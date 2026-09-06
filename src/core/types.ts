@@ -341,8 +341,8 @@ export interface NetworkTelemetry {
 export interface SpeechTranscriptionResult {
   /** Transcribed textual content */
   transcript: string;
-  /** Confidence score between 0.0 and 1.0 */
-  confidence: number;
+  /** Confidence score between 0.0 and 1.0; null when the engine does not report one (Gemini cloud) */
+  confidence: number | null;
   /** Duration of recorded audio in seconds */
   durationSeconds: number;
   /** Time taken to perform transcription in milliseconds */

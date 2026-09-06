@@ -1,8 +1,9 @@
 /**
  * @file AILabScreen.tsx
- * @description Multimodal AI, Voice Speech-to-Text, and Computer Vision test laboratory.
- * Features live Gemini 2.5 conversational chat, voice audio transcription via useSpeechAI,
- * camera image capture with vision analysis, TPU token throughput telemetry, and Titan M3 encrypted API key persistence.
+ * @description Multimodal AI, voice, and vision laboratory. Cloud Gemini (chat, vision, transcription)
+ * runs only with a configured API key; there is no simulated reply. The on-device stack card reports
+ * what is verifiably installed (AICore, Private Compute Services, NPU flag) until the pixel-nano module
+ * wires Gemini Nano.
  */
 
 import React, { useState } from 'react';
@@ -22,6 +23,8 @@ import { useVisionAI } from '../ai/useVisionAI';
 import { useSpeechAI } from '../ai/useSpeechAI';
 import { useTPU } from '../ai/useTPU';
 import { useHiLight } from '../hardware/useHiLight';
+import { useHaptics, HapticEnvelopes } from '../hardware/useHaptics';
+import { useCapabilities } from '../hardware/useCapabilities';
 import { saveApiKey } from '../ai/geminiClient';
 import { HapticButton } from '../components/HapticButton';
 import { MetricCard } from '../components/MetricCard';
@@ -33,26 +36,33 @@ export const AILabScreen: React.FC = () => {
   const speech = useSpeechAI();
   const tpu = useTPU();
   const hilight = useHiLight();
+  const haptics = useHaptics();
+  const caps = useCapabilities();
 
   const [inputPrompt, setInputPrompt] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [keySavedMessage, setKeySavedMessage] = useState<string | null>(null);
 
+  const signalThinking = () => {
+    hilight.triggerGeminiPulse(4500);
+    haptics.playEnvelope(HapticEnvelopes.thinkingRamp);
+  };
+
   const handleSend = () => {
     if (!inputPrompt.trim() || gemini.isLoading) return;
     const prompt = inputPrompt;
     setInputPrompt('');
-    hilight.triggerGeminiPulse(4500);
+    signalThinking();
     gemini.sendMessage(prompt);
   };
 
   const handleVoiceToggle = async () => {
     if (speech.isListening) {
       const result = await speech.stopListeningAndTranscribe();
-      if (result && result.transcript) {
+      if (result?.transcript) {
         setInputPrompt(result.transcript);
-        hilight.triggerGeminiPulse(4500);
+        signalThinking();
         gemini.sendMessage(result.transcript);
       }
     } else {
@@ -65,7 +75,7 @@ export const AILabScreen: React.FC = () => {
     const success = await saveApiKey(apiKeyInput.trim());
     if (success) {
       gemini.setApiKey(apiKeyInput.trim());
-      setKeySavedMessage('API Key securely stored in Titan M3 KeyStore (PQC Encrypted).');
+      setKeySavedMessage('API key stored in SecureStore (hardware-backed keystore).');
       setShowKeyInput(false);
       setApiKeyInput('');
       setTimeout(() => setKeySavedMessage(null), 3500);
@@ -73,173 +83,150 @@ export const AILabScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header & Accelerator Status */}
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Pixel AI & Vision Lab</Text>
-          <Text style={styles.subtitle}>Powered by Google Gemini, Tensor TPU & Speech Pipeline</Text>
+          <Text style={styles.subtitle}>Cloud Gemini ({gemini.model}) · on-device stack: {tpu.aicoreInstalled ? `AICore ${tpu.aicoreVersion?.split('_')[2] ?? ''}` : 'AICore not installed'}</Text>
         </View>
 
         {keySavedMessage && (
-          <View style={styles.alertSuccess}>
-            <Text style={styles.alertSuccessText}>{keySavedMessage}</Text>
-          </View>
+          <View style={styles.alertSuccess}><Text style={styles.alertSuccessText}>{keySavedMessage}</Text></View>
         )}
 
-        {/* TPU Accelerator Quick Status */}
         <MetricCard
-          title="On-Device Neural Engine"
-          value={tpu.activeDelegate}
-          subtitle={`Latency: ${tpu.lastInferenceLatencyMs} ms • ~${tpu.throughputTokensPerSec} tokens/sec`}
-          badge={gemini.hasApiKey ? "Cloud + TPU Linked" : "Edge TPU Mode"}
-          badgeColor={gemini.hasApiKey ? Colors.dark.success : Colors.dark.tensorGlow}
+          title="On-device AI stack"
+          value={tpu.aicoreInstalled ? 'AICore present' : 'AICore absent'}
+          badge={caps.geminiNanoTier.toUpperCase()}
+          badgeColor={tpu.aicoreInstalled ? Colors.dark.tensorGlow : Colors.dark.warning}
+          subtitle={`AICore ${tpu.aicoreVersion ?? '—'} • PCS ${tpu.privateComputeServicesVersion ?? '—'} • NPU feature flag: ${tpu.hasNpuFeature == null ? '?' : tpu.hasNpuFeature ? 'yes' : 'no'} • Gemini Nano inference not wired yet (pixel-nano module)`}
+          source={tpu.source}
+        />
+        <View style={styles.row}>
+          <MetricCard
+            title="CPU fallback matmul"
+            value={tpu.cpuFallbackLatencyMs}
+            unit="ms"
+            badge="256×256 JS"
+            badgeColor={Colors.dark.primary}
+            subtitle="Real JS-thread compute; not TPU"
+            source={tpu.cpuFallbackLatencyMs == null ? 'unavailable' : 'derived'}
+          />
+        </View>
+        <HapticButton
+          title={tpu.isBenchmarking ? 'Running matmul…' : 'Run CPU fallback benchmark'}
+          onPress={() => { void tpu.benchmarkTPU(); }}
+          disabled={tpu.isBenchmarking}
+          variant="secondary"
+          style={styles.keyButton}
         />
 
-        {/* API Key Configuration Toggle */}
         <HapticButton
-          title={showKeyInput ? "Close Settings" : (gemini.hasApiKey ? "Change Gemini API Key" : "Configure Gemini API Key")}
+          title={showKeyInput ? 'Close settings' : (gemini.hasApiKey ? 'Change Gemini API key' : 'Configure Gemini API key')}
           onPress={() => setShowKeyInput(!showKeyInput)}
-          variant="outline"
+          variant={gemini.hasApiKey ? 'outline' : 'primary'}
           style={styles.keyButton}
         />
 
         {showKeyInput && (
           <View style={styles.keyContainer}>
-            <Text style={styles.keyLabel}>Google Gemini API Key:</Text>
+            <Text style={styles.keyLabel}>Google Gemini API key</Text>
             <TextInput
               style={styles.keyTextInput}
-              placeholder="Paste AIzaSy... key"
+              placeholder="Paste AIzaSy… key"
               placeholderTextColor={Colors.dark.textMuted}
               value={apiKeyInput}
               onChangeText={setApiKeyInput}
               autoCapitalize="none"
               secureTextEntry
             />
-            <HapticButton
-              title="Save Key to Titan M3"
-              onPress={handleSaveKey}
-              variant="primary"
-              style={{ marginTop: 8 }}
-            />
+            <HapticButton title="Save key to SecureStore" onPress={handleSaveKey} variant="primary" style={{ marginTop: 8 }} />
           </View>
         )}
 
-        {/* Voice Speech-to-Text Section */}
-        <Text style={styles.sectionHeader}>Voice Speech-To-Text Pipeline</Text>
-        <View style={styles.voiceCard}>
-          <Text style={styles.voiceDesc}>
-            Record your voice with the Pixel multi-mic array and transcribe spoken audio into text prompt tokens.
-          </Text>
+        {!gemini.hasApiKey && (
+          <View style={styles.notice}>
+            <Text style={styles.noticeText}>No API key. Chat, vision and transcription will return an error instead of a simulated answer.</Text>
+          </View>
+        )}
 
+        <Text style={styles.sectionHeader}>Voice → text (Gemini audio)</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardDesc}>Records 16 kHz mono through the voice-recognition mic path, then transcribes with {speech.model}.</Text>
           <HapticButton
-            title={speech.isListening ? `Listening... (${speech.voiceDecibels} dB) [Tap to Finish]` : (speech.isTranscribing ? "Transcribing Audio..." : "Start Voice Input")}
+            title={speech.isListening ? `Listening… ${speech.voiceDecibels} dBFS (tap to finish)` : (speech.isTranscribing ? 'Transcribing…' : 'Start voice input')}
             onPress={handleVoiceToggle}
             disabled={speech.isTranscribing}
-            variant={speech.isListening ? "danger" : "primary"}
+            variant={speech.isListening ? 'danger' : 'primary'}
             style={{ marginBottom: 10 }}
           />
-
+          {speech.error && <Text style={styles.errorText}>{speech.error}</Text>}
           {speech.lastTranscript && (
             <View style={styles.transcriptBox}>
-              <Text style={styles.transcriptLabel}>LAST TRANSCRIPT ({speech.lastTranscript.durationSeconds}s, {speech.lastTranscript.latencyMs}ms):</Text>
-              <Text style={styles.transcriptText}>"{speech.lastTranscript.transcript}"</Text>
+              <Text style={styles.transcriptLabel}>LAST TRANSCRIPT ({speech.lastTranscript.durationSeconds}s audio, {speech.lastTranscript.latencyMs} ms)</Text>
+              <Text style={styles.transcriptText}>"{speech.lastTranscript.transcript || '(no speech detected)'}"</Text>
             </View>
           )}
         </View>
 
-        {/* Vision AI Camera Section */}
-        <Text style={styles.sectionHeader}>Multimodal Vision Analysis</Text>
-        <View style={styles.visionCard}>
-          <Text style={styles.visionDesc}>
-            Take a photo with the Pixel camera to analyze scenes, read text, or inspect objects.
-          </Text>
-
-          <View style={styles.visionButtons}>
-            <HapticButton
-              title="Capture Photo"
-              onPress={() => vision.captureAndAnalyze(true)}
-              disabled={vision.isAnalyzing}
-              variant="primary"
-              style={{ flex: 1, marginRight: 6 }}
-            />
-            <HapticButton
-              title="Pick Photo"
-              onPress={() => vision.captureAndAnalyze(false)}
-              disabled={vision.isAnalyzing}
-              variant="secondary"
-              style={{ flex: 1, marginLeft: 6 }}
-            />
+        <Text style={styles.sectionHeader}>Vision (Gemini multimodal)</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardDesc}>Capture or pick a photo; the description and labels come back as structured JSON from the model.</Text>
+          <View style={styles.row}>
+            <HapticButton title="Capture photo" onPress={() => vision.captureAndAnalyze(true)} disabled={vision.isAnalyzing} variant="primary" style={{ flex: 1, marginRight: 6 }} />
+            <HapticButton title="Pick photo" onPress={() => vision.captureAndAnalyze(false)} disabled={vision.isAnalyzing} variant="secondary" style={{ flex: 1, marginLeft: 6 }} />
           </View>
-
           {vision.isAnalyzing && (
             <View style={styles.loadingBox}>
               <ActivityIndicator size="small" color={Colors.dark.primary} />
-              <Text style={styles.loadingText}>Processing through Tensor Vision Pipeline...</Text>
+              <Text style={styles.loadingText}>Analysing with {vision.model}…</Text>
             </View>
           )}
-
-          {vision.selectedImageUri && (
-            <Image source={{ uri: vision.selectedImageUri }} style={styles.previewImage} />
-          )}
-
+          {vision.error && <Text style={styles.errorText}>{vision.error}</Text>}
+          {vision.selectedImageUri && <Image source={{ uri: vision.selectedImageUri }} style={styles.previewImage} />}
           {vision.analysis && (
             <View style={styles.analysisBox}>
               <Text style={styles.analysisText}>{vision.analysis.description}</Text>
               <View style={styles.labelsRow}>
                 {vision.analysis.labels.map((label, idx) => (
-                  <View key={idx} style={styles.labelChip}>
-                    <Text style={styles.labelChipText}>{label}</Text>
-                  </View>
+                  <View key={idx} style={styles.labelChip}><Text style={styles.labelChipText}>{label}</Text></View>
                 ))}
               </View>
-              <Text style={styles.latencyFooter}>
-                Latency: {vision.analysis.latencyMs} ms
-              </Text>
+              <Text style={styles.latencyFooter}>Latency {vision.analysis.latencyMs} ms</Text>
             </View>
           )}
         </View>
 
-        {/* Conversational AI Chat Stream */}
-        <Text style={styles.sectionHeader}>Conversational AI Engine</Text>
+        <Text style={styles.sectionHeader}>Conversation</Text>
         <View style={styles.chatContainer}>
+          {gemini.messages.length === 0 && (
+            <Text style={styles.cardDesc}>Ask something below. Replies are real Gemini responses with API-reported token counts.</Text>
+          )}
           {gemini.messages.map((msg) => (
             <View
               key={msg.id}
-              style={[
-                styles.messageBubble,
-                msg.role === 'user' ? styles.userBubble : styles.modelBubble,
-              ]}
+              style={[styles.messageBubble, msg.role === 'user' ? styles.userBubble : msg.role === 'system' ? styles.systemBubble : styles.modelBubble]}
             >
-              <Text style={styles.messageRole}>
-                {msg.role === 'user' ? 'YOU' : 'PIXELFORGE AI'}
-              </Text>
+              <Text style={styles.messageRole}>{msg.role === 'user' ? 'YOU' : msg.role === 'system' ? 'ERROR' : 'GEMINI'}</Text>
               <Text style={styles.messageContent}>{msg.content}</Text>
               {msg.latencyMs !== undefined && (
-                <Text style={styles.messageLatency}>
-                  {msg.latencyMs} ms {msg.tokenCount ? `• ${msg.tokenCount} tokens` : ''}
-                </Text>
+                <Text style={styles.messageLatency}>{msg.latencyMs} ms{msg.tokenCount ? ` • ${msg.tokenCount} tokens` : ''}</Text>
               )}
             </View>
           ))}
-
           {gemini.isLoading && (
             <View style={styles.loadingBubble}>
               <ActivityIndicator size="small" color={Colors.dark.primary} />
-              <Text style={styles.thinkingText}>Thinking...</Text>
+              <Text style={styles.thinkingText}>Thinking…</Text>
             </View>
           )}
         </View>
       </ScrollView>
 
-      {/* Input Bar */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
-          placeholder="Ask or command the AI..."
+          placeholder="Ask Gemini…"
           placeholderTextColor={Colors.dark.textMuted}
           value={inputPrompt}
           onChangeText={setInputPrompt}
@@ -247,279 +234,76 @@ export const AILabScreen: React.FC = () => {
           returnKeyType="send"
         />
         <HapticButton
-          title={speech.isListening ? "⏹" : "🎤"}
+          title={speech.isListening ? '⏹' : '🎤'}
           onPress={handleVoiceToggle}
-          variant={speech.isListening ? "danger" : "secondary"}
+          variant={speech.isListening ? 'danger' : 'secondary'}
           style={styles.micButton}
           textStyle={{ fontSize: 16 }}
         />
-        <HapticButton
-          title="Send"
-          onPress={handleSend}
-          disabled={gemini.isLoading || !inputPrompt.trim()}
-          variant="primary"
-          style={styles.sendButton}
-        />
+        <HapticButton title="Send" onPress={handleSend} disabled={gemini.isLoading || !inputPrompt.trim()} variant="primary" style={styles.sendButton} />
       </View>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    color: Colors.dark.text,
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    color: Colors.dark.textMuted,
-    fontSize: 13,
-    marginTop: 2,
-  },
+  container: { flex: 1, backgroundColor: Colors.dark.background },
+  content: { padding: 16, paddingBottom: 24 },
+  header: { marginBottom: 16 },
+  title: { color: Colors.dark.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  subtitle: { color: Colors.dark.textMuted, fontSize: 13, marginTop: 2 },
+  row: { flexDirection: 'row' },
   sectionHeader: {
-    color: Colors.dark.primary,
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginTop: 18,
-    marginBottom: 10,
-    marginLeft: 4,
+    color: Colors.dark.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase',
+    letterSpacing: 1.2, marginTop: 18, marginBottom: 10, marginLeft: 4,
   },
-  keyButton: {
-    marginBottom: 12,
-  },
+  keyButton: { marginBottom: 12 },
   keyContainer: {
-    backgroundColor: Colors.dark.surface,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
-    marginBottom: 16,
+    backgroundColor: Colors.dark.surface, padding: 16, borderRadius: 16, borderWidth: 1,
+    borderColor: Colors.dark.cardBorder, marginBottom: 16,
   },
-  keyLabel: {
-    color: Colors.dark.text,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
+  keyLabel: { color: Colors.dark.text, fontSize: 13, fontWeight: '600', marginBottom: 6 },
   keyTextInput: {
-    backgroundColor: Colors.dark.card,
-    color: Colors.dark.text,
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
+    backgroundColor: Colors.dark.card, color: Colors.dark.text, borderRadius: 10, padding: 12,
+    fontSize: 14, borderWidth: 1, borderColor: Colors.dark.cardBorder,
   },
-  alertSuccess: {
-    backgroundColor: '#0F3E22',
-    borderColor: Colors.dark.success,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 14,
-  },
-  alertSuccessText: {
-    color: Colors.dark.success,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  voiceCard: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
-    padding: 16,
-    marginBottom: 16,
-  },
-  voiceDesc: {
-    color: Colors.dark.textMuted,
-    fontSize: 13,
-    marginBottom: 12,
-    lineHeight: 18,
-  },
-  transcriptBox: {
-    backgroundColor: Colors.dark.surfaceVariant,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
-  },
-  transcriptLabel: {
-    color: Colors.dark.primary,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  transcriptText: {
-    color: Colors.dark.text,
-    fontSize: 13,
-    fontStyle: 'italic',
-    lineHeight: 18,
-  },
-  visionCard: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
-    padding: 16,
-    marginBottom: 16,
-  },
-  visionDesc: {
-    color: Colors.dark.textMuted,
-    fontSize: 13,
-    marginBottom: 12,
-    lineHeight: 18,
-  },
-  visionButtons: {
-    flexDirection: 'row',
-  },
-  previewImage: {
-    width: '100%',
-    height: 180,
-    borderRadius: 12,
-    marginTop: 12,
-  },
-  loadingBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  loadingText: {
-    color: Colors.dark.primary,
-    marginLeft: 8,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  analysisBox: {
-    backgroundColor: Colors.dark.surfaceVariant,
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 12,
-  },
-  analysisText: {
-    color: Colors.dark.text,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  labelsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  labelChip: {
-    backgroundColor: Colors.dark.card,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 6,
-    marginTop: 4,
-  },
-  labelChipText: {
-    color: Colors.dark.primary,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  latencyFooter: {
-    color: Colors.dark.textMuted,
-    fontSize: 11,
-    marginTop: 8,
-    textAlign: 'right',
-  },
-  chatContainer: {
-    marginBottom: 12,
-  },
-  messageBubble: {
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    maxWidth: '90%',
-  },
-  userBubble: {
-    backgroundColor: Colors.dark.primaryContainer,
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 4,
-  },
-  modelBubble: {
-    backgroundColor: Colors.dark.card,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
-  },
-  messageRole: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.dark.textMuted,
-    marginBottom: 4,
-    letterSpacing: 0.5,
-  },
-  messageContent: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  messageLatency: {
-    color: Colors.dark.textMuted,
-    fontSize: 10,
-    marginTop: 6,
-    textAlign: 'right',
-  },
-  loadingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.dark.card,
-    padding: 12,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  thinkingText: {
-    color: Colors.dark.textMuted,
-    fontSize: 12,
-    marginLeft: 8,
-  },
+  alertSuccess: { backgroundColor: '#0F3E22', borderColor: Colors.dark.success, borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 14 },
+  alertSuccessText: { color: Colors.dark.success, fontSize: 13, fontWeight: '600' },
+  notice: { backgroundColor: `${Colors.dark.warning}18`, borderColor: Colors.dark.warning, borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 8 },
+  noticeText: { color: Colors.dark.warning, fontSize: 12, lineHeight: 17 },
+  card: { backgroundColor: Colors.dark.card, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.cardBorder, padding: 16, marginBottom: 16 },
+  cardDesc: { color: Colors.dark.textMuted, fontSize: 13, marginBottom: 12, lineHeight: 18 },
+  errorText: { color: Colors.dark.error, fontSize: 12, lineHeight: 17, marginTop: 4 },
+  transcriptBox: { backgroundColor: Colors.dark.surfaceVariant, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.cardBorder, marginTop: 8 },
+  transcriptLabel: { color: Colors.dark.primary, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
+  transcriptText: { color: Colors.dark.text, fontSize: 13, fontStyle: 'italic', lineHeight: 18 },
+  previewImage: { width: '100%', height: 180, borderRadius: 12, marginTop: 12 },
+  loadingBox: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  loadingText: { color: Colors.dark.primary, marginLeft: 8, fontSize: 12, fontWeight: '500' },
+  analysisBox: { backgroundColor: Colors.dark.surfaceVariant, padding: 12, borderRadius: 12, marginTop: 12 },
+  analysisText: { color: Colors.dark.text, fontSize: 13, lineHeight: 19 },
+  labelsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
+  labelChip: { backgroundColor: Colors.dark.card, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 6, marginTop: 4 },
+  labelChipText: { color: Colors.dark.primary, fontSize: 11, fontWeight: '600' },
+  latencyFooter: { color: Colors.dark.textMuted, fontSize: 11, marginTop: 8, textAlign: 'right' },
+  chatContainer: { marginBottom: 12 },
+  messageBubble: { borderRadius: 16, padding: 14, marginBottom: 10, maxWidth: '90%' },
+  userBubble: { backgroundColor: Colors.dark.primaryContainer, alignSelf: 'flex-end', borderBottomRightRadius: 4 },
+  modelBubble: { backgroundColor: Colors.dark.card, borderWidth: 1, borderColor: Colors.dark.cardBorder, alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
+  systemBubble: { backgroundColor: `${Colors.dark.error}18`, borderWidth: 1, borderColor: Colors.dark.error, alignSelf: 'stretch', maxWidth: '100%' },
+  messageRole: { fontSize: 10, fontWeight: '700', color: Colors.dark.textMuted, marginBottom: 4, letterSpacing: 0.5 },
+  messageContent: { color: Colors.dark.text, fontSize: 14, lineHeight: 20 },
+  messageLatency: { color: Colors.dark.textMuted, fontSize: 10, marginTop: 6, textAlign: 'right' },
+  loadingBubble: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.card, padding: 12, borderRadius: 16, alignSelf: 'flex-start' },
+  thinkingText: { color: Colors.dark.textMuted, fontSize: 12, marginLeft: 8 },
   inputContainer: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: Colors.dark.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.dark.cardBorder,
-    alignItems: 'center',
+    flexDirection: 'row', padding: 12, backgroundColor: Colors.dark.surface, borderTopWidth: 1,
+    borderTopColor: Colors.dark.cardBorder, alignItems: 'center',
   },
   textInput: {
-    flex: 1,
-    backgroundColor: Colors.dark.card,
-    color: Colors.dark.text,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 14,
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: Colors.dark.cardBorder,
+    flex: 1, backgroundColor: Colors.dark.card, color: Colors.dark.text, borderRadius: 20, paddingHorizontal: 16,
+    paddingVertical: 10, fontSize: 14, marginRight: 6, borderWidth: 1, borderColor: Colors.dark.cardBorder,
   },
-  micButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginRight: 6,
-    borderRadius: 20,
-  },
-  sendButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-  },
+  micButton: { paddingVertical: 10, paddingHorizontal: 12, marginRight: 6, borderRadius: 20 },
+  sendButton: { paddingVertical: 10, paddingHorizontal: 18 },
 });

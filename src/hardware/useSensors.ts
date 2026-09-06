@@ -92,7 +92,8 @@ export function useSensors(updateIntervalMs: number = 100): SensorTelemetry {
         if (isLightAvailable) {
           LightSensor.setUpdateInterval(updateIntervalMs * 2);
           lightSub = LightSensor.addListener(({ illuminance }) => {
-            setLightLux(Math.round(illuminance));
+            // Keep one decimal: a dark room legitimately reads 0.4–2 lux and must not display as 0.
+            setLightLux(Number(illuminance.toFixed(1)));
           });
         }
       } catch {

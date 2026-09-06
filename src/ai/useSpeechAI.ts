@@ -1,118 +1,95 @@
 /**
  * @file useSpeechAI.ts
- * @description Voice input, audio transcription, and conversational speech pipeline for PixelForge.
- * Captures spoken voice input, transcribes speech with confidence scoring, and bridges to Gemini conversational AI.
+ * @description Voice capture (expo-audio via useAudio) and transcription through Gemini's audio
+ * understanding. Without an API key the recording is kept and an error is returned; there is no
+ * simulated transcript. On-device streaming recognition (ML Kit GenAI Speech Recognition) is the
+ * planned replacement; see docs/guides/voice.md.
  */
 
 import { useState } from 'react';
+import * as FileSystem from 'expo-file-system';
 import { useAudio } from '../hardware/useAudio';
 import { SpeechTranscriptionResult } from '../core/types';
-import { getStoredApiKey, createGeminiClient } from './geminiClient';
-import * as FileSystem from 'expo-file-system';
+import { getStoredApiKey, createGeminiClient, GEMINI_MODEL, NO_API_KEY_MESSAGE } from './geminiClient';
+import { logEvent, recordMetric } from '../core/observability';
 
-/**
- * Hook to manage spoken audio recording and speech-to-text transcription.
- *
- * @returns Object providing recording state, transcription results, and start/stop controls.
- *
- * @example
- * ```typescript
- * const { isListening, lastTranscript, startListening, stopListeningAndTranscribe } = useSpeechAI();
- * await startListening();
- * // After speaking:
- * const result = await stopListeningAndTranscribe();
- * console.log(`Transcribed: "${result?.transcript}"`);
- * ```
- */
+const MODULE = 'useSpeechAI';
+
 export function useSpeechAI() {
   const audio = useAudio();
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [lastTranscript, setLastTranscript] = useState<SpeechTranscriptionResult | null>(null);
+  const [lastRecordingUri, setLastRecordingUri] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [recordingStartedAt, setRecordingStartedAt] = useState<number | null>(null);
 
-  /**
-   * Starts listening to user voice via multi-mic array.
-   */
   const startListening = async (): Promise<boolean> => {
-    const recording = await audio.startRecording();
-    return !!recording;
+    setError(null);
+    const ok = await audio.startRecording();
+    if (ok) setRecordingStartedAt(Date.now());
+    else setError('Microphone unavailable or permission denied');
+    return ok;
   };
 
-  /**
-   * Concludes voice recording and transcribes the captured audio via Gemini Multimodal Audio or edge pipeline.
-   * @returns Promise resolving to SpeechTranscriptionResult or null on error.
-   */
   const stopListeningAndTranscribe = async (): Promise<SpeechTranscriptionResult | null> => {
-    const startTime = performance.now();
     const uri = await audio.stopRecording();
-    if (!uri) return null;
+    const durationSeconds = recordingStartedAt ? Number(((Date.now() - recordingStartedAt) / 1000).toFixed(1)) : 0;
+    setRecordingStartedAt(null);
+    if (!uri) { setError('No recording captured'); return null; }
+    setLastRecordingUri(uri);
+    logEvent(MODULE, 'recorded', { uri, durationSeconds });
+
+    const apiKey = await getStoredApiKey();
+    if (!apiKey) { setError(NO_API_KEY_MESSAGE); return null; }
 
     setIsTranscribing(true);
-
+    const start = performance.now();
     try {
-      const apiKey = await getStoredApiKey();
-      let transcriptText = '';
-
-      if (apiKey) {
-        // Read captured audio as base64
-        const base64Audio = await FileSystem.readAsStringAsync(uri, {
-          encoding: 'base64',
-        });
-
-        const client = createGeminiClient(apiKey);
-        const response = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: 'Transcribe this voice audio accurately. Return only the transcription text.' },
-                {
-                  inlineData: {
-                    mimeType: 'audio/m4a',
-                    data: base64Audio,
-                  }
-                }
-              ]
-            }
-          ]
-        });
-        transcriptText = response.text?.trim() || 'Audio captured, but no words were distinguished.';
-      } else {
-        // High-fidelity speech pipeline simulation
-        await new Promise(res => setTimeout(res, 900));
-        transcriptText = 'Check Pixel 11 Pro Tensor TPU diagnostics and optimize thermal headroom.';
-      }
-
-      const elapsedMs = Math.round(performance.now() - startTime);
+      const base64Audio = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const client = createGeminiClient(apiKey);
+      const response = await client.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: 'Transcribe this speech verbatim. Return only the transcript text; if there is no speech return an empty string.' },
+            { inlineData: { mimeType: 'audio/mp4', data: base64Audio } },
+          ],
+        }],
+      });
+      const transcript = (response.text ?? '').trim();
+      const latencyMs = Math.round(performance.now() - start);
       const result: SpeechTranscriptionResult = {
-        transcript: transcriptText,
-        confidence: 0.98,
-        durationSeconds: Number((elapsedMs / 1000).toFixed(1)),
-        latencyMs: elapsedMs,
-        language: 'en-US',
+        transcript,
+        confidence: null,
+        durationSeconds,
+        latencyMs,
+        language: 'auto',
       };
-
       setLastTranscript(result);
-      setIsTranscribing(false);
+      recordMetric(MODULE, 'latencyMs', latencyMs, 'hardware');
+      logEvent(MODULE, 'transcribed', { chars: transcript.length, latencyMs });
       return result;
-    } catch {
-      setIsTranscribing(false);
+    } catch (e: any) {
+      const message = e?.message ?? 'transcription failed';
+      setError(message);
+      logEvent(MODULE, 'error', { message }, 'error');
       return null;
+    } finally {
+      setIsTranscribing(false);
     }
   };
 
   return {
-    /** Whether microphone is actively recording voice input */
     isListening: audio.isRecording,
-    /** Whether audio is currently being transcribed through AI */
     isTranscribing,
-    /** Decibel level of incoming voice (-160 to 0) */
+    /** Live microphone level in dBFS */
     voiceDecibels: audio.meteringDecibels,
-    /** Latest speech-to-text transcript */
     lastTranscript,
-    /** Start listening to voice */
+    lastRecordingUri,
+    error,
     startListening,
-    /** Conclude speech and execute transcription */
     stopListeningAndTranscribe,
+    model: GEMINI_MODEL,
   };
 }

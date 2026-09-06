@@ -1,122 +1,102 @@
 /**
  * @file useVisionAI.ts
- * @description Multimodal visual inspection hook connecting the Pixel camera to Gemini Vision.
- * Encodes camera frames or selected photos to base64, passes them to Gemini 2.5 Flash, and returns object labels & description.
+ * @description Camera / gallery capture with Gemini multimodal analysis. The description and labels
+ * come from the model as structured JSON (`responseJsonSchema`), not from hard-coded strings. Without
+ * an API key the hook records the image and returns an error; nothing is simulated.
  */
 
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { Type } from '@google/genai';
 import { VisionAnalysisResult } from '../core/types';
-import { getStoredApiKey, createGeminiClient } from './geminiClient';
+import { getStoredApiKey, createGeminiClient, GEMINI_MODEL, NO_API_KEY_MESSAGE } from './geminiClient';
+import { logEvent, recordMetric } from '../core/observability';
 
-/**
- * Hook to capture photographs or pick images from the gallery and process them through multimodal AI.
- *
- * @returns Object providing image URI, latest analysis result, loading state, and the capture/analyze function.
- *
- * @example
- * ```typescript
- * const { captureAndAnalyze, analysis, isAnalyzing } = useVisionAI();
- * const result = await captureAndAnalyze(true); // Open camera
- * console.log(`Identified: ${result?.labels.join(', ')}`);
- * ```
- */
+const MODULE = 'useVisionAI';
+
 export function useVisionAI() {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<VisionAnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Captures an image from the camera or gallery and initiates vision model inference.
-   * @param useCamera If true, launches camera viewfinder; if false, opens photo gallery.
-   * @returns Promise resolving to VisionAnalysisResult or null on cancellation/failure.
-   */
   const captureAndAnalyze = async (useCamera: boolean = true): Promise<VisionAnalysisResult | null> => {
+    setError(null);
     try {
-      let result;
+      let result: ImagePicker.ImagePickerResult;
       if (useCamera) {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') return null;
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.8,
-          base64: true,
-        });
+        if (status !== 'granted') { setError('Camera permission denied'); return null; }
+        result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8, base64: true });
       } else {
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.8,
-          base64: true,
-        });
+        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, base64: true });
       }
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return null;
-      }
+      if (result.canceled || !result.assets?.length) return null;
 
       const asset = result.assets[0];
       setSelectedImageUri(asset.uri);
-      setIsAnalyzing(true);
+      logEvent(MODULE, 'image', { width: asset.width, height: asset.height, mime: asset.mimeType });
 
-      const startTime = performance.now();
       const apiKey = await getStoredApiKey();
-
-      let description = '';
-      let labels: string[] = [];
-
-      if (apiKey && asset.base64) {
-        const client = createGeminiClient(apiKey);
-        const response = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: 'Describe what you see in this image in 2 concise sentences, and list 3 key items detected.' },
-                {
-                  inlineData: {
-                    mimeType: asset.mimeType || 'image/jpeg',
-                    data: asset.base64,
-                  }
-                }
-              ]
-            }
-          ]
-        });
-        description = response.text || 'Visual analysis completed.';
-        labels = ['Pixel Camera Capture', 'Object Detection', 'Tensor Processed'];
-      } else {
-        // High-fidelity fallback simulation
-        await new Promise(res => setTimeout(res, 800));
-        description = `Pixel 11 Pro Camera frame captured (${asset.width}x${asset.height}px). Visual features extracted and analyzed via simulated Tensor TPU Edge pipeline.`;
-        labels = ['OLED Viewport', 'Ultra HDR', 'Neural Vision'];
+      if (!apiKey || !asset.base64) {
+        setError(NO_API_KEY_MESSAGE);
+        setAnalysis(null);
+        return null;
       }
 
-      const elapsedMs = Math.round(performance.now() - startTime);
+      setIsAnalyzing(true);
+      const start = performance.now();
+      const client = createGeminiClient(apiKey);
+      const response = await client.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: [{
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType: asset.mimeType || 'image/jpeg', data: asset.base64 } },
+            { text: 'Describe this image in two concise sentences and list the 3 to 5 most important objects or subjects as short labels.' },
+          ],
+        }],
+        config: {
+          responseMimeType: 'application/json',
+          responseJsonSchema: {
+            type: Type.OBJECT,
+            properties: {
+              description: { type: Type.STRING },
+              labels: { type: Type.ARRAY, items: { type: Type.STRING }, minItems: 1, maxItems: 5 },
+            },
+            required: ['description', 'labels'],
+          },
+        },
+      });
+      const parsed = JSON.parse(response.text ?? '{}') as { description?: string; labels?: string[] };
+      const elapsedMs = Math.round(performance.now() - start);
       const res: VisionAnalysisResult = {
-        description,
-        labels,
+        description: parsed.description ?? '(no description)',
+        labels: parsed.labels ?? [],
         latencyMs: elapsedMs,
         timestamp: Date.now(),
       };
-
       setAnalysis(res);
-      setIsAnalyzing(false);
+      recordMetric(MODULE, 'latencyMs', elapsedMs, 'hardware');
+      logEvent(MODULE, 'analysis', { model: GEMINI_MODEL, latencyMs: elapsedMs, labels: res.labels.length });
       return res;
-    } catch {
-      setIsAnalyzing(false);
+    } catch (e: any) {
+      const message = e?.message ?? 'analysis failed';
+      setError(message);
+      logEvent(MODULE, 'error', { message }, 'error');
       return null;
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
   return {
-    /** File URI of the captured image preview */
     selectedImageUri,
-    /** Output analysis result from Gemini */
     analysis,
-    /** Whether vision inference is actively executing */
     isAnalyzing,
-    /** Trigger camera or gallery capture and analysis */
+    /** Last error (permission, missing key, API) */
+    error,
     captureAndAnalyze,
+    model: GEMINI_MODEL,
   };
 }
