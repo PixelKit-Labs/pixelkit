@@ -1,10 +1,23 @@
+/**
+ * @file useGemini.ts
+ * @description Conversational AI hook backed by Google Gen AI SDK (Gemini 2.5 Flash).
+ * Features multi-turn chat memory, execution latency measurement, token estimation, and offline simulation.
+ */
+
 import { useState, useCallback, useEffect } from 'react';
 import { AIMessage } from '../core/types';
 import { getStoredApiKey, createGeminiClient } from './geminiClient';
 
 /**
- * PixelForge Gemini AI Hook
- * Multi-turn conversational chat, reasoning, and text completions.
+ * Hook to manage conversational AI sessions with Google Gemini.
+ *
+ * @returns Object providing conversation messages, loading state, dispatch method, and API key status.
+ *
+ * @example
+ * ```typescript
+ * const { messages, isLoading, sendMessage } = useGemini();
+ * await sendMessage("Summarize current sensor anomalies and battery consumption.");
+ * ```
  */
 export function useGemini() {
   const [messages, setMessages] = useState<AIMessage[]>([
@@ -16,14 +29,18 @@ export function useGemini() {
       latencyMs: 12,
     }
   ]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
 
   useEffect(() => {
     getStoredApiKey().then(setApiKey);
   }, []);
 
-  const sendMessage = useCallback(async (userPrompt: string) => {
+  /**
+   * Dispatches a user prompt to Gemini and streams or appends the model reply.
+   * @param userPrompt Text prompt input by the user.
+   */
+  const sendMessage = useCallback(async (userPrompt: string): Promise<void> => {
     if (!userPrompt.trim()) return;
 
     const userMsg: AIMessage = {
@@ -79,16 +96,25 @@ export function useGemini() {
     }
   }, [apiKey]);
 
-  const clearMessages = () => {
+  /**
+   * Clears the current chat history.
+   */
+  const clearMessages = (): void => {
     setMessages([]);
   };
 
   return {
+    /** Array of user and model conversation messages */
     messages,
+    /** Whether an AI generation request is currently pending */
     isLoading,
+    /** Send a prompt to the model */
     sendMessage,
+    /** Clear conversation history */
     clearMessages,
+    /** Whether a valid API key has been stored */
     hasApiKey: !!apiKey,
+    /** Set active API key */
     setApiKey,
   };
 }

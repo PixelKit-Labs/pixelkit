@@ -1,17 +1,48 @@
+/**
+ * @file MetricCard.tsx
+ * @description Card component for displaying hardware telemetry, silicon metrics, and status badges.
+ * Built with dark-mode OLED borders, tabular numerals for jump-free real-time rendering, and customizable accent chips.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../theme/colors';
 
-interface MetricCardProps {
+/**
+ * Properties for the MetricCard component.
+ */
+export interface MetricCardProps {
+  /** Metric header title */
   title: string;
+  /** Primary numeric or string telemetry value */
   value: string | number;
+  /** Optional unit suffix (e.g., 'FPS', 'ms', 'hPa', '%') */
   unit?: string;
+  /** Explanatory secondary text below the value */
   subtitle?: string;
+  /** Status badge chip text rendered in top right */
   badge?: string;
+  /** Accent color of the status badge border and text */
   badgeColor?: string;
+  /** Optional header icon element */
   icon?: React.ReactNode;
 }
 
+/**
+ * Reusable telemetry card primitive for hardware HUD and diagnostic dashboards.
+ *
+ * @example
+ * ```tsx
+ * <MetricCard
+ *   title="Tensor TPU"
+ *   value={14.2}
+ *   unit="ms"
+ *   badge="HARDWARE ACCELERATED"
+ *   badgeColor="#00E5FF"
+ *   subtitle="Running on local NPU silicon"
+ * />
+ * ```
+ */
 export const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
@@ -91,6 +122,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '700',
     letterSpacing: -0.5,
+    fontVariant: ['tabular-nums'],
   },
   unit: {
     color: Colors.dark.textMuted,

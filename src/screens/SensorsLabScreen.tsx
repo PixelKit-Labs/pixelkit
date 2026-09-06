@@ -1,3 +1,12 @@
+/**
+ * @file SensorsLabScreen.tsx
+ * @description Interactive testing laboratory for physical Pixel hardware.
+ * Provides 3 sub-panels:
+ * 1. Motion: Real-time 3-axis Accelerometer, Gyroscope, Magnetometer, Barometer altimeter, Light.
+ * 2. Haptics: Tactile test pad for LRA mechanical ticks and notification waveforms, plus NFC tag scanner.
+ * 3. Audio & Display: Microphone decibel meter and 120Hz LTPO screen wake-lock controls.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSensors } from '../hardware/useSensors';

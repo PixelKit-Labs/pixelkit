@@ -1,3 +1,9 @@
+/**
+ * @file useDevice.ts
+ * @description Hardware specification, battery health, thermal charging, and network telemetry.
+ * Automatically listens for battery percentage adjustments, AC/wireless charger attachment, and connectivity changes.
+ */
+
 import { useState, useEffect } from 'react';
 import * as Device from 'expo-device';
 import * as Battery from 'expo-battery';
@@ -5,15 +11,22 @@ import * as Network from 'expo-network';
 import { DeviceTelemetry } from '../core/types';
 
 /**
- * PixelForge Device Telemetry Hook
- * Reports hardware model, battery levels, charging state, and network connectivity.
+ * Hook to retrieve and observe device specifications, real-time power levels, and connectivity.
+ *
+ * @returns {DeviceTelemetry} Up-to-date telemetry containing model, OS, battery %, charging state, and Wi-Fi/Cellular type.
+ *
+ * @example
+ * ```typescript
+ * const { modelName, batteryLevel, isCharging, isConnected } = useDevice();
+ * console.log(`Running on ${modelName}, Battery: ${batteryLevel}% (Charging: ${isCharging})`);
+ * ```
  */
 export function useDevice(): DeviceTelemetry {
   const [telemetry, setTelemetry] = useState<DeviceTelemetry>({
     modelName: Device.modelName || 'Pixel 11 Pro',
     brand: Device.brand || 'Google',
     osVersion: Device.osVersion || 'Android 16',
-    batteryLevel: 1.0,
+    batteryLevel: 100,
     isCharging: false,
     lowPowerMode: false,
     networkType: 'WIFI',
@@ -22,8 +35,8 @@ export function useDevice(): DeviceTelemetry {
   });
 
   useEffect(() => {
-    let batteryLevelSub: any;
-    let batteryStateSub: any;
+    let batteryLevelSub: { remove: () => void } | null = null;
+    let batteryStateSub: { remove: () => void } | null = null;
 
     const fetchDeviceStatus = async () => {
       try {
@@ -54,7 +67,7 @@ export function useDevice(): DeviceTelemetry {
           }));
         });
       } catch {
-        // Fallback for environments where battery/network listeners are restricted
+        // Fallback for emulator environments where battery listeners are unavailable
       }
     };
 

@@ -1,4 +1,25 @@
-// Core Types & Constants
+/**
+ * @file index.ts
+ * @description Master entry barrel for PixelForge SDK.
+ * Exports strongly-typed hardware hooks, Tensor AI services, and Material 3 UI primitives.
+ *
+ * @example
+ * ```typescript
+ * import {
+ *   useSensors,
+ *   useHaptics,
+ *   useTPU,
+ *   useGemini,
+ *   useVisionAI,
+ *   useDevice,
+ *   useADPF,
+ *   MetricCard,
+ *   HapticButton
+ * } from './src';
+ * ```
+ */
+
+// Core Types & Design System
 export * from './core/types';
 export * from './theme/colors';
 
@@ -21,6 +42,6 @@ export { useVisionAI } from './ai/useVisionAI';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';
 
 // Reusable UI Primitives
-export { HapticButton } from './components/HapticButton';
-export { MetricCard } from './components/MetricCard';
-export { SensorVisualizer } from './components/SensorVisualizer';
+export { HapticButton, type HapticButtonProps } from './components/HapticButton';
+export { MetricCard, type MetricCardProps } from './components/MetricCard';
+export { SensorVisualizer, type SensorVisualizerProps } from './components/SensorVisualizer';

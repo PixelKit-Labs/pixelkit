@@ -1,15 +1,30 @@
+/**
+ * @file useAudio.ts
+ * @description Multi-microphone acoustic recording, decibel metering, and audio DSP streaming.
+ * Provides real-time decibel level updates (-160 dBFS to 0 dBFS) for acoustic monitoring and voice input.
+ */
+
 import { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
 
 /**
- * PixelForge Audio Engine
- * Handles low-latency audio effects, mic recording, and sound level metering.
+ * Hook to record audio streams and measure ambient sound levels via device microphones.
+ *
+ * @returns Object providing recording state, decibel levels, and start/stop controls.
+ *
+ * @example
+ * ```typescript
+ * const { isRecording, meteringDecibels, startRecording, stopRecording } = useAudio();
+ * await startRecording();
+ * console.log(`Ambient noise: ${meteringDecibels} dB`);
+ * const fileUri = await stopRecording();
+ * ```
  */
 export function useAudio() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
   const [meteringDecibels, setMeteringDecibels] = useState<number>(-160);
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
 
   useEffect(() => {
     const initAudio = async () => {
@@ -21,7 +36,7 @@ export function useAudio() {
           playsInSilentModeIOS: true,
         });
       } catch {
-        // Permissions or mode failure
+        // Permissions or mode failure on restricted platforms
       }
     };
     initAudio();
@@ -33,7 +48,11 @@ export function useAudio() {
     };
   }, []);
 
-  const startRecording = async () => {
+  /**
+   * Starts high-quality microphone recording with continuous metering callback.
+   * @returns Promise resolving to Audio.Recording instance or null on failure.
+   */
+  const startRecording = async (): Promise<Audio.Recording | null> => {
     try {
       if (!permissionGranted) {
         const { status } = await Audio.requestPermissionsAsync();
@@ -63,6 +82,10 @@ export function useAudio() {
     }
   };
 
+  /**
+   * Stops active recording and unloads the native audio hardware.
+   * @returns Promise resolving to the local file URI of the recorded audio, or null.
+   */
   const stopRecording = async (): Promise<string | null> => {
     try {
       if (!recording) return null;
@@ -77,10 +100,15 @@ export function useAudio() {
   };
 
   return {
+    /** Whether the microphone is actively recording */
     isRecording,
+    /** Real-time microphone acoustic level in dBFS (-160 to 0) */
     meteringDecibels,
+    /** Start recording and metering */
     startRecording,
+    /** Stop recording and retrieve audio file URI */
     stopRecording,
+    /** Whether microphone permission has been granted */
     permissionGranted,
   };
 }

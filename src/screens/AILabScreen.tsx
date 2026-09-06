@@ -1,3 +1,10 @@
+/**
+ * @file AILabScreen.tsx
+ * @description Multimodal AI and Computer Vision test laboratory.
+ * Features live Gemini 2.5 conversational chat, camera image capture with vision analysis,
+ * TPU token throughput telemetry, and Titan M2 encrypted API key persistence.
+ */
+
 import React, { useState } from 'react';
 import {
   View,

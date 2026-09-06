@@ -1,3 +1,9 @@
+/**
+ * @file useSensors.ts
+ * @description Real-time 6-axis IMU, Barometer, Magnetometer, and Light Sensor hook.
+ * Streams physical hardware telemetry with configurable sampling rates and hypsometric altitude calculation.
+ */
+
 import { useState, useEffect } from 'react';
 import {
   Accelerometer,
@@ -9,13 +15,22 @@ import {
 import { SensorTelemetry, Vector3D, BarometerData } from '../core/types';
 
 const INITIAL_VECTOR: Vector3D = { x: 0, y: 0, z: 0 };
-const SEA_LEVEL_PRESSURE = 1013.25; // hPa standard
+const SEA_LEVEL_PRESSURE = 1013.25; // Standard atmospheric pressure in hPa
 
 /**
- * PixelForge Sensor Suite
- * Connects to the Pixel's 6-axis motion sensors, Barometer (altimeter), and Magnetometer.
+ * Hook to subscribe to and stream Google Pixel physical hardware sensors.
+ *
+ * @param updateIntervalMs Polling/streaming interval in milliseconds (default: 100ms = 10 Hz).
+ *                         Lower values increase precision; higher values preserve battery.
+ * @returns {SensorTelemetry} Real-time object containing accelerometer, gyroscope, magnetometer, barometer, and light.
+ *
+ * @example
+ * ```typescript
+ * const { accelerometer, gyroscope, barometer } = useSensors(50); // 20 Hz
+ * console.log(`Current Altitude: ${barometer.relativeAltitude}m`);
+ * ```
  */
-export function useSensors(updateIntervalMs: number = 100) {
+export function useSensors(updateIntervalMs: number = 100): SensorTelemetry {
   const [accelerometer, setAccelerometer] = useState<Vector3D>(INITIAL_VECTOR);
   const [gyroscope, setGyroscope] = useState<Vector3D>(INITIAL_VECTOR);
   const [magnetometer, setMagnetometer] = useState<Vector3D>(INITIAL_VECTOR);
@@ -24,11 +39,11 @@ export function useSensors(updateIntervalMs: number = 100) {
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
 
   useEffect(() => {
-    let accelSub: any;
-    let gyroSub: any;
-    let magSub: any;
-    let barSub: any;
-    let lightSub: any;
+    let accelSub: { remove: () => void } | null = null;
+    let gyroSub: { remove: () => void } | null = null;
+    let magSub: { remove: () => void } | null = null;
+    let barSub: { remove: () => void } | null = null;
+    let lightSub: { remove: () => void } | null = null;
 
     const setupSensors = async () => {
       try {
@@ -61,10 +76,10 @@ export function useSensors(updateIntervalMs: number = 100) {
           });
         });
 
-        const isBarometerAvailable = await Barometer.isAvailableAsync();
+        const isBarometerAvailable = await Barometer.isAvailableAsync().catch(() => false);
         if (isBarometerAvailable) {
           barSub = Barometer.addListener(({ pressure }) => {
-            // Hypsometric formula for altitude estimation
+            // Hypsometric formula for international barometric altitude estimation
             const altitude = 44330 * (1 - Math.pow(pressure / SEA_LEVEL_PRESSURE, 0.1903));
             setBarometer({
               pressure: Number(pressure.toFixed(2)),
@@ -80,7 +95,7 @@ export function useSensors(updateIntervalMs: number = 100) {
             setLightLux(Math.round(illuminance));
           });
         }
-      } catch (err) {
+      } catch {
         setIsAvailable(false);
       }
     };
@@ -96,7 +111,7 @@ export function useSensors(updateIntervalMs: number = 100) {
     };
   }, [updateIntervalMs]);
 
-  const telemetry: SensorTelemetry = {
+  return {
     accelerometer,
     gyroscope,
     magnetometer,
@@ -104,6 +119,4 @@ export function useSensors(updateIntervalMs: number = 100) {
     lightLux,
     isAvailable,
   };
-
-  return telemetry;
 }

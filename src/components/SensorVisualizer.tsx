@@ -1,14 +1,38 @@
+/**
+ * @file SensorVisualizer.tsx
+ * @description Real-time 3-axis motion visualizer for Accelerometer, Gyroscope, and Magnetometer.
+ * Displays normalized horizontal bar graphs for X, Y, and Z axes with tabular numeric readouts.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Vector3D } from '../core/types';
 import { Colors } from '../theme/colors';
 
-interface SensorVisualizerProps {
+/**
+ * Properties for the SensorVisualizer component.
+ */
+export interface SensorVisualizerProps {
+  /** Display label describing the sensor (e.g. "6-Axis Accelerometer") */
   label: string;
+  /** Real-time 3D vector */
   vector: Vector3D;
+  /** Optional unit suffix (e.g. "g", "rad/s", "μT") */
   unit?: string;
 }
 
+/**
+ * Multi-axis telemetry graph component with color-coded X (red), Y (green), and Z (blue) bars.
+ *
+ * @example
+ * ```tsx
+ * <SensorVisualizer
+ *   label="6-Axis Accelerometer"
+ *   vector={accelerometer}
+ *   unit="g"
+ * />
+ * ```
+ */
 export const SensorVisualizer: React.FC<SensorVisualizerProps> = ({
   label,
   vector,

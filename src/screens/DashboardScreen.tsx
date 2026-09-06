@@ -1,3 +1,10 @@
+/**
+ * @file DashboardScreen.tsx
+ * @description Central silicon and hardware diagnostics HUD.
+ * Renders real-time compute telemetry: 120Hz LTPO frame pacing, ADPF thermal headroom,
+ * Google Tensor TPU latency benchmark, battery discharge telemetry, and Titan M2 biometric prompts.
+ */
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useDevice } from '../hardware/useDevice';

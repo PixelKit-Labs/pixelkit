@@ -1,3 +1,10 @@
+/**
+ * @file App.tsx
+ * @description Primary application container for PixelForge.
+ * Hosts the top branding bar, silicon status indicator, 3-tab screen switcher,
+ * and bottom floating navigation pill bar.
+ */
+
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
