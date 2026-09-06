@@ -14,24 +14,29 @@ This document covers hardware capabilities exclusive to Google's flagship Pro mo
 
 ## `useHiLight`
 
-State model for the eight-LED **HiLight** array around the Pixel 11 Pro flash. Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. The hook provides a strongly-typed state machine for patterns, colours, and brightness, mirrored honestly on screen (`availability: 'simulated'`, `source: 'simulated'`) and through the linear resonant actuator (LRA).
+Hardware driver and state machine for the eight-LED **HiLight** array around the Pixel 11 Pro flash. Android restricts `CONTROL_DEVICE_LIGHTS` to signature|privileged permissions, which only Google system apps and `android.uid.shell` (UID 2000) hold.
+
+PixelKit includes a native, zero-dependency Java daemon (`scripts/hilight-daemon/`, started via `npm run hilight:daemon`) that runs as UID 2000 via ADB on `127.0.0.1:11080`. When active, `useHiLight` directly drives the physical LEDs in real-time (~3 ms latency). When untethered, it falls back to an honest on-screen simulation and LRA haptic actuator.
 
 | `availability` | Condition | Effect of the colour methods | `source` |
 | :--- | :--- | :--- | :--- |
-| `'simulated'` | Pixel 11 Pro-class device | State maintained, mirrored on screen & LRA haptics | `'simulated'` |
+| `'hardware'` | Native ADB daemon active (`npm run hilight:daemon`) | Drives real physical LEDs via `ILightsManager` | `'hardware'` |
+| `'simulated'` | Pixel 11 Pro without active daemon | State maintained, mirrored on screen & LRA haptics | `'simulated'` |
 | `'unsupported'` | No HiLight array | Nothing | `'unavailable'` |
 
 ### Signature
 ```typescript
 function useHiLight(): {
-  availability: 'simulated' | 'unsupported';
+  availability: 'hardware' | 'simulated' | 'unsupported';
   isHardwareSupported: boolean;
-  source: 'simulated' | 'unavailable';
+  source: 'hardware' | 'simulated' | 'unavailable';
+  isDaemonConnected: boolean;
   isActive: boolean;
   currentColor: string;
   mode: HiLightMode;
   brightness: number;
   isFaceDownMode: boolean;
+  refreshDaemonStatus: () => Promise<boolean>;
   setColor: (hexColor: string) => void;
   setMode: (mode: HiLightMode) => void;
   setBrightness: (level: number) => void;

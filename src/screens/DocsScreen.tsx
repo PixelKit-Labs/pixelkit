@@ -196,13 +196,15 @@ function ThermalMonitor() {
     category: 'pro',
     chipBadge: 'HiLight Ring (Pro Exclusive)',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'State model for the Pixel 11 Pro eight-LED HiLight camera bar ring. Mirrored on-screen with haptic feedback (simulated; Google exposes no third-party LED API).',
-    description: 'The Pixel 11 Pro features eight RGB LEDs around the camera flash. Android restricts CONTROL_DEVICE_LIGHTS to system apps with no public third-party API. useHiLight provides a strongly-typed state machine for patterns, colours, and brightness, mirrored honestly on screen and through the linear resonant actuator (LRA).',
+    summary: 'Pixel 11 Pro eight-LED HiLight camera bar ring driver. Drives physical LEDs via the PixelKit native ADB daemon (scripts/hilight-daemon, "npm run hilight:daemon"), with honest on-screen simulation when untethered.',
+    description: 'Android restricts CONTROL_DEVICE_LIGHTS to system/shell permissions. PixelKit ships a native, zero-dependency Java daemon that runs as UID 2000 via ADB (127.0.0.1:11080). When active, useHiLight drives the physical LEDs in real-time (~3 ms latency). When untethered, it seamlessly falls back to on-screen simulation and LRA haptics.',
     signature: 'useHiLight(): HiLightState',
     returns: [
-      "availability: 'simulated' | 'unsupported'",
-      "source: 'simulated' | 'unavailable'",
-      'isActive: boolean · currentColor: string · mode: HiLightMode · brightness: number',
+      "availability: 'hardware' | 'simulated' | 'unsupported'",
+      "source: 'hardware' | 'simulated' | 'unavailable'",
+      'isDaemonConnected: boolean · isActive: boolean',
+      'currentColor: string · mode: HiLightMode · brightness: number',
+      'refreshDaemonStatus(): Promise<boolean>',
       'triggerGeminiPulse(durationMs?) · triggerContactAlert(colorHex, durationMs?)',
       'setColor(hex) · setMode(mode) · setBrightness(level) · turnOff() · toggle()',
     ],
@@ -218,7 +220,7 @@ function StatusRing() {
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Availability is "simulated" on Pixel 11 Pro. It mirrors state on screen; no third-party API exists to drive the physical LEDs directly.',
+    aiTip: 'AI Tip: Availability is "hardware" when the ADB daemon is active (physical LEDs lit), and "simulated" when untethered (on-screen mirror).',
   },
   {
     id: 'useUWB',

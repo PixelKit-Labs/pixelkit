@@ -30,7 +30,7 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Tensor TPU / NPU** | `useTPU()` | AICore / Private Compute Services detection (Gemini Nano host), NPU feature flag; inference itself is `useGeminiNano()` |
 | **LPDDR5X RAM** | `useMemory()` | ActivityManager total/available/LMK threshold, Java + native heaps, GC request |
 | **Dynamic Thermals** | `useADPF()` | PowerManager thermal headroom + status listener, thresholds, Android 16+ SystemHealth CPU/GPU headroom, display target vs measured FPS |
-| **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Eight-LED camera-bar array state model mirrored on-screen with haptic feedback (simulated; no public 3rd-party LED API) |
+| **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Eight-LED camera-bar array; real LEDs via native ADB daemon (`npm run hilight:daemon`), on-screen mirror when untethered |
 | **Motion & Atmosphere**| `useSensors()` | 6-Axis IMU (Gyro/Accel), Barometer (hypsometric altimeter), Magnetometer, Light |
 | **Tactile Haptics** | `useHaptics()` | LRA patterns plus Android 16 envelope effects (PWLE v2, 134.4 Hz resonance) and primitive compositions |
 | **Camera & Looks** | `useCamera()` | expo-camera lens, zoom, flash and permission state; Camera Looks kept as UI state (Pixel Camera app feature) |

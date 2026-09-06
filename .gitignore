@@ -42,7 +42,5 @@ yarn-error.*
 modules/**/build/
 .gradle/
 
-# HiLight probe build output
-scripts/hilight-probe/out/
-scripts/hilight-probe/dex/
-scripts/hilight-probe/*.jar
+# HiLight daemon build output
+scripts/hilight-daemon/build/

@@ -222,9 +222,15 @@ export const DashboardScreen: React.FC = () => {
       <MetricCard
         title="HiLight camera ring"
         value={hilight.isActive ? `Active (${hilight.currentColor})` : 'Standby'}
-        badge={hilight.isHardwareSupported ? 'SIMULATED' : 'NO SENSOR'}
-        badgeColor={hilight.isHardwareSupported ? Colors.dark.warning : Colors.dark.error}
-        subtitle={hilight.isHardwareSupported ? 'Virtual state (Google exposes no third-party LED API)' : 'Pixel 11 Pro family only'}
+        badge={!hilight.isHardwareSupported ? 'NO SENSOR' : hilight.isDaemonConnected ? 'HARDWARE' : 'SIMULATED'}
+        badgeColor={!hilight.isHardwareSupported ? Colors.dark.error : hilight.isDaemonConnected ? Colors.dark.success : Colors.dark.warning}
+        subtitle={
+          !hilight.isHardwareSupported
+            ? 'Pixel 11 Pro family only'
+            : hilight.isDaemonConnected
+            ? 'ADB Daemon connected · 8 real LEDs active'
+            : 'On-screen mirror · Run npm run hilight:daemon for real LEDs'
+        }
         source={hilight.source}
       />
       {hilight.isHardwareSupported && (

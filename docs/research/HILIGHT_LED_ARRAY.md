@@ -75,16 +75,18 @@ LightsManager.openSession(priority) → LightsSession.requestLights(request) / c
 
 `LightsManager` is a normal system service (`Context.LIGHTS_SERVICE`), but every session call checks `CONTROL_DEVICE_LIGHTS`. On this phone `pm grant` cannot hand that permission to a third-party app.
 
-## 5. What this means for PixelKit
+## 5. Architectural Decision: Native ADB Daemon & Hardware Driver
 
-## 5. Architectural Decision: Honest Simulation & Screen Mirror
-
-PixelKit explicitly does not bundle or require privileged shell helpers. Because Google restricts `CONTROL_DEVICE_LIGHTS` to system apps, third-party apps have no public API to drive the LEDs directly. PixelKit provides an honest, strongly-typed state machine in `useHiLight` with an on-screen visual mirror and LRA haptics:
+PixelKit provides a zero-Shizuku developer solution:
+1. `scripts/hilight-daemon/`: A lightweight, zero-dependency Java daemon that runs as UID 2000 (`com.android.shell`) via Android's built-in `app_process`.
+2. Communication: Exposes an HTTP/REST server on `127.0.0.1:11080` on the device's loopback interface.
+3. `useHiLight`: When the daemon is running (`npm run hilight:daemon`), `useHiLight` drives the physical LEDs directly in real-time (`availability: 'hardware'`, `source: 'hardware'`). When untethered, it cleanly falls back to on-screen simulation and LRA haptics (`'simulated'`).
 
 | `availability` | When | What the buttons do |
 | :--- | :--- | :--- |
+| `hardware` | ADB daemon running (`npm run hilight:daemon`) | drives real physical LEDs on camera bar |
+| `simulated` | hardware present, daemon not active | state mirrored on-screen and through LRA haptics |
 | `unsupported` | not a Pixel 11 Pro-class device | nothing; card hidden |
-| `simulated` | Pixel 11 Pro-class device | state mirrored on-screen and through LRA haptics |
 
 ## 6. Open questions
 

@@ -1,6 +1,6 @@
 {
   "name": "pixelkit",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",
@@ -50,7 +50,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "describe": "android describe --project_dir=."
+    "describe": "android describe --project_dir=.",
+    "hilight:build": "powershell -ExecutionPolicy Bypass -File scripts/hilight-daemon/build.ps1",
+    "hilight:daemon": "powershell -ExecutionPolicy Bypass -File scripts/hilight-daemon/run.ps1"
   },
   "private": true
 }

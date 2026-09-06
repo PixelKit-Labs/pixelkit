@@ -4,6 +4,20 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.7] - 2026-09-06
+
+### Added
+- Native PixelKit ADB HiLight Daemon in `scripts/hilight-daemon/`: zero-dependency Java daemon that runs as UID 2000 (`com.android.shell`) via `app_process` on the device.
+- Direct HTTP loopback driver on `127.0.0.1:11080` that controls all 8 physical RGB LEDs with ~3 ms latency via `android.hardware.lights.ILightsManager`.
+- Built-in hardware safety controls: 60-second automatic hold clamp and stuck-LED clear mitigation sequence (alpha-black write, canonical black write, and priority -1000 cleanup passes).
+- NPM scripts `"hilight:daemon"` (pushes and runs the daemon over ADB) and `"hilight:build"` (compiles daemon Java sources into DEX JAR).
+- Enabled `android:usesCleartextTraffic="true"` in `AndroidManifest.xml` for local loopback IPC.
+
+### Changed
+- `useHiLight`: elevated to hybrid driver. Automatically detects the active local ADB daemon; reports `availability: 'hardware'` and `source: 'hardware'` when the daemon is running, and seamlessly falls back to on-screen simulation (`'simulated'`) when untethered.
+- Dashboard: HiLight card reflects `HARDWARE` status when the ADB daemon is active.
+- Docs & Guides: Updated `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `README.md`, `docs/HARDWARE_API.md`, `docs/AI_PRIMER.md`, `docs/api/pro-exclusives.md`, and `DocsScreen.tsx` to document the native ADB hardware driver.
+
 ## [1.0.6] - 2026-09-06
 
 ### Removed

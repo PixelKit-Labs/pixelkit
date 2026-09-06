@@ -151,21 +151,23 @@ isStuttering: boolean; gpuMemoryUsageMB: null; source: TelemetrySource;
 ### `useHiLight`
 * **File Path**: `src/hardware/useHiLight.ts`
 * **Target Hardware**: Eight `Light.LIGHT_TYPE_APPLICATION` RGB LEDs around the flash (ids 1-8, 33 ms update period) on Pixel 11 Pro-class devices.
-* **Description**: Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. `useHiLight` provides a strongly-typed state machine for patterns, colours, and brightness, mirrored honestly on screen (`availability: 'simulated'`, `source: 'simulated'`) and through LRA haptics.
+* **Description**: Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. `useHiLight` drives the real physical LEDs when the native PixelKit ADB daemon is active (`npm run hilight:daemon`, `availability: 'hardware'`, `source: 'hardware'`) and falls back to honest on-screen simulation and LRA haptics when untethered (`'simulated'`).
 
 #### Interface
 ```typescript
 type HiLightMode = 'off' | 'glow' | 'breathing' | 'pulse' | 'gemini_thinking' | 'incoming_call' | 'notification';
 
 interface HiLightState {
-  availability: 'simulated' | 'unsupported';
+  availability: 'hardware' | 'simulated' | 'unsupported';
   isHardwareSupported: boolean;
-  source: 'simulated' | 'unavailable';
+  source: 'hardware' | 'simulated' | 'unavailable';
+  isDaemonConnected: boolean;
   isActive: boolean;
   currentColor: string;
   mode: HiLightMode;
   brightness: number; // 0.0 to 1.0
   isFaceDownMode: boolean;
+  refreshDaemonStatus: () => Promise<boolean>;
   setColor: (hexColor: string) => void;
   setMode: (mode: HiLightMode) => void;
   setBrightness: (level: number) => void;
