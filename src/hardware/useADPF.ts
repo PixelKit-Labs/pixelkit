@@ -1,87 +1,96 @@
 /**
  * @file useADPF.ts
- * @description Android Dynamic Performance Framework (ADPF) compute and thermal management.
- * Tracks 120Hz frame pacing, CPU/GPU headroom, and notifies apps of approaching thermal limits.
+ * @description Android Dynamic Performance Framework telemetry, all real:
+ * - `PowerManager.getThermalHeadroom(0)` (0.0 cool … 1.0 severe throttling), sampled every 10 s as
+ *   Google recommends (faster polling returns NaN), plus the device's status thresholds.
+ * - `PowerManager` thermal status via a live listener (NONE…SHUTDOWN).
+ * - Android 16+ `SystemHealthManager` CPU/GPU headroom when the device provides it.
+ * - Display refresh rate as the FPS target and Choreographer-measured FPS as the current value.
  */
 
-import { useState, useEffect } from 'react';
-import { PerformanceHeadroom } from '../core/types';
+import { useCallback, useEffect, useState } from 'react';
+import PixelNative, { type ThermalInfo } from '../../modules/pixel-native';
+import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
+import type { PerformanceHeadroom } from '../core/types';
+
+const MODULE = 'useADPF';
+const HEADROOM_POLL_MS = 10_000;
+
+/** Android PowerManager.THERMAL_STATUS_* → PixelForge label */
+export function thermalStatusLabel(status: number): PerformanceHeadroom['thermalStatus'] {
+  switch (status) {
+    case 0: return 'nominal';
+    case 1: return 'light';
+    case 2: return 'moderate';
+    case 3: return 'severe';
+    default: return 'critical'; // 4 critical, 5 emergency, 6 shutdown
+  }
+}
 
 /**
- * Hook to inspect real-time frame pacing, compute headroom, and thermal state.
- *
- * @returns {PerformanceHeadroom & { reportWorkDuration: (actualMs: number, targetBudgetMs?: number) => string }}
+ * Hook exposing ADPF thermal and headroom telemetry.
  *
  * @example
  * ```typescript
- * const { currentFps, cpuHeadroom, thermalStatus, reportWorkDuration } = useADPF();
- * if (thermalStatus === 'severe') {
- *   // Gracefully scale back rendering quality or AI batch size
- * }
+ * const { thermalHeadroom, thermalStatus, cpuHeadroom, currentFps, targetFps } = useADPF();
+ * if (thermalStatus !== 'nominal') reduceWorkload();
  * ```
  */
 export function useADPF() {
-  const [adpfData, setAdpfData] = useState<PerformanceHeadroom>({
-    cpuHeadroom: 0.85,
-    gpuHeadroom: 0.90,
-    thermalStatus: 'nominal',
-    targetFps: 120,
-    currentFps: 120,
-  });
+  const [thermal, setThermal] = useState<ThermalInfo | null>(null);
+  const [status, setStatus] = useState<number>(0);
+  const [currentFps, setCurrentFps] = useState<number | null>(null);
+  const [targetFps, setTargetFps] = useState<number | null>(null);
+
+  const source: TelemetrySource = PixelNative ? 'hardware' : 'unavailable';
 
   useEffect(() => {
-    let lastTime = Date.now();
-    let frameCount = 0;
-    let animId: number;
-
-    const measureFps = () => {
-      frameCount++;
-      const now = Date.now();
-      if (now - lastTime >= 1000) {
-        const measuredFps = Math.min(120, Math.round((frameCount * 1000) / (now - lastTime)));
-        
-        // Compute dynamic thermal headroom based on sustained frame stability
-        setAdpfData(prev => {
-          const headroom = measuredFps > 110 ? 0.92 : measuredFps > 90 ? 0.75 : 0.55;
-          const status = headroom > 0.8 ? 'nominal' : headroom > 0.6 ? 'light' : 'moderate';
-          return {
-            ...prev,
-            currentFps: measuredFps,
-            cpuHeadroom: Number(headroom.toFixed(2)),
-            gpuHeadroom: Number((headroom * 0.95).toFixed(2)),
-            thermalStatus: status,
-          };
-        });
-
-        frameCount = 0;
-        lastTime = now;
-      }
-      animId = requestAnimationFrame(measureFps);
+    const native = PixelNative;
+    if (!native) { logEvent(MODULE, 'native module absent; ADPF telemetry unavailable', undefined, 'warn'); return; }
+    const readThermal = () => {
+      try {
+        const t = native.getThermal();
+        setThermal(t);
+        setStatus(t.thermalStatus);
+        recordMetric(MODULE, 'thermalHeadroom', t.thermalHeadroom, t.thermalHeadroom == null ? 'unavailable' : 'hardware');
+        recordMetric(MODULE, 'cpuHeadroom', t.cpuHeadroom, t.cpuHeadroom == null ? 'unavailable' : 'hardware');
+        recordMetric(MODULE, 'gpuHeadroom', t.gpuHeadroom, t.gpuHeadroom == null ? 'unavailable' : 'hardware');
+      } catch (e: any) { logEvent(MODULE, 'getThermal error', { message: e?.message }, 'error'); }
     };
-
-    animId = requestAnimationFrame(measureFps);
-
-    return () => {
-      cancelAnimationFrame(animId);
-    };
+    readThermal();
+    try { setTargetFps(Math.round(native.getDisplayInfo().refreshRate)); } catch { /* handled by useDisplay */ }
+    const t = setInterval(readThermal, HEADROOM_POLL_MS);
+    const s1 = native.addListener('onThermalStatus', e => {
+      setStatus(e.status);
+      logEvent(MODULE, 'thermal status changed', { status: e.status, label: thermalStatusLabel(e.status) }, e.status >= 3 ? 'warn' : 'info');
+    });
+    const s2 = native.addListener('onFrameStats', f => {
+      setCurrentFps(Math.round(f.fps));
+      setTargetFps(Math.round(1000 / f.expectedFrameMs));
+    });
+    return () => { clearInterval(t); s1.remove(); s2.remove(); };
   }, []);
 
-  /**
-   * Reports frame or task execution duration against target budget (default: 8.33ms for 120 FPS).
-   * @param actualWorkDurationMs Measured duration of the render or computation work.
-   * @param targetDurationMs Target budget threshold in milliseconds.
-   */
-  const reportWorkDuration = (actualWorkDurationMs: number, targetDurationMs: number = 8.33): string => {
-    const ratio = actualWorkDurationMs / targetDurationMs;
-    if (ratio > 1.0) {
-      return 'BOOST_REQUESTED';
-    }
-    return 'WITHIN_BUDGET';
-  };
+  /** Compare a measured work duration against the frame budget. Pure helper. */
+  const reportWorkDuration = useCallback((actualWorkDurationMs: number, targetDurationMs: number = targetFps ? 1000 / targetFps : 8.33): 'WITHIN_BUDGET' | 'BOOST_REQUESTED' =>
+    actualWorkDurationMs / targetDurationMs > 1.0 ? 'BOOST_REQUESTED' : 'WITHIN_BUDGET', [targetFps]);
 
   return {
-    ...adpfData,
-    /** Signal work completion for dynamic frequency scaling */
+    /** 0.0 (cool) → 1.0 (severe throttling), from PowerManager.getThermalHeadroom */
+    thermalHeadroom: thermal?.thermalHeadroom ?? null,
+    /** Device-specific headroom values at which each status begins (keys = status codes) */
+    thermalThresholds: thermal?.thresholds ?? null,
+    thermalStatus: thermalStatusLabel(status),
+    thermalStatusCode: status,
+    /** Android 16+ SystemHealthManager CPU headroom (0..1 of remaining capacity), null if unsupported */
+    cpuHeadroom: thermal?.cpuHeadroom ?? null,
+    gpuHeadroom: thermal?.gpuHeadroom ?? null,
+    /** Display mode refresh rate (Hz) */
+    targetFps,
+    /** Choreographer-measured frames per second */
+    currentFps,
     reportWorkDuration,
+    /** Telemetry provenance */
+    source,
   };
 }

@@ -84,16 +84,18 @@ export interface DeviceTelemetry {
  * Android Dynamic Performance Framework (ADPF) real-time compute telemetry.
  */
 export interface PerformanceHeadroom {
-  /** CPU headroom ratio (0.0 to 1.0; 1.0 = maximum capacity remaining) */
-  cpuHeadroom: number;
-  /** GPU headroom ratio (0.0 to 1.0) */
-  gpuHeadroom: number;
-  /** Kernel thermal state indicating throttling level */
+  /** Android 16+ SystemHealthManager CPU headroom (0.0 to 1.0), null when the device does not report it */
+  cpuHeadroom: number | null;
+  /** Android 16+ SystemHealthManager GPU headroom (0.0 to 1.0), null when unsupported */
+  gpuHeadroom: number | null;
+  /** PowerManager thermal headroom: 0.0 cool → 1.0 severe throttling, null if unsupported */
+  thermalHeadroom?: number | null;
+  /** Kernel thermal state indicating throttling level (PowerManager.THERMAL_STATUS_*) */
   thermalStatus: 'nominal' | 'light' | 'moderate' | 'severe' | 'critical';
-  /** Target display refresh rate in Hz (e.g. 120Hz LTPO) */
-  targetFps: number;
-  /** Real-time rendered frames per second */
-  currentFps: number;
+  /** Display mode refresh rate in Hz, null until read */
+  targetFps: number | null;
+  /** Choreographer-measured frames per second, null until the first 1 s window */
+  currentFps: number | null;
 }
 
 /**
@@ -105,11 +107,11 @@ export interface TPUAcceleration {
   /** Whether neural tensor operations are accelerated by dedicated silicon */
   isHardwareAccelerated: boolean;
   /** Latency of the most recent neural inference run in milliseconds */
-  lastInferenceLatencyMs: number;
+  lastInferenceLatencyMs: number | null;
   /** Estimated throughput in tokens per second */
-  throughputTokensPerSec: number;
+  throughputTokensPerSec: number | null;
   /** Memory footprint allocated by on-device model weights in MB */
-  memoryFootprintMB: number;
+  memoryFootprintMB: number | null;
 }
 
 /**
@@ -194,34 +196,32 @@ export interface LocationTelemetry {
  * Multi-core CPU cluster telemetry and compute metrics.
  */
 export interface CPUTelemetry {
-  /** CPU core topology (e.g. "1x Prime C1-Ultra @ 4.11GHz + 4x C-1 Pro @ 3.38GHz + 2x C-1 Pro @ 2.65GHz") */
+  /** CPU core topology built from /proc/cpuinfo parts and cpufreq max frequencies */
   coreTopology: string;
-  /** Number of active CPU execution cores (7 cores on Tensor G6) */
+  /** Number of CPU cores visible to the process (7 on Tensor G6) */
   coreCount: number;
-  /** Estimated CPU load percentage (0 to 100) */
-  cpuLoadPercent: number;
-  /** Execution thread frequency governor status */
-  governorMode: 'performance' | 'balanced' | 'powersave';
-  /** Last multi-threaded compute benchmark duration in milliseconds */
-  lastBenchmarkDurationMs: number;
-  /** Semiconductor fabrication node */
-  nodeProcess?: string;
+  /** Cluster frequency utilisation (avg of current/max over cores), null when sysfs is unreadable */
+  cpuLoadPercent: number | null;
+  /** Kernel cpufreq governor name for cpu0 (e.g. "schedutil"); read-only for apps */
+  governorMode: string;
+  /** Last JS single-thread benchmark duration in milliseconds, null until run */
+  lastBenchmarkDurationMs: number | null;
 }
 
 /**
  * GPU graphics acceleration and Vulkan/OpenGLES telemetry.
  */
 export interface GPUTelemetry {
-  /** Active GPU graphics architecture name */
-  gpuRenderer: string;
-  /** Supported graphics API (e.g. 'Vulkan 1.3', 'OpenGL ES 3.2') */
-  graphicsApi: string;
-  /** Average frame render time in milliseconds (target <= 8.33ms for 120 FPS) */
-  frameRenderTimeMs: number;
-  /** Number of dropped frames in the last observation window */
+  /** GL_RENDERER read through an offscreen EGL context, null until read */
+  gpuRenderer: string | null;
+  /** GL_VERSION plus the Vulkan feature version, null until read */
+  graphicsApi: string | null;
+  /** Average UI-thread frame interval over the last second in ms, null until measured */
+  frameRenderTimeMs: number | null;
+  /** Cumulative jank frames (interval > 1.5× the display's expected frame time) */
   droppedFrameCount: number;
-  /** Estimated GPU memory utilization in MB */
-  gpuMemoryUsageMB: number;
+  /** Not exposed by Android to apps; always null */
+  gpuMemoryUsageMB: number | null;
 }
 
 /**

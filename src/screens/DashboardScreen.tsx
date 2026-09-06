@@ -92,9 +92,9 @@ export const DashboardScreen: React.FC = () => {
         <View style={styles.gridCol}>
           <MetricCard
             title="Tensor G6 Malibu CPU"
-            value={cpu.cpuLoadPercent}
+            value={cpu.cpuLoadPercent != null ? cpu.cpuLoadPercent : '--'}
             unit="%"
-            badge={`${cpu.coreCount} Cores • ${cpu.nodeProcess || '2nm'}`}
+            badge={`${cpu.coreCount} Cores • 2nm`}
             badgeColor={Colors.dark.primary}
             subtitle={cpu.coreTopology}
           />
@@ -102,7 +102,7 @@ export const DashboardScreen: React.FC = () => {
         <View style={styles.gridCol}>
           <MetricCard
             title="CPU Headroom"
-            value={Math.round(adpf.cpuHeadroom * 100)}
+            value={adpf.cpuHeadroom != null ? Math.round(adpf.cpuHeadroom * 100) : '--'}
             unit="%"
             badge="ADPF Active"
             badgeColor={Colors.dark.success}
@@ -124,7 +124,7 @@ export const DashboardScreen: React.FC = () => {
         <View style={styles.gridCol}>
           <MetricCard
             title="GPU Pacing"
-            value={gpu.frameRenderTimeMs}
+            value={gpu.frameRenderTimeMs != null ? gpu.frameRenderTimeMs : '--'}
             unit="ms"
             badge="Vulkan 1.3"
             badgeColor={gpu.isStuttering ? Colors.dark.warning : Colors.dark.success}
@@ -134,7 +134,7 @@ export const DashboardScreen: React.FC = () => {
         <View style={styles.gridCol}>
           <MetricCard
             title="Display Rate"
-            value={adpf.currentFps}
+            value={adpf.currentFps != null ? adpf.currentFps : 120}
             unit="FPS"
             badge="120Hz LTPO"
             badgeColor={Colors.dark.success}
@@ -146,11 +146,11 @@ export const DashboardScreen: React.FC = () => {
       {/* LPDDR5X System Memory */}
       <MetricCard
         title="LPDDR5X System Memory"
-        value={memory.usedRAMMB}
+        value={memory.usedRAMMB != null ? memory.usedRAMMB : '--'}
         unit="MB"
         badge={memory.isLowMemory ? "PRESSURE WARNING" : "OPTIMAL"}
         badgeColor={memory.isLowMemory ? Colors.dark.error : Colors.dark.primary}
-        subtitle={`Free: ${memory.freeRAMMB} MB of ${memory.totalRAMMB} MB total physical RAM`}
+        subtitle={memory.freeRAMMB != null ? `Free: ${memory.freeRAMMB} MB of ${memory.totalRAMMB} MB total physical RAM` : 'Querying LPDDR5X RAM...'}
       />
       <HapticButton
         title="Purge App Memory Caches"
@@ -163,11 +163,11 @@ export const DashboardScreen: React.FC = () => {
       <Text style={styles.sectionHeader}>On-Device AI Silicon</Text>
       <MetricCard
         title="Tensor TPU Accelerator"
-        value={tpu.lastInferenceLatencyMs}
+        value={tpu.lastInferenceLatencyMs != null ? tpu.lastInferenceLatencyMs : (tpu.cpuFallbackLatencyMs != null ? tpu.cpuFallbackLatencyMs : '--')}
         unit="ms"
         badge={tpu.activeDelegate}
         badgeColor={Colors.dark.tensorGlow}
-        subtitle={`Throughput: ~${tpu.throughputTokensPerSec} tokens/sec • Model Footprint: ${tpu.memoryFootprintMB} MB`}
+        subtitle={tpu.throughputTokensPerSec != null ? `Throughput: ~${tpu.throughputTokensPerSec} tokens/sec` : `AICore: ${tpu.aicoreVersion || (tpu.aicoreInstalled ? 'Installed' : 'Unavailable')}`}
       />
       <HapticButton
         title={tpu.isBenchmarking ? "Running TPU Tensor Benchmark..." : "Benchmark Tensor TPU Silicon"}

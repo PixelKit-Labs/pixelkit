@@ -1,101 +1,101 @@
 /**
  * @file useCPU.ts
- * @description Multi-core CPU cluster telemetry and compute performance benchmark for Google Tensor SoC.
- * Inspects core topology, estimates CPU utilization, and benchmarks multithreaded compute pipelines.
+ * @description Real CPU telemetry from the Android kernel: core count, per-core part ids from
+ * `/proc/cpuinfo`, current/max frequencies from cpufreq sysfs, the active governor, and two load
+ * signals: this app's own CPU share (`Process.getElapsedCpuTime`) and cluster frequency utilisation
+ * (current/max frequency averaged across cores). Android does not expose whole-system `/proc/stat`
+ * to apps, so there is no fabricated "system load" here.
  */
 
-import { useState, useEffect } from 'react';
-import { CPUTelemetry } from '../core/types';
+import { useCallback, useEffect, useState } from 'react';
+import PixelNative, { type CpuInfo, type CpuLoad } from '../../modules/pixel-native';
+import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
+
+const MODULE = 'useCPU';
+const POLL_MS = 1000;
+
+function topologyString(info: CpuInfo | null): string {
+  if (!info) return 'unknown';
+  return [...info.clusters]
+    .sort((a, b) => (b.maxMHz ?? 0) - (a.maxMHz ?? 0))
+    .map(c => `${c.count}x ${c.name ?? 'Arm'} @ ${c.maxMHz ? (c.maxMHz / 1000).toFixed(2) + ' GHz' : '?'}`)
+    .join(' + ');
+}
 
 /**
- * Hook to inspect the CPU cluster and run intensive computational benchmarks.
- *
- * @returns {CPUTelemetry & { isBenchmarking: boolean, benchmarkCPU: () => Promise<number>, setGovernor: (mode: 'performance' | 'balanced' | 'powersave') => void }}
+ * Hook exposing real CPU topology, frequencies, and load.
  *
  * @example
  * ```typescript
- * const { coreTopology, cpuLoadPercent, benchmarkCPU } = useCPU();
- * console.log(`Architecture: ${coreTopology} (Load: ${cpuLoadPercent}%)`);
- * const durationMs = await benchmarkCPU();
+ * const { coreCount, coreTopology, cpuLoadPercent, cores, benchmarkCPU } = useCPU();
  * ```
  */
 export function useCPU() {
-  const [cpuTelemetry, setCpuTelemetry] = useState<CPUTelemetry>({
-    coreTopology: '1x Prime ARM C1-Ultra @ 4.11GHz + 4x C-1 Pro @ 3.38GHz + 2x C-1 Pro @ 2.65GHz',
-    coreCount: 7,
-    cpuLoadPercent: 18,
-    governorMode: 'balanced',
-    lastBenchmarkDurationMs: 28,
-    nodeProcess: 'TSMC 2nm (N2)',
-  });
-
+  const [info, setInfo] = useState<CpuInfo | null>(null);
+  const [load, setLoad] = useState<CpuLoad | null>(null);
   const [isBenchmarking, setIsBenchmarking] = useState<boolean>(false);
+  const [lastBenchmarkDurationMs, setLastBenchmarkDurationMs] = useState<number | null>(null);
+
+  const source: TelemetrySource = PixelNative ? 'hardware' : 'unavailable';
 
   useEffect(() => {
-    // Dynamic CPU load estimation based on active frame ticks
-    const interval = setInterval(() => {
-      setCpuTelemetry(prev => {
-        // Subtle natural fluctuation around base load
-        const delta = (Math.random() * 8) - 4;
-        const base = prev.governorMode === 'performance' ? 35 : prev.governorMode === 'powersave' ? 14 : 22;
-        const newLoad = Math.max(5, Math.min(95, Math.round(base + delta)));
-        return { ...prev, cpuLoadPercent: newLoad };
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
+    const native = PixelNative;
+    if (!native) { logEvent(MODULE, 'native module absent; CPU telemetry unavailable', undefined, 'warn'); return; }
+    try {
+      const i = native.getCpuInfo();
+      setInfo(i);
+      logEvent(MODULE, 'topology', { coreCount: i.coreCount, clusters: i.clusters, governor: i.governor });
+    } catch (e: any) { logEvent(MODULE, 'getCpuInfo error', { message: e?.message }, 'error'); }
+    const poll = () => {
+      try {
+        const l = native.getCpuLoad();
+        setLoad(l);
+        recordMetric(MODULE, 'frequencyUtilizationPercent', l.frequencyUtilizationPercent, l.frequencyUtilizationPercent == null ? 'unavailable' : 'hardware');
+        recordMetric(MODULE, 'appCpuPercent', l.appCpuPercent, l.appCpuPercent == null ? 'unavailable' : 'derived');
+      } catch (e: any) { logEvent(MODULE, 'getCpuLoad error', { message: e?.message }, 'error'); }
+    };
+    poll();
+    const t = setInterval(poll, POLL_MS);
+    return () => clearInterval(t);
   }, []);
 
-  /**
-   * Executes a compute-heavy multi-threaded integer factorization benchmark.
-   * Measures multi-core execution throughput.
-   */
-  const benchmarkCPU = async (): Promise<number> => {
+  /** Single-thread JS prime sieve. A real workload on the JS thread; not a system benchmark. */
+  const benchmarkCPU = useCallback(async (): Promise<number> => {
     setIsBenchmarking(true);
-    const startTime = performance.now();
-
-    // Intensive parallel mathematical operations
-    let primeCount = 0;
-    const limit = 40000;
-    for (let i = 2; i <= limit; i++) {
-      let isPrime = true;
-      for (let j = 2; j * j <= i; j++) {
-        if (i % j === 0) {
-          isPrime = false;
-          break;
-        }
-      }
-      if (isPrime) primeCount++;
+    await new Promise(r => setTimeout(r, 30)); // let the UI paint the pending state
+    const start = performance.now();
+    let primes = 0;
+    for (let i = 2; i <= 60000; i++) {
+      let p = true;
+      for (let j = 2; j * j <= i; j++) if (i % j === 0) { p = false; break; }
+      if (p) primes++;
     }
+    const ms = Math.round(performance.now() - start);
+    setLastBenchmarkDurationMs(ms);
+    setIsBenchmarking(false);
+    logEvent(MODULE, 'benchmark', { ms, primes });
+    return ms;
+  }, []);
 
-    const duration = Math.round(performance.now() - startTime);
-
-    setCpuTelemetry(prev => ({
-      ...prev,
-      lastBenchmarkDurationMs: duration,
-      cpuLoadPercent: 88, // Spike during benchmark
-    }));
-
-    // Settle back after 1 second
-    setTimeout(() => {
-      setCpuTelemetry(prev => ({ ...prev, cpuLoadPercent: 24 }));
-      setIsBenchmarking(false);
-    }, 1000);
-
-    return duration;
-  };
-
-  /**
-   * Adjusts the simulated CPU scheduler governor profile.
-   */
-  const setGovernor = (mode: 'performance' | 'balanced' | 'powersave') => {
-    setCpuTelemetry(prev => ({ ...prev, governorMode: mode }));
-  };
+  const utilization = load?.frequencyUtilizationPercent ?? null;
 
   return {
-    ...cpuTelemetry,
+    /** Human topology string built from real cluster data, e.g. "1x Arm C1-Ultra @ 4.11 GHz + ..." */
+    coreTopology: topologyString(info),
+    coreCount: info?.coreCount ?? 0,
+    /** Cluster-frequency utilisation in percent (avg of cur/max over cores). null when sysfs is unreadable. */
+    cpuLoadPercent: utilization == null ? null : Math.round(utilization),
+    /** This app process's CPU share in percent of all cores. null on the first sample. */
+    appCpuPercent: load?.appCpuPercent == null ? null : Math.round(load.appCpuPercent),
+    /** Per-core current/max MHz and part name */
+    cores: load?.cores ?? info?.cores ?? [],
+    clusters: info?.clusters ?? [],
+    /** Kernel cpufreq governor for cpu0 (e.g. "schedutil"). Not settable without root. */
+    governorMode: info?.governor ?? 'unknown',
+    lastBenchmarkDurationMs,
     isBenchmarking,
     benchmarkCPU,
-    setGovernor,
+    /** Telemetry provenance */
+    source,
   };
 }

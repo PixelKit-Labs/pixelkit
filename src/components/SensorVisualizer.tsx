@@ -1,7 +1,9 @@
 /**
  * @file SensorVisualizer.tsx
  * @description Real-time 3-axis motion visualizer for Accelerometer, Gyroscope, and Magnetometer.
- * Displays normalized horizontal bar graphs for X, Y, and Z axes with tabular numeric readouts.
+ * Displays centred horizontal bar graphs for X, Y, and Z axes (zero in the middle, negative to the
+ * left) with tabular numeric readouts. `range` sets the full-scale magnitude so each sensor's
+ * natural units fill the bar: ±2 g, ±5 rad/s, ±100 µT.
  */
 
 import React from 'react';
@@ -19,6 +21,12 @@ export interface SensorVisualizerProps {
   vector: Vector3D;
   /** Optional unit suffix (e.g. "g", "rad/s", "μT") */
   unit?: string;
+  /** Full-scale magnitude for the bars (default 10) */
+  range?: number;
+  /** Decimal places for the readout (default 2) */
+  decimals?: number;
+  /** Optional caption under the title (e.g. sensor part number) */
+  caption?: string;
 }
 
 /**
@@ -26,39 +34,31 @@ export interface SensorVisualizerProps {
  *
  * @example
  * ```tsx
- * <SensorVisualizer
- *   label="6-Axis Accelerometer"
- *   vector={accelerometer}
- *   unit="g"
- * />
+ * <SensorVisualizer label="Accelerometer" vector={accelerometer} unit="g" range={2} />
  * ```
  */
 export const SensorVisualizer: React.FC<SensorVisualizerProps> = ({
   label,
   vector,
   unit = '',
+  range = 10,
+  decimals = 2,
+  caption,
 }) => {
   const renderAxis = (axisLabel: string, val: number, color: string) => {
-    // Clamp to -10 to +10 for visual bar representation
-    const clamped = Math.max(-10, Math.min(10, val));
-    const percentage = ((clamped + 10) / 20) * 100;
+    const clamped = Math.max(-range, Math.min(range, val));
+    const half = (Math.abs(clamped) / range) * 50; // percent of half-width
+    const left = clamped < 0 ? 50 - half : 50;
 
     return (
       <View style={styles.axisRow} key={axisLabel}>
         <View style={styles.axisHeader}>
-          <Text style={[styles.axisLabel, { color }]}>{axisLabel}:</Text>
-          <Text style={styles.axisValue}>{val.toFixed(2)} {unit}</Text>
+          <Text style={[styles.axisLabel, { color }]}>{axisLabel}</Text>
+          <Text style={styles.axisValue}>{val.toFixed(decimals)} {unit}</Text>
         </View>
         <View style={styles.barBackground}>
-          <View
-            style={[
-              styles.barFill,
-              {
-                width: `${percentage}%`,
-                backgroundColor: color,
-              },
-            ]}
-          />
+          <View style={styles.centreLine} />
+          <View style={[styles.barFill, { left: `${left}%`, width: `${Math.max(half, 0.5)}%`, backgroundColor: color }]} />
         </View>
       </View>
     );
@@ -66,10 +66,14 @@ export const SensorVisualizer: React.FC<SensorVisualizerProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{label}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{label}</Text>
+        {caption ? <Text style={styles.caption}>{caption}</Text> : null}
+      </View>
       {renderAxis('X', vector.x, '#FF5252')}
       {renderAxis('Y', vector.y, '#69F0AE')}
       {renderAxis('Z', vector.z, '#448AFF')}
+      <Text style={styles.scale}>±{range} {unit}</Text>
     </View>
   );
 };
@@ -83,13 +87,23 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   title: {
     color: Colors.dark.textMuted,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 12,
+  },
+  caption: {
+    color: Colors.dark.textMuted,
+    fontSize: 10,
+    fontWeight: '500',
   },
   axisRow: {
     marginBottom: 10,
@@ -114,8 +128,22 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: 'hidden',
   },
+  centreLine: {
+    position: 'absolute',
+    left: '50%',
+    width: 1,
+    height: '100%',
+    backgroundColor: Colors.dark.cardBorder,
+  },
   barFill: {
+    position: 'absolute',
     height: '100%',
     borderRadius: 4,
+  },
+  scale: {
+    color: Colors.dark.textMuted,
+    fontSize: 10,
+    textAlign: 'right',
+    marginTop: -4,
   },
 });

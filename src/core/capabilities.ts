@@ -49,6 +49,20 @@ export interface DeviceCapabilities {
   supportsAppFunctions: boolean;
   /** Android 17+ `AdvancedProtectionManager`, ML-DSA keys, Handoff, contacts picker */
   supportsAndroid17Apis: boolean;
+  /**
+   * 'device' when the flags below were confirmed with PackageManager.hasSystemFeature through the
+   * PixelNative module; 'model-table' when inferred from the model name only.
+   */
+  verification: 'device' | 'model-table';
+  /** Device-verified feature flags (null when not verified) */
+  hasNFC: boolean | null;
+  hasBleChannelSounding: boolean | null;
+  hasWifiRtt: boolean | null;
+  hasSatelliteTelephony: boolean | null;
+  hasStrongBox: boolean | null;
+  hasNpuFeature: boolean | null;
+  /** AICore (Gemini Nano host) version name when installed */
+  aicoreVersion: string | null;
 }
 
 const PIXEL_PATTERN = /pixel\s*(\d+)?(\s*a)?(\s*pro)?(\s*xl)?(\s*fold)?/i;
@@ -97,5 +111,38 @@ export function resolveCapabilities(
     supportsHapticEnvelopes: api != null && api >= 36,
     supportsAppFunctions: api != null && api >= 36,
     supportsAndroid17Apis: api != null && api >= 37,
+    verification: 'model-table',
+    hasNFC: null,
+    hasBleChannelSounding: null,
+    hasWifiRtt: null,
+    hasSatelliteTelephony: null,
+    hasStrongBox: null,
+    hasNpuFeature: null,
+    aicoreVersion: null,
+  };
+}
+
+/** Feature-flag probe interface (implemented by the PixelNative module). */
+export interface FeatureProbe {
+  hasSystemFeature(name: string): boolean;
+  getPackageVersion(pkg: string): { installed: boolean; versionName: string | null };
+}
+
+/** Upgrade model-table capabilities with real PackageManager feature flags. Pure given a probe. */
+export function verifyCapabilities(base: DeviceCapabilities, probe: FeatureProbe): DeviceCapabilities {
+  const f = (name: string) => { try { return probe.hasSystemFeature(name); } catch { return null; } };
+  const aicore = (() => { try { return probe.getPackageVersion('com.google.android.aicore'); } catch { return null; } })();
+  const uwb = f('android.hardware.uwb');
+  return {
+    ...base,
+    verification: 'device',
+    hasUWB: uwb ?? base.hasUWB,
+    hasNFC: f('android.hardware.nfc'),
+    hasBleChannelSounding: f('android.hardware.bluetooth_le.channel_sounding'),
+    hasWifiRtt: f('android.hardware.wifi.rtt'),
+    hasSatelliteTelephony: f('android.hardware.telephony.satellite'),
+    hasStrongBox: f('android.hardware.strongbox_keystore'),
+    hasNpuFeature: f('android.hardware.neural_processing_unit'),
+    aicoreVersion: aicore?.installed ? aicore.versionName : null,
   };
 }

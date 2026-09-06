@@ -1,35 +1,43 @@
 /**
  * @file useCapabilities.ts
  * @description Single source of truth for "what does this Pixel actually have?".
- * Every Pro-exclusive or platform-gated hook reads from here so the SDK never claims
- * hardware that is missing (e.g. the thermometer on Pixel 11 Pro) or an API that is
- * below the device's Android level.
+ * Resolves from the device model table, then upgrades to device-verified PackageManager feature
+ * flags (UWB, NFC, BLE channel sounding, Wi-Fi RTT, satellite, StrongBox, NPU) and the installed
+ * AICore version when the PixelNative module is present. Every Pro-exclusive or platform-gated hook
+ * reads from here so the SDK never claims hardware that is missing.
  */
 
 import { useMemo } from 'react';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
-import { resolveCapabilities, type DeviceCapabilities } from '../core/capabilities';
+import PixelNative from '../../modules/pixel-native';
+import { resolveCapabilities, verifyCapabilities, type DeviceCapabilities } from '../core/capabilities';
+import { logEvent } from '../core/observability';
+
+let logged = false;
 
 /**
- * Hook returning resolved device capabilities. Values are derived synchronously from
- * `expo-device` and memoised for the app lifetime; they never change at runtime.
+ * Hook returning resolved device capabilities. Memoised for the app lifetime.
  *
  * @example
  * ```typescript
  * const caps = useCapabilities();
  * if (!caps.hasThermometer) hideThermometerCard();
- * if (caps.geminiNanoTier === 'nano-v4') enableThinkingMode();
+ * if (caps.verification === 'device' && caps.hasUWB) enableRanging();
  * ```
  */
 export function useCapabilities(): DeviceCapabilities {
-  return useMemo(
-    () =>
-      resolveCapabilities(
-        Device.modelName,
-        Platform.OS === 'android' ? Device.platformApiLevel : null,
-        Device.isDevice,
-      ),
-    [],
-  );
+  return useMemo(() => {
+    const base = resolveCapabilities(
+      Device.modelName,
+      Platform.OS === 'android' ? Device.platformApiLevel : null,
+      Device.isDevice,
+    );
+    const caps = PixelNative ? verifyCapabilities(base, PixelNative) : base;
+    if (!logged) {
+      logged = true;
+      logEvent('useCapabilities', 'resolved', caps as unknown as Record<string, unknown>);
+    }
+    return caps;
+  }, []);
 }

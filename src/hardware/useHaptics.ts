@@ -1,81 +1,106 @@
 /**
  * @file useHaptics.ts
- * @description Tactile feedback abstraction for Google Pixel's Linear Resonant Actuator (LRA).
- * Generates crisp mechanical ticks, varying impact weights, and notification waveforms.
+ * @description Linear Resonant Actuator control. Standard patterns use `expo-haptics`. On top of that
+ * the PixelNative module exposes the vibrator's real capabilities (amplitude control, resonant
+ * frequency, supported primitives) and Android 16+ envelope effects (`BasicEnvelopeBuilder`), which
+ * this Pixel 11 Pro supports (PWLE v2). Envelopes are how "Gemini thinking" ramps and HiLight-synced
+ * pulses are rendered tactilely.
  */
 
+import { useCallback, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import PixelNative, { type EnvelopePoint, type HapticsInfo, type PrimitiveStep } from '../../modules/pixel-native';
+import { logEvent, type TelemetrySource } from '../core/observability';
 import { HapticType } from '../core/types';
 
-/**
- * Hook to trigger tactile vibrations and haptic waveforms on the device.
- * Gracefully degrades to a no-op on web browsers or environments lacking an actuator.
- *
- * @returns Object providing dedicated helper methods for each haptic vibration pattern.
- *
- * @example
- * ```typescript
- * const { light, success, error } = useHaptics();
- * // On button tap:
- * light();
- * // On async completion:
- * success();
- * ```
- */
-export function useHaptics() {
-  /**
-   * Triggers a specific haptic vibration pattern by name.
-   * @param type The haptic pattern category.
-   */
-  const triggerHaptic = async (type: HapticType = 'light'): Promise<void> => {
-    if (Platform.OS === 'web') return;
+const MODULE = 'useHaptics';
 
+/** Preset envelopes (intensity 0..1, sharpness 0..1, duration ms). Every envelope must end at intensity 0. */
+export const HapticEnvelopes = {
+  /** Slow swell then release: "Gemini is thinking" */
+  thinkingRamp: [
+    { intensity: 0.35, sharpness: 0.2, durationMs: 220 },
+    { intensity: 0.7, sharpness: 0.4, durationMs: 260 },
+    { intensity: 0.0, sharpness: 0.3, durationMs: 180 },
+  ] as EnvelopePoint[],
+  /** Two crisp pulses: "response ready" */
+  doublePulse: [
+    { intensity: 0.9, sharpness: 0.9, durationMs: 40 },
+    { intensity: 0.0, sharpness: 0.9, durationMs: 60 },
+    { intensity: 0.9, sharpness: 0.9, durationMs: 40 },
+    { intensity: 0.0, sharpness: 0.9, durationMs: 40 },
+  ] as EnvelopePoint[],
+  /** Bouncing spring from the Android haptics guide */
+  spring: [
+    { intensity: 1.0, sharpness: 1.0, durationMs: 60 },
+    { intensity: 0.2, sharpness: 0.6, durationMs: 120 },
+    { intensity: 0.6, sharpness: 0.8, durationMs: 60 },
+    { intensity: 0.0, sharpness: 0.5, durationMs: 100 },
+  ] as EnvelopePoint[],
+};
+
+export function useHaptics() {
+  const [info, setInfo] = useState<HapticsInfo | null>(null);
+  const source: TelemetrySource = Platform.OS === 'web' ? 'unavailable' : 'hardware';
+
+  useEffect(() => {
+    if (!PixelNative) return;
+    try {
+      const i = PixelNative.getHapticsInfo();
+      setInfo(i);
+      logEvent(MODULE, 'vibrator', i as unknown as Record<string, unknown>);
+    } catch (e: any) { logEvent(MODULE, 'getHapticsInfo error', { message: e?.message }, 'warn'); }
+  }, []);
+
+  const triggerHaptic = useCallback(async (type: HapticType = 'light'): Promise<void> => {
+    if (Platform.OS === 'web') return;
     try {
       switch (type) {
-        case 'selection':
-          await Haptics.selectionAsync();
-          break;
-        case 'light':
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          break;
-        case 'medium':
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          break;
-        case 'heavy':
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-          break;
-        case 'success':
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          break;
-        case 'warning':
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          break;
-        case 'error':
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          break;
+        case 'selection': await Haptics.selectionAsync(); break;
+        case 'light': await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); break;
+        case 'medium': await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); break;
+        case 'heavy': await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); break;
+        case 'success': await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); break;
+        case 'warning': await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); break;
+        case 'error': await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); break;
       }
-    } catch {
-      // Haptics unavailable on emulator or unsupported hardware
-    }
-  };
+    } catch (e: any) { logEvent(MODULE, 'haptic error', { type, message: e?.message }, 'warn'); }
+  }, []);
+
+  /** Android 16+ envelope effect. Returns false (and logs) when unsupported. */
+  const playEnvelope = useCallback((points: EnvelopePoint[], initialSharpness?: number): boolean => {
+    if (!PixelNative || !info?.envelopeEffectsSupported) return false;
+    try { return PixelNative.playEnvelope(points, initialSharpness ?? null); }
+    catch (e: any) { logEvent(MODULE, 'playEnvelope error', { message: e?.message }, 'warn'); return false; }
+  }, [info]);
+
+  /** Android 11+ primitive composition (CLICK, THUD, SPIN, QUICK_RISE, SLOW_RISE, QUICK_FALL, TICK, LOW_TICK). */
+  const playPrimitives = useCallback((steps: PrimitiveStep[]): boolean => {
+    if (!PixelNative) return false;
+    try { return PixelNative.playPrimitives(steps); }
+    catch (e: any) { logEvent(MODULE, 'playPrimitives error', { message: e?.message }, 'warn'); return false; }
+  }, []);
+
+  const cancel = useCallback(() => { try { PixelNative?.cancelVibration(); } catch { /* ignore */ } }, []);
 
   return {
-    /** Trigger a specific haptic pattern dynamically */
     triggerHaptic,
-    /** Ultra-subtle click for rotary pickers, sliders, and segmented controls */
     selection: () => triggerHaptic('selection'),
-    /** Crisp mechanical click for standard UI button presses */
     light: () => triggerHaptic('light'),
-    /** Firm physical thump for switches and modal reveals */
     medium: () => triggerHaptic('medium'),
-    /** Deep substantial thud for drag drops, snapping, or critical events */
     heavy: () => triggerHaptic('heavy'),
-    /** Double-pulse confirmation for successful operations */
     success: () => triggerHaptic('success'),
-    /** Cautionary alert vibration pattern */
     warning: () => triggerHaptic('warning'),
-    /** Rapid triple-pulse error vibration */
     error: () => triggerHaptic('error'),
+    playEnvelope,
+    playPrimitives,
+    cancel,
+    /** Real vibrator capabilities (null until read or when native module absent) */
+    hasAmplitudeControl: info?.hasAmplitudeControl ?? null,
+    envelopeSupported: info?.envelopeEffectsSupported ?? false,
+    resonantFrequencyHz: info?.resonantFrequencyHz ?? null,
+    supportedPrimitives: info?.supportedPrimitives ?? [],
+    source,
   };
 }

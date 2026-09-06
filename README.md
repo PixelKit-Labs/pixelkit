@@ -200,12 +200,14 @@ Pixel delta/ (PixelForge Framework)
 4. **Start the development server**:
    ```bash
    npm start
+   # Or with local AI MCP tools enabled:
+   npm run start:mcp
    ```
 
-5. **Launch on your phone**:
-   * Install the **Expo Go** app from Google Play on your Pixel 11 Pro. **Note:** Expo Go covers the JS-only hooks. Native AI modules (Gemini Nano, Ranging, haptic envelopes) require a development build: `npx expo prebuild --platform android && npx expo run:android` with `expo-dev-client` (already configured; `app.json` sets compileSdk/targetSdk 36, minSdk 26 via `expo-build-properties`. Android 17 ships as the minor-versioned platform `android-37.0`, which the AGP 8.12 bundled with Expo 57 cannot resolve as `compileSdk 37`; raise it when Expo moves to an AGP with minor-SDK support).
-   * Scan the terminal QR code with your camera.
-   * The app will compile and launch on your phone over Wi-Fi with hot reloading!
+5. **Test & Edit the UI**:
+   * **Physical Device (Fast Refresh)**: Install **Expo Go** from Google Play on your Pixel 11 Pro, scan the terminal QR code, and watch UI edits reflect live in <500ms.
+   * **Web Browser Preview**: Run `npm run web` (or press `w` in Metro) to preview and inspect layout at `http://localhost:8081` using Chrome/Edge DevTools (F12).
+   * **Android Emulator**: Press `a` in Metro to launch on an active Android Virtual Device (AVD).
 
 ---
 

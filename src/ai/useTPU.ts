@@ -1,74 +1,82 @@
 /**
  * @file useTPU.ts
- * @description Hardware accelerator hook for the Google Tensor TPU (Neural Processing Unit).
- * Manages LiteRT / NNAPI acceleration delegates, tracks token throughput, and provides a benchmark suite.
+ * @description Honest view of the Tensor TPU / on-device AI stack. The TPU is only reachable through
+ * AICore (Gemini Nano via ML Kit) or LiteRT, so this hook reports what is verifiably present on the
+ * device (AICore + Private Compute Services versions, NPU feature flag) and leaves inference metrics
+ * null until the `pixel-nano` module exists. `benchmarkTPU` runs a real JS matmul and reports it as a
+ * CPU-fallback number, clearly labelled.
  */
 
-import { useState } from 'react';
-import { TPUAcceleration } from '../core/types';
+import { useCallback, useEffect, useState } from 'react';
+import PixelNative, { type PackageVersion } from '../../modules/pixel-native';
+import { logEvent, type TelemetrySource } from '../core/observability';
+import type { TPUAcceleration } from '../core/types';
 
-/**
- * Hook to interface with on-device Google Tensor TPU neural hardware.
- *
- * @returns {TPUAcceleration & { isBenchmarking: boolean, benchmarkTPU: () => Promise<TPUAcceleration> }}
- *
- * @example
- * ```typescript
- * const { activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec, benchmarkTPU } = useTPU();
- * console.log(`Active accelerator: ${activeDelegate} (${lastInferenceLatencyMs}ms)`);
- * const metrics = await benchmarkTPU();
- * ```
- */
+const MODULE = 'useTPU';
+const AICORE = 'com.google.android.aicore';
+const PCS = 'com.google.android.as.oss';
+
 export function useTPU() {
-  const [tpuStatus, setTpuStatus] = useState<TPUAcceleration>({
-    activeDelegate: 'Tensor TPU',
-    isHardwareAccelerated: true,
-    lastInferenceLatencyMs: 14.2,
-    throughputTokensPerSec: 68.4,
-    memoryFootprintMB: 48.6,
-  });
-
+  const [aicore, setAicore] = useState<PackageVersion | null>(null);
+  const [pcs, setPcs] = useState<PackageVersion | null>(null);
+  const [hasNpuFeature, setHasNpuFeature] = useState<boolean | null>(null);
   const [isBenchmarking, setIsBenchmarking] = useState<boolean>(false);
+  const [cpuFallbackLatencyMs, setCpuFallbackLatencyMs] = useState<number | null>(null);
 
-  /**
-   * Executes a compute-intensive matrix multiplication benchmark to test TPU/NPU silicon throughput.
-   * @returns Promise resolving to the updated TPUAcceleration telemetry.
-   */
-  const benchmarkTPU = async (): Promise<TPUAcceleration> => {
+  const source: TelemetrySource = PixelNative ? 'hardware' : 'unavailable';
+
+  useEffect(() => {
+    if (!PixelNative) { logEvent(MODULE, 'native module absent; AI stack detection unavailable', undefined, 'warn'); return; }
+    try {
+      const a = PixelNative.getPackageVersion(AICORE);
+      const p = PixelNative.getPackageVersion(PCS);
+      setAicore(a); setPcs(p);
+      setHasNpuFeature(PixelNative.hasSystemFeature('android.hardware.neural_processing_unit'));
+      logEvent(MODULE, 'ai stack', { aicore: a.versionName, pcs: p.versionName });
+    } catch (e: any) { logEvent(MODULE, 'detect error', { message: e?.message }, 'error'); }
+  }, []);
+
+  /** Real 256×256 float matmul on the JS thread. Measures CPU fallback, not the TPU. */
+  const benchmarkTPU = useCallback(async (): Promise<TPUAcceleration> => {
     setIsBenchmarking(true);
-    const startTime = performance.now();
-
-    // Perform intensive tensor matrix multiplication simulation
-    let accumulator = 0;
-    const size = 300;
-    for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
-        accumulator += Math.sin(i) * Math.cos(j);
-      }
-    }
-
-    const elapsedMs = performance.now() - startTime;
-    const calculatedLatency = Math.max(8.5, Number((elapsedMs * 0.45).toFixed(1)));
-    const calculatedTokens = Math.round((1000 / calculatedLatency) * 1.2);
-
-    const updatedStatus: TPUAcceleration = {
-      activeDelegate: 'Tensor TPU',
-      isHardwareAccelerated: true,
-      lastInferenceLatencyMs: calculatedLatency,
-      throughputTokensPerSec: calculatedTokens,
-      memoryFootprintMB: Number((45 + Math.random() * 8).toFixed(1)),
-    };
-
-    setTpuStatus(updatedStatus);
+    await new Promise(r => setTimeout(r, 30));
+    const n = 256;
+    const a = new Float32Array(n * n).map(() => Math.random());
+    const b = new Float32Array(n * n).map(() => Math.random());
+    const c = new Float32Array(n * n);
+    const start = performance.now();
+    for (let i = 0; i < n; i++) for (let k = 0; k < n; k++) { const aik = a[i * n + k]; for (let j = 0; j < n; j++) c[i * n + j] += aik * b[k * n + j]; }
+    const ms = Number((performance.now() - start).toFixed(1));
+    setCpuFallbackLatencyMs(ms);
     setIsBenchmarking(false);
-    return updatedStatus;
-  };
+    logEvent(MODULE, 'cpu fallback matmul', { n, ms });
+    return {
+      activeDelegate: 'CPU Fallback',
+      isHardwareAccelerated: false,
+      lastInferenceLatencyMs: ms,
+      throughputTokensPerSec: null,
+      memoryFootprintMB: null,
+    };
+  }, []);
 
   return {
-    ...tpuStatus,
-    /** Whether a benchmark run is currently in progress */
+    /** AICore (Gemini Nano host) installed and version */
+    aicoreInstalled: aicore?.installed ?? false,
+    aicoreVersion: aicore?.versionName ?? null,
+    privateComputeServicesVersion: pcs?.versionName ?? null,
+    /** Android 17 NPU feature flag as declared by the device */
+    hasNpuFeature,
+    /** No on-device inference path is wired yet, so nothing runs on the TPU from this app. */
+    activeDelegate: (cpuFallbackLatencyMs != null ? 'CPU Fallback' : 'NPU') as TPUAcceleration['activeDelegate'],
+    isHardwareAccelerated: false,
+    /** null until the pixel-nano module measures real Gemini Nano latency */
+    lastInferenceLatencyMs: null as number | null,
+    throughputTokensPerSec: null as number | null,
+    memoryFootprintMB: null as number | null,
+    /** JS matmul time, labelled as CPU fallback */
+    cpuFallbackLatencyMs,
     isBenchmarking,
-    /** Run a silicon throughput benchmark */
     benchmarkTPU,
+    source,
   };
 }

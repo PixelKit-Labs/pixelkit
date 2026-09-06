@@ -10,6 +10,13 @@ import { Platform } from 'react-native';
 
 const API_KEY_STORAGE_KEY = 'PIXELFORGE_GEMINI_API_KEY';
 
+/** Cloud model used for chat, vision and transcription (Gemini API "Models" page, Sept 2026). */
+export const GEMINI_MODEL = 'gemini-3.8-flash';
+
+/** Error raised by AI hooks when no key is configured. There is no simulated fallback. */
+export const NO_API_KEY_MESSAGE =
+  'No Gemini API key configured. Open "Configure Gemini API Key" in the AI Lab; the key is stored in the Titan-backed SecureStore.';
+
 /**
  * Retrieves the stored Gemini API key from Titan M3 Keystore or environment variables.
  * @returns Promise resolving to API key string or null if not yet configured.

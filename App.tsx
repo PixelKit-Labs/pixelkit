@@ -1,31 +1,42 @@
 /**
  * @file App.tsx
  * @description Primary application container for PixelForge.
- * Hosts the top branding bar, silicon status indicator, 3-tab screen switcher,
- * and bottom floating navigation pill bar.
+ * Hosts the top branding bar, native-module status indicator, 4-tab screen switcher,
+ * and bottom floating navigation pill bar. Edge-to-edge safe: insets come from
+ * react-native-safe-area-context (React Native's built-in SafeAreaView is iOS-only).
  */
 
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AILabScreen } from './src/screens/AILabScreen';
 import { SensorsLabScreen } from './src/screens/SensorsLabScreen';
 import { DocsScreen } from './src/screens/DocsScreen';
 import { HapticButton } from './src/components/HapticButton';
 import { Colors } from './src/theme/colors';
+import { isPixelNativeAvailable } from './modules/pixel-native';
 
 type Tab = 'dashboard' | 'ai' | 'sensors' | 'docs';
 
-export default function App() {
+const TABS: { key: Tab; title: string }[] = [
+  { key: 'dashboard', title: 'Silicon' },
+  { key: 'ai', title: 'AI Lab' },
+  { key: 'sensors', title: 'Sensors' },
+  { key: 'docs', title: 'Docs' },
+];
+
+function Shell() {
   const [currentTab, setCurrentTab] = useState<Tab>('dashboard');
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.root}>
       <StatusBar style="light" />
-      
-      {/* Top Header Bar */}
-      <View style={styles.topBar}>
+
+      {/* Top Header Bar (padded below the status bar / camera cutout) */}
+      <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
         <View style={styles.brandingRow}>
           <View style={styles.logoBadge}>
             <Text style={styles.logoBadgeText}>⚡</Text>
@@ -36,8 +47,10 @@ export default function App() {
           </View>
         </View>
 
-        <View style={styles.statusPill}>
-          <Text style={styles.statusPillText}>TPU READY</Text>
+        <View style={[styles.statusPill, !isPixelNativeAvailable && styles.statusPillWarn]}>
+          <Text style={[styles.statusPillText, !isPixelNativeAvailable && styles.statusPillTextWarn]}>
+            {isPixelNativeAvailable ? 'NATIVE LIVE' : 'JS ONLY'}
+          </Text>
         </View>
       </View>
 
@@ -49,45 +62,36 @@ export default function App() {
         {currentTab === 'docs' && <DocsScreen />}
       </View>
 
-      {/* Bottom Floating Navigation Pill Bar */}
-      <View style={styles.navBarWrapper}>
+      {/* Bottom Floating Navigation Pill Bar (padded above the gesture bar) */}
+      <View style={[styles.navBarWrapper, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <View style={styles.navBar}>
-          <HapticButton
-            title="Silicon"
-            onPress={() => setCurrentTab('dashboard')}
-            variant={currentTab === 'dashboard' ? 'primary' : 'outline'}
-            style={styles.navButton}
-            textStyle={{ fontSize: 12 }}
-          />
-          <HapticButton
-            title="AI Lab"
-            onPress={() => setCurrentTab('ai')}
-            variant={currentTab === 'ai' ? 'primary' : 'outline'}
-            style={styles.navButton}
-            textStyle={{ fontSize: 12 }}
-          />
-          <HapticButton
-            title="Sensors"
-            onPress={() => setCurrentTab('sensors')}
-            variant={currentTab === 'sensors' ? 'primary' : 'outline'}
-            style={styles.navButton}
-            textStyle={{ fontSize: 12 }}
-          />
-          <HapticButton
-            title="Docs"
-            onPress={() => setCurrentTab('docs')}
-            variant={currentTab === 'docs' ? 'primary' : 'outline'}
-            style={styles.navButton}
-            textStyle={{ fontSize: 12 }}
-          />
+          {TABS.map(t => (
+            <HapticButton
+              key={t.key}
+              title={t.title}
+              onPress={() => setCurrentTab(t.key)}
+              hapticType="selection"
+              variant={currentTab === t.key ? 'primary' : 'outline'}
+              style={styles.navButton}
+              textStyle={{ fontSize: 12 }}
+            />
+          ))}
         </View>
       </View>
-    </SafeAreaView>
+    </View>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Shell />
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  root: {
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
@@ -96,7 +100,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 14,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.dark.cardBorder,
@@ -139,18 +142,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  statusPillWarn: {
+    backgroundColor: `${Colors.dark.warning}20`,
+    borderColor: Colors.dark.warning,
+  },
   statusPillText: {
     color: Colors.dark.tensorGlow,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  statusPillTextWarn: {
+    color: Colors.dark.warning,
+  },
   screenContainer: {
     flex: 1,
   },
   navBarWrapper: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: 10,
     backgroundColor: Colors.dark.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.dark.cardBorder,

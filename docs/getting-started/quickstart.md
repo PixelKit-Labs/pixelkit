@@ -90,6 +90,23 @@ The official Google Android CLI provides tools for SDK management, UI inspection
    npm run android
    ```
 
+### Method C: Web Browser Preview (Instant UI & Layout Prototyping)
+To edit and preview UI components and layout immediately in your PC browser without connecting a phone:
+1. Start the Metro web dev server:
+   ```bash
+   npm run web
+   ```
+2. Open `http://localhost:8081` in Chrome or Edge.
+3. Use browser DevTools (F12) to inspect component layouts. All hardware hooks feature simulation fallbacks on Web.
+
+### Method D: With Local MCP Server for AI Agent Testing
+To enable AI agent visual verification, automated screenshotting, and `testID` element inspection:
+1. Start Metro with the local MCP server enabled:
+   ```bash
+   npm run start:mcp
+   ```
+2. Connected AI agents (Claude, Cursor, Antigravity) can now autonomously run `automation_take_screenshot`, `automation_tap`, `open_devtools`, and `collect_app_logs`.
+
 ---
 
 ## 🔑 Environment Variables & API Keys
