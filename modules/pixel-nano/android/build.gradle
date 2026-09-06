@@ -1,0 +1,40 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.pixelforge'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.pixelnano"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // ML Kit GenAI Prompt API (Gemini Nano through AICore). beta4 = Nano v4 + streaming fixes.
+  implementation "com.google.mlkit:genai-prompt:1.0.0-beta4"
+}
+
+// genai-prompt 1.0.0-beta4 is compiled with Kotlin 2.3 (metadata 2.3.0). Expo 57 builds with the
+// Kotlin version from React Native's version catalog (2.1.20), which only reads metadata up to 2.2.
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  compilerOptions.freeCompilerArgs.add("-Xskip-metadata-version-check")
+}
+
+// genai-prompt depends on kotlin-stdlib 2.3.21. Left alone, Gradle would raise the app's stdlib to 2.3.21
+// and the app module's Kotlin compile would fail on the newer metadata. Pin every kotlin-stdlib artifact
+// in the build to the project's Kotlin version. ML Kit's stdlib usage was checked against 2.1.20.
+rootProject.allprojects { p ->
+  p.configurations.configureEach { c ->
+    c.resolutionStrategy.eachDependency { d ->
+      if (d.requested.group == 'org.jetbrains.kotlin' && d.requested.name.startsWith('kotlin-stdlib')) {
+        d.useVersion(rootProject.ext.kotlinVersion)
+        d.because('pixel-nano: ML Kit GenAI pulls kotlin-stdlib 2.3.21; project compiles with Kotlin ' + rootProject.ext.kotlinVersion)
+      }
+    }
+  }
+}

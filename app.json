@@ -2,7 +2,7 @@
   "expo": {
     "name": "PixelForge",
     "slug": "pixel-forge",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -36,7 +36,7 @@
         "android.permission.UWB_RANGING"
       ],
       "predictiveBackGestureEnabled": true,
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/favicon.png"

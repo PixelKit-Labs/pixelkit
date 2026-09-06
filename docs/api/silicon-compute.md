@@ -89,7 +89,7 @@ function useTPU(): {
   privateComputeServicesVersion: string | null;
   hasNpuFeature: boolean | null;        // android.hardware.neural_processing_unit
   activeDelegate: 'Tensor TPU' | 'NPU' | 'GPU' | 'CPU Fallback';
-  isHardwareAccelerated: false;         // until pixel-nano wires Gemini Nano
+  isHardwareAccelerated: false;         // this hook runs nothing on the TPU; see useGeminiNano
   lastInferenceLatencyMs: number | null;
   throughputTokensPerSec: number | null;
   memoryFootprintMB: number | null;

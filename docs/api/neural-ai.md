@@ -8,6 +8,7 @@ This document covers conversational reasoning, speech audio transcription, multi
 ## 📑 Module Index
 
 * [`useGemini`](#usegemini) - Multi-Turn Conversational Reasoning & Streaming
+* [`useGeminiNano`](#usegemininano) - Gemini Nano on-device (ML Kit GenAI Prompt API on AICore)
 * [`useSpeechAI`](#usespeechai) - Microphone recording & Gemini transcription
 * [`useVisionAI`](#usevisionai) - Multimodal Camera Scene & Document Analysis
 * [`geminiClient`](#geminiclient) - Titan M3 Encrypted Credential Management
@@ -66,6 +67,75 @@ export function AssistantChat() {
       ))}
       <TextInput value={input} onChangeText={setInput} placeholder="Ask assistant..." />
       <HapticButton title="Send" onPress={handleSend} disabled={gemini.isLoading} />
+    </View>
+  );
+}
+```
+
+---
+
+## `useGeminiNano`
+
+Gemini Nano on-device through the local `modules/pixel-nano` Expo Module, which wraps `com.google.mlkit:genai-prompt:1.0.0-beta4` (ML Kit GenAI Prompt API on AICore). Status, base model name, token limit and feature flags (system prompt, thinking mode, structured output, caching) are read from `GenerativeModel`. Latency and time-to-first-token are measured around the native call; output token counts come from the on-device tokenizer (`countTokens`). AICore keeps no history, so `buildNanoTurn()` re-sends a capped transcript with the system instruction. **There is no cloud fallback and no simulated reply**: when the model is not `available`, `sendMessage` appends a `system`-role error.
+
+Requires the dev client or a release APK on a device with AICore (Pixel 9 and later; verified on Pixel 11 Pro). On web and in Expo Go the module resolves to `null` and `source` is `'unavailable'`.
+
+### Signature
+```typescript
+function useGeminiNano(): {
+  status: 'available' | 'downloadable' | 'downloading' | 'unavailable';
+  isAvailable: boolean;
+  info: NanoModelInfo | null;            // baseModelName, tokenLimit, thinkingModeAvailable, systemPromptAvailable, …
+  messages: AIMessage[];                 // role 'system' entries are local errors
+  partial: string;                       // streamed text for the in-flight reply
+  thoughts: string[];                    // thinking-mode output when enabled and supported
+  lastLatencyMs: number | null;          // hardware
+  lastFirstTokenMs: number | null;       // hardware
+  lastOutputTokens: number | null;       // on-device tokenizer
+  lastDecodeTokensPerSec: number | null; // derived: output tokens ÷ time after first token
+  downloadedBytes: number | null; isDownloading: boolean; isWarmingUp: boolean; warmupMs: number | null;
+  isGenerating: boolean; error: string | null;
+  source: 'hardware' | 'unavailable';
+  refresh(): Promise<void>;
+  download(): Promise<NanoStatus>;
+  warmup(): Promise<number | null>;
+  countTokens(prompt: string, options?: NanoOptions): Promise<number | null>;
+  generate(prompt: string, options?: NanoOptions): Promise<NanoResult>;
+  sendMessage(prompt: string): Promise<void>;
+  clearMessages(): void;
+  setModelConfig(stage: 'stable' | 'preview', preference: 'full' | 'fast'): Promise<void>;
+};
+```
+
+### Native module (`modules/pixel-nano`)
+| Function | ML Kit call | Notes |
+| :--- | :--- | :--- |
+| `checkStatus()` | `GenerativeModel.checkStatus()` | `FeatureStatus` int mapped to a string |
+| `getModelInfo()` | `getBaseModelName`, `getTokenLimit`, `isThinkingModeAvailable`, `isSystemPromptAvailable`, `isStructuredOutputFeatureAvailable`, `isCachingFeatureAvailable` | each field null when AICore does not answer |
+| `download()` | `download(): Flow<DownloadStatus>` | progress as `onDownloadProgress` events |
+| `warmup()` | `warmup()` | returns wall time in ms |
+| `countTokens(prompt, options)` | `countTokens(request)` | on-device tokenizer |
+| `generate(prompt, options)` | `generateContent(request)` | single shot |
+| `stream(requestId, prompt, options)` | `generateContent(request, StreamingCallback)` | `onToken` / `onThought` events tagged with `requestId` |
+| `setModelConfig(stage, preference)` | `Generation.getClient(generationConfig { modelConfig { … } })` | `ModelReleaseStage.STABLE|PREVIEW`, `ModelPreference.FULL|FAST` |
+
+Options map to `GenerateContentRequest.Builder`: `systemInstruction` (a `SystemInstruction` part), `temperature`, `topK`, `candidateCount`, `maxOutputTokens`, `seed`, `thinking` (`enableThinking`), `imageBase64` (one `ImagePart`). Errors surface as `E_NANO_<ErrorCode>` (`NOT_AVAILABLE`, `BUSY`, `REQUEST_TOO_LARGE`, `BACKGROUND_USE_BLOCKED`, …).
+
+Build note: genai-prompt beta4 is compiled with Kotlin 2.3 while Expo 57 builds with Kotlin 2.1.20. The module passes `-Xskip-metadata-version-check` for its own compile and pins every `kotlin-stdlib` artifact in the build to the project's Kotlin version (see `modules/pixel-nano/android/build.gradle`).
+
+### Usage
+```tsx
+import { useGeminiNano, HapticButton } from './src';
+
+export function OnDeviceAssistant() {
+  const nano = useGeminiNano();
+  return (
+    <View>
+      <Text>Gemini Nano: {nano.status} · {nano.info?.baseModelName ?? '—'} · limit {nano.info?.tokenLimit ?? '—'} tokens</Text>
+      {nano.status === 'downloadable' && <HapticButton title="Download model" onPress={() => nano.download()} />}
+      <HapticButton title="Ask on-device" onPress={() => nano.sendMessage('Summarise the thermal state')} disabled={!nano.isAvailable} />
+      {nano.partial ? <Text>{nano.partial}</Text> : null}
+      <Text>{nano.lastLatencyMs ?? '—'} ms · first token {nano.lastFirstTokenMs ?? '—'} ms · {nano.lastDecodeTokensPerSec ?? '—'} tok/s</Text>
     </View>
   );
 }

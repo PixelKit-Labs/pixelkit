@@ -20,6 +20,7 @@ This document is the consolidated reference for every hook in the PixelForge SDK
    - [useUWB](#useuwb) (Ultra-Wideband Spatial Radar)
 4. [Neural & Intelligence Hooks](#neural--intelligence-hooks)
    - [useGemini](#usegemini) (gemini-3.8-flash chat)
+   - [useGeminiNano](#usegemininano) (Gemini Nano on-device via ML Kit GenAI)
    - [useSpeechAI](#usespeechai) (expo-audio → Gemini transcription)
    - [useVisionAI](#usevisionai) (Multimodal Scene Inspection)
 5. [Sensors & Physical Actuators](#sensors--physical-actuators)
@@ -79,6 +80,7 @@ import {
   useCamera,
   useSpeechAI, 
   useGemini, 
+  useGeminiNano,
   useVisionAI,
   useSecurity
 } from './src';
@@ -216,7 +218,11 @@ availability: 'hardware' | 'estimated';
 ### `useGemini`
 * **File Path**: `src/ai/useGemini.ts`
 * **Target Hardware**: Google Gen AI SDK (`@google/genai`) configured for gemini-3.8-flash.
-* **Description**: Multi-turn chat over `ai.chats`, API token counts and latency. There is no simulated fallback; without a key every call rejects.
+$1
+### `useGeminiNano`
+* **File Path**: `src/ai/useGeminiNano.ts` + `modules/pixel-nano` (Kotlin)
+* **Target Hardware**: Gemini Nano on the Tensor G6 TPU through **AICore**, reached with `com.google.mlkit:genai-prompt:1.0.0-beta4`. Verified on Pixel 11 Pro with AICore `0.release.prod_aicore_20260723.00_RC11`.
+* **Description**: Status, base model name, token limit and feature flags from `GenerativeModel`; download with progress events; streaming generation with tokens as events; latency and first-token time measured natively; output tokens from the on-device tokenizer. No cloud fallback, no simulated reply.
 
 ---
 

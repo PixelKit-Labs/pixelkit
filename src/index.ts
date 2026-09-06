@@ -14,6 +14,7 @@
  *   useHaptics,
  *   useSpeechAI,
  *   useGemini,
+ *   useGeminiNano,
  *   useVisionAI,
  *   useDevice,
  *   useDisplay,
@@ -70,6 +71,7 @@ export { useUWB } from './hardware/useUWB';
 // AI, Voice & Tensor TPU Hooks
 export { useTPU } from './ai/useTPU';
 export { useGemini } from './ai/useGemini';
+export { useGeminiNano, buildNanoTurn, NANO_SYSTEM_INSTRUCTION } from './ai/useGeminiNano';
 export { useVisionAI } from './ai/useVisionAI';
 export { useSpeechAI } from './ai/useSpeechAI';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';

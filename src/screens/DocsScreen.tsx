@@ -105,7 +105,7 @@ function GPUHUD() {
     category: 'silicon',
     chipBadge: 'AICore · Gemini Nano host',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Detects the on-device AI stack (AICore, Private Compute Services, NPU flag). Inference metrics are null until Gemini Nano is wired.',
+    summary: 'Detects the on-device AI stack (AICore, Private Compute Services, NPU flag). Inference itself lives in useGeminiNano; the metrics here stay null.',
     description: 'The TPU is only reachable through AICore (ML Kit GenAI) or LiteRT, so this hook reports what is verifiably installed and refuses to invent latency numbers. benchmarkTPU() runs a real 256×256 JS matmul and reports it as CPU Fallback.',
     signature: 'useTPU(): TPUState',
     returns: [
@@ -113,7 +113,7 @@ function GPUHUD() {
       'aicoreVersion: string | null',
       'privateComputeServicesVersion: string | null',
       'hasNpuFeature: boolean | null',
-      'lastInferenceLatencyMs: number | null  // null until pixel-nano',
+      'lastInferenceLatencyMs: number | null  // always null here; see useGeminiNano',
       'cpuFallbackLatencyMs: number | null',
       'benchmarkTPU(): Promise<TPUAcceleration>',
     ],
@@ -289,6 +289,40 @@ function SpatialRadar() {
   },
 
   // AI & Neural
+  {
+    id: 'useGeminiNano',
+    name: 'useGeminiNano',
+    category: 'ai',
+    chipBadge: 'AICore · ML Kit Prompt API',
+    badgeColor: Colors.dark.tensorGlow,
+    summary: 'Gemini Nano on-device through the PixelNano module. Status, model name, token limit and feature flags come from AICore; latency, first-token time and token counts are measured on the device.',
+    description: 'Wraps com.google.mlkit:genai-prompt (1.0.0-beta4) in modules/pixel-nano. checkStatus/getModelInfo read AICore, download() streams progress, stream() emits tokens as events. AICore keeps no history, so buildNanoTurn() re-sends a capped transcript with the system instruction. No cloud fallback and no simulated reply: when the model is unavailable the hook appends a system-role error.',
+    signature: 'useGeminiNano(): GeminiNanoState',
+    returns: [
+      "status: 'available' | 'downloadable' | 'downloading' | 'unavailable'",
+      'info: { baseModelName, tokenLimit, thinkingModeAvailable, systemPromptAvailable, … } | null',
+      'messages: AIMessage[] · partial: string  // streaming text',
+      'lastLatencyMs · lastFirstTokenMs · lastOutputTokens · lastDecodeTokensPerSec',
+      'download() · warmup() · countTokens(prompt) · generate(prompt, options)',
+      'sendMessage(text) · clearMessages() · setModelConfig(stage, preference)',
+      "source: 'hardware' | 'unavailable'",
+    ],
+    example: `import { useGeminiNano } from './src';
+
+function OnDeviceAssistant() {
+  const nano = useGeminiNano();
+  return (
+    <View>
+      <Text>Gemini Nano: {nano.status} · {nano.info?.baseModelName ?? '—'}</Text>
+      {nano.status === 'downloadable' && <Button title="Download model" onPress={() => nano.download()} />}
+      <Button title="Ask on-device" onPress={() => nano.sendMessage('Summarise the thermal state')} disabled={!nano.isAvailable} />
+      <Text>{nano.partial || nano.messages.at(-1)?.content}</Text>
+      <Text>{nano.lastLatencyMs ?? '—'} ms · {nano.lastDecodeTokensPerSec ?? '—'} tok/s</Text>
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Check status before offering on-device answers and never fall back to a canned string. AICore is foreground-only and single-turn; keep the transcript short and route background work to the cloud hook.',
+  },
   {
     id: 'useGemini',
     name: 'useGemini',

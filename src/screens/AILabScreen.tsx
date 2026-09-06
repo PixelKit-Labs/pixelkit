@@ -1,9 +1,9 @@
 /**
  * @file AILabScreen.tsx
  * @description Multimodal AI, voice, and vision laboratory. Cloud Gemini (chat, vision, transcription)
- * runs only with a configured API key; there is no simulated reply. The on-device stack card reports
- * what is verifiably installed (AICore, Private Compute Services, NPU flag) until the pixel-nano module
- * wires Gemini Nano.
+ * runs only with a configured API key; there is no simulated reply. Gemini Nano runs on-device through
+ * the PixelNano module (ML Kit GenAI Prompt API on AICore); the conversation can target either engine.
+ * The stack card reports what is verifiably installed (AICore, Private Compute Services, NPU flag).
  */
 
 import React, { useState } from 'react';
@@ -22,6 +22,7 @@ import { useGemini } from '../ai/useGemini';
 import { useVisionAI } from '../ai/useVisionAI';
 import { useSpeechAI } from '../ai/useSpeechAI';
 import { useTPU } from '../ai/useTPU';
+import { useGeminiNano } from '../ai/useGeminiNano';
 import { useHiLight } from '../hardware/useHiLight';
 import { useHaptics, HapticEnvelopes } from '../hardware/useHaptics';
 import { useCapabilities } from '../hardware/useCapabilities';
@@ -36,9 +37,16 @@ export const AILabScreen: React.FC = () => {
   const vision = useVisionAI();
   const speech = useSpeechAI();
   const tpu = useTPU();
+  const nano = useGeminiNano();
   const hilight = useHiLight();
   const haptics = useHaptics();
   const caps = useCapabilities();
+
+  /** Which model answers the conversation: cloud gemini-3.8-flash or on-device Gemini Nano. */
+  const [engine, setEngine] = useState<'cloud' | 'nano'>('cloud');
+  const activeMessages = engine === 'nano' ? nano.messages : gemini.messages;
+  const isBusy = engine === 'nano' ? nano.isGenerating : gemini.isLoading;
+  const ask = (prompt: string) => (engine === 'nano' ? nano.sendMessage(prompt) : gemini.sendMessage(prompt));
 
   const [inputPrompt, setInputPrompt] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
@@ -51,11 +59,11 @@ export const AILabScreen: React.FC = () => {
   };
 
   const handleSend = () => {
-    if (!inputPrompt.trim() || gemini.isLoading) return;
+    if (!inputPrompt.trim() || isBusy) return;
     const prompt = inputPrompt;
     setInputPrompt('');
     signalThinking();
-    gemini.sendMessage(prompt);
+    void ask(prompt);
   };
 
   const handleVoiceToggle = async () => {
@@ -64,7 +72,7 @@ export const AILabScreen: React.FC = () => {
       if (result?.transcript) {
         setInputPrompt(result.transcript);
         signalThinking();
-        gemini.sendMessage(result.transcript);
+        void ask(result.transcript);
       }
     } else {
       await speech.startListening();
@@ -88,7 +96,7 @@ export const AILabScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Pixel AI & Vision Lab</Text>
-          <Text style={styles.subtitle}>Cloud Gemini ({gemini.model}) · on-device stack: {tpu.aicoreInstalled ? `AICore ${tpu.aicoreVersion?.split('_')[2] ?? ''}` : 'AICore not installed'}</Text>
+          <Text style={styles.subtitle}>Cloud {gemini.model} · Gemini Nano {nano.status}{tpu.aicoreInstalled ? ` · AICore ${tpu.aicoreVersion?.split('_')[2] ?? ''}` : ' · AICore not installed'}</Text>
         </View>
 
         {keySavedMessage && (
@@ -100,9 +108,68 @@ export const AILabScreen: React.FC = () => {
           value={tpu.aicoreInstalled ? 'AICore present' : 'AICore absent'}
           badge={caps.geminiNanoTier.toUpperCase()}
           badgeColor={tpu.aicoreInstalled ? Colors.dark.tensorGlow : Colors.dark.warning}
-          subtitle={`AICore ${tpu.aicoreVersion ?? '—'} • PCS ${tpu.privateComputeServicesVersion ?? '—'} • NPU feature flag: ${tpu.hasNpuFeature == null ? '?' : tpu.hasNpuFeature ? 'yes' : 'no'} • Gemini Nano inference not wired yet (pixel-nano module)`}
+          subtitle={`AICore ${tpu.aicoreVersion ?? '—'} • PCS ${tpu.privateComputeServicesVersion ?? '—'} • NPU feature flag: ${tpu.hasNpuFeature == null ? '?' : tpu.hasNpuFeature ? 'yes' : 'no'}`}
           source={tpu.source}
         />
+
+        <SectionHeader title="Gemini Nano (on-device, ML Kit Prompt API)" />
+        <MetricCard
+          title="Prompt API status"
+          value={nano.status}
+          badge={nano.info?.baseModelName ?? 'model —'}
+          badgeColor={nano.isAvailable ? Colors.dark.success : Colors.dark.warning}
+          subtitle={
+            nano.info
+              ? `token limit ${nano.info.tokenLimit ?? '—'} • system prompt ${nano.info.systemPromptAvailable == null ? '?' : nano.info.systemPromptAvailable ? 'yes' : 'no'} • thinking ${nano.info.thinkingModeAvailable == null ? '?' : nano.info.thinkingModeAvailable ? 'yes' : 'no'} • track ${nano.info.releaseStage}/${nano.info.preference}`
+              : 'Status, model name and feature flags come from AICore once the module loads.'
+          }
+          source={nano.source}
+        />
+        <View style={styles.row}>
+          <MetricCard
+            title="Nano latency"
+            value={nano.lastLatencyMs}
+            unit="ms"
+            badge={nano.lastFirstTokenMs != null ? `first token ${nano.lastFirstTokenMs} ms` : 'measured natively'}
+            badgeColor={Colors.dark.primary}
+            subtitle="Wall time of the last AICore call"
+            source={nano.lastLatencyMs == null ? 'unavailable' : 'hardware'}
+          />
+          <MetricCard
+            title="Decode rate"
+            value={nano.lastDecodeTokensPerSec}
+            unit="tok/s"
+            badge={nano.lastOutputTokens != null ? `${nano.lastOutputTokens} tokens` : 'on-device tokenizer'}
+            badgeColor={Colors.dark.primary}
+            subtitle="Output tokens ÷ time after first token"
+            source={nano.lastDecodeTokensPerSec == null ? 'unavailable' : 'derived'}
+          />
+        </View>
+        {nano.status === 'downloadable' && (
+          <HapticButton
+            title={nano.isDownloading ? `Downloading… ${nano.downloadedBytes != null ? `${(nano.downloadedBytes / 1e6).toFixed(0)} MB` : ''}` : 'Download Gemini Nano model'}
+            onPress={() => { void nano.download(); }}
+            disabled={nano.isDownloading}
+            variant="primary"
+            style={styles.keyButton}
+          />
+        )}
+        {nano.isAvailable && (
+          <HapticButton
+            title={nano.isWarmingUp ? 'Warming up…' : nano.warmupMs != null ? `Warm up again (last ${nano.warmupMs} ms)` : 'Warm up model'}
+            onPress={() => { void nano.warmup(); }}
+            disabled={nano.isWarmingUp}
+            variant="secondary"
+            style={styles.keyButton}
+          />
+        )}
+        {nano.error && <Text style={[styles.errorText, { marginBottom: 12 }]}>{nano.error}</Text>}
+        {nano.source === 'unavailable' && (
+          <View style={styles.notice}>
+            <Text style={styles.noticeText}>PixelNano module is not in this build. Gemini Nano needs the dev client or release APK on a Pixel with AICore.</Text>
+          </View>
+        )}
+
         <View style={styles.row}>
           <MetricCard
             title="CPU fallback matmul"
@@ -199,26 +266,56 @@ export const AILabScreen: React.FC = () => {
         </View>
 
         <SectionHeader title="Conversation" />
+        <View style={styles.engineRow}>
+          <HapticButton
+            title={`Cloud · ${gemini.model}`}
+            onPress={() => setEngine('cloud')}
+            variant={engine === 'cloud' ? 'primary' : 'outline'}
+            style={{ flex: 1, marginRight: 6 }}
+          />
+          <HapticButton
+            title={`On-device · Nano${nano.isAvailable ? '' : ` (${nano.status})`}`}
+            onPress={() => setEngine('nano')}
+            variant={engine === 'nano' ? 'primary' : 'outline'}
+            style={{ flex: 1, marginLeft: 6 }}
+          />
+        </View>
         <View style={styles.chatContainer}>
-          {gemini.messages.length === 0 && (
-            <Text style={styles.cardDesc}>Ask something below. Replies are real Gemini responses with API-reported token counts.</Text>
+          {activeMessages.length === 0 && (
+            <Text style={styles.cardDesc}>
+              {engine === 'nano'
+                ? 'Ask something below. Replies come from Gemini Nano through AICore; latency and token counts are measured on this device.'
+                : 'Ask something below. Replies are real Gemini responses with API-reported token counts.'}
+            </Text>
           )}
-          {gemini.messages.map((msg) => (
+          {activeMessages.map((msg) => (
             <View
               key={msg.id}
               style={[styles.messageBubble, msg.role === 'user' ? styles.userBubble : msg.role === 'system' ? styles.systemBubble : styles.modelBubble]}
             >
-              <Text style={styles.messageRole}>{msg.role === 'user' ? 'YOU' : msg.role === 'system' ? 'ERROR' : 'GEMINI'}</Text>
+              <Text style={styles.messageRole}>{msg.role === 'user' ? 'YOU' : msg.role === 'system' ? 'ERROR' : engine === 'nano' ? 'NANO' : 'GEMINI'}</Text>
               <Text style={styles.messageContent}>{msg.content}</Text>
               {msg.latencyMs !== undefined && (
                 <Text style={styles.messageLatency}>{msg.latencyMs} ms{msg.tokenCount ? ` • ${msg.tokenCount} tokens` : ''}</Text>
               )}
             </View>
           ))}
-          {gemini.isLoading && (
+          {engine === 'nano' && nano.isGenerating && nano.partial.length > 0 && (
+            <View style={[styles.messageBubble, styles.modelBubble]}>
+              <Text style={styles.messageRole}>NANO · streaming</Text>
+              <Text style={styles.messageContent}>{nano.partial}</Text>
+            </View>
+          )}
+          {engine === 'nano' && nano.thoughts.length > 0 && (
+            <View style={styles.transcriptBox}>
+              <Text style={styles.transcriptLabel}>THOUGHTS ({nano.thoughts.length})</Text>
+              <Text style={styles.transcriptText}>{nano.thoughts.join(' ')}</Text>
+            </View>
+          )}
+          {isBusy && (
             <View style={styles.loadingBubble}>
               <ActivityIndicator size="small" color={Colors.dark.primary} />
-              <Text style={styles.thinkingText}>Thinking…</Text>
+              <Text style={styles.thinkingText}>{engine === 'nano' ? 'Gemini Nano generating…' : 'Thinking…'}</Text>
             </View>
           )}
         </View>
@@ -227,7 +324,7 @@ export const AILabScreen: React.FC = () => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
-          placeholder="Ask Gemini…"
+          placeholder={engine === 'nano' ? 'Ask Gemini Nano (on-device)…' : 'Ask Gemini…'}
           placeholderTextColor={Colors.dark.textMuted}
           value={inputPrompt}
           onChangeText={setInputPrompt}
@@ -241,7 +338,7 @@ export const AILabScreen: React.FC = () => {
           style={styles.micButton}
           textStyle={{ fontSize: 16 }}
         />
-        <HapticButton title="Send" onPress={handleSend} disabled={gemini.isLoading || !inputPrompt.trim()} variant="primary" style={styles.sendButton} />
+        <HapticButton title="Send" onPress={handleSend} disabled={isBusy || !inputPrompt.trim()} variant="primary" style={styles.sendButton} />
       </View>
     </KeyboardAvoidingView>
   );
@@ -283,6 +380,7 @@ const styles = StyleSheet.create({
   labelChip: { backgroundColor: Colors.dark.card, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 6, marginTop: 4 },
   labelChipText: { color: Colors.dark.primary, fontSize: 11, fontWeight: '600' },
   latencyFooter: { color: Colors.dark.textMuted, fontSize: 11, marginTop: 8, textAlign: 'right' },
+  engineRow: { flexDirection: 'row', marginBottom: 12 },
   chatContainer: { marginBottom: 12 },
   messageBubble: { borderRadius: 16, padding: 14, marginBottom: 10, maxWidth: '90%' },
   userBubble: { backgroundColor: Colors.dark.primaryContainer, alignSelf: 'flex-end', borderBottomRightRadius: 4 },

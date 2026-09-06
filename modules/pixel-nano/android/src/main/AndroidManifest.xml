@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!--
+    ML Kit GenAI talks to AICore (com.google.android.aicore) over a bound service. The package
+    visibility entry lets PackageManager resolve it on Android 11+. No permissions are required.
+  -->
+  <queries>
+    <package android:name="com.google.android.aicore" />
+  </queries>
+</manifest>

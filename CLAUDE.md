@@ -4,7 +4,7 @@ This file is the single source of truth for any coding agent (Claude, Gemini, An
 
 ## Project
 
-PixelForge is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and a local Kotlin Expo Module, `modules/pixel-native`. Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four screens: Silicon (dashboard), AI Lab, Sensors, Docs.
+PixelForge is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and two local Kotlin Expo Modules: `modules/pixel-native` (telemetry and actuators) and `modules/pixel-nano` (Gemini Nano via ML Kit GenAI on AICore). Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four screens: Silicon (dashboard), AI Lab, Sensors, Docs.
 
 Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
 
@@ -38,10 +38,11 @@ Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do
 
 ```
 App.tsx                      shell: fonts, scrims, wordmark, tabs
-modules/pixel-native/        Kotlin Expo Module + TS bridge (index.ts)
+modules/pixel-native/        Kotlin Expo Module + TS bridge (index.ts): telemetry, actuators
+modules/pixel-nano/          Kotlin Expo Module + TS bridge: Gemini Nano (ML Kit GenAI Prompt API)
 src/core/                    types, capabilities, observability
 src/hardware/                device hooks
-src/ai/                      Gemini hooks, TPU/AICore detection, client
+src/ai/                      Gemini cloud hooks, useGeminiNano, TPU/AICore detection, client
 src/theme/                   colors (tokens), mode (state → colour)
 src/components/              HapticButton, MetricCard, SensorVisualizer, Decor
 src/screens/                 Dashboard, AILab, SensorsLab, Docs

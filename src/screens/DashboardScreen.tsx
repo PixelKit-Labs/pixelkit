@@ -216,7 +216,7 @@ export const DashboardScreen: React.FC = () => {
         value={tpu.aicoreInstalled ? 'Installed' : 'Not installed'}
         badge={caps.geminiNanoTier.toUpperCase()}
         badgeColor={tpu.aicoreInstalled ? Colors.dark.tensorGlow : Colors.dark.warning}
-        subtitle={`${tpu.aicoreVersion ?? '—'} • NPU feature ${tpu.hasNpuFeature == null ? '?' : tpu.hasNpuFeature ? 'declared' : 'not declared'} • inference not wired yet`}
+        subtitle={`${tpu.aicoreVersion ?? '—'} • NPU feature ${tpu.hasNpuFeature == null ? '?' : tpu.hasNpuFeature ? 'declared' : 'not declared'} • inference via useGeminiNano`}
         source={tpu.source}
       />
 

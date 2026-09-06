@@ -72,9 +72,9 @@ pixel-delta/ (PixelForge Framework)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
-│   │   ├── useTPU.ts           # AICore / Gemini Nano stack detection (inference not wired yet)
+│   │   ├── useTPU.ts           # AICore / Gemini Nano stack detection (inference lives in useGeminiNano)
 │   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
-│   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
+$1│   │   ├── useGeminiNano.ts    # Gemini Nano on-device chat, status, download, measured latency
 │   │   ├── useVisionAI.ts      # Multimodal camera capture & visual scene inspection
 │   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
 │   │
@@ -112,6 +112,7 @@ import {
   useSensors, 
   useHaptics, 
   useGemini, 
+  useGeminiNano,
   useVisionAI, 
   useDevice, 
   useADPF, 
@@ -132,7 +133,7 @@ import {
 
 ---
 
-> **No mocks rule.** Every hook reads real device state through Expo modules or the local `PixelNative` module (`modules/pixel-native`). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). The only remaining simulations are NFC, BLE, UWB and HiLight, and they are labelled `simulated` in every surface.
+> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`modules/pixel-native`) or the `PixelNano` module (`modules/pixel-nano`, Gemini Nano via ML Kit GenAI). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). The only remaining simulations are NFC, BLE, UWB and HiLight, and they are labelled `simulated` in every surface.
 
 ### 1. `useCPU()` — Real CPU topology and load
 `/proc/cpuinfo` part ids and cpufreq sysfs via PixelNative. On Pixel 11 Pro: `1x Arm C1-Ultra @ 4.11 GHz + 4x Arm C1-Pro @ 3.38 GHz + 2x Arm C1-Pro @ 2.65 GHz`, governor `sched_pixel`.

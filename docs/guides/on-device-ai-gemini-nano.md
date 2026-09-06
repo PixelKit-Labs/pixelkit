@@ -1,6 +1,19 @@
 # On-Device AI with Gemini Nano 4 (AICore + ML Kit GenAI) 🧠
 
-> Build the `pixel-nano` local Expo Module that bridges the **ML Kit GenAI Prompt API** to React Native, then wrap it in a `useGeminiNano` hook with cloud fallback. Target: Pixel 11 / 11 Pro / 11 Pro XL / 11 Pro Fold (Gemini Nano tier `nano-v4`). Works on Pixel 9 and 10 with `nano-v3`.
+> The `pixel-nano` local Expo Module bridges the **ML Kit GenAI Prompt API** to React Native and `useGeminiNano` wraps it. Target: Pixel 11 / 11 Pro / 11 Pro XL / 11 Pro Fold (Gemini Nano tier `nano-v4`). Works on Pixel 9 and 10 with `nano-v3`.
+
+**Status (1.0.2):** implemented in `modules/pixel-nano` and `src/ai/useGeminiNano.ts`, wired into the AI Lab as a second conversation engine. The shipped code differs from the sketches below where the beta4 AAR disagrees with the docs:
+
+| Guide sketch | What genai-prompt 1.0.0-beta4 actually exposes (from the AAR) |
+| :--- | :--- |
+| `checkStatus()` returns a `FeatureStatus` enum | Returns an `Int`; compare with `FeatureStatus.AVAILABLE` etc. |
+| `generateContentRequest(*parts)` vararg | Fixed-arity overloads: `(TextPart)`, `(SystemInstruction, TextPart)`, `(ImagePart, TextPart)`, `(SystemInstruction, ImagePart, TextPart)`, plus `(Content)` builders. One image per request through the builder. |
+| `ModelReleaseTrack` | `ModelReleaseStage.STABLE / PREVIEW`; `ModelPreference.FULL / FAST` |
+| `candidate.finishReason.name` | `Int?` (`Candidate.FinishReason.STOP / MAX_TOKENS / OTHER`) |
+| `Coroutine { }` as a member of the builder | Top-level extension: `import expo.modules.kotlin.functions.Coroutine` |
+| Kotlin versions | beta4 is compiled with Kotlin 2.3 (metadata 2.3.0). Expo 57 builds with 2.1.20, which reads up to 2.2. The module passes `-Xskip-metadata-version-check` and pins `kotlin-stdlib` build-wide to the project version; every `kotlin/` class ML Kit references exists in stdlib 2.1.20 (checked with javap). Expo refuses Kotlin ≥ 2.3, so bumping the project is not an option. |
+
+Structured output (`@Generable`, KSP) and the feature APIs (summarization, proofreading, …) are not wired yet; the module exposes text, one image, system instruction, thinking mode, sampling options, token counting, warm-up and model track selection.
 
 ---
 

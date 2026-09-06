@@ -3,8 +3,8 @@
  * @description Honest view of the Tensor TPU / on-device AI stack. The TPU is only reachable through
  * AICore (Gemini Nano via ML Kit) or LiteRT, so this hook reports what is verifiably present on the
  * device (AICore + Private Compute Services versions, NPU feature flag) and leaves inference metrics
- * null until the `pixel-nano` module exists. `benchmarkTPU` runs a real JS matmul and reports it as a
- * CPU-fallback number, clearly labelled.
+ * null here; real Gemini Nano latency lives in `useGeminiNano` (PixelNano module). `benchmarkTPU` runs a
+ * real JS matmul and reports it as a CPU-fallback number, clearly labelled.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -66,10 +66,10 @@ export function useTPU() {
     privateComputeServicesVersion: pcs?.versionName ?? null,
     /** Android 17 NPU feature flag as declared by the device */
     hasNpuFeature,
-    /** No on-device inference path is wired yet, so nothing runs on the TPU from this app. */
+    /** This hook runs nothing on the TPU; on-device inference is `useGeminiNano`. */
     activeDelegate: (cpuFallbackLatencyMs != null ? 'CPU Fallback' : 'NPU') as TPUAcceleration['activeDelegate'],
     isHardwareAccelerated: false,
-    /** null until the pixel-nano module measures real Gemini Nano latency */
+    /** Always null here; see `useGeminiNano.lastLatencyMs` for measured Gemini Nano latency */
     lastInferenceLatencyMs: null as number | null,
     throughputTokensPerSec: null as number | null,
     memoryFootprintMB: null as number | null,
