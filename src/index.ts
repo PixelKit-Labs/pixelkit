@@ -61,6 +61,7 @@ export { useAudio } from './hardware/useAudio';
 export { useTorch } from './hardware/useTorch';
 export { useBLE } from './hardware/useBLE';
 export { useNFC } from './hardware/useNFC';
+export { useRadios, type RadioTelemetry } from './hardware/useRadios';
 
 // Pixel Pro Exclusive Hardware Hooks
 export { useHiLight, type HiLightMode, type HiLightState } from './hardware/useHiLight';

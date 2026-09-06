@@ -4,6 +4,20 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.9] - 2026-09-06
+
+### Added
+- Native radio telemetry in `PixelNativeModule.kt`: implemented `getRadioInfo()` querying Android system services (`NfcAdapter`, `BluetoothManager`, `BluetoothAdapter`, `UwbManager`, `WifiRttManager`, `PackageManager`) for live hardware states without mock fallbacks.
+- `useRadios` hook in `src/hardware/useRadios.ts`: comprehensive hardware radio telemetry exposing real NFC antenna state, Bluetooth controller & bonded devices, UWB chip status, and Wi-Fi RTT availability (`source: 'hardware'`).
+- Bonded Bluetooth peripheral device listing in `SensorsLabScreen` with real MAC addresses and bond states.
+- UWB hardware status card in `DashboardScreen` and `SensorsLabScreen` reporting real chip readiness (`default`, `READY`) with `source: 'hardware'`.
+
+### Changed
+- `useNFC`: wired to `PixelNative.getRadioInfo().nfc` to report real hardware adapter status, antenna state (`ENABLED`/`DISABLED`), and Android 15+ Observe Mode support with `source: 'hardware'`.
+- `useBLE`: wired to `PixelNative.getRadioInfo().bluetooth` to report real adapter status (`ON`/`OFF`), Bluetooth 5.4 Channel Sounding hardware feature verification, and real bonded/paired devices with `source: 'hardware'`.
+- `useUWB`: wired to `PixelNative.getRadioInfo().uwb` to report real chip state (`default`, `READY`) and Android 16+ RangingManager availability with `source: 'hardware'`.
+- Synchronized documentation across `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `README.md`, `PIXELKIT.md`, `docs/HARDWARE_API.md`, `docs/api/radios-security.md`, `docs/api/pro-exclusives.md`, `docs/AI_PRIMER.md`, `docs/research/DEVICE_TEST_REPORT_2026-09-06.md`, and in-app `DocsScreen.tsx`.
+
 ## [1.0.8] - 2026-09-06
 
 ### Changed

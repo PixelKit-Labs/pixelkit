@@ -11,6 +11,7 @@ This document covers wireless radios, near-field interactions, satellite positio
 * [`useSecurity`](#usesecurity) - SecureStore on the Android Keystore (StrongBox)
 * [`useBLE`](#useble) - Bluetooth 5.4 Low Energy Scanner & Beacon Proximity
 * [`useNFC`](#usenfc) - Contactless NDEF / RFID Smart Tag Controller
+* [`useRadios`](#useradios) - Unified Hardware Radio Subsystem Telemetry
 * [`useLocation`](#uselocation) - Dual-Frequency Multi-Band GNSS (GPS L1/L5)
 
 ---
@@ -71,14 +72,20 @@ export function VaultManager() {
 
 ## `useBLE`
 
-Scans for nearby Bluetooth 5.4 Low Energy beacons, trackers, and smart accessories with RSSI distance estimation.
+Inspects physical Bluetooth adapter status, verifies Bluetooth 5.4 Channel Sounding silicon capabilities, retrieves real paired/bonded devices, and scans for nearby BLE beacons.
 
 ### Signature
 ```typescript
 function useBLE(): {
-  peripherals: BLEPeripheral[];
+  isSupported: boolean;
+  isEnabled: boolean;
+  state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF';
+  channelSounding: boolean;
+  bondedDevices: BondedDevice[];
+  source: 'hardware' | 'simulated';
   isScanning: boolean;
-  startScan: () => void;
+  peripherals: BLEPeripheral[];
+  startScan: () => Promise<void>;
   stopScan: () => void;
 };
 ```
@@ -87,16 +94,61 @@ function useBLE(): {
 
 ## `useNFC`
 
-Interacts with Near Field Communication tags and smart cards touched against the upper third of the rear glass visor.
+Queries physical Near Field Communication adapter status, antenna state, Android 15+ Observe Mode capabilities, and interacts with contactless NDEF smart tags.
 
 ### Signature
 ```typescript
 function useNFC(): {
   isSupported: boolean;
+  isEnabled: boolean;
+  observeModeSupported: boolean;
+  antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
+  source: 'hardware' | 'simulated';
   isScanning: boolean;
   lastScannedTag: NFCTag | null;
   startScan: () => Promise<void>;
-  simulateScan: (mockId?: string, mockPayload?: string) => void;
+  stopScan: () => void;
+};
+```
+
+---
+
+## `useRadios`
+
+Unified hardware radio telemetry directly querying Android system services (`NfcAdapter`, `BluetoothManager`, `UwbManager`, `WifiRttManager`, `PackageManager`) with zero mock fallbacks.
+
+### Signature
+```typescript
+function useRadios(): {
+  nfc: {
+    supported: boolean;
+    enabled: boolean;
+    observeModeSupported: boolean;
+    antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
+  };
+  bluetooth: {
+    supported: boolean;
+    bleSupported: boolean;
+    enabled: boolean;
+    state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF';
+    channelSounding: boolean;
+    bondedDevices: BondedDevice[];
+  };
+  uwb: {
+    supported: boolean;
+    enabled: boolean;
+    chipId: string | null;
+    rangingApiSupported: boolean;
+  };
+  wifiRtt: {
+    supported: boolean;
+    available: boolean;
+  };
+  satellite: {
+    supported: boolean;
+  };
+  source: 'hardware' | 'unavailable';
+  refresh: () => void;
 };
 ```
 

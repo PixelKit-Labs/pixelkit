@@ -22,7 +22,7 @@
 | `useDisplay` keep-awake | **HW** | `SCREEN_BRIGHT_WAKE_LOCK` with `WorkSource{10398 com.pixelkit.sdk}` |
 | `useTPU` | **HW (detection only)** | AICore `0.release.prod_aicore_20260723.00_RC11`, PCS `1.0.release.962568596`; NPU feature flag not declared; inference metrics null by design |
 | `useGemini` / `useVisionAI` / `useSpeechAI` | **Real or error** | Without a key: `sendMessage without key` logged and an error bubble shown. No simulated replies remain. With a key: Gemini `gemini-3.8-flash`, chat via `ai.chats`, vision via structured JSON, transcription via audio input (not exercised without a key) |
-| `useNFC`, `useBLE`, `useUWB` | **SIMULATED (labelled)** | Radios verified present; native paths (react-native-nfc-manager, BLE library, Android 16 RangingManager) not wired yet |
+| `useNFC`, `useBLE`, `useUWB`, `useRadios` | **HW / SIMULATED (labelled)** | Radio adapters verified live via `PixelNative.getRadioInfo()` (`source: 'hardware'`): NFC antenna on/off + Observe Mode, Bluetooth adapter state + bonded devices, UWB chip state (`default`, `READY`). Tag/beacon/ranging RF scans remain simulated until peripheral scan services land |
 | `useHiLight` | **SIMULATED (labelled)** | Hardware present; Google exposes no third-party API |
 | `useTemperature` | **N/A (labelled)** | No thermometer on Pixel 11 Pro |
 

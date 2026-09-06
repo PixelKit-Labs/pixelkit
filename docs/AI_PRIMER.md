@@ -69,7 +69,7 @@ When iterating on UI components:
 ---
 
 ### 7. The Telemetry Provenance Rule (No Mocks)
-Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Only NFC, BLE, UWB and HiLight remain `simulated`, and any UI that shows them must say so. Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
+Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Radio adapter states (NFC antenna, Bluetooth controller, UWB chip) report `source: 'hardware'`; RF scan discoveries remain `simulated` until dedicated background scan services land. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and acts as an on-screen mirror when untethered (`source: 'simulated'`). Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
 
 ---
 
@@ -82,15 +82,16 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **Tensor TPU** | `useTPU()` | `activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec` | Benchmark local neural inference |
 | **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
 | **HiLight LED Ring**| `useHiLight()` | `availability, isDaemonConnected, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array (`hardware` with ADB daemon, `simulated` when untethered) |
-| **UWB Radar** | `useUWB()` | `activeTargets, isRanging, startRanging()` | [Pixel Pro] Distance & AoA (ranging simulated until RangingManager) |
+| **UWB Radar** | `useUWB()` | `isEnabled, chipId, activeTargets, isRanging, startRanging()` | [Pixel Pro] Hardware chip state (`hardware`), distance & AoA |
 | **Camera & Looks** | `useCamera()` | `zoomFactor, maxZoomFactor, selectedLook, setLook()` | expo-camera zoom; Camera Looks are UI state only |
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
 | **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, stopListeningAndTranscribe()` | Voice speech-to-text token transcription |
 | **Vision AI** | `useVisionAI()` | `captureAndAnalyze(cameraRef), analysis` | Multimodal camera inspection |
 | **Conversational** | `useGemini()` | `messages, isLoading, sendMessage(prompt)` | gemini-3.8-flash chat via ai.chats |
 | **On-device Nano** | `useGeminiNano()` | `status, info, messages, partial, sendMessage(prompt), download()` | Gemini Nano through AICore; latency and tok/s measured on device |
-| **Bluetooth LE** | `useBLE()` | `peripherals, isScanning, startScan()` | Nearby beacon & tracker discovery |
-| **NFC Radio** | `useNFC()` | `lastScannedTag, isScanning, startScan()` | Contactless smart tags / RFID |
+| **Bluetooth LE** | `useBLE()` | `state, channelSounding, bondedDevices, peripherals, isScanning` | Physical BT adapter, Channel Sounding, bonded devices & scanner |
+| **NFC Radio** | `useNFC()` | `antennaState, observeModeSupported, lastScannedTag, isScanning` | Physical NFC antenna, Android 15+ Observe Mode & NDEF tag reader |
+| **Hardware Radios** | `useRadios()` | `nfc, bluetooth, uwb, wifiRtt, satellite, source, refresh()` | Unified hardware radio subsystem telemetry |
 | **Flashlight** | `useTorch()` | `isTorchOn, toggleTorch(), startStrobe()` | Dual-LED torch & SOS strobe |
 | **120Hz Display** | `useDisplay()` | `isKeepAwake, toggleKeepAwake(), brightness` | Display wake-lock & LTPO refresh |
 | **Titan M3 Auth** | `useBiometrics()` | `hasHardware, isEnrolled, authenticate(reason)` | Ultrasonic fingerprint & Face Unlock |

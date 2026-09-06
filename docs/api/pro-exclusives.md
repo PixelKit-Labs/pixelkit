@@ -69,16 +69,21 @@ export function HiLightHUD() {
 
 ## `useUWB`
 
-Distance and Angle-of-Arrival to UWB targets. The radio is verified by `useCapabilities`; ranging is simulated until the Android 16 RangingManager path is implemented.
+Ultra-Wideband (UWB) transceiver hardware status and Angle-of-Arrival (AoA) spatial targets. Real hardware chip state (`default`, `READY`) is verified directly from `UwbManager` and `PackageManager` (`source: 'hardware'`); ranging sessions are simulated until Android 16 RangingManager sessions land.
 
 ### Signature
 ```typescript
 function useUWB(): {
   isSupported: boolean;
+  isEnabled: boolean;
+  chipId: string | null;
+  rangingApiSupported: boolean;
+  source: 'hardware' | 'simulated';
   isRanging: boolean;
   activeTargets: UWBSpatialTarget[];
   startRanging: () => Promise<void>;
   stopRanging: () => void;
+  isSupportedOnDevice: boolean;
 };
 ```
 

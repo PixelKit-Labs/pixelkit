@@ -38,10 +38,11 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
 | **Conversational AI** | `useGemini()` | Multi-turn chat on gemini-3.8-flash via ai.chats, API token counts, key in SecureStore; no simulated replies |
 | **On-device Gemini Nano** | `useGeminiNano()` | ML Kit GenAI Prompt API on AICore via `modules/pixel-nano`: status, model name, token limit, streaming tokens, measured latency and decode rate; no cloud fallback |
-| **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband distance & AoA; radio verified, ranging simulated until RangingManager |
+| **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband chip status (READY, default) & AoA; hardware verified, ranging simulated until RangingManager |
 | **Device Capabilities** | `useCapabilities()` | Resolves what this Pixel physically has (HiLight, UWB, Titan M3, Gemini Nano tier) and which Android 16/17 APIs exist |
-| **Contactless NFC** | `useNFC()` | NFC radio controller, NDEF smart tag reader/writer, and simulation runner |
-| **Bluetooth Low Energy**| `useBLE()` | BLE beacon & peripheral scanner with RSSI signal strength distance estimation |
+| **Contactless NFC** | `useNFC()` | Physical NFC controller, antenna state, Android 15+ Observe Mode, and NDEF smart tag reader |
+| **Bluetooth Low Energy**| `useBLE()` | Physical Bluetooth adapter, Channel Sounding verification, paired/bonded devices, and BLE scanner |
+| **Hardware Radios** | `useRadios()` | Unified hardware radio subsystem telemetry (NFC, BLE, UWB, Wi-Fi RTT, Satellite) from Android system services |
 | **Flashlight / Torch** | `useTorch()` | CameraManager torch with 21 brightness levels (Android 13+), system torch callback, SOS strobe |
 | **Super Actua Display**| `useDisplay()` | Live refresh rate + ARR support, 1-120 Hz mode list, HDR types, preferred-rate control, wake lock, brightness |
 | **Biometrics** | `useBiometrics()` | Titan M3-backed under-display Fingerprint and Class 3 Face Unlock authentication |
@@ -157,8 +158,9 @@ Pixel delta/ (PixelKit Framework)
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
 │   │   ├── useCapabilities.ts  # Device capability resolution (what this Pixel really has)
 │   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
-│   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
-│   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
+│   │   ├── useBLE.ts           # Bluetooth Low Energy adapter, channel sounding & bonded devices
+│   │   ├── useNFC.ts           # Contactless NFC adapter, antenna state & NDEF tag reader
+│   │   ├── useRadios.ts        # Unified hardware radio telemetry (NFC, BLE, UWB, RTT, Satellite)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer (4 hooks + client)

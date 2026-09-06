@@ -1,20 +1,22 @@
 /**
  * @file useNFC.ts
  * @description Contactless Near Field Communication (NFC) radio reader and writer.
- * Handles NDEF smart posters, RFID cards, and contactless peripheral identification.
+ * Queries physical NfcAdapter state, antenna status, and Android 15+ Observe Mode capabilities.
  */
 
 import { useState } from 'react';
+import PixelNative from '../../modules/pixel-native';
+import { type TelemetrySource } from '../core/observability';
 import { NFCTag } from '../core/types';
 
 /**
- * Hook to control NFC polling and process contactless tag payloads.
+ * Hook to control NFC polling and inspect hardware adapter telemetry.
  *
- * @returns Object providing scanning state, last scanned tag, and start/stop triggers.
+ * @returns Object providing antenna state, observe mode support, scanning state, and tag controls.
  *
  * @example
  * ```typescript
- * const { isScanning, lastScannedTag, startScan } = useNFC();
+ * const { isEnabled, antennaState, observeModeSupported, isScanning, lastScannedTag, startScan } = useNFC();
  * await startScan();
  * if (lastScannedTag) {
  *   console.log(`Discovered NFC Tag: ${lastScannedTag.payload}`);
@@ -24,6 +26,13 @@ import { NFCTag } from '../core/types';
 export function useNFC() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [lastScannedTag, setLastScannedTag] = useState<NFCTag | null>(null);
+
+  const nativeInfo = PixelNative?.getRadioInfo?.()?.nfc;
+  const isSupported = nativeInfo?.supported ?? false;
+  const isEnabled = nativeInfo?.enabled ?? false;
+  const observeModeSupported = nativeInfo?.observeModeSupported ?? false;
+  const antennaState = nativeInfo?.antennaState ?? (isSupported ? 'ENABLED' : 'UNAVAILABLE');
+  const source: TelemetrySource = PixelNative ? 'hardware' : 'simulated';
 
   /**
    * Initiates NFC RF field listening for nearby tags.
@@ -50,6 +59,16 @@ export function useNFC() {
   };
 
   return {
+    /** Whether device hardware has NFC support */
+    isSupported,
+    /** Whether NFC adapter is powered on in Android Settings */
+    isEnabled,
+    /** Whether Android 15+ Observe Mode is supported (allows host RF card emulation observation) */
+    observeModeSupported,
+    /** Current NFC antenna state ('ENABLED' | 'DISABLED' | 'UNAVAILABLE') */
+    antennaState,
+    /** Provenance of the adapter telemetry */
+    source,
     /** Whether the NFC controller is actively listening for tags */
     isScanning,
     /** Most recently read NFC tag payload and metadata */
@@ -60,3 +79,4 @@ export function useNFC() {
     stopScan,
   };
 }
+

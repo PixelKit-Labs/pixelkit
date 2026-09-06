@@ -1,22 +1,24 @@
 /**
  * @file useBLE.ts
- * @description Bluetooth Low Energy (BLE) peripheral discovery and RSSI proximity beacon tracking.
- * Scans for nearby fitness trackers, smart home devices, ESP32/Arduino peripherals, and BLE beacons.
+ * @description Bluetooth Low Energy (BLE) peripheral discovery, bonded devices, and RSSI tracking.
+ * Reads physical adapter state, Bluetooth 5.4 Channel Sounding hardware support, and bonded devices.
  */
 
 import { useState } from 'react';
+import PixelNative, { type BondedDevice } from '../../modules/pixel-native';
+import { type TelemetrySource } from '../core/observability';
 import { BLEPeripheral } from '../core/types';
 
 /**
- * Hook to discover nearby Bluetooth Low Energy devices and calculate signal proximity.
+ * Hook to discover nearby Bluetooth Low Energy devices and inspect bonded peripherals.
  *
- * @returns Object providing discovered peripherals, scanning state, and scan controls.
+ * @returns Object providing discovered peripherals, bonded devices, hardware state, and scan controls.
  *
  * @example
  * ```typescript
- * const { isScanning, peripherals, startScan, stopScan } = useBLE();
+ * const { state, channelSounding, bondedDevices, isScanning, peripherals, startScan } = useBLE();
  * await startScan();
- * console.log(`Discovered ${peripherals.length} BLE devices`);
+ * console.log(`Bonded: ${bondedDevices.length}, Discovered: ${peripherals.length}`);
  * ```
  */
 export function useBLE() {
@@ -37,6 +39,14 @@ export function useBLE() {
       lastSeenTimestamp: Date.now(),
     }
   ]);
+
+  const nativeInfo = PixelNative?.getRadioInfo?.()?.bluetooth;
+  const isSupported = nativeInfo?.supported ?? false;
+  const isEnabled = nativeInfo?.enabled ?? false;
+  const state = nativeInfo?.state ?? (isEnabled ? 'ON' : 'OFF');
+  const channelSounding = nativeInfo?.channelSounding ?? false;
+  const bondedDevices: BondedDevice[] = nativeInfo?.bondedDevices ?? [];
+  const source: TelemetrySource = PixelNative ? 'hardware' : 'simulated';
 
   /**
    * Begins Bluetooth Low Energy discovery.
@@ -66,6 +76,18 @@ export function useBLE() {
   };
 
   return {
+    /** Whether device hardware has Bluetooth Low Energy */
+    isSupported,
+    /** Whether Bluetooth is switched on in Android Settings */
+    isEnabled,
+    /** Bluetooth adapter state ('ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF') */
+    state,
+    /** True if Bluetooth Channel Sounding (fine ranging) is supported by silicon */
+    channelSounding,
+    /** Real paired/bonded Bluetooth peripherals from Android BluetoothAdapter */
+    bondedDevices,
+    /** Provenance of the adapter telemetry */
+    source,
     /** Whether BLE radio is actively scanning */
     isScanning,
     /** List of discovered nearby peripherals */
@@ -76,3 +98,4 @@ export function useBLE() {
     stopScan,
   };
 }
+

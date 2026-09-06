@@ -55,6 +55,43 @@ export type PrimitiveStep = { primitive: 'CLICK' | 'TICK' | 'THUD' | 'SPIN' | 'Q
 
 export type PackageVersion = { installed: boolean; versionName: string | null; versionCode: number | null };
 
+export type BondedDevice = {
+  name: string;
+  address: string;
+  type: number;
+  bondState: 'BONDED' | 'BONDING' | 'NONE';
+};
+
+export type RadioInfo = {
+  nfc: {
+    supported: boolean;
+    enabled: boolean;
+    observeModeSupported: boolean;
+    antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
+  };
+  bluetooth: {
+    supported: boolean;
+    bleSupported: boolean;
+    enabled: boolean;
+    state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF';
+    channelSounding: boolean;
+    bondedDevices: BondedDevice[];
+  };
+  uwb: {
+    supported: boolean;
+    enabled: boolean;
+    chipId: string | null;
+    rangingApiSupported: boolean;
+  };
+  wifiRtt: {
+    supported: boolean;
+    available: boolean;
+  };
+  satellite: {
+    supported: boolean;
+  };
+};
+
 type Events = {
   onThermalStatus(e: { status: number }): void;
   onFrameStats(e: FrameStats): void;
@@ -79,6 +116,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;
   cancelVibration(): boolean;
+  getRadioInfo(): RadioInfo;
 }
 
 /** `null` when the native module is absent (web, Expo Go, or not yet built). */

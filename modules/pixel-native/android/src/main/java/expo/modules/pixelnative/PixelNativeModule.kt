@@ -1,10 +1,15 @@
 package expo.modules.pixelnative
 
 import android.app.ActivityManager
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.net.wifi.rtt.WifiRttManager
+import android.nfc.NfcAdapter
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.GLES20
@@ -261,6 +266,9 @@ class PixelNativeModule : Module() {
 
     Function("cancelVibration") { vibrator().cancel(); true }
 
+    // ───────────────────────── Radios ─────────────────────────
+    Function("getRadioInfo") { radioInfo() }
+
     OnDestroy {
       frameCallback = null
       thermalListener?.let { (context.getSystemService(Context.POWER_SERVICE) as PowerManager).removeThermalStatusListener(it) }
@@ -457,6 +465,118 @@ class PixelNativeModule : Module() {
     }
     frameCallback = cb
     mainHandler.post { Choreographer.getInstance().postFrameCallback(cb) }
+  }
+
+  private fun radioInfo(): Map<String, Any?> {
+    val pm = context.packageManager
+
+    // NFC
+    val nfcSupported = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+    val nfcAdapter = try { NfcAdapter.getDefaultAdapter(context) } catch (e: Throwable) { null }
+    val nfcEnabled = nfcAdapter?.isEnabled ?: false
+    val nfcObserveMode = if (Build.VERSION.SDK_INT >= 35 && nfcAdapter != null) {
+      try { nfcAdapter.isObserveModeSupported } catch (e: Throwable) { false }
+    } else false
+    val nfcMap = mapOf(
+      "supported" to nfcSupported,
+      "enabled" to nfcEnabled,
+      "observeModeSupported" to nfcObserveMode,
+      "antennaState" to if (!nfcSupported) "UNAVAILABLE" else if (nfcEnabled) "ENABLED" else "DISABLED"
+    )
+
+    // Bluetooth
+    val btSupported = pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
+    val bleSupported = pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
+    val bleChannelSounding = if (Build.VERSION.SDK_INT >= 34) {
+      pm.hasSystemFeature("android.hardware.bluetooth_le.channel_sounding")
+    } else false
+    val btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    val btAdapter = btManager?.adapter ?: try { BluetoothAdapter.getDefaultAdapter() } catch (e: Throwable) { null }
+    val btEnabled = btAdapter?.isEnabled ?: false
+    val btStateStr = when (btAdapter?.state) {
+      BluetoothAdapter.STATE_ON -> "ON"
+      BluetoothAdapter.STATE_OFF -> "OFF"
+      BluetoothAdapter.STATE_TURNING_ON -> "TURNING_ON"
+      BluetoothAdapter.STATE_TURNING_OFF -> "TURNING_OFF"
+      else -> if (btEnabled) "ON" else "OFF"
+    }
+    val bondedList = mutableListOf<Map<String, Any?>>()
+    if (btEnabled && btAdapter != null) {
+      try {
+        val bonded = btAdapter.bondedDevices
+        if (bonded != null) {
+          for (dev in bonded) {
+            bondedList.add(mapOf(
+              "name" to (dev.name ?: "Bluetooth Peripheral"),
+              "address" to dev.address,
+              "type" to dev.type,
+              "bondState" to when (dev.bondState) {
+                BluetoothDevice.BOND_BONDED -> "BONDED"
+                BluetoothDevice.BOND_BONDING -> "BONDING"
+                else -> "NONE"
+              }
+            ))
+          }
+        }
+      } catch (e: Throwable) {
+        // Permission or restricted
+      }
+    }
+    val btMap = mapOf(
+      "supported" to btSupported,
+      "bleSupported" to bleSupported,
+      "enabled" to btEnabled,
+      "state" to btStateStr,
+      "channelSounding" to bleChannelSounding,
+      "bondedDevices" to bondedList
+    )
+
+    // UWB
+    val uwbSupported = pm.hasSystemFeature("android.hardware.uwb")
+    var uwbEnabled: Boolean? = null
+    if (uwbSupported && Build.VERSION.SDK_INT >= 31) {
+      try {
+        val uwbManager = context.getSystemService("uwb")
+        if (uwbManager != null) {
+          val m = uwbManager.javaClass.methods.firstOrNull { it.name == "isUwbEnabled" && it.parameterCount == 0 }
+          uwbEnabled = (m?.invoke(uwbManager) as? Boolean) ?: true
+        } else {
+          uwbEnabled = true
+        }
+      } catch (e: Throwable) {
+        uwbEnabled = true
+      }
+    }
+    val uwbMap = mapOf(
+      "supported" to uwbSupported,
+      "enabled" to (uwbEnabled ?: uwbSupported),
+      "chipId" to if (uwbSupported) "default" else null,
+      "rangingApiSupported" to (Build.VERSION.SDK_INT >= 36)
+    )
+
+    // Wi-Fi RTT
+    val wifiRttSupported = pm.hasSystemFeature("android.hardware.wifi.rtt")
+    val rttManager = if (Build.VERSION.SDK_INT >= 28) {
+      context.getSystemService(Context.WIFI_RTT_RANGING_SERVICE) as? WifiRttManager
+    } else null
+    val wifiRttMap = mapOf(
+      "supported" to wifiRttSupported,
+      "available" to (rttManager?.isAvailable ?: false)
+    )
+
+    // Satellite
+    val satelliteSupported = pm.hasSystemFeature("android.hardware.telephony.satellite")
+    val satelliteMap = mapOf(
+      "supported" to satelliteSupported
+    )
+
+    return mapOf(
+      "nfc" to nfcMap,
+      "bluetooth" to btMap,
+      "uwb" to uwbMap,
+      "wifiRtt" to wifiRttMap,
+      "satellite" to satelliteMap
+    )
   }
 
   companion object {

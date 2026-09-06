@@ -66,8 +66,9 @@ pixel-delta/ (PixelKit Framework)
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
 │   │   ├── useCapabilities.ts  # Device capability resolution (HiLight/UWB/Nano tier/API level)
 │   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
-│   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
-│   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
+│   │   ├── useBLE.ts           # Bluetooth Low Energy adapter, channel sounding & bonded devices
+│   │   ├── useNFC.ts           # Contactless NFC adapter, antenna state & NDEF tag reader
+│   │   ├── useRadios.ts        # Unified hardware radio telemetry (NFC, BLE, UWB, RTT, Satellite)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
@@ -187,9 +188,10 @@ console.log(`Transcribed voice: "${result?.transcript}" (${result?.latencyMs}ms)
 ---
 
 ### 6. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
-Distance and Angle-of-Arrival to UWB targets (ranging simulated until RangingManager):
+Hardware UWB chip state (default, READY) and spatial targets (ranging simulated until RangingManager):
 ```typescript
-const { activeTargets, isRanging, startRanging } = useUWB();
+const { isEnabled, chipId, activeTargets, isRanging, startRanging } = useUWB();
+console.log(`UWB Chip: ${chipId} (${isEnabled ? 'READY' : 'OFF'})`);
 await startRanging();
 activeTargets.forEach(target => {
   console.log(`${target.deviceId}: ${target.distanceMeters}m at ${target.azimuthDegrees}° azimuth`);
@@ -198,10 +200,11 @@ activeTargets.forEach(target => {
 
 ---
 
-### 7. `useBLE()` — Bluetooth Low Energy Beacon & Peripheral Discovery
-Discovers nearby fitness bands, smart home peripherals, and BLE beacons with signal strength distance estimation:
+### 7. `useBLE()` — Bluetooth Low Energy Adapter & Bonded Devices
+Reads physical adapter state, Bluetooth 5.4 Channel Sounding support, and bonded devices:
 ```typescript
-const { isScanning, peripherals, startScan } = useBLE();
+const { state, channelSounding, bondedDevices, isScanning, peripherals, startScan } = useBLE();
+console.log(`Bluetooth: ${state}, Channel Sounding: ${channelSounding}, Bonded: ${bondedDevices.length}`);
 await startScan();
 peripherals.forEach(p => console.log(`${p.name}: ${p.rssi} dBm (~${p.estimatedDistanceMeters}m)`));
 ```

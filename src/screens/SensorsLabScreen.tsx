@@ -16,6 +16,7 @@ import { useAudio } from '../hardware/useAudio';
 import { useDisplay } from '../hardware/useDisplay';
 import { useNFC } from '../hardware/useNFC';
 import { useBLE } from '../hardware/useBLE';
+import { useUWB } from '../hardware/useUWB';
 import { useCapabilities } from '../hardware/useCapabilities';
 import { SensorVisualizer } from '../components/SensorVisualizer';
 import { MetricCard } from '../components/MetricCard';
@@ -32,6 +33,7 @@ export const SensorsLabScreen: React.FC = () => {
   const display = useDisplay();
   const nfc = useNFC();
   const ble = useBLE();
+  const uwb = useUWB();
   const caps = useCapabilities();
 
   const [activeTab, setActiveTab] = useState<'motion' | 'haptics' | 'radios' | 'audio'>('motion');
@@ -152,16 +154,47 @@ export const SensorsLabScreen: React.FC = () => {
 
           <SectionHeader title="Near Field Communication" />
           <MetricCard
-            title="NFC transceiver"
+            title="NFC controller"
+            value={nfc.antennaState}
+            badge={nfc.observeModeSupported ? 'OBSERVE MODE' : nfc.isEnabled ? 'ACTIVE' : 'OFF'}
+            badgeColor={nfc.isEnabled ? Colors.dark.success : Colors.dark.textMuted}
+            subtitle={`Observe mode: ${nfc.observeModeSupported ? 'Supported (Android 15+)' : 'Unsupported'} • Host card emulation active`}
+            source={nfc.source}
+          />
+          <MetricCard
+            title="NFC tag reader"
             value={nfc.isScanning ? 'Scanning…' : (nfc.lastScannedTag ? 'Tag detected' : 'Standby')}
-            badge="SIMULATED"
-            badgeColor={Colors.dark.warning}
-            subtitle={nfc.lastScannedTag ? `ID ${nfc.lastScannedTag.id} • ${nfc.lastScannedTag.payload}` : 'Reader/writer not wired to hardware yet (react-native-nfc-manager planned)'}
+            badge={nfc.lastScannedTag ? nfc.lastScannedTag.tech : 'SIMULATED'}
+            badgeColor={nfc.lastScannedTag ? Colors.dark.success : Colors.dark.warning}
+            subtitle={nfc.lastScannedTag ? `ID ${nfc.lastScannedTag.id} • ${nfc.lastScannedTag.payload}` : 'Touch NFC tag to upper third of phone to read NDEF payload'}
             source="simulated"
           />
           <HapticButton title={nfc.isScanning ? 'Scanning (simulated)…' : 'Run simulated NFC scan'} onPress={nfc.startScan} disabled={nfc.isScanning} variant="secondary" style={{ marginBottom: 20 }} />
 
           <SectionHeader title="Bluetooth Low Energy" />
+          <MetricCard
+            title="Bluetooth adapter"
+            value={ble.state}
+            badge={ble.channelSounding ? 'CHANNEL SOUNDING' : 'BLE 5.4'}
+            badgeColor={ble.isEnabled ? Colors.dark.success : Colors.dark.textMuted}
+            subtitle={`Channel sounding: ${ble.channelSounding ? 'Hardware supported' : 'Unsupported'} • ${ble.bondedDevices.length} bonded peripheral${ble.bondedDevices.length === 1 ? '' : 's'}`}
+            source={ble.source}
+          />
+          {ble.bondedDevices.length > 0 && (
+            <View style={{ marginBottom: 12 }}>
+              {ble.bondedDevices.map((dev) => (
+                <MetricCard
+                  key={dev.address}
+                  title={dev.name}
+                  value={dev.bondState}
+                  badge={dev.type === 2 ? 'LE' : dev.type === 1 ? 'CLASSIC' : 'DUAL'}
+                  badgeColor={Colors.dark.accent}
+                  subtitle={`MAC: ${dev.address}`}
+                  source="hardware"
+                />
+              ))}
+            </View>
+          )}
           <HapticButton title={ble.isScanning ? 'Scanning (simulated)…' : 'Run simulated BLE scan'} onPress={ble.startScan} disabled={ble.isScanning} variant="secondary" style={{ marginBottom: 12 }} />
           {ble.peripherals.map((device) => (
             <MetricCard
@@ -171,6 +204,28 @@ export const SensorsLabScreen: React.FC = () => {
               badge={`~${device.estimatedDistanceMeters} m`}
               badgeColor={Colors.dark.warning}
               subtitle={`${device.id} • simulated peripheral`}
+              source="simulated"
+            />
+          ))}
+
+          <SectionHeader title="Ultra-Wideband (UWB)" />
+          <MetricCard
+            title="UWB transceiver"
+            value={uwb.isEnabled ? 'Ready' : (uwb.isSupported ? 'Disabled' : 'Not present')}
+            badge={uwb.chipId ? `CHIP: ${uwb.chipId.toUpperCase()}` : 'ABSENT'}
+            badgeColor={uwb.isEnabled ? Colors.dark.success : Colors.dark.textMuted}
+            subtitle={`Ranging API: ${uwb.rangingApiSupported ? 'Android 16+ IRangingAdapter active' : 'Legacy'} • Chip: ${uwb.chipId ?? 'none'}`}
+            source={uwb.source}
+          />
+          <HapticButton title={uwb.isRanging ? 'Simulated ranging…' : 'Run simulated UWB ranging'} onPress={uwb.startRanging} disabled={uwb.isRanging} variant="secondary" style={{ marginBottom: 12 }} />
+          {uwb.activeTargets.map((target) => (
+            <MetricCard
+              key={target.deviceId}
+              title={target.deviceId}
+              value={`${target.distanceMeters.toFixed(2)} m`}
+              badge={`${target.azimuthDegrees > 0 ? '+' : ''}${target.azimuthDegrees.toFixed(1)}°`}
+              badgeColor={Colors.dark.warning}
+              subtitle={`Elevation: ${target.elevationDegrees.toFixed(1)}° • Quality: ${Math.round(target.signalQuality * 100)}%`}
               source="simulated"
             />
           ))}

@@ -226,26 +226,31 @@ function StatusRing() {
     id: 'useUWB',
     name: 'useUWB',
     category: 'pro',
-    chipBadge: 'UWB radio present · SIMULATED',
+    chipBadge: 'UWB Chip (default) · HARDWARE',
     badgeColor: '#4785FF',
-    summary: 'UWB distance and angle-of-arrival targets. The radio is verified present; ranging is simulated until the Android 16 RangingManager path lands.',
-    description: 'Returns distance (m), azimuth and elevation per target. useCapabilities().hasUWB is device-verified; activeTargets are simulated values and are labelled SIMULATED in the UI.',
+    summary: 'UWB transceiver hardware status and Angle-of-Arrival (AoA) spatial targets. Chip state is verified from hardware.',
+    description: 'Returns distance (m), azimuth and elevation per target. Physical UWB chip state (default, READY) is verified from hardware; activeTargets are simulated values until Android 16 RangingManager sessions land.',
     signature: 'useUWB(): UWBState',
     returns: [
       'isSupported: boolean',
+      'isEnabled: boolean',
+      'chipId: string | null',
+      'rangingApiSupported: boolean',
+      "source: 'hardware' | 'simulated'",
       'isRanging: boolean',
-      'activeTargets: UWBTarget[]',
+      'activeTargets: UWBSpatialTarget[]',
       'startRanging(): Promise<void>',
       'stopRanging(): void',
     ],
     example: `import { useUWB } from './src';
 
 function SpatialRadar() {
-  const { activeTargets, isRanging, startRanging } = useUWB();
+  const { isEnabled, chipId, activeTargets, isRanging, startRanging } = useUWB();
   return (
     <View>
+      <Text>UWB: {chipId} ({isEnabled ? 'READY' : 'OFF'})</Text>
       {activeTargets.map(t => (
-        <Text key={t.id}>{t.name}: {t.distanceMeters.toFixed(2)}m (Azimuth: {t.azimuthDegrees}°)</Text>
+        <Text key={t.deviceId}>{t.deviceId}: {t.distanceMeters.toFixed(2)}m ({t.azimuthDegrees}°)</Text>
       ))}
       <Button title={isRanging ? "Ranging Active" : "Start UWB"} onPress={startRanging} />
     </View>
@@ -562,12 +567,18 @@ function KeyManager() {
     id: 'useBLE',
     name: 'useBLE',
     category: 'radios',
-    chipBadge: 'Bluetooth 5.4 LE',
+    chipBadge: 'Bluetooth 5.4 LE · HARDWARE',
     badgeColor: '#C2E7FF',
-    summary: 'Bluetooth Low Energy scanning, peripheral discovery, and RSSI proximity tracking.',
-    description: 'Scans for nearby BLE beacons, tags, and accessories with signal strength tracking.',
+    summary: 'Bluetooth Low Energy adapter state, Channel Sounding verification, bonded devices, and RSSI tracking.',
+    description: 'Reads physical adapter state, Bluetooth 5.4 Channel Sounding hardware support, and bonded devices directly from Android BluetoothAdapter.',
     signature: 'useBLE(): BLEState',
     returns: [
+      'isSupported: boolean',
+      'isEnabled: boolean',
+      "state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF'",
+      'channelSounding: boolean',
+      'bondedDevices: BondedDevice[]',
+      "source: 'hardware' | 'simulated'",
       'isScanning: boolean',
       'peripherals: BLEPeripheral[]',
       'startScan(): Promise<void>',
@@ -576,43 +587,82 @@ function KeyManager() {
     example: `import { useBLE } from './src';
 
 function BeaconScanner() {
-  const { peripherals, isScanning, startScan } = useBLE();
+  const { state, channelSounding, bondedDevices, peripherals, isScanning, startScan } = useBLE();
   return (
     <View>
+      <Text>Bluetooth: {state} · Channel Sounding: {channelSounding ? 'Yes' : 'No'}</Text>
+      <Text>Bonded Devices: {bondedDevices.length}</Text>
       <Button title={isScanning ? "Scanning..." : "Scan BLE"} onPress={startScan} />
       {peripherals.map(p => <Text key={p.id}>{p.name} ({p.rssi} dBm)</Text>)}
     </View>
   );
 }`,
-    aiTip: 'AI Tip: RSSI is logarithmic. Distance estimates are approximations; pair with UWB for true cm accuracy.',
+    aiTip: 'AI Tip: RSSI is logarithmic. Channel Sounding enables true high-accuracy physical distance measurement on supported silicon.',
   },
   {
     id: 'useNFC',
     name: 'useNFC',
     category: 'radios',
-    chipBadge: 'NFC NDEF Controller',
+    chipBadge: 'NFC Controller · HARDWARE',
     badgeColor: '#C2E7FF',
-    summary: 'Contactless smart tag detection and NDEF record decoding.',
-    description: 'Detects and reads RFID tags and NFC smart cards touched to the back of the Pixel 11 Pro.',
+    summary: 'Contactless Near Field Communication adapter state, Android 15+ Observe Mode, and NDEF smart tag decoding.',
+    description: 'Inspects physical NfcAdapter antenna status and Android 15+ Observe Mode capabilities. Detects and reads RFID tags and NFC smart cards touched to the back of the phone.',
     signature: 'useNFC(): NFCState',
     returns: [
       'isSupported: boolean',
+      'isEnabled: boolean',
+      'observeModeSupported: boolean',
+      "antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE'",
+      "source: 'hardware' | 'simulated'",
       'isScanning: boolean',
       'lastScannedTag: NFCTag | null',
       'startScan(): Promise<void>',
+      'stopScan(): void',
     ],
     example: `import { useNFC } from './src';
 
 function NFCReader() {
-  const { lastScannedTag, startScan } = useNFC();
+  const { antennaState, observeModeSupported, lastScannedTag, startScan } = useNFC();
   return (
     <View>
+      <Text>Antenna: {antennaState} · Observe Mode: {observeModeSupported ? 'Supported' : 'No'}</Text>
       <Button title="Scan NFC Tag" onPress={startScan} />
       {lastScannedTag && <Text>Tag ID: {lastScannedTag.id} Payload: {lastScannedTag.payload}</Text>}
     </View>
   );
 }`,
     aiTip: 'AI Tip: Prompt the user to touch the tag against the upper third of the rear phone glass.',
+  },
+  {
+    id: 'useRadios',
+    name: 'useRadios',
+    category: 'radios',
+    chipBadge: 'All Radios · HARDWARE',
+    badgeColor: '#C2E7FF',
+    summary: 'Comprehensive hardware telemetry across NFC, Bluetooth LE, UWB, Wi-Fi RTT, and satellite communication directly from Android system services.',
+    description: 'Reads physical adapter states, Channel Sounding, Observe Mode, UWB chip status, and paired devices without mock fallbacks.',
+    signature: 'useRadios(): RadioTelemetry',
+    returns: [
+      'nfc: { supported, enabled, observeModeSupported, antennaState }',
+      'bluetooth: { supported, bleSupported, enabled, state, channelSounding, bondedDevices }',
+      'uwb: { supported, enabled, chipId, rangingApiSupported }',
+      'wifiRtt: { supported, available }',
+      'satellite: { supported }',
+      "source: 'hardware' | 'unavailable'",
+      'refresh(): void',
+    ],
+    example: `import { useRadios } from './src';
+
+function RadioStatus() {
+  const { nfc, bluetooth, uwb, source } = useRadios();
+  return (
+    <View>
+      <Text>NFC: {nfc.antennaState} · Bluetooth: {bluetooth.state}</Text>
+      <Text>UWB Chip: {uwb.chipId ?? 'none'} · Source: {source}</Text>
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Use useRadios for an instant, unified hardware overview before launching fine-grained radio sessions.',
   },
   {
     id: 'useLocation',

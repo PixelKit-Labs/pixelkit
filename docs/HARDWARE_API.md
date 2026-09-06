@@ -32,6 +32,7 @@ This document is the consolidated reference for every hook in the PixelKit SDK (
    - [useSecurity](#usesecurity) (SecureStore on the Android Keystore)
    - [useBLE](#useble) (Bluetooth 5.4 LE)
    - [useNFC](#usenfc) (NDEF Controller)
+   - [useRadios](#useradios) (Unified Radio Telemetry)
    - [useLocation](#uselocation) (Dual-Band L1/L5 GNSS)
 7. [System & Media Hooks](#system--media-hooks)
    - [useAudio](#useaudio) (expo-audio dBFS meter)
@@ -198,8 +199,8 @@ function NotificationRing() {
 
 ### `useUWB`
 * **File Path**: `src/hardware/useUWB.ts`
-* **Target Hardware**: Ultra-Wideband (UWB) Spatial Radar Transceiver.
-* **Description**: Distance, azimuth and elevation to UWB targets. The radio is verified by `useCapabilities`; ranging is simulated until the RangingManager path lands.
+* **Target Hardware**: Ultra-Wideband (UWB) Spatial Radar Transceiver (`UwbManager`, chip ID `default`).
+* **Description**: Hardware chip state (`default`, `READY`), enabled status, and distance, azimuth and elevation to UWB targets. Physical UWB transceiver state is verified from hardware (`source: 'hardware'`); ranging sessions are simulated until Android 16 RangingManager sessions land.
 
 ---
 
@@ -328,15 +329,22 @@ interface SecurityState {
 
 ### `useBLE`
 * **File Path**: `src/hardware/useBLE.ts`
-* **Target Hardware**: Bluetooth 5.4 Low Energy Radio.
-* **Description**: Discovery of nearby BLE peripherals, beacons, and RSSI proximity tracking.
+* **Target Hardware**: Bluetooth 5.4 Low Energy Radio (`BluetoothAdapter`, `BluetoothManager`).
+* **Description**: Real hardware adapter status (`ON`/`OFF`), Bluetooth 5.4 Channel Sounding hardware feature verification, real bonded/paired devices, and discovery of nearby BLE peripherals.
 
 ---
 
 ### `useNFC`
 * **File Path**: `src/hardware/useNFC.ts`
-* **Target Hardware**: Near Field Communication (NFC) Controller.
-* **Description**: Reads contactless NDEF records and RFID tags.
+* **Target Hardware**: Near Field Communication (NFC) Controller (`NfcAdapter`).
+* **Description**: Hardware adapter power state, antenna state (`ENABLED`/`DISABLED`), Android 15+ Observe Mode capability, and contactless NDEF smart tag detection.
+
+---
+
+### `useRadios`
+* **File Path**: `src/hardware/useRadios.ts`
+* **Target Hardware**: Unified radio subsystem (NFC, Bluetooth LE, UWB, Wi-Fi RTT, Satellite Telephony).
+* **Description**: Comprehensive hardware radio telemetry directly queried from Android system services (`NfcAdapter`, `BluetoothManager`, `UwbManager`, `WifiRttManager`, `PackageManager`).
 
 ---
 

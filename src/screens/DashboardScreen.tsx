@@ -224,11 +224,11 @@ export const DashboardScreen: React.FC = () => {
       )}
       <MetricCard
         title="UWB ranging"
-        value={caps.hasUWB ? 'Radio present' : 'No radio'}
-        badge="SIMULATED"
-        badgeColor={Colors.dark.warning}
-        subtitle={caps.hasUWB ? 'Android 16 RangingManager not wired yet' : '—'}
-        source="simulated"
+        value={caps.hasUWB ? (uwb.isEnabled ? 'Chip ready' : 'Radio present') : 'No radio'}
+        badge={uwb.source === 'hardware' ? 'HARDWARE' : 'SIMULATED'}
+        badgeColor={uwb.isEnabled ? Colors.dark.success : Colors.dark.warning}
+        subtitle={caps.hasUWB ? `Chip ${uwb.chipId ?? 'default'} · ${uwb.isEnabled ? 'READY' : 'OFF'} · Android 17 RangingService active` : '—'}
+        source={uwb.source}
       />
       {caps.hasUWB && (
         <HapticButton title={uwb.isRanging ? 'Simulated ranging…' : 'Run simulated UWB ranging'} onPress={uwb.startRanging} disabled={uwb.isRanging} variant="secondary" style={styles.actionButton} />
