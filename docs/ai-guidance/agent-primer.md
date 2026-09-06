@@ -52,6 +52,11 @@ Style dark backgrounds with `#0B0D11` from `Colors.dark.background`. Self-emissi
 ### Law 5: The Titan M3 Post-Quantum Enclave Rule
 Never store credentials or API keys in plaintext files or unencrypted storage. Always persist secrets via `useSecurity().saveSecureItem()` which routes into the **Titan M3** hardware enclave with **Post-Quantum Cryptography (PQC)**.
 
+### Law 6: Visual Context via React Grab & Android Layout
+When inspecting or editing UI components:
+* In Web Browser mode (`npm run web`), leverage **React Grab**: hold `Ctrl+C` (Windows) / `Cmd+C` (macOS) and click any element to copy its precise component stack and file path to clipboard.
+* On Android devices/emulators, use `android layout` (JSON UI tree) and `android screen` (visual coordinates) from the Google Android CLI.
+
 ---
 
 ## 📋 Copy-Paste System Prompt Directive

@@ -40,17 +40,27 @@ export const HapticEnvelopes = {
   ] as EnvelopePoint[],
 };
 
+/** Vibrator capabilities never change at runtime; read once per app, not once per button. */
+let cachedInfo: HapticsInfo | null | undefined;
+function readHapticsInfo(): HapticsInfo | null {
+  if (cachedInfo !== undefined) return cachedInfo;
+  if (!PixelNative) { cachedInfo = null; return null; }
+  try {
+    cachedInfo = PixelNative.getHapticsInfo();
+    logEvent(MODULE, 'vibrator', cachedInfo as unknown as Record<string, unknown>);
+  } catch (e: any) {
+    cachedInfo = null;
+    logEvent(MODULE, 'getHapticsInfo error', { message: e?.message }, 'warn');
+  }
+  return cachedInfo;
+}
+
 export function useHaptics() {
-  const [info, setInfo] = useState<HapticsInfo | null>(null);
+  const [info, setInfo] = useState<HapticsInfo | null>(() => cachedInfo ?? null);
   const source: TelemetrySource = Platform.OS === 'web' ? 'unavailable' : 'hardware';
 
   useEffect(() => {
-    if (!PixelNative) return;
-    try {
-      const i = PixelNative.getHapticsInfo();
-      setInfo(i);
-      logEvent(MODULE, 'vibrator', i as unknown as Record<string, unknown>);
-    } catch (e: any) { logEvent(MODULE, 'getHapticsInfo error', { message: e?.message }, 'warn'); }
+    if (cachedInfo === undefined) setInfo(readHapticsInfo());
   }, []);
 
   const triggerHaptic = useCallback(async (type: HapticType = 'light'): Promise<void> => {

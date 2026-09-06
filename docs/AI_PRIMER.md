@@ -61,6 +61,11 @@ Pixels utilize self-emissive Super Actua OLED panels. Always style dark backgrou
 ### 5. The Titan M3 Post-Quantum Enclave Rule
 Never write sensitive user data or API keys into plaintext AsyncStorage or unencrypted files. Always persist credentials through `useSecurity().saveSecureItem()` or `useGemini().setApiKey()`, which securely encrypt keys into the **Titan M3** hardware security coprocessor with **Post-Quantum Cryptography (PQC)**.
 
+### 6. The Visual Context Rule (React Grab & Android Layout)
+When iterating on UI components:
+* In Web Browser mode (`npm run web`), use **React Grab**: hold `Ctrl+C` (Windows) / `Cmd+C` (macOS) and click any component to copy its exact source location and component hierarchy for AI agents.
+* On Android hardware/emulators, use `android layout` (JSON UI tree) and `android screen` (visual coordinates) from the Google Android CLI.
+
 ---
 
 ## 🧭 Master Silicon & Hook Mapping Table

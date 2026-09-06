@@ -96,14 +96,17 @@ The official Google Android CLI provides tools for SDK management, UI inspection
    npm run android
    ```
 
-### Method C: Web Browser Preview (Instant UI & Layout Prototyping)
+### Method C: Web Browser Preview & React Grab (Instant UI & Agent Prototyping)
 To edit and preview UI components and layout immediately in your PC browser without connecting a phone:
 1. Start the Metro web dev server:
    ```bash
    npm run web
    ```
 2. Open `http://localhost:8081` in Chrome or Edge.
-3. Use browser DevTools (F12) to inspect component layouts. All hardware hooks feature simulation fallbacks on Web.
+3. **React Grab (`react-grab`)**:
+   - Hold **`Ctrl+C`** (Windows) or **`Cmd+C`** (macOS) and click any visual element on screen to copy its exact component name, file path, line number, and props directly to your clipboard.
+   - Paste the snippet into your AI coding agent (Antigravity, Claude, Cursor) for instant targeted edits.
+4. Use browser DevTools (F12) to inspect component layouts. All hardware hooks feature simulation fallbacks on Web.
 
 ### Method D: With Local MCP Server for AI Agent Testing
 To enable AI agent visual verification, automated screenshotting, and `testID` element inspection:

@@ -208,7 +208,7 @@ Pixel delta/ (PixelForge Framework)
 
 5. **Test & Edit the UI**:
    * **Physical Device (Fast Refresh)**: Install **Expo Go** from Google Play on your Pixel 11 Pro, scan the terminal QR code, and watch UI edits reflect live in <500ms.
-   * **Web Browser Preview**: Run `npm run web` (or press `w` in Metro) to preview and inspect layout at `http://localhost:8081` using Chrome/Edge DevTools (F12).
+   * **Web Browser Preview & React Grab**: Run `npm run web` (or press `w` in Metro) to preview and inspect layout at `http://localhost:8081`. Hold **`Ctrl+C`** / **`Cmd+C`** and click any visual element to copy its exact source location and component stack for AI agents.
    * **Android Emulator**: Press `a` in Metro to launch on an active Android Virtual Device (AVD).
 
 ---

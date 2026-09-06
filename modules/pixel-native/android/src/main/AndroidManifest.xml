@@ -1,3 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- Torch via CameraManager.setTorchMode needs no permission. Vibrator needs VIBRATE (declared by the app). -->
+  <!--
+    Torch via CameraManager.setTorchMode needs no permission. Vibrator needs VIBRATE (declared by the app).
+    Android 11+ package visibility: PackageManager.getPackageInfo only sees packages listed here.
+    AICore (Gemini Nano host) and Private Compute Services are queried by useTPU / useCapabilities.
+  -->
+  <queries>
+    <package android:name="com.google.android.aicore" />
+    <package android:name="com.google.android.as.oss" />
+    <package android:name="com.google.android.as" />
+  </queries>
 </manifest>
