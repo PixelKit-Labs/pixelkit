@@ -41,3 +41,8 @@ yarn-error.*
 /android
 modules/**/build/
 .gradle/
+
+# HiLight probe build output
+scripts/hilight-probe/out/
+scripts/hilight-probe/dex/
+scripts/hilight-probe/*.jar

@@ -49,7 +49,7 @@ AICore build 2026-07-23 postdates ML Kit Prompt API beta4 (2026-07-21), so Gemin
 
 Present: `android.hardware.uwb`, `android.hardware.bluetooth_le.channel_sounding`, `android.hardware.wifi.rtt`, `android.hardware.wifi.aware`, `android.hardware.wifi.passpoint`, `android.hardware.nfc` (+ `.any`, `.ese`, `.hce`, `.hcef`), `android.hardware.telephony.satellite`, `android.hardware.strongbox_keystore=400`, `android.hardware.hardware_keystore=500`, `android.hardware.keystore.app_attest_key`, `android.hardware.biometrics.face`, `android.hardware.fingerprint`, `android.hardware.sensor.barometer`, `android.hardware.sensor.hifi_sensors`, `android.hardware.sensor.light`, `android.hardware.sensor.proximity`, `android.hardware.context_hub`, `android.hardware.camera.concurrent`, `android.hardware.camera.flash`.
 
-**Absent:** any thermometer / infrared feature. Confirms the Pixel 11 Pro has **no IR thermopile**.
+**Absent:** any thermometer / infrared feature. Confirms the Pixel 11 Pro has **no IR thermopile**. Sensor list (2026-09-06, `dumpsys sensorservice`): 38 sensors, none of type object temperature; `ICM45631 Temperature` and `SPA18001 Temperature` are IMU and barometer die temperatures.
 
 ## System services present (`service list`)
 

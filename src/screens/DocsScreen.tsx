@@ -196,8 +196,8 @@ function ThermalMonitor() {
     category: 'pro',
     chipBadge: 'HiLight Ring (Pro Exclusive)',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Rear camera bar multi-color LED notification ring with Gemini AI status and face-down alerts.',
-    description: 'Hardware controller for the Pixel 11 Pro camera bar notification ring. Replaces older thermopiles with glanceable face-down status, custom contact color pulses, and breathing animations during Gemini reasoning.',
+    summary: 'Virtual state for the eight-LED HiLight array. Google ships no third-party path; the LEDs are gated by a privileged permission, so the app mirrors the intended colour and pattern on screen.',
+    description: 'The array is exposed by Android 17 as eight Light.LIGHT_TYPE_APPLICATION lights (RGB + animation, 33 ms update period) but every session needs CONTROL_DEVICE_LIGHTS, which only shell, root or a Shizuku helper holds. availability is "simulated" on Pixel 11 Pro-class devices and "unsupported" elsewhere. See docs/research/HILIGHT_LED_ARRAY.md for the measured facts and the planned Shizuku path.',
     signature: 'useHiLight(): HiLightState',
     returns: [
       'isActive: boolean',

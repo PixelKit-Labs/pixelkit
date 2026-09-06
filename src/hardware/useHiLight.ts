@@ -1,7 +1,9 @@
 /**
  * @file useHiLight.ts
- * @description State model for the Pixel 11 Pro HiLight LED array. Google exposes no third-party API for
- * the LEDs, so this hook keeps the intended colour/pattern state and the app renders it on screen.
+ * @description State model for the Pixel 11 Pro HiLight LED array: eight `Light.LIGHT_TYPE_APPLICATION` lights in
+ * the Android 17 lights service. Driving them needs `CONTROL_DEVICE_LIGHTS`, a signature|privileged permission a
+ * third-party app cannot hold, so this hook keeps the intended colour/pattern state and the app renders it on
+ * screen. A Shizuku-backed path is planned (docs/research/HILIGHT_LED_ARRAY.md).
  * `availability` is 'simulated' on devices that have the array and 'unsupported' elsewhere.
  */
 

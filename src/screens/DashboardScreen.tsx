@@ -227,7 +227,7 @@ export const DashboardScreen: React.FC = () => {
         value={hilight.isActive ? 'Illuminated (virtual)' : 'Standby'}
         badge={hilight.availability.toUpperCase()}
         badgeColor={hilight.availability === 'simulated' ? Colors.dark.warning : Colors.dark.error}
-        subtitle={hilight.isHardwareSupported ? 'Hardware present; Google exposes no third-party API, state is mirrored on-screen' : 'Not on this device'}
+        subtitle={hilight.isHardwareSupported ? '8 LEDs in the lights service; driving them needs the privileged CONTROL_DEVICE_LIGHTS permission (Shizuku path planned). State mirrored on-screen' : 'Not on this device'}
         source={hilight.availability === 'simulated' ? 'simulated' : 'unavailable'}
       />
       {hilight.isHardwareSupported && (
