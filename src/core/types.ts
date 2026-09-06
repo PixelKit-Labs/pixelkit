@@ -283,6 +283,36 @@ export interface UWBSpatialTarget {
 }
 
 /**
+ * Camera lens configuration and zoom ratio telemetry.
+ */
+export interface CameraTelemetry {
+  /** Selected lens orientation: 'back' (main array) or 'front' (selfie) */
+  facing: 'back' | 'front';
+  /** Optical/digital zoom factor (e.g. 0.5x ultra-wide, 1.0x wide, 5.0x periscope telephoto) */
+  zoomFactor: number;
+  /** Flash illumination mode ('auto', 'on', 'off') */
+  flashMode: 'auto' | 'on' | 'off';
+  /** Whether camera hardware permission has been granted */
+  hasPermission: boolean;
+}
+
+/**
+ * Detailed network interface and carrier telemetry.
+ */
+export interface NetworkTelemetry {
+  /** IP address string of device */
+  ipAddress: string | null;
+  /** Network connection type (WIFI, CELLULAR, NONE, UNKNOWN) */
+  networkType: string;
+  /** Whether internet is reachable */
+  isConnected: boolean;
+  /** Whether device is metered (e.g. cellular data) */
+  isMetered: boolean;
+  /** Whether airplane mode is enabled */
+  isAirplaneMode: boolean;
+}
+
+/**
  * Speech recognition and voice transcription output.
  */
 export interface SpeechTranscriptionResult {

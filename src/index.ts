@@ -49,8 +49,10 @@ export { useSecurity } from './hardware/useSecurity';
 // Sensor & Radio Hardware Hooks
 export { useSensors } from './hardware/useSensors';
 export { useHaptics } from './hardware/useHaptics';
+export { useCamera } from './hardware/useCamera';
 export { useBiometrics } from './hardware/useBiometrics';
 export { useLocation } from './hardware/useLocation';
+export { useNetwork } from './hardware/useNetwork';
 export { useAudio } from './hardware/useAudio';
 export { useTorch } from './hardware/useTorch';
 export { useBLE } from './hardware/useBLE';
