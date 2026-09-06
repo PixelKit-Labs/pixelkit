@@ -22,6 +22,7 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 ### 🤖 [AI Agent Guidance](./ai-guidance/)
 * **[Agent Operational Primer](./ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelForge, and copy-paste system prompt directives.
 * **[Production Recipes](./ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, face-down HiLight visual signaling, and spatial tracking.
+* **Agent Skills & Tooling**: 26 official Expo agent skills (`.agents/skills/` tracked via `skills-lock.json`) covering navigation, UI, modules, animations, and deployment alongside Google `android-cli`.
 
 ### 🛠️ [Guides & Diagnostics](./guides/)
 * **[Built-in AI, Function Calling & Voice (hub)](./guides/README.md)**: Where inference runs (Gemini Nano 4 on-device vs Gemini cloud), capability matrix, and shared dev-build prerequisites.

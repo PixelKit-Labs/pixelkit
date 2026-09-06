@@ -112,9 +112,11 @@ Pixel delta/ (PixelForge Framework)
 ├── GEMINI.md                   # Gemini agent guidelines mirror & mandatory doc sync rule
 ├── app.json                    # Android 15/16/17 Permissions & 120Hz LTPO Manifest
 ├── package.json                # Dependencies: Expo 57, React 19, React Native 0.86, @google/genai
+├── skills-lock.json            # Deterministic lockfile for installed agent skills
 │
 ├── .agents/skills/             # Built-in Agent Skills
-│   └── android-cli/            # Google Android CLI skill (SDK, emulator, device inspection)
+│   ├── android-cli/            # Google Android CLI skill (SDK, emulator, device inspection)
+│   └── expo/skills             # 26 Official Expo agent skills (expo-router, expo-ui, eas-*, etc.)
 │
 ├── docs/                       # Comprehensive Modular Documentation Suite
 │   ├── README.md               # Documentation portal & sitemap

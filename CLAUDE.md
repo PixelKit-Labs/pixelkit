@@ -39,6 +39,9 @@ Whenever you make **ANY** changes to this codebase (creating or modifying hooks,
 * **TypeScript Typecheck**: `npm run typecheck` (`tsc --noEmit`) - Must pass with 0 errors.
 * **Metro Bundler Check**: `npx expo export -p android` - Verifies Hermes bytecode compilation.
 * **Android CLI**: `android describe --project_dir=.`, `android layout`, `android screen`.
+* **Agent Skills (`.agents/skills/`)**:
+  - `android-cli`: Android CLI, SDK management, AVD controls, UI layout inspection.
+  - `expo/skills` (26 skills via `npx skills add expo/skills` & `skills-lock.json`): `expo-router`, `expo-native-ui`, `expo-ui`, `expo-module`, `expo-design-system`, `expo-animation`, `eas-app-stores`, `eas-hosting`, `eas-observe`, `eas-simulator`, `eas-update`, `eas-workflows`, etc.
 
 ---
 

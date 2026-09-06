@@ -27,7 +27,7 @@ Agents and tools can analyze project structure, build targets, and APK artifact 
 android describe --project_dir=<path>
 ```
 * **Device Inspection**: `android layout` (JSON UI tree) & `android screen` (visual bounds & screenshots).
-* **CLI Skills**: Built-in skill instructions available in `.agents/skills/android-cli/`.
+* **CLI Skills**: Built-in skill instructions available in `.agents/skills/android-cli/` and 26 official Expo skills (`.agents/skills/` via `npx skills add expo/skills` and `skills-lock.json`).
 
 ---
 
@@ -38,7 +38,11 @@ pixel-delta/ (PixelForge Framework)
 ├── App.tsx                     # Main App Shell & 4-Tab Navigator (HUD, AI Lab, Sensors, Docs)
 ├── PIXELFORGE.md               # Canonical AI Reference & SDK Documentation
 ├── README.md                   # Developer Setup & Prerequisites
+├── skills-lock.json            # Deterministic lockfile for installed agent skills
 ├── app.json                    # Android 15/16 Permissions & 120Hz LTPO Manifest
+├── .agents/skills/             # Built-in Agent Skills
+│   ├── android-cli/            # Google Android CLI skill (SDK, emulator, device inspection)
+│   └── expo/skills             # 26 Expo skills (expo-router, expo-ui, expo-module, eas-*, etc.)
 ├── src/
 │   ├── index.ts                # Master barrel export for all hooks and primitives
 │   ├── core/

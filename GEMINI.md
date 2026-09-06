@@ -14,6 +14,16 @@ The official Google Android CLI (`android.exe`) is installed and available in PA
 ### Android Skills
 * Built-in skills are located in `.agents/skills/android-cli/`. Refer to `.agents/skills/android-cli/SKILL.md` for CLI workflows.
 
+### Official Expo Agent Skills
+* Official Expo agent skills are installed in `.agents/skills/` (managed via `skills-lock.json` and `npx skills add expo/skills`).
+* 26 specialized skills are available for Expo development:
+  - **Navigation & UI**: `expo-router`, `expo-native-ui`, `expo-ui`, `expo-design-system`, `expo-animation`
+  - **Modules & Native**: `expo-module`, `expo-migrate-module`, `expo-brownfield`, `expo-dev-client`
+  - **Data, Web & DOM**: `expo-data-fetching`, `expo-dom`, `expo-web-to-native`, `expo-examples`
+  - **Deployment & EAS**: `eas-app-stores`, `eas-hosting`, `eas-observe`, `eas-simulator`, `eas-update`, `eas-update-insights`, `eas-workflows`
+  - **Project Management**: `expo-overview`, `expo-project-structure`, `expo-upgrade`, `expo-skill-eval`, `expo-skill-feedback`
+* Consult each skill's `SKILL.md` before executing related tasks.
+
 ---
 
 ## 🚨 Mandatory Documentation Synchronization Rule

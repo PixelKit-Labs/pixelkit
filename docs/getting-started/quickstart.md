@@ -62,6 +62,12 @@ The official Google Android CLI provides tools for SDK management, UI inspection
    ```
    *Verifies that all 696 modules package cleanly into Hermes bytecode (`.hbc`).*
 
+5. **Install / Sync Official Expo Agent Skills**:
+   ```bash
+   npx skills add expo/skills
+   ```
+   *Installs and locks 26 official Expo agent skills into `.agents/skills/` tracked via `skills-lock.json`.*
+
 ---
 
 ## 📱 Running on Google Pixel 11 Pro
