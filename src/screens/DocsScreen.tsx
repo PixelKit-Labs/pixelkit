@@ -1,0 +1,1447 @@
+/**
+ * @file DocsScreen.tsx
+ * @description Interactive documentation browser and AI Guidance Hub.
+ * Provides live on-device API references, hardware silicon mappings,
+ * copyable code snippets, and operational primers for AI coding agents on Pixel 11 Pro.
+ */
+
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { useHaptics } from '../hardware/useHaptics';
+import { HapticButton } from '../components/HapticButton';
+import { Colors } from '../theme/colors';
+
+interface DocModule {
+  id: string;
+  name: string;
+  category: 'silicon' | 'pro' | 'ai' | 'sensors' | 'radios' | 'system';
+  chipBadge: string;
+  badgeColor: string;
+  summary: string;
+  description: string;
+  signature: string;
+  returns: string[];
+  example: string;
+  aiTip: string;
+}
+
+const DOC_MODULES: DocModule[] = [
+  // Silicon & Compute
+  {
+    id: 'useCPU',
+    name: 'useCPU',
+    category: 'silicon',
+    chipBadge: 'Cortex-X925 Cluster',
+    badgeColor: '#8AB4F8',
+    summary: 'Monitors CPU cluster topology (Prime, Perf, Efficiency) and benchmarks multi-core compute.',
+    description: 'Queries the Tensor multi-core CPU architecture. Provides dynamic clock frequency estimates, real-time load estimation, and a multi-threaded prime factorization benchmark.',
+    signature: 'useCPU(): CPUState',
+    returns: [
+      'coreTopology: CoreInfo[]',
+      'totalCores: number',
+      'cpuLoadPercent: number',
+      'isBenchmarking: boolean',
+      'benchmarkCPU(iterations?: number): Promise<number>',
+    ],
+    example: `import { useCPU } from './src';
+
+function CPUWidget() {
+  const { totalCores, cpuLoadPercent, benchmarkCPU, isBenchmarking } = useCPU();
+  return (
+    <View>
+      <Text>Cores: {totalCores} | Load: {cpuLoadPercent}%</Text>
+      <Button title="Benchmark" onPress={() => benchmarkCPU(100000)} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Never run synchronous intensive loops on the JS thread. Use benchmarkCPU() which calculates primes in asynchronous chunks.',
+  },
+  {
+    id: 'useGPU',
+    name: 'useGPU',
+    category: 'silicon',
+    chipBadge: 'Mali-G715 / Immortalis',
+    badgeColor: '#8AB4F8',
+    summary: 'Tracks 120Hz LTPO frame pacing, dropped frames, and GPU memory usage against 8.33ms budget.',
+    description: 'Hooks into the graphics pipeline to monitor frame rendering times against the 8.33ms budget for 120 FPS. Detects stutter conditions and visual hitching.',
+    signature: 'useGPU(): GPUState',
+    returns: [
+      'api: "Vulkan 1.3"',
+      'targetFPS: 120',
+      'frameBudgetMs: 8.33',
+      'frameRenderTimeMs: number',
+      'droppedFrameCount: number',
+      'isStuttering: boolean',
+    ],
+    example: `import { useGPU } from './src';
+
+function GPUHUD() {
+  const { frameRenderTimeMs, isStuttering } = useGPU();
+  return (
+    <Text style={{ color: isStuttering ? '#F28B82' : '#81C995' }}>
+      Render: {frameRenderTimeMs.toFixed(2)} ms / 8.33 ms
+    </Text>
+  );
+}`,
+    aiTip: 'AI Tip: Inspect isStuttering when rendering complex Canvas or SVG animations. If true, downsample rendering complexity.',
+  },
+  {
+    id: 'useTPU',
+    name: 'useTPU',
+    category: 'silicon',
+    chipBadge: 'Google Tensor TPU',
+    badgeColor: Colors.dark.tensorGlow,
+    summary: 'Hardware neural acceleration delegate tracking and local token inference benchmarking.',
+    description: 'Tracks whether neural workloads run via NNAPI_TPU, LiteRT_XNNPACK, or GPU_FALLBACK. Measures inference latency and calculates token throughput.',
+    signature: 'useTPU(): TPUState',
+    returns: [
+      'activeDelegate: string',
+      'lastInferenceLatencyMs: number',
+      'throughputTokensPerSec: number',
+      'benchmarkTPU(): Promise<void>',
+    ],
+    example: `import { useTPU } from './src';
+
+function TPUWidget() {
+  const { activeDelegate, throughputTokensPerSec, benchmarkTPU } = useTPU();
+  return (
+    <View>
+      <Text>Delegate: {activeDelegate}</Text>
+      <Text>Speed: {throughputTokensPerSec} tokens/sec</Text>
+      <Button title="Test TPU" onPress={benchmarkTPU} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Use useTPU to verify hardware acceleration before launching multi-turn AI loops.',
+  },
+  {
+    id: 'useMemory',
+    name: 'useMemory',
+    category: 'silicon',
+    chipBadge: '16GB LPDDR5X RAM',
+    badgeColor: '#8AB4F8',
+    summary: 'Monitors unified system RAM, free memory thresholds, and triggers cache purging.',
+    description: 'Provides live telemetry of LPDDR5X physical RAM usage, free memory headroom, and Low Memory Killer (LMK) protection status.',
+    signature: 'useMemory(): MemoryState',
+    returns: [
+      'totalRAMMB: number',
+      'usedRAMMB: number',
+      'freeRAMMB: number',
+      'isLowMemory: boolean',
+      'purgeCaches(): Promise<void>',
+    ],
+    example: `import { useMemory } from './src';
+
+function MemoryHUD() {
+  const { freeRAMMB, isLowMemory, purgeCaches } = useMemory();
+  return (
+    <View>
+      <Text>Free RAM: {freeRAMMB} MB</Text>
+      {isLowMemory && <Button title="Purge Caches" onPress={purgeCaches} />}
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: If isLowMemory is true, purge image buffers and cache before initiating large AI multimodal payloads.',
+  },
+  {
+    id: 'useADPF',
+    name: 'useADPF',
+    category: 'silicon',
+    chipBadge: 'ADPF Kernel Subsystem',
+    badgeColor: '#FDD663',
+    summary: 'Android Dynamic Performance Framework thermal headroom and CPU/GPU power budgeting.',
+    description: 'Directly queries the Android thermal subsystem to get normalized thermal headroom (0.0 to 1.0) and thermal status warnings.',
+    signature: 'useADPF(): ADPFState',
+    returns: [
+      'thermalStatus: ThermalStatus',
+      'thermalHeadroom: number',
+      'powerEfficiencyMode: boolean',
+    ],
+    example: `import { useADPF } from './src';
+
+function ThermalMonitor() {
+  const { thermalStatus, thermalHeadroom } = useADPF();
+  return (
+    <Text>Thermals: {thermalStatus} (Headroom: {(thermalHeadroom * 100).toFixed(0)}%)</Text>
+  );
+}`,
+    aiTip: 'AI Tip: If thermalStatus is "severe" or "critical", throttle sensor sampling and postpone background inference.',
+  },
+
+  // Pro Exclusives
+  {
+    id: 'useTemperature',
+    name: 'useTemperature',
+    category: 'pro',
+    chipBadge: 'IR Thermopile (Pro Exclusive)',
+    badgeColor: '#FDD663',
+    summary: 'Non-contact surface and liquid thermometer using the camera bar infrared thermopile sensor.',
+    description: 'Pixel Pro exclusive hardware sensor that measures radiant infrared heat without physical contact. Supports material emissivity presets (metal, liquid, food, skin).',
+    signature: 'useTemperature(): TemperatureState',
+    returns: [
+      'reading: TemperatureReading { celsius, fahrenheit, materialPreset }',
+      'isMeasuring: boolean',
+      'measureTemperature(preset?): Promise<TemperatureReading>',
+    ],
+    example: `import { useTemperature } from './src';
+
+function Thermometer() {
+  const { reading, measureTemperature, isMeasuring } = useTemperature();
+  return (
+    <View>
+      <Text>{reading.celsius.toFixed(1)}°C / {reading.fahrenheit.toFixed(1)}°F</Text>
+      <Button 
+        title={isMeasuring ? "Measuring..." : "Scan Surface"} 
+        onPress={() => measureTemperature('liquid')} 
+      />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Always pass the appropriate MaterialPreset ("metal" | "liquid" | "food" | "skin") for calibrated infrared emissivity.',
+  },
+  {
+    id: 'useUWB',
+    name: 'useUWB',
+    category: 'pro',
+    chipBadge: 'UWB Radar AoA (Pro Exclusive)',
+    badgeColor: '#4785FF',
+    summary: 'Centimeter-level spatial distance and Angle-of-Arrival (AoA) tracking for spatial anchors.',
+    description: 'Pixel Pro exclusive Ultra-Wideband spatial radar. Computes exact distance in meters and azimuth/elevation angles to nearby compatible anchors, tags, or Pixel devices.',
+    signature: 'useUWB(): UWBState',
+    returns: [
+      'isSupported: boolean',
+      'isRanging: boolean',
+      'activeTargets: UWBTarget[]',
+      'startRanging(): Promise<void>',
+      'stopRanging(): void',
+    ],
+    example: `import { useUWB } from './src';
+
+function SpatialRadar() {
+  const { activeTargets, isRanging, startRanging } = useUWB();
+  return (
+    <View>
+      {activeTargets.map(t => (
+        <Text key={t.id}>{t.name}: {t.distanceMeters.toFixed(2)}m (Azimuth: {t.azimuthDegrees}°)</Text>
+      ))}
+      <Button title={isRanging ? "Ranging Active" : "Start UWB"} onPress={startRanging} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: UWB provides true spatial vectors. Combine distanceMeters and azimuthDegrees for 2D spatial positioning.',
+  },
+
+  // AI & Neural
+  {
+    id: 'useGemini',
+    name: 'useGemini',
+    category: 'ai',
+    chipBadge: 'Gemini 2.5 Flash / TPU',
+    badgeColor: Colors.dark.tensorGlow,
+    summary: 'Conversational reasoning, token streaming, and automatic Titan M2 API key retrieval.',
+    description: 'Official Google Gen AI SDK integration for multi-turn chats. Automatically pulls API keys from Titan M2 encrypted storage and supports offline simulation mode.',
+    signature: 'useGemini(): GeminiState',
+    returns: [
+      'messages: ChatMessage[]',
+      'isLoading: boolean',
+      'sendMessage(text: string): Promise<string>',
+      'clearHistory(): void',
+      'setApiKey(key: string): Promise<void>',
+    ],
+    example: `import { useGemini } from './src';
+
+function Assistant() {
+  const { messages, sendMessage, isLoading } = useGemini();
+  return (
+    <View>
+      {messages.map(m => <Text key={m.id}>[{m.role}]: {m.content}</Text>)}
+      <Button title="Ask AI" onPress={() => sendMessage("Analyze current telemetry")} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Always configure setApiKey() through Titan M2 storage; do not hardcode Gemini API keys in source code.',
+  },
+  {
+    id: 'useSpeechAI',
+    name: 'useSpeechAI',
+    category: 'ai',
+    chipBadge: 'Acoustic Beamforming Array',
+    badgeColor: Colors.dark.tensorGlow,
+    summary: 'Voice audio recording with decibel metering and speech-to-text token transcription.',
+    description: 'Captures voice audio using the Pixel quad-mic array, monitors real-time sound levels in dBFS, and converts audio packets into transcribed text tokens.',
+    signature: 'useSpeechAI(): SpeechAIState',
+    returns: [
+      'isListening: boolean',
+      'voiceDecibels: number',
+      'startListening(): Promise<void>',
+      'stopListeningAndTranscribe(): Promise<SpeechResult | null>',
+    ],
+    example: `import { useSpeechAI, useGemini } from './src';
+
+function VoiceBot() {
+  const speech = useSpeechAI();
+  const gemini = useGemini();
+
+  const handleVoice = async () => {
+    if (speech.isListening) {
+      const res = await speech.stopListeningAndTranscribe();
+      if (res?.transcript) gemini.sendMessage(res.transcript);
+    } else {
+      await speech.startListening();
+    }
+  };
+
+  return <Button title={speech.isListening ? "Stop & Transcribe" : "Speak"} onPress={handleVoice} />;
+}`,
+    aiTip: 'AI Tip: Pipe speech.stopListeningAndTranscribe() directly into gemini.sendMessage() for voice agent loops.',
+  },
+  {
+    id: 'useVisionAI',
+    name: 'useVisionAI',
+    category: 'ai',
+    chipBadge: 'Multimodal Vision Engine',
+    badgeColor: Colors.dark.tensorGlow,
+    summary: 'Camera snapshot capture and multimodal scene perception via Gemini Vision.',
+    description: 'Connects the camera optical feed directly to Gemini Multimodal reasoning. Downsamples images for optimal token consumption and returns structured scene observations.',
+    signature: 'useVisionAI(): VisionAIState',
+    returns: [
+      'isAnalyzing: boolean',
+      'analysis: VisionAnalysis | null',
+      'captureAndAnalyze(cameraRef, prompt?): Promise<VisionAnalysis | null>',
+    ],
+    example: `import { useVisionAI } from './src';
+
+function VisionWidget({ cameraRef }: { cameraRef: any }) {
+  const { captureAndAnalyze, isAnalyzing, analysis } = useVisionAI();
+  return (
+    <View>
+      <Button title="Analyze Scene" onPress={() => captureAndAnalyze(cameraRef)} />
+      {analysis && <Text>{analysis.description}</Text>}
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Pass custom prompts into captureAndAnalyze(cameraRef, "Find all objects and text") for targeted tasks.',
+  },
+
+  // Sensors & Actuators
+  {
+    id: 'useSensors',
+    name: 'useSensors',
+    category: 'sensors',
+    chipBadge: '6-Axis IMU & Barometer',
+    badgeColor: '#81C995',
+    summary: 'Continuous 6-axis motion, compass heading, photodiode light, and barometric altitude.',
+    description: 'Monitors accelerometer, gyroscope, magnetometer, ambient light, and air pressure. Calculates relative altitude using the international hypsometric barometric equation.',
+    signature: 'useSensors(intervalMs?: number): SensorsState',
+    returns: [
+      'accelerometer: SensorData',
+      'gyroscope: SensorData',
+      'magnetometer: SensorData',
+      'barometer: BarometerData { pressure, relativeAltitude }',
+      'lightSensor: { illuminance }',
+    ],
+    example: `import { useSensors } from './src';
+
+function SensorHUD() {
+  const { barometer, accelerometer } = useSensors(100);
+  return (
+    <View>
+      <Text>Altitude: {barometer.relativeAltitude}m ({barometer.pressure} hPa)</Text>
+      <Text>Accel Z: {accelerometer.z.toFixed(2)} m/s²</Text>
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Default to 100ms or 200ms intervals to avoid unnecessary battery drain and thermal rise.',
+  },
+  {
+    id: 'useHaptics',
+    name: 'useHaptics',
+    category: 'sensors',
+    chipBadge: 'Linear Resonant Actuator',
+    badgeColor: '#81C995',
+    summary: 'Precision mechanical haptic feedback matching Pixel tactile click profiles.',
+    description: 'Directly drives the Pixel Linear Resonant Actuator (LRA) to produce tactile pulses: selection tick, light tap, medium click, heavy thud, success double-pulse, and error buzz.',
+    signature: 'useHaptics(): HapticsState',
+    returns: [
+      'selection(): Promise<void>',
+      'light(): Promise<void>',
+      'medium(): Promise<void>',
+      'heavy(): Promise<void>',
+      'success(): Promise<void>',
+      'error(): Promise<void>',
+    ],
+    example: `import { useHaptics } from './src';
+
+function TactileCard() {
+  const { light, success } = useHaptics();
+  return (
+    <TouchableOpacity onPress={() => { light(); success(); }}>
+      <Text>Tap for Physical Feedback</Text>
+    </TouchableOpacity>
+  );
+}`,
+    aiTip: 'AI Tip: Follow the Physical Sensation Rule: attach selection() to sliders, light() to buttons, and success() to completions.',
+  },
+  {
+    id: 'useCamera',
+    name: 'useCamera',
+    category: 'sensors',
+    chipBadge: 'Triple Optical Array',
+    badgeColor: '#81C995',
+    summary: 'CameraX lifecycle, multi-lens switching (0.5x, 1.0x, 5.0x periscope), and flash control.',
+    description: 'Manages camera permissions, lens selection, optical/digital zoom levels, and flash mode switching.',
+    signature: 'useCamera(): CameraState',
+    returns: [
+      'hasPermission: boolean',
+      'lensType: "front" | "back"',
+      'zoomFactor: number',
+      'flashMode: "off" | "on" | "auto"',
+      'setLensType',
+      'setZoomFactor',
+    ],
+    example: `import { useCamera } from './src';
+
+function CameraControl() {
+  const { zoomFactor, setZoomFactor } = useCamera();
+  return <Button title="5x Telephoto" onPress={() => setZoomFactor(5.0)} />;
+}`,
+    aiTip: 'AI Tip: Support 0.5x ultrawide, 1.0x primary, and 5.0x telephoto optical steps for best photo fidelity.',
+  },
+  {
+    id: 'useTorch',
+    name: 'useTorch',
+    category: 'sensors',
+    chipBadge: 'Dual-LED Flashlight',
+    badgeColor: '#81C995',
+    summary: 'Hardware flashlight toggle and rhythmic optical SOS emergency strobe.',
+    description: 'Directly controls the rear camera bar dual-LED flashlight. Includes an emergency SOS strobe function that pulses optical signals.',
+    signature: 'useTorch(): TorchState',
+    returns: [
+      'isTorchOn: boolean',
+      'isStrobeActive: boolean',
+      'toggleTorch(): Promise<void>',
+      'startStrobe(): Promise<void>',
+      'stopStrobe(): void',
+    ],
+    example: `import { useTorch } from './src';
+
+function Flashlight() {
+  const { isTorchOn, toggleTorch, startStrobe } = useTorch();
+  return (
+    <View>
+      <Button title={isTorchOn ? "Torch OFF" : "Torch ON"} onPress={toggleTorch} />
+      <Button title="SOS Strobe" onPress={startStrobe} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Ensure stopStrobe() is invoked during unmount cleanup to avoid leaving the LED pulsing indefinitely.',
+  },
+
+  // Radios & Security
+  {
+    id: 'useBiometrics',
+    name: 'useBiometrics',
+    category: 'radios',
+    chipBadge: 'Titan M2 Biometrics',
+    badgeColor: '#C2E7FF',
+    summary: 'Ultrasonic under-display fingerprint and Class 3 3D Face Unlock.',
+    description: 'Performs hardware-backed biometric verification using the Titan M2 security enclave.',
+    signature: 'useBiometrics(): BiometricsState',
+    returns: [
+      'hasHardware: boolean',
+      'isEnrolled: boolean',
+      'biometricType: string',
+      'authenticate(prompt: string): Promise<boolean>',
+    ],
+    example: `import { useBiometrics } from './src';
+
+function AuthButton() {
+  const { authenticate } = useBiometrics();
+  const handleAuth = async () => {
+    const ok = await authenticate("Verify Identity");
+    if (ok) console.log("Unlocked!");
+  };
+  return <Button title="Unlock Vault" onPress={handleAuth} />;
+}`,
+    aiTip: 'AI Tip: Always check isEnrolled before invoking authenticate() to avoid throwing missing enrollment errors.',
+  },
+  {
+    id: 'useSecurity',
+    name: 'useSecurity',
+    category: 'radios',
+    chipBadge: 'Titan M2 KeyStore HSM',
+    badgeColor: '#C2E7FF',
+    summary: 'Hardware-backed encrypted key and token storage via expo-secure-store.',
+    description: 'Encrypts and persists credentials directly inside the Titan M2 hardware security module.',
+    signature: 'useSecurity(): SecurityState',
+    returns: [
+      'saveSecureItem(key, value): Promise<void>',
+      'getSecureItem(key): Promise<string | null>',
+      'deleteSecureItem(key): Promise<void>',
+    ],
+    example: `import { useSecurity } from './src';
+
+function KeyManager() {
+  const { saveSecureItem, getSecureItem } = useSecurity();
+  return <Button title="Save Key" onPress={() => saveSecureItem("api_key", "secret_123")} />;
+}`,
+    aiTip: 'AI Tip: Never write auth tokens to AsyncStorage; always route sensitive keys through useSecurity.',
+  },
+  {
+    id: 'useBLE',
+    name: 'useBLE',
+    category: 'radios',
+    chipBadge: 'Bluetooth 5.4 LE',
+    badgeColor: '#C2E7FF',
+    summary: 'Bluetooth Low Energy scanning, peripheral discovery, and RSSI proximity tracking.',
+    description: 'Scans for nearby BLE beacons, tags, and accessories with signal strength tracking.',
+    signature: 'useBLE(): BLEState',
+    returns: [
+      'isScanning: boolean',
+      'peripherals: BLEPeripheral[]',
+      'startScan(): Promise<void>',
+      'stopScan(): void',
+    ],
+    example: `import { useBLE } from './src';
+
+function BeaconScanner() {
+  const { peripherals, isScanning, startScan } = useBLE();
+  return (
+    <View>
+      <Button title={isScanning ? "Scanning..." : "Scan BLE"} onPress={startScan} />
+      {peripherals.map(p => <Text key={p.id}>{p.name} ({p.rssi} dBm)</Text>)}
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: RSSI is logarithmic. Distance estimates are approximations; pair with UWB for true cm accuracy.',
+  },
+  {
+    id: 'useNFC',
+    name: 'useNFC',
+    category: 'radios',
+    chipBadge: 'NFC NDEF Controller',
+    badgeColor: '#C2E7FF',
+    summary: 'Contactless smart tag detection and NDEF record decoding.',
+    description: 'Detects and reads RFID tags and NFC smart cards touched to the back of the Pixel 11 Pro.',
+    signature: 'useNFC(): NFCState',
+    returns: [
+      'isSupported: boolean',
+      'isScanning: boolean',
+      'lastScannedTag: NFCTag | null',
+      'startScan(): Promise<void>',
+    ],
+    example: `import { useNFC } from './src';
+
+function NFCReader() {
+  const { lastScannedTag, startScan } = useNFC();
+  return (
+    <View>
+      <Button title="Scan NFC Tag" onPress={startScan} />
+      {lastScannedTag && <Text>Tag ID: {lastScannedTag.id} Payload: {lastScannedTag.payload}</Text>}
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Prompt the user to touch the tag against the upper third of the rear phone glass.',
+  },
+  {
+    id: 'useLocation',
+    name: 'useLocation',
+    category: 'radios',
+    chipBadge: 'Dual-Band GNSS (L1/L5)',
+    badgeColor: '#C2E7FF',
+    summary: 'High-precision dual-frequency GNSS positioning, altitude, heading, and speed.',
+    description: 'Interfaces with GPS L1/L5, Galileo, and GLONASS constellations for centimeter-grade location fixes.',
+    signature: 'useLocation(): LocationState',
+    returns: [
+      'latitude: number',
+      'longitude: number',
+      'altitude: number',
+      'heading: number',
+      'speed: number',
+      'accuracy: number',
+    ],
+    example: `import { useLocation } from './src';
+
+function LocationHUD() {
+  const { latitude, longitude, altitude, speed } = useLocation();
+  return <Text>Coords: {latitude.toFixed(5)}, {longitude.toFixed(5)} | Alt: {altitude}m</Text>;
+}`,
+    aiTip: 'AI Tip: Check location accuracy before relying on tight geographical geofences.',
+  },
+
+  // System & Media
+  {
+    id: 'useAudio',
+    name: 'useAudio',
+    category: 'system',
+    chipBadge: 'Quad-Mic Studio Array',
+    badgeColor: '#E3E2E6',
+    summary: 'Acoustic recording and real-time dBFS sound pressure level metering.',
+    description: 'Records audio and provides instant dBFS sound pressure readings for noise monitoring.',
+    signature: 'useAudio(): AudioState',
+    returns: [
+      'isRecording: boolean',
+      'currentDecibels: number',
+      'startRecording(): Promise<void>',
+      'stopRecording(): Promise<string | null>',
+    ],
+    example: `import { useAudio } from './src';
+
+function SoundMeter() {
+  const { currentDecibels, isRecording, startRecording, stopRecording } = useAudio();
+  return (
+    <View>
+      <Text>Sound Level: {currentDecibels} dBFS</Text>
+      <Button title={isRecording ? "Stop" : "Record"} onPress={isRecording ? stopRecording : startRecording} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Decibel readings are normalized to dBFS where 0 is peak clipping and -160 is silence.',
+  },
+  {
+    id: 'useDisplay',
+    name: 'useDisplay',
+    category: 'system',
+    chipBadge: '1-120Hz LTPO Super Actua',
+    badgeColor: '#E3E2E6',
+    summary: 'Display wake-lock management and screen brightness control.',
+    description: 'Prevents the display from sleeping during active AI generation or telemetry viewing, and sets screen brightness.',
+    signature: 'useDisplay(): DisplayState',
+    returns: [
+      'isKeepAwake: boolean',
+      'brightness: number',
+      'toggleKeepAwake(): Promise<void>',
+      'setBrightness(val: number): Promise<void>',
+    ],
+    example: `import { useDisplay } from './src';
+
+function DisplayHUD() {
+  const { isKeepAwake, toggleKeepAwake } = useDisplay();
+  return <Button title={isKeepAwake ? "WakeLock Active" : "Enable WakeLock"} onPress={toggleKeepAwake} />;
+}`,
+    aiTip: 'AI Tip: In Expo SDK 57, always provide a tag to activateKeepAwakeAsync(tag) to avoid unhandled rejections.',
+  },
+  {
+    id: 'useDevice',
+    name: 'useDevice',
+    category: 'system',
+    chipBadge: 'Android HAL & PMIC',
+    badgeColor: '#E3E2E6',
+    summary: 'Battery percentage, charging status, device thermals, and model specs.',
+    description: 'Queries Android Power Management IC for exact battery percentages, charging states, and hardware model strings.',
+    signature: 'useDevice(): DeviceState',
+    returns: [
+      'batteryLevel: number',
+      'isCharging: boolean',
+      'modelName: string',
+      'osVersion: string',
+    ],
+    example: `import { useDevice } from './src';
+
+function DeviceHUD() {
+  const { batteryLevel, isCharging, modelName } = useDevice();
+  return <Text>{modelName}: {Math.round(batteryLevel * 100)}% {isCharging ? "⚡" : ""}</Text>;
+}`,
+    aiTip: 'AI Tip: Battery level is a float between 0.0 and 1.0; multiply by 100 for percentage.',
+  },
+  {
+    id: 'useNetwork',
+    name: 'useNetwork',
+    category: 'system',
+    chipBadge: 'Wi-Fi 7 & 5G Modem',
+    badgeColor: '#E3E2E6',
+    summary: 'IP address inspection, connection type, cellular status, and airplane mode.',
+    description: 'Provides real-time network connectivity data including local IP address and connection type.',
+    signature: 'useNetwork(): NetworkState',
+    returns: [
+      'ipAddress: string',
+      'networkType: string',
+      'isConnected: boolean',
+      'isAirplaneMode: boolean',
+    ],
+    example: `import { useNetwork } from './src';
+
+function NetHUD() {
+  const { ipAddress, networkType, isConnected } = useNetwork();
+  return <Text>{networkType} ({ipAddress}) - {isConnected ? "Online" : "Offline"}</Text>;
+}`,
+    aiTip: 'AI Tip: Always check isConnected before dispatching network-dependent requests.',
+  },
+];
+
+type CategoryFilter = 'all' | 'primer' | 'silicon' | 'pro' | 'ai' | 'sensors' | 'radios' | 'system';
+
+export const DocsScreen: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
+
+  const { selection, success, light } = useHaptics();
+
+  const handleCopy = async (text: string, label: string) => {
+    await Clipboard.setStringAsync(text);
+    await success();
+    setCopiedNotification(`Copied: ${label}`);
+    setTimeout(() => setCopiedNotification(null), 2500);
+  };
+
+  const filteredModules = useMemo(() => {
+    return DOC_MODULES.filter((mod) => {
+      const matchesCategory =
+        selectedCategory === 'all' || mod.category === selectedCategory;
+      const matchesSearch =
+        searchQuery.trim() === '' ||
+        mod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mod.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mod.chipBadge.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mod.aiTip.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [searchQuery, selectedCategory]);
+
+  const toggleExpand = (id: string) => {
+    light();
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const SYSTEM_PROMPT_DIRECTIVE = `You are building an application using the PixelForge SDK on a Google Pixel 11 Pro.
+Always adhere to these requirements:
+1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useSensors, useGemini, useHaptics).
+2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
+3. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
+4. Use true OLED black (#0B0D11) for backgrounds via Colors.dark.background.
+5. Store sensitive keys exclusively in the Titan M2 enclave using useSecurity().saveSecureItem().
+6. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).`;
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      {/* Header Banner */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>PixelForge Documentation ⚡</Text>
+        <Text style={styles.headerSubtitle}>
+          Complete Hardware & AI API Reference for Google Pixel 11 Pro
+        </Text>
+      </View>
+
+      {/* Copy Notification Toast */}
+      {copiedNotification && (
+        <View style={styles.toast}>
+          <Text style={styles.toastText}>✓ {copiedNotification}</Text>
+        </View>
+      )}
+
+      {/* Search Input */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search 22 hooks, silicon chips, or AI tips..."
+          placeholderTextColor={Colors.dark.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              setSearchQuery('');
+              selection();
+            }}
+            style={styles.clearButton}
+          >
+            <Text style={styles.clearButtonText}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Category Filter Chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipsRow}
+        contentContainerStyle={styles.chipsContent}
+      >
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'all' && styles.chipActive,
+          ]}
+          onPress={() => {
+            setSelectedCategory('all');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'all' && styles.chipTextActive,
+            ]}
+          >
+            All ({DOC_MODULES.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'primer' && styles.chipActivePrimer,
+          ]}
+          onPress={() => {
+            setSelectedCategory('primer');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'primer' && styles.chipTextActivePrimer,
+            ]}
+          >
+            🤖 AI Primer & Rules
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'silicon' && styles.chipActive,
+          ]}
+          onPress={() => {
+            setSelectedCategory('silicon');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'silicon' && styles.chipTextActive,
+            ]}
+          >
+            Silicon & Compute (5)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'pro' && styles.chipActivePro,
+          ]}
+          onPress={() => {
+            setSelectedCategory('pro');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'pro' && styles.chipTextActivePro,
+            ]}
+          >
+            Pro Exclusives (2)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'ai' && styles.chipActiveAI,
+          ]}
+          onPress={() => {
+            setSelectedCategory('ai');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'ai' && styles.chipTextActiveAI,
+            ]}
+          >
+            Neural & AI (3)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'sensors' && styles.chipActive,
+          ]}
+          onPress={() => {
+            setSelectedCategory('sensors');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'sensors' && styles.chipTextActive,
+            ]}
+          >
+            Sensors & Actuators (4)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'radios' && styles.chipActive,
+          ]}
+          onPress={() => {
+            setSelectedCategory('radios');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'radios' && styles.chipTextActive,
+            ]}
+          >
+            Radios & Security (5)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            selectedCategory === 'system' && styles.chipActive,
+          ]}
+          onPress={() => {
+            setSelectedCategory('system');
+            selection();
+          }}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              selectedCategory === 'system' && styles.chipTextActive,
+            ]}
+          >
+            System & Media (4)
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* AI PRIMER SECTION (Shown when 'primer' or 'all' selected) */}
+      {(selectedCategory === 'primer' || (selectedCategory === 'all' && searchQuery === '')) && (
+        <View style={styles.primerCard}>
+          <View style={styles.primerHeaderRow}>
+            <Text style={styles.primerTitle}>🤖 AI Primer & Operational Rules</Text>
+            <View style={styles.primerBadge}>
+              <Text style={styles.primerBadgeText}>AI GUIDE</Text>
+            </View>
+          </View>
+
+          <Text style={styles.primerBody}>
+            When an AI agent writes code for the Pixel 11 Pro, it must follow the
+            <Text style={{ fontWeight: '700', color: Colors.dark.primary }}> 5 Golden Rules</Text>:
+          </Text>
+
+          <View style={styles.rulesList}>
+            <Text style={styles.ruleItem}>
+              <Text style={styles.ruleNum}>1. Single Import: </Text>
+              Always import from <Text style={styles.codeInline}>./src</Text>. Never re-implement raw listeners.
+            </Text>
+            <Text style={styles.ruleItem}>
+              <Text style={styles.ruleNum}>2. Tactile Feedback: </Text>
+              Attach <Text style={styles.codeInline}>useHaptics</Text> to every touchable element.
+            </Text>
+            <Text style={styles.ruleItem}>
+              <Text style={styles.ruleNum}>3. Thermal & Frame Budget: </Text>
+              Check <Text style={styles.codeInline}>useADPF()</Text> and respect the 8.33ms 120Hz budget.
+            </Text>
+            <Text style={styles.ruleItem}>
+              <Text style={styles.ruleNum}>4. True OLED Black: </Text>
+              Style backgrounds with <Text style={styles.codeInline}>#0B0D11</Text> to turn off pixels.
+            </Text>
+            <Text style={styles.ruleItem}>
+              <Text style={styles.ruleNum}>5. Titan M2 Enclave: </Text>
+              Persist all secret keys via <Text style={styles.codeInline}>useSecurity().saveSecureItem()</Text>.
+            </Text>
+          </View>
+
+          <View style={styles.promptBox}>
+            <Text style={styles.promptBoxTitle}>AI System Prompt Directive</Text>
+            <Text style={styles.promptBoxCode}>{SYSTEM_PROMPT_DIRECTIVE}</Text>
+            <HapticButton
+              title="Copy AI System Prompt"
+              onPress={() => handleCopy(SYSTEM_PROMPT_DIRECTIVE, 'AI System Prompt Directive')}
+              variant="secondary"
+              style={{ marginTop: 10 }}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* MODULES LIST */}
+      {selectedCategory !== 'primer' && (
+        <View style={styles.modulesSection}>
+          <Text style={styles.sectionHeader}>
+            {selectedCategory === 'all'
+              ? `Hardware & AI Modules (${filteredModules.length})`
+              : `Modules (${filteredModules.length})`}
+          </Text>
+
+          {filteredModules.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No modules match "{searchQuery}"</Text>
+            </View>
+          ) : (
+            filteredModules.map((mod) => {
+              const isExpanded = expandedId === mod.id;
+              return (
+                <View key={mod.id} style={styles.moduleCard}>
+                  {/* Top Card Bar */}
+                  <TouchableOpacity
+                    onPress={() => toggleExpand(mod.id)}
+                    style={styles.moduleCardHeader}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.moduleNameRow}>
+                      <Text style={styles.moduleName}>{mod.name}()</Text>
+                      <View
+                        style={[
+                          styles.chipBadge,
+                          { borderColor: mod.badgeColor },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.chipBadgeText, { color: mod.badgeColor }]}
+                        >
+                          {mod.chipBadge}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.moduleSummary}>{mod.summary}</Text>
+                    <View style={styles.expandRow}>
+                      <Text style={styles.expandText}>
+                        {isExpanded ? '▲ Collapse Details' : '▼ Expand Code & AI Tip'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <View style={styles.expandedContent}>
+                      <Text style={styles.expandedDesc}>{mod.description}</Text>
+
+                      {/* Signature */}
+                      <View style={styles.metaRow}>
+                        <Text style={styles.metaLabel}>Signature:</Text>
+                        <Text style={styles.metaValue}>{mod.signature}</Text>
+                      </View>
+
+                      {/* Returns */}
+                      <View style={styles.returnsBlock}>
+                        <Text style={styles.metaLabel}>Key Return Properties:</Text>
+                        {mod.returns.map((ret, idx) => (
+                          <Text key={idx} style={styles.returnItem}>
+                            • {ret}
+                          </Text>
+                        ))}
+                      </View>
+
+                      {/* Code Example */}
+                      <View style={styles.codeSnippetContainer}>
+                        <View style={styles.snippetHeaderRow}>
+                          <Text style={styles.snippetHeaderTitle}>TypeScript Recipe</Text>
+                          <TouchableOpacity
+                            onPress={() => handleCopy(mod.example, `${mod.name} recipe`)}
+                            style={styles.snippetCopyButton}
+                          >
+                            <Text style={styles.snippetCopyText}>📋 Copy</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.codeSnippetText}>{mod.example}</Text>
+                      </View>
+
+                      {/* AI Agent Tip */}
+                      <View style={styles.aiTipBox}>
+                        <Text style={styles.aiTipText}>💡 {mod.aiTip}</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </View>
+      )}
+
+      {/* Footer Info */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          PixelForge SDK ⚡ Expo SDK 57 • React 19 • React Native 0.86 • Google Pixel 11 Pro
+        </Text>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  headerTitle: {
+    color: Colors.dark.text,
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    color: Colors.dark.textMuted,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  toast: {
+    backgroundColor: Colors.dark.success,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  toastText: {
+    color: '#0B0D11',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    color: Colors.dark.text,
+    fontSize: 14,
+  },
+  clearButton: {
+    padding: 6,
+  },
+  clearButtonText: {
+    color: Colors.dark.textMuted,
+    fontSize: 14,
+  },
+  chipsRow: {
+    marginBottom: 16,
+  },
+  chipsContent: {
+    paddingRight: 8,
+  },
+  chip: {
+    backgroundColor: Colors.dark.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  chipActive: {
+    backgroundColor: Colors.dark.primaryContainer,
+    borderColor: Colors.dark.primary,
+  },
+  chipActivePrimer: {
+    backgroundColor: `${Colors.dark.tensorGlow}25`,
+    borderColor: Colors.dark.tensorGlow,
+  },
+  chipActivePro: {
+    backgroundColor: `${Colors.dark.warning}25`,
+    borderColor: Colors.dark.warning,
+  },
+  chipActiveAI: {
+    backgroundColor: `${Colors.dark.accent}25`,
+    borderColor: Colors.dark.accent,
+  },
+  chipText: {
+    color: Colors.dark.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  chipTextActive: {
+    color: Colors.dark.text,
+    fontWeight: '700',
+  },
+  chipTextActivePrimer: {
+    color: Colors.dark.tensorGlow,
+    fontWeight: '700',
+  },
+  chipTextActivePro: {
+    color: Colors.dark.warning,
+    fontWeight: '700',
+  },
+  chipTextActiveAI: {
+    color: Colors.dark.secondary,
+    fontWeight: '700',
+  },
+  primerCard: {
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.dark.tensorGlow,
+    padding: 16,
+    marginBottom: 20,
+  },
+  primerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  primerTitle: {
+    color: Colors.dark.tensorGlow,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  primerBadge: {
+    backgroundColor: `${Colors.dark.tensorGlow}20`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.dark.tensorGlow,
+  },
+  primerBadgeText: {
+    color: Colors.dark.tensorGlow,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  primerBody: {
+    color: Colors.dark.text,
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  rulesList: {
+    backgroundColor: Colors.dark.background,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  ruleItem: {
+    color: Colors.dark.text,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  ruleNum: {
+    color: Colors.dark.primary,
+    fontWeight: '700',
+  },
+  codeInline: {
+    color: Colors.dark.tensorGlow,
+    fontFamily: 'monospace',
+  },
+  promptBox: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  promptBoxTitle: {
+    color: Colors.dark.secondary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  promptBoxCode: {
+    color: Colors.dark.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    fontFamily: 'monospace',
+  },
+  modulesSection: {
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    color: Colors.dark.text,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  emptyState: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: Colors.dark.textMuted,
+    fontSize: 14,
+  },
+  moduleCard: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  moduleCardHeader: {
+    padding: 14,
+  },
+  moduleNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  moduleName: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+  },
+  chipBadge: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: Colors.dark.surface,
+  },
+  chipBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  moduleSummary: {
+    color: Colors.dark.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  expandRow: {
+    marginTop: 8,
+  },
+  expandText: {
+    color: Colors.dark.primary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  expandedContent: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.dark.cardBorder,
+    backgroundColor: Colors.dark.surface,
+  },
+  expandedDesc: {
+    color: Colors.dark.text,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  metaRow: {
+    marginBottom: 8,
+  },
+  metaLabel: {
+    color: Colors.dark.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 3,
+    textTransform: 'uppercase',
+  },
+  metaValue: {
+    color: Colors.dark.primary,
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+  returnsBlock: {
+    marginBottom: 10,
+  },
+  returnItem: {
+    color: Colors.dark.text,
+    fontSize: 11,
+    fontFamily: 'monospace',
+    lineHeight: 16,
+  },
+  codeSnippetContainer: {
+    backgroundColor: Colors.dark.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    padding: 10,
+    marginBottom: 10,
+  },
+  snippetHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.cardBorder,
+    paddingBottom: 4,
+  },
+  snippetHeaderTitle: {
+    color: Colors.dark.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  snippetCopyButton: {
+    backgroundColor: Colors.dark.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  snippetCopyText: {
+    color: Colors.dark.primary,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  codeSnippetText: {
+    color: Colors.dark.text,
+    fontSize: 11,
+    fontFamily: 'monospace',
+    lineHeight: 15,
+  },
+  aiTipBox: {
+    backgroundColor: `${Colors.dark.warning}15`,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: `${Colors.dark.warning}40`,
+    padding: 10,
+  },
+  aiTipText: {
+    color: Colors.dark.warning,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 10,
+    paddingBottom: 20,
+  },
+  footerText: {
+    color: Colors.dark.textMuted,
+    fontSize: 11,
+    textAlign: 'center',
+  },
+});

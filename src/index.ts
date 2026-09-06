@@ -73,3 +73,10 @@ export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClie
 export { HapticButton, type HapticButtonProps } from './components/HapticButton';
 export { MetricCard, type MetricCardProps } from './components/MetricCard';
 export { SensorVisualizer, type SensorVisualizerProps } from './components/SensorVisualizer';
+
+// Application Screens
+export { DashboardScreen } from './screens/DashboardScreen';
+export { AILabScreen } from './screens/AILabScreen';
+export { SensorsLabScreen } from './screens/SensorsLabScreen';
+export { DocsScreen } from './screens/DocsScreen';
+

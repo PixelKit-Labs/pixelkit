@@ -151,7 +151,8 @@ Pixel delta/ (PixelForge Framework)
 │   └── screens/
 │       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)
 │       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and Voice Speech-to-Text
-│       └── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
+│       ├── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
+│       └── DocsScreen.tsx      # Interactive in-app API documentation & AI Primer viewer
 ```
 
 ---
@@ -220,9 +221,13 @@ export default function MyPixelTool() {
 
 ---
 
-## 🤖 AI Agent Blueprint (Building the Delta Bot)
+## 🤖 AI Agent Blueprint & Documentation
 
-If you are an AI assistant building a new application or developing the **Delta AI bot**:
-* Read **[PIXELFORGE.md](./PIXELFORGE.md)** as your canonical API guide and prompt instructions.
+If you or an AI assistant is building a new application or feature on PixelForge:
+* Read **[docs/AI_PRIMER.md](./docs/AI_PRIMER.md)** for the AI Agent Guidance Primer, 5 Golden Rules, and system prompt directive.
+* Consult **[docs/HARDWARE_API.md](./docs/HARDWARE_API.md)** for exhaustive technical specifications across all 22 silicon and AI modules.
+* Review **[PIXELFORGE.md](./PIXELFORGE.md)** as your canonical API guide and prompt instructions.
 * Consult **[AGENTS.md](./AGENTS.md)** for Android CLI and project describing guidelines.
 * Refer to **[`.agents/skills/android-cli/SKILL.md`](./.agents/skills/android-cli/SKILL.md)** for device control and emulator commands.
+* Explore the live on-device documentation in the **Docs** tab of the PixelForge app.
+

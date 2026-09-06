@@ -11,10 +11,11 @@ import { StatusBar } from 'expo-status-bar';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AILabScreen } from './src/screens/AILabScreen';
 import { SensorsLabScreen } from './src/screens/SensorsLabScreen';
+import { DocsScreen } from './src/screens/DocsScreen';
 import { HapticButton } from './src/components/HapticButton';
 import { Colors } from './src/theme/colors';
 
-type Tab = 'dashboard' | 'ai' | 'sensors';
+type Tab = 'dashboard' | 'ai' | 'sensors' | 'docs';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<Tab>('dashboard');
@@ -45,31 +46,39 @@ export default function App() {
         {currentTab === 'dashboard' && <DashboardScreen />}
         {currentTab === 'ai' && <AILabScreen />}
         {currentTab === 'sensors' && <SensorsLabScreen />}
+        {currentTab === 'docs' && <DocsScreen />}
       </View>
 
       {/* Bottom Floating Navigation Pill Bar */}
       <View style={styles.navBarWrapper}>
         <View style={styles.navBar}>
           <HapticButton
-            title="Silicon HUD"
+            title="Silicon"
             onPress={() => setCurrentTab('dashboard')}
             variant={currentTab === 'dashboard' ? 'primary' : 'outline'}
             style={styles.navButton}
-            textStyle={{ fontSize: 13 }}
+            textStyle={{ fontSize: 12 }}
           />
           <HapticButton
             title="AI Lab"
             onPress={() => setCurrentTab('ai')}
             variant={currentTab === 'ai' ? 'primary' : 'outline'}
             style={styles.navButton}
-            textStyle={{ fontSize: 13 }}
+            textStyle={{ fontSize: 12 }}
           />
           <HapticButton
             title="Sensors"
             onPress={() => setCurrentTab('sensors')}
             variant={currentTab === 'sensors' ? 'primary' : 'outline'}
             style={styles.navButton}
-            textStyle={{ fontSize: 13 }}
+            textStyle={{ fontSize: 12 }}
+          />
+          <HapticButton
+            title="Docs"
+            onPress={() => setCurrentTab('docs')}
+            variant={currentTab === 'docs' ? 'primary' : 'outline'}
+            style={styles.navButton}
+            textStyle={{ fontSize: 12 }}
           />
         </View>
       </View>
