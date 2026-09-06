@@ -1,6 +1,7 @@
 # Pixel 11 Pro Hardware Research & SDK Gap Analysis
 
 > **Date:** 2026-09-05 · **Author:** Claude (research pass) · **Status:** Research only, no code changed
+> **Round 2 corrections:** see [PIXEL_11_PRO_DEEP_DIVE.md](./PIXEL_11_PRO_DEEP_DIVE.md). Notably: use Android 16 `RangingManager` instead of `androidx.core.uwb`; `expo-widgets` is iOS-only; ML Kit Prompt API is at `1.0.0-beta4` with System Instructions; a third-party constrained-satellite-network API exists.
 > **Purpose:** Establish ground truth for the Pixel 11 Pro / Pro XL / Pro Fold and Android 17 (API 37), compare it against what PixelForge currently models, and propose what to add to the SDK/template next.
 
 ---

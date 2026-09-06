@@ -24,7 +24,15 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 * **[Production Recipes](./ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, face-down HiLight visual signaling, and spatial tracking.
 
 ### 🛠️ [Guides & Diagnostics](./guides/)
+* **[Built-in AI, Function Calling & Voice (hub)](./guides/README.md)**: Where inference runs (Gemini Nano 4 on-device vs Gemini cloud), capability matrix, and shared dev-build prerequisites.
+* **[On-Device AI with Gemini Nano](./guides/on-device-ai-gemini-nano.md)**: `pixel-nano` Expo Module over the ML Kit GenAI Prompt API, `useGeminiNano`, structured output, thinking mode, hybrid routing.
+* **[Function Calling & Hardware Tools](./guides/function-calling.md)**: One tool registry executed by cloud Gemini function calling, Gemini Nano structured output, and Android AppFunctions.
+* **[Voice: Speech In, Speech Out, Live Agents](./guides/voice.md)**: On-device streaming STT (Pixel 10/11 Advanced mode), Gemini Live API voice agents with ephemeral tokens, TTS, HiLight/haptic status.
 * **[Troubleshooting & Diagnostics](./guides/troubleshooting.md)**: Expo SDK 57 specifics, camera permissions, keep-awake tags, Hermes bytecode compilation, and thermal throttling mitigations.
+
+### 🔬 [Research](./research/)
+* **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 API surface, hook-by-hook gap analysis, and prioritised roadmap.
+* **[Pixel 11 Pro Deep Dive (Round 2)](./research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections to round 1, Android 16/17 APIs missed (RangingManager, real ADPF headroom, haptic envelopes, ARR, constrained satellite networks, Advanced Protection), 2026 ML Kit / AICore timeline, Play deadlines, Android CLI docs & skills, revised hook roadmap.
 
 ### 🔬 [Hardware Research & Gap Analysis](./research/)
 * **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 (API 37) surfaces, on-device Gemini Nano ML Kit integration roadmap, and native Kotlin module plan.

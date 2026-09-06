@@ -36,8 +36,9 @@ Every AI feature in PixelForge should be routed through **one decision**, made o
 | Capability | Gemini Nano 4 on device (ML Kit Prompt API) | Gemini cloud (`@google/genai` 2.21) |
 | :--- | :--- | :--- |
 | Text generation, streaming | ✅ | ✅ |
-| Image input | ✅ single image (multi-image landed in Prompt API 2026) | ✅ many |
+| Image input | ✅ multiple images since Prompt API beta3 (Jul 2026) | ✅ many |
 | Audio / video / PDF input | ❌ | ✅ |
+| System instructions | ✅ Beta, `SystemInstruction` part, Nano V3+ | ✅ `systemInstruction` |
 | Multi-turn chat with server-side history | ❌ (AICore is single-turn; you re-send context) | ✅ `ai.chats` |
 | Structured output | ✅ Alpha, Kotlin `@Generable` classes | ✅ `responseJsonSchema` |
 | Thinking mode | ✅ Beta, Nano V4+ | ✅ `thinkingConfig` |
