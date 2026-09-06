@@ -34,11 +34,8 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 * **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 API surface, hook-by-hook gap analysis, and prioritised roadmap.
 * **[Pixel 11 Pro Deep Dive (Round 2)](./research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections to round 1, Android 16/17 APIs missed (RangingManager, real ADPF headroom, haptic envelopes, ARR, constrained satellite networks, Advanced Protection), 2026 ML Kit / AICore timeline, Play deadlines, Android CLI docs & skills, revised hook roadmap.
 
-### 🔬 [Hardware Research & Gap Analysis](./research/)
-* **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 (API 37) surfaces, on-device Gemini Nano ML Kit integration roadmap, and native Kotlin module plan.
-
 ### 📑 Consolidated Single-File Manuals
-* **[HARDWARE_API.md](./HARDWARE_API.md)**: Complete 23-module API reference in a single document.
+* **[HARDWARE_API.md](./HARDWARE_API.md)**: Complete 24-module API reference in a single document.
 * **[AI_PRIMER.md](./AI_PRIMER.md)**: Complete AI agent operational manual in a single document.
 
 ---

@@ -2,7 +2,7 @@
  * @file AILabScreen.tsx
  * @description Multimodal AI, Voice Speech-to-Text, and Computer Vision test laboratory.
  * Features live Gemini 2.5 conversational chat, voice audio transcription via useSpeechAI,
- * camera image capture with vision analysis, TPU token throughput telemetry, and Titan M2 encrypted API key persistence.
+ * camera image capture with vision analysis, TPU token throughput telemetry, and Titan M3 encrypted API key persistence.
  */
 
 import React, { useState } from 'react';
@@ -120,7 +120,7 @@ export const AILabScreen: React.FC = () => {
               secureTextEntry
             />
             <HapticButton
-              title="Save Key to Titan M2"
+              title="Save Key to Titan M3"
               onPress={handleSaveKey}
               variant="primary"
               style={{ marginTop: 8 }}

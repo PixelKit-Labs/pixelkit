@@ -6,7 +6,7 @@
 
 ## 📖 Executive Summary
 
-**PixelForge** is a production-grade, modular framework and SDK designed to bridge Google Pixel hardware silicon (Multi-core CPU, GPU Vulkan pipeline, Tensor TPU, Titan M2 Security Enclave, 120Hz LTPO display, Infrared Thermometer, UWB Spatial Radar, and 6-axis sensors) with modern Generative AI capabilities (Google Gemini, Vision AI, Speech AI, and LiteRT).
+**PixelForge** is a production-grade, modular framework and SDK designed to bridge Google Pixel hardware silicon (Tensor G6 7-Core CPU, PowerVR GPU Vulkan pipeline, Tensor TPU, Titan M3 Post-Quantum Security Enclave, 120Hz LTPO display, HiLight notification ring, UWB Spatial Radar, and 6-axis sensors) with modern Generative AI capabilities (Google Gemini, Vision AI, Speech AI, and LiteRT).
 
 This document serves as the **canonical API Reference and Blueprint for AI agents (including the future Delta Bot)** and developers building on top of this framework.
 
@@ -59,6 +59,7 @@ pixel-delta/ (PixelForge Framework)
 │   │   ├── useBiometrics.ts    # Titan M3 in-display Fingerprint & Face Unlock auth
 │   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
+│   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
 │   │   ├── useAudio.ts         # Multi-mic array acoustic recording & real-time dBFS metering
 │   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
 │   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
@@ -83,7 +84,8 @@ pixel-delta/ (PixelForge Framework)
 │   └── screens/
 │       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)
 │       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and Voice Speech-to-Text
-│       └── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
+│       ├── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
+│       └── DocsScreen.tsx      # Interactive in-app API documentation & AI Primer viewer
 ```
 
 ---
@@ -97,6 +99,8 @@ import {
   useGPU,
   useTPU,
   useMemory,
+  useHiLight,
+  useCamera,
   useSpeechAI,
   useSensors, 
   useHaptics, 
@@ -105,10 +109,14 @@ import {
   useDevice, 
   useADPF, 
   useBiometrics,
+  useSecurity,
   useTemperature,
   useUWB,
   useBLE,
   useNFC,
+  useNetwork,
+  useAudio,
+  useDisplay,
   useTorch,
   HapticButton, 
   MetricCard 

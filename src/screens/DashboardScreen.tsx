@@ -44,7 +44,7 @@ export const DashboardScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const handleTestBiometrics = async () => {
-    const success = await biometrics.authenticate('Test Titan M2 Biometric Enclave');
+    const success = await biometrics.authenticate('Test Titan M3 Biometric Enclave');
     setAuthStatus(success ? 'Verified via Biometrics' : 'Authentication Failed/Cancelled');
     setTimeout(() => setAuthStatus(null), 3000);
   };

@@ -1,7 +1,7 @@
 /**
  * @file types.ts
  * @description Centralized TypeScript definitions and telemetry interfaces for PixelForge SDK.
- * Covers physical sensors, Google Tensor TPU, Titan M2 security, ADPF, and AI pipelines.
+ * Covers physical sensors, Google Tensor TPU, Titan M3 security, ADPF, and AI pipelines.
  */
 
 /**

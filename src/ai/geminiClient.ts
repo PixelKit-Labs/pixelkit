@@ -1,7 +1,7 @@
 /**
  * @file geminiClient.ts
  * @description Google Gen AI SDK client factory and secure API key persistence.
- * Leverages Titan M2 hardware-backed SecureStore to persist user API keys without plaintext exposure.
+ * Leverages Titan M3 hardware-backed SecureStore to persist user API keys without plaintext exposure.
  */
 
 import { GoogleGenAI } from '@google/genai';
@@ -11,7 +11,7 @@ import { Platform } from 'react-native';
 const API_KEY_STORAGE_KEY = 'PIXELFORGE_GEMINI_API_KEY';
 
 /**
- * Retrieves the stored Gemini API key from Titan M2 Keystore or environment variables.
+ * Retrieves the stored Gemini API key from Titan M3 Keystore or environment variables.
  * @returns Promise resolving to API key string or null if not yet configured.
  */
 export async function getStoredApiKey(): Promise<string | null> {

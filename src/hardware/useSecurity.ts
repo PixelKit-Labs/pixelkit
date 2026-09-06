@@ -1,6 +1,6 @@
 /**
  * @file useSecurity.ts
- * @description Hardware-backed cryptographic key and secret storage via Android Keystore and Titan M2.
+ * @description Hardware-backed cryptographic key and secret storage via Android Keystore and Titan M3.
  * Stores sensitive credentials, AI API keys, and auth tokens in an isolated cryptographic enclave.
  */
 

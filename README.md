@@ -1,10 +1,10 @@
 # PixelForge SDK ⚡
 > **The Hardware & AI Framework for Google Pixel & Android**  
-> *Engineered for high-performance mobile applications and AI-driven bots.*
+> *Engineered for high-performance mobile applications and autonomous AI agents.*
 
 [![Expo SDK](https://img.shields.io/badge/Expo-SDK%2057-black?style=flat-square&logo=expo)](https://docs.expo.dev/versions/v57.0.0/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?style=flat-square&logo=react)](https://reactnative.dev/)
-[![Android Version](https://img.shields.io/badge/Android-15%20%2F%2016-3DDC84?style=flat-square&logo=android)](https://developer.android.com/)
+[![Android Version](https://img.shields.io/badge/Android-15%20%2F%2016%20%2F%2017-3DDC84?style=flat-square&logo=android)](https://developer.android.com/)
 [![Google Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![Tensor TPU](https://img.shields.io/badge/Hardware-Tensor%20TPU-00E5FF?style=flat-square)](https://developers.google.com/tensor)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -15,9 +15,9 @@
 
 **PixelForge** is a modular framework and developer SDK designed specifically to unlock 100% of the hardware silicon and on-device machine learning capabilities of the **Google Pixel 11 Pro** (and modern Android devices). 
 
-Instead of dealing with fragmented low-level Android APIs or complex native bridges, PixelForge abstracts the phone's physical hardware into typed, reusable **React hooks** with integrated tactile haptics, thermal headroom management, and multimodal Gemini AI intelligence.
+Instead of dealing with fragmented low-level Android APIs or complex native bridges, PixelForge abstracts the phone's physical hardware into 24 typed, reusable **React hooks** with integrated tactile haptics, thermal headroom management, and multimodal Gemini AI intelligence.
 
-It is structured as a foundation for developers and autonomous AI agents (such as the upcoming **Delta Bot**) to build, test, and ship mobile experiences rapidly.
+It is structured as an authoritative foundation for developers and autonomous AI coding agents (including the upcoming **Delta Bot**) to build, test, and ship mobile experiences rapidly.
 
 ---
 
@@ -48,6 +48,7 @@ It is structured as a foundation for developers and autonomous AI agents (such a
 | **Satellite & Modem** | `useNetwork()` | MediaTek M90 modem, Wi-Fi 7, 5G Sub-6/mmWave, and Satellite SOS connectivity |
 | **Satellite GNSS** | `useLocation()` | Multi-band dual-frequency L1/L5 GPS receiver, speed, altitude, and compass heading |
 | **Pixelsnap & Power** | `useDevice()` | Pixelsnap Qi2.2 25W magnetic wireless charging, battery health, and PMIC telemetry |
+| **Studio Mic Array** | `useAudio()` | Quad-mic beamforming acoustic recording & real-time dBFS sound pressure metering |
 
 ---
 
@@ -102,42 +103,56 @@ android describe --project_dir=.
 
 ```text
 Pixel delta/ (PixelForge Framework)
-├── App.tsx                     # Main App Shell & 3-Tab Navigator (HUD, AI Lab, Sensors)
+├── App.tsx                     # Main App Shell & 4-Tab Navigator (HUD, AI Lab, Sensors, Docs)
 ├── PIXELFORGE.md               # Canonical AI Reference & Prompt Manual
 ├── README.md                   # Complete Developer Reference & Quickstart
 ├── AGENTS.md                   # Antigravity agent guidelines & Android CLI rules
-├── GEMINI.md                   # Agent guidelines mirror
-├── app.json                    # Android 15/16 Permissions & 120Hz LTPO Manifest
-├── package.json                # Dependencies: Expo 57, React 19, @google/genai
+├── CLAUDE.md                   # Claude agent guidelines mirror & mandatory doc sync rule
+├── GEMINI.md                   # Gemini agent guidelines mirror & mandatory doc sync rule
+├── app.json                    # Android 15/16/17 Permissions & 120Hz LTPO Manifest
+├── package.json                # Dependencies: Expo 57, React 19, React Native 0.86, @google/genai
 │
-├── .agents/skills/             # Built-in Antigravity Agent Skills
+├── .agents/skills/             # Built-in Agent Skills
 │   └── android-cli/            # Google Android CLI skill (SDK, emulator, device inspection)
+│
+├── docs/                       # Comprehensive Modular Documentation Suite
+│   ├── README.md               # Documentation portal & sitemap
+│   ├── HARDWARE_API.md         # Consolidated 24-module hardware reference manual
+│   ├── AI_PRIMER.md            # Consolidated AI operational manual & 5 Golden Rules
+│   ├── getting-started/        # Quickstart & silicon architecture guides
+│   ├── api/                    # Modular API references by subsystem (silicon, pro, ai, etc.)
+│   ├── ai-guidance/            # AI agent primer and production recipes
+│   ├── guides/                 # On-device Gemini Nano, Function Calling, Voice, Diagnostics
+│   └── research/               # Ground-truth Pixel 11 Pro hardware research & deep dives
 │
 ├── src/
 │   ├── index.ts                # Master barrel export for all hooks and UI primitives
 │   ├── core/
 │   │   └── types.ts            # Strongly-typed telemetry, silicon, and AI interfaces
 │   │
-│   ├── hardware/               # Physical Silicon & Hardware Abstractions
-│   │   ├── useCPU.ts           # Multi-core cluster (Prime/Perf/Eff), load & benchmarks
-│   │   ├── useGPU.ts           # Vulkan 120 FPS frame pacing (<= 8.33ms budget) & dropped frames
-│   │   ├── useMemory.ts        # LPDDR5X RAM usage, free memory & LMK protection
-│   │   ├── useADPF.ts          # Android Dynamic Performance Framework (Headroom/Thermal)
+│   ├── hardware/               # Physical Silicon & Hardware Abstractions (15 hooks)
+│   │   ├── useCPU.ts           # Tensor G6 7-Core cluster (4.11GHz C1-Ultra, C-1 Pro) on TSMC 2nm
+│   │   ├── useGPU.ts           # PowerVR / Vulkan frame pacing (8.33ms budget) & dropped frames
+│   │   ├── useMemory.ts        # LPDDR5X RAM usage, free memory & Low Memory Killer (LMK) protection
+│   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
 │   │   ├── useSensors.ts       # 6-Axis Motion (Gyro/Accel), Barometer/Altimeter, Compass, Light
 │   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms & mechanical ticks
-│   │   ├── useTorch.ts         # Rear dual-LED flashlight & emergency SOS strobe
-│   │   ├── useDevice.ts        # Battery health, thermals, charging state & model telemetry
-│   │   ├── useDisplay.ts       # 120Hz LTPO display, screen wake lock & brightness
-│   │   ├── useBiometrics.ts    # Titan M2 in-display Fingerprint & Face Unlock auth
-│   │   ├── useSecurity.ts      # Hardware-backed Titan M2 SecureStore key storage
-│   │   ├── useLocation.ts      # Multi-band GNSS positioning, altitude & heading
-│   │   ├── useAudio.ts         # Multi-mic array recording & real-time dBFS metering
-│   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity client
+│   │   ├── useCamera.ts        # Camera Looks tone-mapping, 120x AI Zoom & Ultra Low Light Video
+│   │   ├── useHiLight.ts       # [Pixel Pro Exclusive] Rear camera bar notification LED ring
+│   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
+│   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
+│   │   ├── useDisplay.ts       # 3,600 nits 120Hz LTPO OLED display, screen wake lock & brightness
+│   │   ├── useBiometrics.ts    # Titan M3 in-display Fingerprint & Face Unlock auth
+│   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
+│   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
+│   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
+│   │   ├── useAudio.ts         # Multi-mic array acoustic recording & real-time dBFS metering
+│   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
 │   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
-│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer sensor
+│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer (legacy / ambient)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
-│   ├── ai/                     # Intelligence & Silicon Acceleration Layer
+│   ├── ai/                     # Intelligence & Silicon Acceleration Layer (4 hooks + client)
 │   │   ├── useTPU.ts           # Google Tensor TPU hardware accelerator & latency benchmarker
 │   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
 │   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
@@ -156,7 +171,7 @@ Pixel delta/ (PixelForge Framework)
 │       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)
 │       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and Voice Speech-to-Text
 │       ├── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
-│       └── DocsScreen.tsx      # Interactive in-app API documentation & AI Primer viewer
+│       └── DocsScreen.tsx      # Interactive on-device API documentation & AI Primer viewer
 ```
 
 ---
@@ -170,15 +185,22 @@ Pixel delta/ (PixelForge Framework)
 
 2. **Verify TypeScript compilation**:
    ```bash
-   npx tsc --noEmit
+   npm run typecheck
    ```
+   *Should exit with 0 errors.*
 
-3. **Start the development server**:
+3. **Verify Metro Hermes bytecode export**:
+   ```bash
+   npx expo export -p android
+   ```
+   *Compiles all 696 modules to optimized Hermes bytecode (`.hbc`).*
+
+4. **Start the development server**:
    ```bash
    npm start
    ```
 
-4. **Launch on your phone**:
+5. **Launch on your phone**:
    * Install the **Expo Go** app from Google Play on your Pixel 11 Pro.
    * Scan the terminal QR code with your camera.
    * The app will compile and launch on your phone over Wi-Fi with hot reloading!
@@ -187,7 +209,7 @@ Pixel delta/ (PixelForge Framework)
 
 ## 💡 How to Build With PixelForge
 
-All hooks and UI components are available from a single import:
+All hooks and UI components are available from a single centralized import:
 
 ```typescript
 import { 
@@ -195,6 +217,8 @@ import {
   useGPU,
   useTPU,
   useMemory,
+  useHiLight,
+  useCamera,
   useSensors, 
   useHaptics, 
   useSpeechAI,
@@ -202,7 +226,8 @@ import {
   useVisionAI, 
   useTemperature,
   useUWB,
-  useTorch,
+  useSecurity,
+  useDevice,
   HapticButton, 
   MetricCard 
 } from './src';
@@ -211,6 +236,13 @@ export default function MyPixelTool() {
   const { light, success } = useHaptics();
   const { currentFps } = useGPU();
   const { celsius } = useTemperature().reading;
+  const hilight = useHiLight();
+
+  const handleAction = async () => {
+    await light();
+    hilight.triggerGeminiPulse(3000);
+    await success();
+  };
 
   return (
     <MetricCard
@@ -225,13 +257,45 @@ export default function MyPixelTool() {
 
 ---
 
-## 🤖 AI Agent Blueprint & Documentation
+## 📚 Comprehensive Documentation Suite
 
-If you or an AI assistant is building a new application or feature on PixelForge:
-* Read **[docs/AI_PRIMER.md](./docs/AI_PRIMER.md)** for the AI Agent Guidance Primer, 5 Golden Rules, and system prompt directive.
-* Consult **[docs/HARDWARE_API.md](./docs/HARDWARE_API.md)** for exhaustive technical specifications across all 22 silicon and AI modules.
-* Review **[PIXELFORGE.md](./PIXELFORGE.md)** as your canonical API guide and prompt instructions.
-* Consult **[AGENTS.md](./AGENTS.md)** for Android CLI and project describing guidelines.
-* Refer to **[`.agents/skills/android-cli/SKILL.md`](./.agents/skills/android-cli/SKILL.md)** for device control and emulator commands.
-* Explore the live on-device documentation in the **Docs** tab of the PixelForge app.
+PixelForge features an exhaustive, multi-tier documentation system kept in continuous synchronization with the codebase:
+
+### 🧭 [Documentation Hub (docs/README.md)](./docs/README.md)
+The central sitemap and entry portal for all developer guides and reference manuals.
+
+### 🚀 Getting Started
+* **[Quickstart Guide](./docs/getting-started/quickstart.md)**: Workstation prerequisites, Android CLI setup, and launching on physical Pixel devices.
+* **[Silicon Architecture](./docs/getting-started/architecture.md)**: Deep dive into Tensor G6 7-core 2nm, PowerVR GPU, Titan M3 PQC, and Pixelsnap Qi2.2 magnetic charging.
+
+### 📚 API Reference (By Subsystem)
+* **[Silicon & Compute](./docs/api/silicon-compute.md)**: `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`.
+* **[Pixel Pro Exclusives](./docs/api/pro-exclusives.md)**: `useHiLight`, `useUWB`, `useTemperature`.
+* **[Neural & AI](./docs/api/neural-ai.md)**: `useGemini`, `useSpeechAI`, `useVisionAI`, `geminiClient`.
+* **[Sensors & Actuators](./docs/api/sensors-actuators.md)**: `useSensors`, `useCamera`, `useTorch`, `useHaptics`.
+* **[Radios & Security](./docs/api/radios-security.md)**: `useBiometrics`, `useSecurity`, `useBLE`, `useNFC`, `useLocation`.
+* **[System & Media](./docs/api/system-media.md)**: `useAudio`, `useDisplay`, `useDevice`, `useNetwork`.
+
+### 🤖 AI Agent Guidance & Primers
+* **[Agent Operational Primer](./docs/ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelForge, and copy-paste system prompts.
+* **[Production Recipes](./docs/ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, HiLight visual signaling, and spatial tracking.
+
+### 🛠️ Production Guides & Diagnostics
+* **[Built-in AI, Function Calling & Voice Hub](./docs/guides/README.md)**: Hybrid decision tree (Gemini Nano 4 on-device vs Gemini cloud) and build prerequisites.
+* **[On-Device AI with Gemini Nano](./docs/guides/on-device-ai-gemini-nano.md)**: ML Kit GenAI Prompt API, local Expo Module, structured output, and thinking mode.
+* **[Function Calling & Hardware Tools](./docs/guides/function-calling.md)**: Unified tool registry for cloud Gemini, Gemini Nano, and Android AppFunctions.
+* **[Voice: Speech In, Speech Out, Live Agents](./docs/guides/voice.md)**: On-device streaming STT, Gemini Live API bidirectional agents, and audio haptics.
+* **[Troubleshooting & Diagnostics](./docs/guides/troubleshooting.md)**: Expo SDK 57 nuances, KeepAwake tags, StatusBar styling, and thermal throttling mitigations.
+
+### 🔬 Research & Deep Dives
+* **[Pixel 11 Pro Hardware Research](./docs/research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 (API 37) surfaces, and SDK gap analysis.
+* **[Pixel 11 Pro Deep Dive (Round 2)](./docs/research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections, Android 16/17 APIs (`RangingManager`, ADPF headroom, ARR), and store deadlines.
+
+### 📑 Consolidated Single-File Manuals
+* **[HARDWARE_API.md](./docs/HARDWARE_API.md)**: Complete 24-module hardware and AI API manual in a single file.
+* **[AI_PRIMER.md](./docs/AI_PRIMER.md)**: Complete AI agent operational manual in a single file.
+
+### 📱 In-App Documentation Viewer
+Browse live documentation, interactive copyable TypeScript snippets, and AI tips on the device itself via the **Docs** tab (`DocsScreen.tsx`).
+
 

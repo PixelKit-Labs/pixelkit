@@ -280,8 +280,8 @@ function SpatialRadar() {
     category: 'ai',
     chipBadge: 'Gemini 2.5 Flash / TPU',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Conversational reasoning, token streaming, and automatic Titan M2 API key retrieval.',
-    description: 'Official Google Gen AI SDK integration for multi-turn chats. Automatically pulls API keys from Titan M2 encrypted storage and supports offline simulation mode.',
+    summary: 'Conversational reasoning, token streaming, and automatic Titan M3 API key retrieval.',
+    description: 'Official Google Gen AI SDK integration for multi-turn chats. Automatically pulls API keys from Titan M3 encrypted storage and supports offline simulation mode.',
     signature: 'useGemini(): GeminiState',
     returns: [
       'messages: ChatMessage[]',
@@ -301,7 +301,7 @@ function Assistant() {
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Always configure setApiKey() through Titan M2 storage; do not hardcode Gemini API keys in source code.',
+    aiTip: 'AI Tip: Always configure setApiKey() through Titan M3 storage; do not hardcode Gemini API keys in source code.',
   },
   {
     id: 'useSpeechAI',
@@ -762,7 +762,7 @@ Always adhere to these requirements:
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
 3. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
 4. Use true OLED black (#0B0D11) for backgrounds via Colors.dark.background.
-5. Store sensitive keys exclusively in the Titan M2 enclave using useSecurity().saveSecureItem().
+5. Store sensitive keys exclusively in the Titan M3 enclave using useSecurity().saveSecureItem().
 6. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).`;
 
   return (
@@ -786,7 +786,7 @@ Always adhere to these requirements:
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search 22 hooks, silicon chips, or AI tips..."
+          placeholder="Search 24 hooks, silicon chips, or AI tips..."
           placeholderTextColor={Colors.dark.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}

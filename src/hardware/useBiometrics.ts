@@ -1,7 +1,7 @@
 /**
  * @file useBiometrics.ts
  * @description Biometric hardware verification for Pixel under-display Fingerprint and Face Unlock.
- * Connects to Android BiometricPrompt backed by the Titan M2 hardware security module.
+ * Connects to Android BiometricPrompt backed by the Titan M3 hardware security module.
  */
 
 import { useState, useEffect } from 'react';
