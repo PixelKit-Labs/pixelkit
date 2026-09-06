@@ -125,26 +125,24 @@ export const AILabScreen: React.FC = () => {
           }
           source={nano.source}
         />
-        <View style={styles.row}>
-          <MetricCard
-            title="Nano latency"
-            value={nano.lastLatencyMs}
-            unit="ms"
-            badge={nano.lastFirstTokenMs != null ? `first token ${nano.lastFirstTokenMs} ms` : 'measured natively'}
-            badgeColor={Colors.dark.primary}
-            subtitle="Wall time of the last AICore call"
-            source={nano.lastLatencyMs == null ? 'unavailable' : 'hardware'}
-          />
-          <MetricCard
-            title="Decode rate"
-            value={nano.lastDecodeTokensPerSec}
-            unit="tok/s"
-            badge={nano.lastOutputTokens != null ? `${nano.lastOutputTokens} tokens` : 'on-device tokenizer'}
-            badgeColor={Colors.dark.primary}
-            subtitle="Output tokens ÷ time after first token"
-            source={nano.lastDecodeTokensPerSec == null ? 'unavailable' : 'derived'}
-          />
-        </View>
+        <MetricCard
+          title="Nano latency"
+          value={nano.lastLatencyMs}
+          unit="ms"
+          badge={nano.lastFirstTokenMs != null ? `first token ${nano.lastFirstTokenMs} ms` : 'measured natively'}
+          badgeColor={Colors.dark.primary}
+          subtitle="Wall time of the last AICore call"
+          source={nano.lastLatencyMs == null ? 'unavailable' : 'hardware'}
+        />
+        <MetricCard
+          title="Decode rate"
+          value={nano.lastDecodeTokensPerSec}
+          unit="tok/s"
+          badge={nano.lastOutputTokens != null ? `${nano.lastOutputTokens} tokens` : 'on-device tokenizer'}
+          badgeColor={Colors.dark.primary}
+          subtitle="Output tokens ÷ time after first token"
+          source={nano.lastDecodeTokensPerSec == null ? 'unavailable' : 'derived'}
+        />
         {nano.status === 'downloadable' && (
           <HapticButton
             title={nano.isDownloading ? `Downloading… ${nano.downloadedBytes != null ? `${(nano.downloadedBytes / 1e6).toFixed(0)} MB` : ''}` : 'Download Gemini Nano model'}
@@ -170,17 +168,15 @@ export const AILabScreen: React.FC = () => {
           </View>
         )}
 
-        <View style={styles.row}>
-          <MetricCard
-            title="CPU fallback matmul"
-            value={tpu.cpuFallbackLatencyMs}
-            unit="ms"
-            badge="256×256 JS"
-            badgeColor={Colors.dark.primary}
-            subtitle="Real JS-thread compute; not TPU"
-            source={tpu.cpuFallbackLatencyMs == null ? 'unavailable' : 'derived'}
-          />
-        </View>
+        <MetricCard
+          title="CPU fallback matmul"
+          value={tpu.cpuFallbackLatencyMs}
+          unit="ms"
+          badge="256×256 JS"
+          badgeColor={Colors.dark.primary}
+          subtitle="Real JS-thread compute; not TPU"
+          source={tpu.cpuFallbackLatencyMs == null ? 'unavailable' : 'derived'}
+        />
         <HapticButton
           title={tpu.isBenchmarking ? 'Running matmul…' : 'Run CPU fallback benchmark'}
           onPress={() => { void tpu.benchmarkTPU(); }}

@@ -4,6 +4,11 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.10] - 2026-09-06
+
+### Changed
+- AI Lab: Stacked Gemini Nano latency, decode rate, and CPU fallback matmul `MetricCard`s vertically into full-width cards instead of horizontal row layout, ensuring consistent styling, no horizontal compression, and clean typography across mobile viewports.
+
 ## [1.0.9] - 2026-09-06
 
 ### Added
