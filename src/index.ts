@@ -35,7 +35,11 @@
 
 // Core Types & Design System
 export * from './core/types';
+export * from './core/capabilities';
 export * from './theme/colors';
+
+// Device Capability Resolution (read this before any Pro-exclusive hook)
+export { useCapabilities } from './hardware/useCapabilities';
 
 // Compute & Silicon Hardware Hooks
 export { useCPU } from './hardware/useCPU';

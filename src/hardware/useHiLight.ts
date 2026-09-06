@@ -6,6 +6,8 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import type { HardwareAvailability } from '../core/capabilities';
+import { useCapabilities } from './useCapabilities';
 
 export type HiLightMode =
   | 'off'
@@ -17,7 +19,14 @@ export type HiLightMode =
   | 'notification';
 
 export interface HiLightState {
-  /** Whether the HiLight LED ring is physically illuminated */
+  /**
+   * 'simulated' on Pixel 11 Pro / Pro XL / Pro Fold: the LED array exists but Google exposes no
+   * third-party API, so state is mirrored on-screen. 'unsupported' on every other device.
+   */
+  availability: HardwareAvailability;
+  /** True when the device physically has the HiLight LED array */
+  isHardwareSupported: boolean;
+  /** Whether the HiLight LED ring is (virtually) illuminated */
   isActive: boolean;
   /** Current RGB hex color displayed by the HiLight ring */
   currentColor: string;
@@ -57,6 +66,8 @@ const GOOGLE_BLUE = '#8AB4F8';
  * ```
  */
 export function useHiLight(): HiLightState {
+  const { hasHiLight } = useCapabilities();
+  const availability: HardwareAvailability = hasHiLight ? 'simulated' : 'unsupported';
   const [isActive, setIsActive] = useState<boolean>(false);
   const [currentColor, setCurrentColor] = useState<string>(GEMINI_CYAN);
   const [mode, setModeState] = useState<HiLightMode>('off');
@@ -129,6 +140,8 @@ export function useHiLight(): HiLightState {
   }, [isActive, turnOff]);
 
   return {
+    availability,
+    isHardwareSupported: hasHiLight,
     isActive,
     currentColor,
     mode,

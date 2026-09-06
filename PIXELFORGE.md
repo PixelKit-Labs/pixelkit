@@ -60,10 +60,11 @@ pixel-delta/ (PixelForge Framework)
 │   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
-│   │   ├── useAudio.ts         # Multi-mic array acoustic recording & real-time dBFS metering
+│   │   ├── useCapabilities.ts  # Device capability resolution (thermometer/HiLight/UWB/Nano tier/API level)
+│   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
 │   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
 │   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
-│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer (legacy / ambient)
+│   │   ├── useTemperature.ts   # [Pixel 8-10 Pro] Infrared thermometer; absent on Pixel 11 Pro (estimated)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer

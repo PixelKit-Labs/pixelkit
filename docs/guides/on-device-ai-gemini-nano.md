@@ -42,7 +42,7 @@ npm i expo-build-properties expo-dev-client
 npx create-expo-module@latest --local     # prompt: name "pixel-nano", Android package "expo.modules.pixelnano"
 ```
 
-`app.json` additions (see [guides README](./README.md#3-build-prerequisites-shared-by-all-three-guides) for the full block): `compileSdkVersion` / `targetSdkVersion` **37**, `minSdkVersion` **26**.
+`app.json` additions (see [guides README](./README.md#3-build-prerequisites-shared-by-all-three-guides) for the full block): `compileSdkVersion` / `targetSdkVersion` **36**, `minSdkVersion` **26**. ML Kit GenAI needs only minSdk 26, so Android 17's `android-37.0` platform is not required for this module; raise compileSdk once Expo's AGP resolves minor-versioned SDKs.
 
 ### 2.2 Gradle dependencies for the module
 

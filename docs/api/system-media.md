@@ -16,17 +16,51 @@ This document covers system telemetry, media capture, power, and wireless modem 
 
 ## `useAudio`
 
-Operates the studio microphone array with instant decibel sound level metering in dBFS (-160 to 0).
+Operates the microphone array with 100 ms decibel metering in dBFS (-160 to 0). Backed by **`expo-audio`** (the legacy `expo-av` package was removed in this project). Records mono 16 kHz AAC through the `voice_recognition` audio source so Pixel's hardware noise suppression is applied, which is the input every Google speech API expects.
 
 ### Signature
 ```typescript
 function useAudio(): {
   isRecording: boolean;
-  recordingUri: string | null;
-  currentDecibels: number;
-  startRecording: () => Promise<void>;
-  stopRecording: () => Promise<string | null>;
+  meteringDecibels: number;       // dBFS -160..0
+  currentDecibels: number;        // alias of meteringDecibels
+  permissionGranted: boolean;
+  startRecording: () => Promise<boolean>;
+  stopRecording: () => Promise<string | null>;   // recorded file URI
 };
+```
+
+---
+
+## `useCapabilities`
+
+Single source of truth for what the current Pixel physically has and which Android platform APIs exist. Pure resolver lives in `src/core/capabilities.ts` (`resolveCapabilities(modelName, apiLevel, isDevice)`) so it can be unit tested; the hook memoises it for the app lifetime. Read it before rendering any Pro-exclusive feature.
+
+### Signature
+```typescript
+function useCapabilities(): DeviceCapabilities;
+
+interface DeviceCapabilities {
+  modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
+  pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
+  androidApiLevel: number | null;
+  hasThermometer: boolean;          // Pixel 8 Pro, 9 Pro, 10 Pro only
+  hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold (no public API; simulated)
+  hasUWB: boolean;                  // Pro models since Pixel 6 Pro, all Folds
+  hasTitanM3: boolean;              // Pixel 11 family
+  geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';
+  supportsRangingApi: boolean;      // Android 16+ RangingManager
+  supportsHapticEnvelopes: boolean; // Android 16+ envelope vibrations
+  supportsAppFunctions: boolean;    // Android 16+
+  supportsAndroid17Apis: boolean;   // Android 17+
+}
+```
+
+### Example
+```typescript
+const caps = useCapabilities();
+if (!caps.hasThermometer) hideThermometerCard();
+if (caps.geminiNanoTier === 'nano-v4') enableThinkingMode();
 ```
 
 ---

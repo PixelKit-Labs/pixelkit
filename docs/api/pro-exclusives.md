@@ -123,11 +123,13 @@ export function RadarHUD() {
 ## `useTemperature`
 
 Samples thermal infrared radiation from surfaces and liquids.
-> **Note**: On the Pixel 11 Pro, the physical camera bar thermopile slot transitioned to the **HiLight** multi-color notification ring. This hook is maintained for full backward compatibility on Pixel 8 Pro, 9 Pro, and 10 Pro hardware, as well as software ambient estimation.
+> **Note**: The **Pixel 11 Pro, Pro XL and Pro Fold have no thermometer**. The camera bar thermopile slot now holds the **HiLight** multi-color LED array. This hook is maintained for Pixel 8 Pro, 9 Pro, and 10 Pro hardware. On every other device `isHardwareSupported` is `false`, `availability` is `'estimated'`, and readings are software estimates that must be labelled as such. Gate UI with `useCapabilities().hasThermometer`.
 
 ### Signature
 ```typescript
 function useTemperature(): {
+  isHardwareSupported: boolean;              // false on Pixel 11 Pro family
+  availability: 'hardware' | 'estimated';
   reading: TemperatureReading;
   materialPreset: string;
   isMeasuring: boolean;

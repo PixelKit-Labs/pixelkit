@@ -199,8 +199,14 @@ function NotificationRing() {
 
 ### `useTemperature`
 * **File Path**: `src/hardware/useTemperature.ts`
-* **Target Hardware**: Infrared Thermopile Sensor (Pixel 8 Pro / 9 Pro / 10 Pro) & Ambient Estimation.
-* **Description**: Samples thermal radiation from surfaces and liquids without physical contact. On the Pixel 11 Pro, the physical hardware slot transitioned into the **HiLight** notification ring, with temperature handled via ambient algorithms.
+* **Target Hardware**: Infrared Thermopile Sensor (Pixel 8 Pro / 9 Pro / 10 Pro **only**).
+* **Description**: Samples thermal radiation from surfaces and liquids without physical contact. The **Pixel 11 Pro, Pro XL and Pro Fold have no thermometer**; the slot now holds the **HiLight** LED array. The hook reads `useCapabilities().hasThermometer` and exposes `isHardwareSupported: boolean` and `availability: 'hardware' | 'estimated'`. When `estimated`, readings are software estimates and UI must label them as such.
+
+#### Interface (additions)
+```typescript
+isHardwareSupported: boolean;                 // false on Pixel 11 Pro family
+availability: 'hardware' | 'estimated';
+```
 
 ---
 
@@ -335,8 +341,42 @@ interface SecurityState {
 
 ### `useAudio`
 * **File Path**: `src/hardware/useAudio.ts`
-* **Target Hardware**: Quad-Microphone Studio Array.
-* **Description**: Acoustic recording and real-time peak audio level metering in dBFS.
+* **Target Hardware**: Multi-Microphone Array (`VOICE_RECOGNITION` audio source for hardware noise suppression).
+* **Backing Module**: `expo-audio` (SDK 57). The legacy `expo-av` dependency has been removed.
+* **Description**: Records mono 16 kHz AAC (the format every Google speech API expects) with 100 ms dBFS metering (-160 silence to 0 clipping).
+
+#### Interface
+```typescript
+isRecording: boolean;
+meteringDecibels: number;        // dBFS, -160..0
+currentDecibels: number;         // alias of meteringDecibels
+permissionGranted: boolean;
+startRecording(): Promise<boolean>;
+stopRecording(): Promise<string | null>;  // file URI
+```
+
+---
+
+### `useCapabilities`
+* **File Path**: `src/hardware/useCapabilities.ts` (pure resolver in `src/core/capabilities.ts`)
+* **Target Hardware**: Device identity via `expo-device`.
+* **Description**: Single source of truth for what the current Pixel physically has and which Android platform APIs are available. Every Pro-exclusive hook (`useTemperature`, `useHiLight`, `useUWB`) and every Android 16/17-gated feature reads from it. Values are memoised for the app lifetime.
+
+#### Interface
+```typescript
+modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
+pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
+androidApiLevel: number | null;
+hasThermometer: boolean;          // Pixel 8-10 Pro only
+hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold
+hasUWB: boolean;                  // Pro since Pixel 6 Pro, all Folds
+hasTitanM3: boolean;              // Pixel 11 family
+geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';
+supportsRangingApi: boolean;      // API 36+
+supportsHapticEnvelopes: boolean; // API 36+
+supportsAppFunctions: boolean;    // API 36+
+supportsAndroid17Apis: boolean;   // API 37+
+```
 
 ---
 

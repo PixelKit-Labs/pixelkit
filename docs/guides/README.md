@@ -78,8 +78,8 @@ Native AI modules cannot run in Expo Go. You need a **development build**.
       "expo-audio",
       ["expo-build-properties", {
         "android": {
-          "compileSdkVersion": 37,
-          "targetSdkVersion": 37,
+          "compileSdkVersion": 36,
+          "targetSdkVersion": 36,
           "minSdkVersion": 26
         }
       }]
@@ -99,6 +99,8 @@ npx expo run:android                          # physical Pixel over USB
 ```
 
 Validation gates remain `npm run typecheck` and `npx expo export -p android`. Add `adb logcat -s AICore:* MLKit:*` while testing on-device inference.
+
+> **compileSdk note (Sept 2026):** Android 17's SDK is published only as minor-versioned platforms (`android-37.0`, `37.1`, `37.2`). AGP 8.12, which Expo 57 bundles, resolves `compileSdk 37` to `android-37` and fails with "Failed to find target with hash string 'android-37'". Stay on 36 (Play's current requirement) and use Android 17 APIs through reflection or `Build.VERSION.SDK_INT >= 37` guards until Expo adopts an AGP with minor-SDK support.
 
 ---
 

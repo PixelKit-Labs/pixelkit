@@ -38,7 +38,8 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
 | **Conversational AI** | `useGemini()` | Multi-turn reasoning, streaming chat, token telemetry, Titan M3 quantum key vault |
 | **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband transceiver for centimeter-level AoA tracking |
-| **IR Thermometer** | `useTemperature()` | **[Pixel Pro Exclusive]** Infrared thermopile sensor (legacy / ambient estimation) |
+| **Device Capabilities** | `useCapabilities()` | Resolves what this Pixel physically has (thermometer, HiLight, UWB, Titan M3, Gemini Nano tier) and which Android 16/17 APIs exist |
+| **IR Thermometer** | `useTemperature()` | **[Pixel 8-10 Pro only]** Infrared thermopile sensor; **absent on Pixel 11 Pro** (reports `availability: 'estimated'`) |
 | **Contactless NFC** | `useNFC()` | NFC radio controller, NDEF smart tag reader/writer, and simulation runner |
 | **Bluetooth Low Energy**| `useBLE()` | BLE beacon & peripheral scanner with RSSI signal strength distance estimation |
 | **Flashlight / Torch** | `useTorch()` | Rear dual-LED hardware flashlight toggle and high-frequency SOS strobe |
@@ -48,7 +49,7 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Satellite & Modem** | `useNetwork()` | MediaTek M90 modem, Wi-Fi 7, 5G Sub-6/mmWave, and Satellite SOS connectivity |
 | **Satellite GNSS** | `useLocation()` | Multi-band dual-frequency L1/L5 GPS receiver, speed, altitude, and compass heading |
 | **Pixelsnap & Power** | `useDevice()` | Pixelsnap Qi2.2 25W magnetic wireless charging, battery health, and PMIC telemetry |
-| **Studio Mic Array** | `useAudio()` | Quad-mic beamforming acoustic recording & real-time dBFS sound pressure metering |
+| **Studio Mic Array** | `useAudio()` | Multi-mic recording via `expo-audio` (16 kHz mono, `voice_recognition` source) & real-time dBFS metering |
 
 ---
 
@@ -146,10 +147,11 @@ Pixel delta/ (PixelForge Framework)
 │   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
-│   │   ├── useAudio.ts         # Multi-mic array acoustic recording & real-time dBFS metering
+│   │   ├── useCapabilities.ts  # Device capability resolution (what this Pixel really has)
+│   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
 │   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
 │   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
-│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer (legacy / ambient)
+│   │   ├── useTemperature.ts   # [Pixel 8-10 Pro] Infrared thermometer; absent on Pixel 11 Pro (estimated)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer (4 hooks + client)
@@ -201,7 +203,7 @@ Pixel delta/ (PixelForge Framework)
    ```
 
 5. **Launch on your phone**:
-   * Install the **Expo Go** app from Google Play on your Pixel 11 Pro.
+   * Install the **Expo Go** app from Google Play on your Pixel 11 Pro. **Note:** Expo Go covers the JS-only hooks. Native AI modules (Gemini Nano, Ranging, haptic envelopes) require a development build: `npx expo prebuild --platform android && npx expo run:android` with `expo-dev-client` (already configured; `app.json` sets compileSdk/targetSdk 36, minSdk 26 via `expo-build-properties`. Android 17 ships as the minor-versioned platform `android-37.0`, which the AGP 8.12 bundled with Expo 57 cannot resolve as `compileSdk 37`; raise it when Expo moves to an AGP with minor-SDK support).
    * Scan the terminal QR code with your camera.
    * The app will compile and launch on your phone over Wi-Fi with hot reloading!
 

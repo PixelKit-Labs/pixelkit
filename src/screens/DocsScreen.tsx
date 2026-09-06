@@ -215,12 +215,14 @@ function StatusRing() {
     id: 'useTemperature',
     name: 'useTemperature',
     category: 'pro',
-    chipBadge: 'IR Thermopile (Legacy Pro)',
+    chipBadge: 'IR Thermopile (Pixel 8-10 Pro)',
     badgeColor: '#FDD663',
-    summary: 'Non-contact surface and liquid thermometer using the camera bar infrared thermopile sensor.',
-    description: 'Pixel Pro exclusive hardware sensor that measures radiant infrared heat without physical contact. Supports material emissivity presets (metal, liquid, food, skin).',
+    summary: 'Non-contact thermometer on Pixel 8-10 Pro. Absent on Pixel 11 Pro: reports availability "estimated".',
+    description: 'Infrared thermopile hook for Pixel 8 Pro, 9 Pro and 10 Pro. The Pixel 11 Pro family removed the sensor (the slot holds the HiLight LED array), so isHardwareSupported is false and readings are labelled software estimates. Supports material emissivity presets (organic, liquid, metal, glass).',
     signature: 'useTemperature(): TemperatureState',
     returns: [
+      'isHardwareSupported: boolean  // false on Pixel 11 Pro family',
+      "availability: 'hardware' | 'estimated'",
       'reading: TemperatureReading { celsius, fahrenheit, materialPreset }',
       'isMeasuring: boolean',
       'measureTemperature(preset?): Promise<TemperatureReading>',
@@ -228,18 +230,19 @@ function StatusRing() {
     example: `import { useTemperature } from './src';
 
 function Thermometer() {
-  const { reading, measureTemperature, isMeasuring } = useTemperature();
+  const { isHardwareSupported, availability, reading, measureTemperature, isMeasuring } = useTemperature();
   return (
     <View>
+      {!isHardwareSupported && <Text>No IR thermometer on this Pixel ({availability})</Text>}
       <Text>{reading.celsius.toFixed(1)}°C / {reading.fahrenheit.toFixed(1)}°F</Text>
-      <Button 
-        title={isMeasuring ? "Measuring..." : "Scan Surface"} 
-        onPress={() => measureTemperature('liquid')} 
+      <Button
+        title={isMeasuring ? "Measuring..." : "Scan Surface"}
+        onPress={() => measureTemperature('liquid')}
       />
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Always pass the appropriate MaterialPreset ("metal" | "liquid" | "food" | "skin") for calibrated infrared emissivity.',
+    aiTip: 'AI Tip: Check isHardwareSupported (or useCapabilities().hasThermometer) before rendering thermometer UI; on Pixel 11 Pro show the estimate label, never present it as a sensor reading.',
   },
   {
     id: 'useUWB',
@@ -622,18 +625,49 @@ function LocationHUD() {
 
   // System & Media
   {
+    id: 'useCapabilities',
+    name: 'useCapabilities',
+    category: 'system',
+    chipBadge: 'Device Identity',
+    badgeColor: '#C4EED0',
+    summary: 'Resolves what this Pixel physically has and which Android 16/17 APIs exist.',
+    description: 'Single source of truth read by every Pro-exclusive hook. Derives thermometer, HiLight, UWB, Titan M3 presence and the expected Gemini Nano tier from the device model, and gates Android 16/17 platform APIs (RangingManager, haptic envelopes, AppFunctions) from the API level. Pure resolver in src/core/capabilities.ts.',
+    signature: 'useCapabilities(): DeviceCapabilities',
+    returns: [
+      'modelName: string, isPixel: boolean, pixelGeneration: number | null',
+      'isProModel: boolean, isFoldable: boolean, androidApiLevel: number | null',
+      'hasThermometer, hasHiLight, hasUWB, hasTitanM3: boolean',
+      "geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none'",
+      'supportsRangingApi, supportsHapticEnvelopes, supportsAppFunctions, supportsAndroid17Apis: boolean',
+    ],
+    example: `import { useCapabilities } from './src';
+
+function ProFeatures() {
+  const caps = useCapabilities();
+  return (
+    <View>
+      <Text>{caps.modelName} · API {caps.androidApiLevel} · {caps.geminiNanoTier}</Text>
+      {caps.hasThermometer && <ThermometerCard />}
+      {caps.hasHiLight && <HiLightCard />}
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Never hard-code "Pixel 11 Pro" assumptions. Read useCapabilities() first; the Pixel 11 Pro has no thermometer, and HiLight has no public API.',
+  },
+  {
     id: 'useAudio',
     name: 'useAudio',
     category: 'system',
-    chipBadge: 'Quad-Mic Studio Array',
+    chipBadge: 'Multi-Mic Array (expo-audio)',
     badgeColor: '#E3E2E6',
-    summary: 'Acoustic recording and real-time dBFS sound pressure level metering.',
-    description: 'Records audio and provides instant dBFS sound pressure readings for noise monitoring.',
+    summary: 'Acoustic recording (16 kHz mono, voice_recognition source) and real-time dBFS metering.',
+    description: 'Records audio with expo-audio and provides 100 ms dBFS sound pressure readings. Output is the mono 16 kHz AAC that Google speech APIs expect, captured through the voice_recognition source so Pixel noise suppression applies.',
     signature: 'useAudio(): AudioState',
     returns: [
       'isRecording: boolean',
-      'currentDecibels: number',
-      'startRecording(): Promise<void>',
+      'meteringDecibels: number  // alias: currentDecibels',
+      'permissionGranted: boolean',
+      'startRecording(): Promise<boolean>',
       'stopRecording(): Promise<string | null>',
     ],
     example: `import { useAudio } from './src';

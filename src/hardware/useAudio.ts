@@ -1,14 +1,38 @@
 /**
  * @file useAudio.ts
- * @description Multi-microphone acoustic recording, decibel metering, and audio DSP streaming.
- * Provides real-time decibel level updates (-160 dBFS to 0 dBFS) for acoustic monitoring and voice input.
+ * @description Multi-microphone acoustic recording and real-time decibel metering on `expo-audio`.
+ * Replaces the legacy `expo-av` implementation (removed from the Expo SDK 57 package set).
+ * Provides dBFS level updates (-160 dBFS silence to 0 dBFS clipping) for acoustic monitoring
+ * and as the capture stage for `useSpeechAI`.
  */
 
-import { useState, useEffect } from 'react';
-import { Audio } from 'expo-av';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  type RecordingOptions,
+} from 'expo-audio';
+
+/** Mono AAC at 16 kHz: what every Google speech API expects, with metering enabled. */
+const SPEECH_RECORDING: RecordingOptions = {
+  ...RecordingPresets.HIGH_QUALITY,
+  isMeteringEnabled: true,
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 64000,
+  android: {
+    ...RecordingPresets.HIGH_QUALITY.android,
+    audioSource: 'voice_recognition', // Pixel multi-mic noise suppression path
+  },
+};
+
+const METER_INTERVAL_MS = 100;
+const SILENCE_DBFS = -160;
 
 /**
- * Hook to record audio streams and measure ambient sound levels via device microphones.
+ * Hook to record audio and measure ambient sound levels via the device microphone array.
  *
  * @returns Object providing recording state, decibel levels, and start/stop controls.
  *
@@ -16,94 +40,88 @@ import { Audio } from 'expo-av';
  * ```typescript
  * const { isRecording, meteringDecibels, startRecording, stopRecording } = useAudio();
  * await startRecording();
- * console.log(`Ambient noise: ${meteringDecibels} dB`);
+ * console.log(`Ambient noise: ${meteringDecibels} dBFS`);
  * const fileUri = await stopRecording();
  * ```
  */
 export function useAudio() {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recorder = useAudioRecorder(SPEECH_RECORDING);
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [meteringDecibels, setMeteringDecibels] = useState<number>(-160);
+  const [meteringDecibels, setMeteringDecibels] = useState<number>(SILENCE_DBFS);
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
+  const meterTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const initAudio = async () => {
-      try {
-        const { status } = await Audio.requestPermissionsAsync();
-        setPermissionGranted(status === 'granted');
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-      } catch {
-        // Permissions or mode failure on restricted platforms
-      }
-    };
-    initAudio();
-
+    requestRecordingPermissionsAsync()
+      .then(({ granted }) => setPermissionGranted(granted))
+      .catch(() => setPermissionGranted(false));
     return () => {
-      if (recording) {
-        recording.stopAndUnloadAsync().catch(() => {});
-      }
+      if (meterTimer.current) clearInterval(meterTimer.current);
     };
   }, []);
 
+  const stopMeter = () => {
+    if (meterTimer.current) {
+      clearInterval(meterTimer.current);
+      meterTimer.current = null;
+    }
+  };
+
   /**
-   * Starts high-quality microphone recording with continuous metering callback.
-   * @returns Promise resolving to Audio.Recording instance or null on failure.
+   * Starts microphone recording with continuous dBFS metering.
+   * @returns Promise resolving to true when recording started, false on permission or hardware failure.
    */
-  const startRecording = async (): Promise<Audio.Recording | null> => {
+  const startRecording = useCallback(async (): Promise<boolean> => {
     try {
       if (!permissionGranted) {
-        const { status } = await Audio.requestPermissionsAsync();
-        if (status !== 'granted') return null;
+        const { granted } = await requestRecordingPermissionsAsync();
+        setPermissionGranted(granted);
+        if (!granted) return false;
       }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        (status) => {
-          if (status.metering !== undefined) {
-            setMeteringDecibels(Math.round(status.metering));
-          }
-        },
-        100 // update every 100ms
-      );
-
-      setRecording(newRecording);
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       setIsRecording(true);
-      return newRecording;
+
+      stopMeter();
+      meterTimer.current = setInterval(() => {
+        const status = recorder.getStatus();
+        if (typeof status.metering === 'number' && Number.isFinite(status.metering)) {
+          setMeteringDecibels(Math.round(status.metering));
+        }
+      }, METER_INTERVAL_MS);
+      return true;
     } catch {
-      return null;
+      setIsRecording(false);
+      return false;
     }
-  };
+  }, [permissionGranted, recorder]);
 
   /**
-   * Stops active recording and unloads the native audio hardware.
+   * Stops the active recording and releases the microphone.
    * @returns Promise resolving to the local file URI of the recorded audio, or null.
    */
-  const stopRecording = async (): Promise<string | null> => {
+  const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
-      if (!recording) return null;
+      stopMeter();
+      if (!isRecording && !recorder.isRecording) return null;
+      await recorder.stop();
       setIsRecording(false);
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      setRecording(null);
-      return uri;
+      setMeteringDecibels(SILENCE_DBFS);
+      return recorder.uri;
     } catch {
+      setIsRecording(false);
       return null;
     }
-  };
+  }, [isRecording, recorder]);
 
   return {
     /** Whether the microphone is actively recording */
     isRecording,
     /** Real-time microphone acoustic level in dBFS (-160 to 0) */
     meteringDecibels,
+    /** Alias of meteringDecibels kept for documentation compatibility */
+    currentDecibels: meteringDecibels,
     /** Start recording and metering */
     startRecording,
     /** Stop recording and retrieve audio file URI */

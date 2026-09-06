@@ -66,7 +66,10 @@ The official Google Android CLI provides tools for SDK management, UI inspection
 
 ## 📱 Running on Google Pixel 11 Pro
 
-### Method A: Over-the-Air via Expo Go (Fastest)
+### Method A: Over-the-Air via Expo Go (Fastest, JS-only hooks)
+> Expo Go cannot load the project's native AI modules (Gemini Nano via ML Kit, Ranging, haptic envelopes). For those, use Method B (development build). `app.json` already includes `expo-dev-client`, `expo-audio`, and `expo-build-properties` (compileSdk/targetSdk 36, minSdk 26). Android 17's SDK is published as `platforms/android-37.0`; the AGP 8.12 in Expo 57 looks for `android-37` and fails, so stay on 36 until Expo ships an AGP with minor-SDK support.
+
+> **Windows toolchain notes**: the project path contains a space ("Pixel delta"). Native builds are more reliable through a space-free junction, e.g. `cmd /c mklink /J C:\dev\pixel-delta "C:\Users\<you>\Documents\Projects\Pixel delta"`, then build from `C:\dev\pixel-delta\android`. Write `android/local.properties` with forward slashes (`sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk`); backslashes are escape characters in Java properties files. Required SDK packages via the Android CLI: `android sdk install platform-tools "platforms/android-36" "build-tools/36.0.0" "ndk/27.1.12297006" "cmake/3.31.6"`, plus a JDK 17 (`winget install Microsoft.OpenJDK.17`).
 1. Install **Expo Go** from the Google Play Store on your Pixel 11 Pro.
 2. Start the local Metro development bundler:
    ```bash
