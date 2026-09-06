@@ -1,0 +1,103 @@
+# PixelForge Quickstart Guide 🚀
+> **Developer Setup, Workstation Prerequisites, and Pixel 11 Pro Deployment**
+
+This guide walks you through setting up your development workstation and launching PixelForge on your Google Pixel 11 Pro.
+
+---
+
+## 📋 Workstation Prerequisites
+
+### 1. Node.js
+* **Required**: Node.js `20.x` or higher (tested on Node `24.x`).
+* **Verify**:
+  ```bash
+  node -v
+  npm -v
+  ```
+
+### 2. Official Google Android CLI (`android.exe`)
+The official Google Android CLI provides tools for SDK management, UI inspection (`android layout`), screenshots (`android screen`), and descriptive project metadata (`android describe`).
+
+#### Installation:
+* **Windows (PowerShell / CMD)**:
+  ```cmd
+  curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"
+  ```
+* **macOS (Apple Silicon)**:
+  ```bash
+  curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | bash
+  ```
+* **Linux (x86_64)**:
+  ```bash
+  curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash
+  ```
+* **Verify Installation**:
+  ```bash
+  android --version
+  ```
+
+---
+
+## 🛠️ Installation & Setup
+
+1. **Clone or open the project repository**:
+   ```bash
+   cd "C:\Users\trave\Documents\Projects\Pixel delta"
+   ```
+
+2. **Install project dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Verify strict TypeScript compilation**:
+   ```bash
+   npm run typecheck
+   ```
+   *Should exit with 0 errors.*
+
+4. **Verify Metro Hermes bundling**:
+   ```bash
+   npx expo export -p android
+   ```
+   *Verifies that all 696 modules package cleanly into Hermes bytecode (`.hbc`).*
+
+---
+
+## 📱 Running on Google Pixel 11 Pro
+
+### Method A: Over-the-Air via Expo Go (Fastest)
+1. Install **Expo Go** from the Google Play Store on your Pixel 11 Pro.
+2. Start the local Metro development bundler:
+   ```bash
+   npm start
+   ```
+3. Point your Pixel 11 Pro camera at the QR code displayed in the terminal.
+4. The app will bundle and stream over Wi-Fi with instant hot module reloading (Fast Refresh).
+
+### Method B: Native Development Build (`android run`)
+1. Enable **Developer Options** and **USB Debugging** on your Pixel 11 Pro.
+2. Connect your phone via USB-C.
+3. Verify connection:
+   ```bash
+   adb devices
+   ```
+4. Build and install directly to the device:
+   ```bash
+   npm run android
+   ```
+
+---
+
+## 🔑 Environment Variables & API Keys
+
+To use Google Gemini 2.5 Flash multimodal reasoning and voice transcription:
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Insert your Google Gemini API key:
+   ```env
+   EXPO_PUBLIC_GEMINI_API_KEY=your_actual_gemini_api_key_here
+   ```
+3. Alternatively, enter your key inside the app in the **AI Lab** tab. It will be encrypted and saved directly into the **Titan M3** hardware security module.
