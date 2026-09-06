@@ -1,4 +1,4 @@
-# PixelForge SDK ⚡
+# PixelForge
 > **The Hardware & AI Framework for Google Pixel & Android**  
 > *Engineered for high-performance mobile applications and autonomous AI agents.*
 
