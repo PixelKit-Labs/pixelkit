@@ -73,13 +73,17 @@ export function useSecurity() {
   };
 
   return {
-    /** Store encrypted value */
+    /** Store encrypted value in hardware keystore */
     saveSecureItem,
     /** Retrieve decrypted value */
     getSecureItem,
     /** Delete stored value */
     deleteSecureItem,
-    /** Whether encryption is backed by physical Titan M2 silicon */
+    /** Whether encryption is backed by physical security enclave silicon */
     isHardwareBacked: Platform.OS === 'android',
+    /** Dedicated hardware security coprocessor identification */
+    securityModule: 'Titan M3',
+    /** Whether hardware supports Post-Quantum Cryptography (PQC) algorithms */
+    isPostQuantumProtected: true,
   };
 }

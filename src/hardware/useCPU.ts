@@ -21,11 +21,12 @@ import { CPUTelemetry } from '../core/types';
  */
 export function useCPU() {
   const [cpuTelemetry, setCpuTelemetry] = useState<CPUTelemetry>({
-    coreTopology: '1x Prime Cortex-X925 + 4x Cortex-A725 + 3x Cortex-A520',
-    coreCount: 8,
-    cpuLoadPercent: 24,
+    coreTopology: '1x Prime ARM C1-Ultra @ 4.11GHz + 4x C-1 Pro @ 3.38GHz + 2x C-1 Pro @ 2.65GHz',
+    coreCount: 7,
+    cpuLoadPercent: 18,
     governorMode: 'balanced',
-    lastBenchmarkDurationMs: 42,
+    lastBenchmarkDurationMs: 28,
+    nodeProcess: 'TSMC 2nm (N2)',
   });
 
   const [isBenchmarking, setIsBenchmarking] = useState<boolean>(false);

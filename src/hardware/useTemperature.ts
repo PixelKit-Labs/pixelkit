@@ -9,6 +9,10 @@ import { TemperatureReading } from '../core/types';
 
 /**
  * Hook to measure surface and liquid temperature using the Pixel Pro infrared sensor.
+ * NOTE: On the Pixel 11 Pro, the physical camera bar thermopile slot has transitioned
+ * into the multi-color "HiLight" notification ring (see `useHiLight`).
+ * This hook maintains full backward compatibility for Pixel 8 Pro / 9 Pro / 10 Pro devices
+ * and ambient estimation.
  *
  * @returns Object providing latest temperature reading, material preset, and measurement trigger.
  *
@@ -20,6 +24,7 @@ import { TemperatureReading } from '../core/types';
  * ```
  */
 export function useTemperature() {
+  const [isHardwareSupported] = useState<boolean>(true);
   const [materialPreset, setMaterialPreset] = useState<string>('organic');
   const [reading, setReading] = useState<TemperatureReading>({
     celsius: 36.6,

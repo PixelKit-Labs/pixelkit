@@ -21,6 +21,7 @@ import { useGemini } from '../ai/useGemini';
 import { useVisionAI } from '../ai/useVisionAI';
 import { useSpeechAI } from '../ai/useSpeechAI';
 import { useTPU } from '../ai/useTPU';
+import { useHiLight } from '../hardware/useHiLight';
 import { saveApiKey } from '../ai/geminiClient';
 import { HapticButton } from '../components/HapticButton';
 import { MetricCard } from '../components/MetricCard';
@@ -31,6 +32,7 @@ export const AILabScreen: React.FC = () => {
   const vision = useVisionAI();
   const speech = useSpeechAI();
   const tpu = useTPU();
+  const hilight = useHiLight();
 
   const [inputPrompt, setInputPrompt] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
@@ -41,6 +43,7 @@ export const AILabScreen: React.FC = () => {
     if (!inputPrompt.trim() || gemini.isLoading) return;
     const prompt = inputPrompt;
     setInputPrompt('');
+    hilight.triggerGeminiPulse(4500);
     gemini.sendMessage(prompt);
   };
 
@@ -49,6 +52,7 @@ export const AILabScreen: React.FC = () => {
       const result = await speech.stopListeningAndTranscribe();
       if (result && result.transcript) {
         setInputPrompt(result.transcript);
+        hilight.triggerGeminiPulse(4500);
         gemini.sendMessage(result.transcript);
       }
     } else {
@@ -61,7 +65,7 @@ export const AILabScreen: React.FC = () => {
     const success = await saveApiKey(apiKeyInput.trim());
     if (success) {
       gemini.setApiKey(apiKeyInput.trim());
-      setKeySavedMessage('API Key securely stored in Titan M2 KeyStore.');
+      setKeySavedMessage('API Key securely stored in Titan M3 KeyStore (PQC Encrypted).');
       setShowKeyInput(false);
       setApiKeyInput('');
       setTimeout(() => setKeySavedMessage(null), 3500);

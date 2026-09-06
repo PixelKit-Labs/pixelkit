@@ -39,30 +39,31 @@ const DOC_MODULES: DocModule[] = [
     id: 'useCPU',
     name: 'useCPU',
     category: 'silicon',
-    chipBadge: 'Cortex-X925 Cluster',
+    chipBadge: 'Tensor G6 (7-Core 2nm)',
     badgeColor: '#8AB4F8',
-    summary: 'Monitors CPU cluster topology (Prime, Perf, Efficiency) and benchmarks multi-core compute.',
-    description: 'Queries the Tensor multi-core CPU architecture. Provides dynamic clock frequency estimates, real-time load estimation, and a multi-threaded prime factorization benchmark.',
+    summary: 'Monitors Tensor G6 Malibu 7-core cluster (1x C1-Ultra @ 4.11GHz, 4x C-1 Pro, 2x C-1 Pro) on TSMC 2nm.',
+    description: 'Queries the custom Tensor G6 multi-core CPU architecture fabricated on TSMC 2nm (N2). Provides dynamic clock frequency estimates, real-time load estimation, and a multi-threaded compute benchmark.',
     signature: 'useCPU(): CPUState',
     returns: [
-      'coreTopology: CoreInfo[]',
-      'totalCores: number',
+      'coreTopology: string',
+      'coreCount: number (7 cores)',
       'cpuLoadPercent: number',
+      'nodeProcess: "TSMC 2nm (N2)"',
       'isBenchmarking: boolean',
       'benchmarkCPU(iterations?: number): Promise<number>',
     ],
     example: `import { useCPU } from './src';
 
 function CPUWidget() {
-  const { totalCores, cpuLoadPercent, benchmarkCPU, isBenchmarking } = useCPU();
+  const { coreCount, cpuLoadPercent, nodeProcess, benchmarkCPU } = useCPU();
   return (
     <View>
-      <Text>Cores: {totalCores} | Load: {cpuLoadPercent}%</Text>
+      <Text>Tensor G6 ({nodeProcess}): {coreCount} Cores (Load: {cpuLoadPercent}%)</Text>
       <Button title="Benchmark" onPress={() => benchmarkCPU(100000)} />
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Never run synchronous intensive loops on the JS thread. Use benchmarkCPU() which calculates primes in asynchronous chunks.',
+    aiTip: 'AI Tip: Tensor G6 features an asymmetrical 7-core design optimized for thermal headroom. Heavy tasks run on the 4.11GHz C1-Ultra.',
   },
   {
     id: 'useGPU',
@@ -178,10 +179,43 @@ function ThermalMonitor() {
 
   // Pro Exclusives
   {
+    id: 'useHiLight',
+    name: 'useHiLight',
+    category: 'pro',
+    chipBadge: 'HiLight Ring (Pro Exclusive)',
+    badgeColor: Colors.dark.tensorGlow,
+    summary: 'Rear camera bar multi-color LED notification ring with Gemini AI status and face-down alerts.',
+    description: 'Hardware controller for the Pixel 11 Pro camera bar notification ring. Replaces older thermopiles with glanceable face-down status, custom contact color pulses, and breathing animations during Gemini reasoning.',
+    signature: 'useHiLight(): HiLightState',
+    returns: [
+      'isActive: boolean',
+      'currentColor: string',
+      'mode: HiLightMode',
+      'brightness: number (0.0 to 1.0)',
+      'triggerGeminiPulse(durationMs?: number): void',
+      'triggerContactAlert(colorHex: string, durationMs?: number): void',
+      'setColor(hex: string): void',
+      'toggle(): void',
+    ],
+    example: `import { useHiLight } from './src';
+
+function StatusRing() {
+  const hilight = useHiLight();
+  return (
+    <View>
+      <Text>HiLight Status: {hilight.mode}</Text>
+      <Button title="Gemini AI Pulse" onPress={() => hilight.triggerGeminiPulse(4000)} />
+      <Button title="Contact Alert" onPress={() => hilight.triggerContactAlert('#81C995', 4000)} />
+    </View>
+  );
+}`,
+    aiTip: 'AI Tip: Call triggerGeminiPulse() whenever Gemini AI begins generating tokens or executing tool calls for glanceable signaling.',
+  },
+  {
     id: 'useTemperature',
     name: 'useTemperature',
     category: 'pro',
-    chipBadge: 'IR Thermopile (Pro Exclusive)',
+    chipBadge: 'IR Thermopile (Legacy Pro)',
     badgeColor: '#FDD663',
     summary: 'Non-contact surface and liquid thermometer using the camera bar infrared thermopile sensor.',
     description: 'Pixel Pro exclusive hardware sensor that measures radiant infrared heat without physical contact. Supports material emissivity presets (metal, liquid, food, skin).',
@@ -394,26 +428,33 @@ function TactileCard() {
     id: 'useCamera',
     name: 'useCamera',
     category: 'sensors',
-    chipBadge: 'Triple Optical Array',
+    chipBadge: '120x AI Zoom & Looks',
     badgeColor: '#81C995',
-    summary: 'CameraX lifecycle, multi-lens switching (0.5x, 1.0x, 5.0x periscope), and flash control.',
-    description: 'Manages camera permissions, lens selection, optical/digital zoom levels, and flash mode switching.',
+    summary: 'Camera Looks live tone-mapping, 120x Generative AI Zoom, and on-device Ultra Low Light Video.',
+    description: 'Controls CameraX optical system on Pixel 11 Pro: lens switching, 120x Super Res AI Zoom ceiling, sensor-level Camera Looks (Original, Natural, Shadows, Velvet, Editorial), and real-time Ultra Low Light Video denoising (5-10 lux).',
     signature: 'useCamera(): CameraState',
     returns: [
       'hasPermission: boolean',
       'lensType: "front" | "back"',
-      'zoomFactor: number',
-      'flashMode: "off" | "on" | "auto"',
-      'setLensType',
-      'setZoomFactor',
+      'zoomFactor: number (0.5x to 120x)',
+      'maxZoomFactor: 120.0',
+      'selectedLook: CameraLook',
+      'isUltraLowLightVideoActive: boolean',
+      'setLook(look: CameraLook): void',
+      'setZoom(ratio: number): void',
     ],
     example: `import { useCamera } from './src';
 
 function CameraControl() {
-  const { zoomFactor, setZoomFactor } = useCamera();
-  return <Button title="5x Telephoto" onPress={() => setZoomFactor(5.0)} />;
+  const { zoomFactor, setZoom, setLook } = useCamera();
+  return (
+    <View>
+      <Button title="120x AI Zoom" onPress={() => setZoom(120.0)} />
+      <Button title="Apply Editorial Look" onPress={() => setLook('Editorial')} />
+    </View>
+  );
 }`,
-    aiTip: 'AI Tip: Support 0.5x ultrawide, 1.0x primary, and 5.0x telephoto optical steps for best photo fidelity.',
+    aiTip: 'AI Tip: Camera Looks are applied at the sensor tone-mapping level before capture, yielding authentic non-HDR aesthetics.',
   },
   {
     id: 'useTorch',
@@ -450,10 +491,10 @@ function Flashlight() {
     id: 'useBiometrics',
     name: 'useBiometrics',
     category: 'radios',
-    chipBadge: 'Titan M2 Biometrics',
+    chipBadge: 'Titan M3 Biometrics',
     badgeColor: '#C2E7FF',
     summary: 'Ultrasonic under-display fingerprint and Class 3 3D Face Unlock.',
-    description: 'Performs hardware-backed biometric verification using the Titan M2 security enclave.',
+    description: 'Performs hardware-backed biometric verification using the Titan M3 security enclave.',
     signature: 'useBiometrics(): BiometricsState',
     returns: [
       'hasHardware: boolean',
@@ -477,23 +518,25 @@ function AuthButton() {
     id: 'useSecurity',
     name: 'useSecurity',
     category: 'radios',
-    chipBadge: 'Titan M2 KeyStore HSM',
+    chipBadge: 'Titan M3 (PQC Protected)',
     badgeColor: '#C2E7FF',
-    summary: 'Hardware-backed encrypted key and token storage via expo-secure-store.',
-    description: 'Encrypts and persists credentials directly inside the Titan M2 hardware security module.',
+    summary: 'Hardware-backed encrypted key and secret storage via Titan M3 with Post-Quantum Cryptography.',
+    description: 'Encrypts and persists credentials directly inside the Titan M3 hardware security coprocessor with quantum-resistant key derivation.',
     signature: 'useSecurity(): SecurityState',
     returns: [
       'saveSecureItem(key, value): Promise<void>',
       'getSecureItem(key): Promise<string | null>',
       'deleteSecureItem(key): Promise<void>',
+      'securityModule: "Titan M3"',
+      'isPostQuantumProtected: boolean',
     ],
     example: `import { useSecurity } from './src';
 
 function KeyManager() {
   const { saveSecureItem, getSecureItem } = useSecurity();
-  return <Button title="Save Key" onPress={() => saveSecureItem("api_key", "secret_123")} />;
+  return <Button title="Save Key (PQC Vault)" onPress={() => saveSecureItem("api_key", "secret_123")} />;
 }`,
-    aiTip: 'AI Tip: Never write auth tokens to AsyncStorage; always route sensitive keys through useSecurity.',
+    aiTip: 'AI Tip: Titan M3 supports Post-Quantum Cryptography (PQC) to future-proof cryptographic keys against quantum decryption.',
   },
   {
     id: 'useBLE',
@@ -844,7 +887,7 @@ Always adhere to these requirements:
               selectedCategory === 'pro' && styles.chipTextActivePro,
             ]}
           >
-            Pro Exclusives (2)
+            Pro Exclusives (3)
           </Text>
         </TouchableOpacity>
 
@@ -962,7 +1005,7 @@ Always adhere to these requirements:
               Style backgrounds with <Text style={styles.codeInline}>#0B0D11</Text> to turn off pixels.
             </Text>
             <Text style={styles.ruleItem}>
-              <Text style={styles.ruleNum}>5. Titan M2 Enclave: </Text>
+              <Text style={styles.ruleNum}>5. Titan M3 Enclave: </Text>
               Persist all secret keys via <Text style={styles.codeInline}>useSecurity().saveSecureItem()</Text>.
             </Text>
           </View>

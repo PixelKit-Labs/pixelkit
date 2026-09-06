@@ -25,25 +25,29 @@ It is structured as a foundation for developers and autonomous AI agents (such a
 
 | Subsystem | Developer Hook | Physical Hardware Mapped |
 | :--- | :--- | :--- |
-| **Multi-Core CPU** | `useCPU()` | Cortex-X925 Prime, Performance & Efficiency clusters, compute benchmarks, governors |
-| **GPU & Vulkan** | `useGPU()` | Vulkan 1.3 / OpenGL ES 3.2, 120 FPS frame pacing (<= 8.33ms budget), dropped frames |
-| **Tensor TPU / NPU** | `useTPU()` | Google Tensor TPU silicon, NNAPI delegates, latency benchmarks (ms), token throughput |
-| **LPDDR5X RAM** | `useMemory()` | Physical RAM allocation, free memory telemetry, Low Memory Killer (LMK) protection |
+| **Tensor G6 CPU** | `useCPU()` | 7-Core cluster (1x C1-Ultra @ 4.11GHz, 4x C-1 Pro, 2x C-1 Pro) on TSMC 2nm (N2) |
+| **PowerVR GPU** | `useGPU()` | Vulkan 1.3 / OpenGL ES 3.2, 120 FPS frame pacing (<= 8.33ms budget), dropped frames |
+| **Tensor TPU / NPU** | `useTPU()` | Google Tensor TPU silicon (+50% compute), NNAPI/LiteRT delegates, latency benchmarks |
+| **LPDDR5X RAM** | `useMemory()` | Up to 16 GB physical RAM allocation, free memory telemetry, LMK protection |
 | **Dynamic Thermals** | `useADPF()` | Android Dynamic Performance Framework, CPU/GPU thermal headroom, power budgeting |
+| **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Camera bar multi-color notification & Gemini AI status ring |
 | **Motion & Atmosphere**| `useSensors()` | 6-Axis IMU (Gyro/Accel), Barometer (hypsometric altimeter), Magnetometer, Light |
 | **Tactile Haptics** | `useHaptics()` | Linear Resonant Actuator (LRA) mechanical ticks, impacts, and notification waveforms |
-| **Camera & Vision** | `useVisionAI()` | Ultra HDR camera capture, gallery picker, and Gemini Multimodal scene analysis |
+| **Camera & Looks** | `useCamera()` | 120x Generative AI Zoom, Camera Looks tone-mapping & Ultra Low Light Video |
+| **Multimodal Vision** | `useVisionAI()` | Ultra HDR camera capture, gallery picker, and Gemini Multimodal scene analysis |
 | **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
-| **Conversational AI** | `useGemini()` | Multi-turn reasoning, streaming chat, token telemetry, Titan M2 key storage |
-| **IR Thermometer** | `useTemperature()` | **[Pixel Pro Exclusive]** Camera bar infrared thermopile non-contact temperature sensor |
+| **Conversational AI** | `useGemini()` | Multi-turn reasoning, streaming chat, token telemetry, Titan M3 quantum key vault |
 | **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband transceiver for centimeter-level AoA tracking |
+| **IR Thermometer** | `useTemperature()` | **[Pixel Pro Exclusive]** Infrared thermopile sensor (legacy / ambient estimation) |
 | **Contactless NFC** | `useNFC()` | NFC radio controller, NDEF smart tag reader/writer, and simulation runner |
 | **Bluetooth Low Energy**| `useBLE()` | BLE beacon & peripheral scanner with RSSI signal strength distance estimation |
 | **Flashlight / Torch** | `useTorch()` | Rear dual-LED hardware flashlight toggle and high-frequency SOS strobe |
-| **Display & Refresh** | `useDisplay()` | 120Hz LTPO display detection, screen wake-lock persistence, hardware brightness |
-| **Biometrics** | `useBiometrics()` | Titan M2-backed under-display Fingerprint and Class 3 Face Unlock authentication |
-| **Hardware Keystore** | `useSecurity()` | StrongBox hardware-backed cryptographic key generation and secret persistence |
-| **Satellite GNSS** | `useLocation()` | Multi-band dual-frequency GPS receiver, speed, altitude, and compass heading |
+| **Super Actua Display**| `useDisplay()` | 3,600 nits 120Hz LTPO display detection, screen wake-lock persistence, brightness |
+| **Biometrics** | `useBiometrics()` | Titan M3-backed under-display Fingerprint and Class 3 Face Unlock authentication |
+| **Quantum Keystore** | `useSecurity()` | Titan M3 Post-Quantum Cryptography (PQC) hardware-backed encrypted secret vault |
+| **Satellite & Modem** | `useNetwork()` | MediaTek M90 modem, Wi-Fi 7, 5G Sub-6/mmWave, and Satellite SOS connectivity |
+| **Satellite GNSS** | `useLocation()` | Multi-band dual-frequency L1/L5 GPS receiver, speed, altitude, and compass heading |
+| **Pixelsnap & Power** | `useDevice()` | Pixelsnap Qi2.2 25W magnetic wireless charging, battery health, and PMIC telemetry |
 
 ---
 

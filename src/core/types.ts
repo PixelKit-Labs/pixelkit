@@ -194,9 +194,9 @@ export interface LocationTelemetry {
  * Multi-core CPU cluster telemetry and compute metrics.
  */
 export interface CPUTelemetry {
-  /** CPU core topology (e.g. "1x Prime Cortex-X925 + 4x Perf + 3x Eff") */
+  /** CPU core topology (e.g. "1x Prime C1-Ultra @ 4.11GHz + 4x C-1 Pro @ 3.38GHz + 2x C-1 Pro @ 2.65GHz") */
   coreTopology: string;
-  /** Number of active CPU execution cores */
+  /** Number of active CPU execution cores (7 cores on Tensor G6) */
   coreCount: number;
   /** Estimated CPU load percentage (0 to 100) */
   cpuLoadPercent: number;
@@ -204,6 +204,8 @@ export interface CPUTelemetry {
   governorMode: 'performance' | 'balanced' | 'powersave';
   /** Last multi-threaded compute benchmark duration in milliseconds */
   lastBenchmarkDurationMs: number;
+  /** Semiconductor fabrication node */
+  nodeProcess?: string;
 }
 
 /**
@@ -283,17 +285,38 @@ export interface UWBSpatialTarget {
 }
 
 /**
+ * Real-time sensor-level tone mapping styles for Pixel 11 Pro Camera Looks.
+ */
+export type CameraLook =
+  | 'Original'
+  | 'Natural'
+  | 'Shadows'
+  | 'Vanilla'
+  | 'Editorial'
+  | 'Velvet'
+  | 'Classic'
+  | 'Digi'
+  | 'Black Tie'
+  | 'Minimal';
+
+/**
  * Camera lens configuration and zoom ratio telemetry.
  */
 export interface CameraTelemetry {
   /** Selected lens orientation: 'back' (main array) or 'front' (selfie) */
   facing: 'back' | 'front';
-  /** Optical/digital zoom factor (e.g. 0.5x ultra-wide, 1.0x wide, 5.0x periscope telephoto) */
+  /** Optical/digital zoom factor (e.g. 0.5x ultra-wide, 1.0x wide, 5.0x periscope telephoto up to 120x AI Zoom) */
   zoomFactor: number;
+  /** Maximum zoom ceiling supported (120x Super Res Zoom on Pixel 11 Pro) */
+  maxZoomFactor: number;
   /** Flash illumination mode ('auto', 'on', 'off') */
   flashMode: 'auto' | 'on' | 'off';
   /** Whether camera hardware permission has been granted */
   hasPermission: boolean;
+  /** Active sensor-level Camera Look profile */
+  selectedLook: CameraLook;
+  /** Whether on-device Ultra Low Light Video neural denoising is active (5-10 lux) */
+  isUltraLowLightVideoActive: boolean;
 }
 
 /**

@@ -18,6 +18,7 @@ import { useSensors } from '../hardware/useSensors';
 import { useBiometrics } from '../hardware/useBiometrics';
 import { useDisplay } from '../hardware/useDisplay';
 import { useTorch } from '../hardware/useTorch';
+import { useHiLight } from '../hardware/useHiLight';
 import { useTemperature } from '../hardware/useTemperature';
 import { useUWB } from '../hardware/useUWB';
 import { MetricCard } from '../components/MetricCard';
@@ -35,6 +36,7 @@ export const DashboardScreen: React.FC = () => {
   const biometrics = useBiometrics();
   const display = useDisplay();
   const torch = useTorch();
+  const hilight = useHiLight();
   const temp = useTemperature();
   const uwb = useUWB();
 
@@ -89,10 +91,10 @@ export const DashboardScreen: React.FC = () => {
       <View style={styles.grid}>
         <View style={styles.gridCol}>
           <MetricCard
-            title="CPU Utilization"
+            title="Tensor G6 Malibu CPU"
             value={cpu.cpuLoadPercent}
             unit="%"
-            badge={`${cpu.coreCount} Cores`}
+            badge={`${cpu.coreCount} Cores • ${cpu.nodeProcess || '2nm'}`}
             badgeColor={Colors.dark.primary}
             subtitle={cpu.coreTopology}
           />
@@ -175,8 +177,38 @@ export const DashboardScreen: React.FC = () => {
         style={styles.actionButton}
       />
 
-      {/* Pixel Pro Exclusives: Infrared Thermometer & UWB Radar */}
+      {/* Pixel Pro Exclusives: HiLight, Infrared Thermometer & UWB Radar */}
       <Text style={styles.sectionHeader}>Pixel Pro Exclusive Silicon</Text>
+      
+      {/* HiLight Camera Bar Notification Ring */}
+      <MetricCard
+        title="HiLight Camera Bar LED"
+        value={hilight.isActive ? "Illuminated" : "Standby"}
+        badge={hilight.mode.toUpperCase()}
+        badgeColor={hilight.currentColor}
+        subtitle={`Color: ${hilight.currentColor} • Face-down glanceable status & Gemini AI ring`}
+      />
+      <View style={styles.proButtonsRow}>
+        <HapticButton
+          title="Gemini Pulse"
+          onPress={() => hilight.triggerGeminiPulse(3500)}
+          variant="secondary"
+          style={{ flex: 1, marginRight: 4 }}
+        />
+        <HapticButton
+          title="Alert Pulse"
+          onPress={() => hilight.triggerContactAlert('#81C995', 3500)}
+          variant="secondary"
+          style={{ flex: 1, marginHorizontal: 4 }}
+        />
+        <HapticButton
+          title={hilight.isActive ? "Turn Off" : "Toggle"}
+          onPress={hilight.toggle}
+          variant="outline"
+          style={{ flex: 1, marginLeft: 4 }}
+        />
+      </View>
+
       <View style={styles.grid}>
         <View style={styles.gridCol}>
           <MetricCard
@@ -185,7 +217,7 @@ export const DashboardScreen: React.FC = () => {
             unit="°C"
             badge={temp.reading.materialPreset.toUpperCase()}
             badgeColor={Colors.dark.warning}
-            subtitle={`${temp.reading.fahrenheit}°F • Non-contact sensor`}
+            subtitle={`${temp.reading.fahrenheit}°F • Backward compatibility`}
           />
         </View>
         <View style={styles.gridCol}>
@@ -259,17 +291,17 @@ export const DashboardScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Titan M2 & Security */}
-      <Text style={styles.sectionHeader}>Titan M2 Security Enclave</Text>
+      {/* Titan M3 & Security */}
+      <Text style={styles.sectionHeader}>Titan M3 Security Coprocessor</Text>
       <MetricCard
-        title="Biometric Hardware"
+        title="Biometric & Quantum Keystore"
         value={biometrics.hasHardware ? "Secure Ready" : "Simulator Mode"}
-        badge={biometrics.supportedTypes.join(' + ') || 'Biometrics'}
+        badge="Titan M3 • PQC Active"
         badgeColor={Colors.dark.accent}
-        subtitle={authStatus || "Hardware-backed cryptographic storage active"}
+        subtitle={authStatus || "Post-Quantum Cryptography (PQC) & Hardware Keystore active"}
       />
       <HapticButton
-        title="Test Titan M2 Biometric Prompt"
+        title="Test Titan M3 Biometric Prompt"
         onPress={handleTestBiometrics}
         variant="outline"
         style={styles.actionButton}

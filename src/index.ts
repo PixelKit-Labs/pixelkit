@@ -59,6 +59,7 @@ export { useBLE } from './hardware/useBLE';
 export { useNFC } from './hardware/useNFC';
 
 // Pixel Pro Exclusive Hardware Hooks
+export { useHiLight, type HiLightMode, type HiLightState } from './hardware/useHiLight';
 export { useTemperature } from './hardware/useTemperature';
 export { useUWB } from './hardware/useUWB';
 

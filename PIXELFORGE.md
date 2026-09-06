@@ -35,7 +35,7 @@ android describe --project_dir=<path>
 
 ```text
 pixel-delta/ (PixelForge Framework)
-├── App.tsx                     # Main App Shell & 3-Tab Navigator (HUD, AI Lab, Sensors)
+├── App.tsx                     # Main App Shell & 4-Tab Navigator (HUD, AI Lab, Sensors, Docs)
 ├── PIXELFORGE.md               # Canonical AI Reference & SDK Documentation
 ├── README.md                   # Developer Setup & Prerequisites
 ├── app.json                    # Android 15/16 Permissions & 120Hz LTPO Manifest
@@ -45,22 +45,24 @@ pixel-delta/ (PixelForge Framework)
 │   │   └── types.ts            # Strongly-typed telemetry, silicon, and AI models
 │   │
 │   ├── hardware/               # Physical Silicon & Hardware Abstractions
-│   │   ├── useCPU.ts           # Multi-core cluster (Prime/Perf/Eff), CPU load & benchmarks
-│   │   ├── useGPU.ts           # Vulkan/OpenGL ES frame pacing (8.33ms budget) & dropped frames
+│   │   ├── useCPU.ts           # Tensor G6 7-Core cluster (4.11GHz C1-Ultra, C-1 Pro) on TSMC 2nm
+│   │   ├── useGPU.ts           # PowerVR / Vulkan frame pacing (8.33ms budget) & dropped frames
 │   │   ├── useMemory.ts        # LPDDR5X RAM usage, free memory & Low Memory Killer (LMK) protection
 │   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
 │   │   ├── useSensors.ts       # 6-Axis Motion (Gyro/Accel), Barometer/Altimeter, Compass, Light
 │   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms & mechanical ticks
+│   │   ├── useCamera.ts        # Camera Looks tone-mapping, 120x AI Zoom & Ultra Low Light Video
+│   │   ├── useHiLight.ts       # [Pixel Pro Exclusive] Rear camera bar notification LED ring
 │   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
-│   │   ├── useDevice.ts        # Battery health, thermals, charging status & model telemetry
-│   │   ├── useDisplay.ts       # 120Hz LTPO OLED display, screen wake lock & brightness
-│   │   ├── useBiometrics.ts    # Titan M2 in-display Fingerprint & Face Unlock auth
-│   │   ├── useSecurity.ts      # Hardware-backed Titan M2 SecureStore key storage
+│   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
+│   │   ├── useDisplay.ts       # 3,600 nits 120Hz LTPO OLED display, screen wake lock & brightness
+│   │   ├── useBiometrics.ts    # Titan M3 in-display Fingerprint & Face Unlock auth
+│   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
 │   │   ├── useAudio.ts         # Multi-mic array acoustic recording & real-time dBFS metering
 │   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
 │   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
-│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer sensor
+│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer (legacy / ambient)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
