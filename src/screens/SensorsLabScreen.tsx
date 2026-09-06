@@ -71,30 +71,24 @@ export const SensorsLabScreen: React.FC = () => {
           <SensorVisualizer label="Gyroscope" caption="TDK ICM45631" vector={sensors.gyroscope} unit="rad/s" range={5} />
           <SensorVisualizer label="Magnetometer" caption="MEMSIC MMC5616" vector={sensors.magnetometer} unit="μT" range={100} decimals={1} />
 
-          <View style={styles.grid}>
-            <View style={styles.gridCol}>
-              <MetricCard
-                title="Barometer"
-                value={sensors.barometer.pressure}
-                unit="hPa"
-                subtitle={`Pressure altitude ${sensors.barometer.relativeAltitude ?? 0} m (ISA)`}
-                badge="SPA18001"
-                badgeColor={Colors.dark.primary}
-                source="hardware"
-              />
-            </View>
-            <View style={styles.gridCol}>
-              <MetricCard
-                title="Ambient Light"
-                value={sensors.lightLux ?? null}
-                unit="lux"
-                subtitle={sensors.lightLux == null ? 'Waiting for first sample' : sensors.lightLux < 5 ? 'Dark room' : sensors.lightLux < 200 ? 'Indoor' : 'Bright'}
-                badge="TMD3743"
-                badgeColor={Colors.dark.warning}
-                source={sensors.lightLux == null ? 'unavailable' : 'hardware'}
-              />
-            </View>
-          </View>
+          <MetricCard
+            title="Barometer"
+            value={sensors.barometer.pressure}
+            unit="hPa"
+            subtitle={`Pressure altitude ${sensors.barometer.relativeAltitude ?? 0} m (ISA)`}
+            badge="SPA18001"
+            badgeColor={Colors.dark.primary}
+            source="hardware"
+          />
+          <MetricCard
+            title="Ambient Light"
+            value={sensors.lightLux ?? null}
+            unit="lux"
+            subtitle={sensors.lightLux == null ? 'Waiting for first sample' : sensors.lightLux < 5 ? 'Dark room' : sensors.lightLux < 200 ? 'Indoor' : 'Bright'}
+            badge="TMD3743"
+            badgeColor={Colors.dark.warning}
+            source={sensors.lightLux == null ? 'unavailable' : 'hardware'}
+          />
         </View>
       )}
 
@@ -297,8 +291,6 @@ const styles = StyleSheet.create({
   subtitle: { color: Colors.dark.textMuted, fontSize: 13, marginTop: 2 },
   tabRow: { flexDirection: 'row', marginBottom: 16 },
   tabButton: { flex: 1, marginHorizontal: 2, paddingVertical: 8, paddingHorizontal: 4 },
-  grid: { flexDirection: 'row', marginHorizontal: -6 },
-  gridCol: { flex: 1, paddingHorizontal: 6 },
   row: { flexDirection: 'row' },
   sectionDesc: { color: Colors.dark.textMuted, fontSize: 13, marginBottom: 12, marginLeft: 4, lineHeight: 18 },
   hapticGrid: { marginBottom: 8 },
