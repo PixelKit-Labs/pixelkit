@@ -4,6 +4,12 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.8] - 2026-09-06
+
+### Changed
+- Dashboard: Stacked all 2-column grid cards across the Silicon dashboard into full-width vertical `MetricCard`s (CPU: Cluster utilisation & This app CPU; Thermal: Thermal headroom & CPU/GPU headroom; GPU: Frame interval & Presented FPS; Power & atmosphere: Battery & Barometer) for optimal readability and breathing room.
+- Styling: Fixed trailing character clipping on Android across headers, telemetry, and navigation (`Wordmark` "PIXELKIT" letter-spacing margin, `TelemetryRow` label shrink-resistance, and `Shell` navigation tab titles).
+
 ## [1.0.7] - 2026-09-06
 
 ### Added

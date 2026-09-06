@@ -161,6 +161,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: 13,
     color: Colors.dark.textMuted,
+    paddingHorizontal: 4,
   },
   navTextActive: {
     color: Colors.dark.text,

@@ -2,7 +2,7 @@
   "expo": {
     "name": "PixelKit",
     "slug": "pixelkit",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -36,7 +36,7 @@
         "android.permission.UWB_RANGING"
       ],
       "predictiveBackGestureEnabled": true,
-      "versionCode": 8
+      "versionCode": 9
     },
     "web": {
       "favicon": "./assets/favicon.png"

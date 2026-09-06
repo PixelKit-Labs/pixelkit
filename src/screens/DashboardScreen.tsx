@@ -83,30 +83,24 @@ export const DashboardScreen: React.FC = () => {
 
       {/* CPU */}
       <SectionHeader title="Tensor G6 CPU" />
-      <View style={styles.grid}>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="Cluster utilisation"
-            value={cpu.cpuLoadPercent}
-            unit="%"
-            badge={`${cpu.coreCount || '?'} cores`}
-            badgeColor={Colors.dark.primary}
-            subtitle="avg current/max frequency"
-            source={cpu.cpuLoadPercent == null ? 'unavailable' : 'hardware'}
-          />
-        </View>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="This app CPU"
-            value={cpu.appCpuPercent}
-            unit="%"
-            badge={cpu.governorMode}
-            badgeColor={Colors.dark.success}
-            subtitle="process time / wall time"
-            source={cpu.appCpuPercent == null ? 'unavailable' : 'derived'}
-          />
-        </View>
-      </View>
+      <MetricCard
+        title="Cluster utilisation"
+        value={cpu.cpuLoadPercent}
+        unit="%"
+        badge={`${cpu.coreCount || '?'} cores`}
+        badgeColor={Colors.dark.primary}
+        subtitle="avg current/max frequency"
+        source={cpu.cpuLoadPercent == null ? 'unavailable' : 'hardware'}
+      />
+      <MetricCard
+        title="This app CPU"
+        value={cpu.appCpuPercent}
+        unit="%"
+        badge={cpu.governorMode}
+        badgeColor={Colors.dark.success}
+        subtitle="process time / wall time"
+        source={cpu.appCpuPercent == null ? 'unavailable' : 'derived'}
+      />
       <MetricCard
         title="Topology"
         value={cpu.coreTopology}
@@ -125,56 +119,44 @@ export const DashboardScreen: React.FC = () => {
 
       {/* Thermal / ADPF */}
       <SectionHeader title="Thermal & ADPF headroom" />
-      <View style={styles.grid}>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="Thermal headroom"
-            value={fmt(adpf.thermalHeadroom, 2)}
-            badge={adpf.thermalStatus.toUpperCase()}
-            badgeColor={adpf.thermalStatusCode === 0 ? Colors.dark.success : adpf.thermalStatusCode < 3 ? Colors.dark.warning : Colors.dark.error}
-            subtitle="0 cool → 1 throttling (10 s poll)"
-            source={adpf.thermalHeadroom == null ? 'unavailable' : 'hardware'}
-          />
-        </View>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="CPU / GPU headroom"
-            value={adpf.cpuHeadroom == null ? null : `${pct(adpf.cpuHeadroom)} / ${pct(adpf.gpuHeadroom) ?? '—'}`}
-            unit="%"
-            badge="SystemHealth"
-            badgeColor={Colors.dark.primary}
-            subtitle="Android 16+ API"
-            source={adpf.cpuHeadroom == null ? 'unavailable' : 'hardware'}
-          />
-        </View>
-      </View>
+      <MetricCard
+        title="Thermal headroom"
+        value={fmt(adpf.thermalHeadroom, 2)}
+        badge={adpf.thermalStatus.toUpperCase()}
+        badgeColor={adpf.thermalStatusCode === 0 ? Colors.dark.success : adpf.thermalStatusCode < 3 ? Colors.dark.warning : Colors.dark.error}
+        subtitle="0 cool → 1 throttling (10 s poll)"
+        source={adpf.thermalHeadroom == null ? 'unavailable' : 'hardware'}
+      />
+      <MetricCard
+        title="CPU / GPU headroom"
+        value={adpf.cpuHeadroom == null ? null : `${pct(adpf.cpuHeadroom)} / ${pct(adpf.gpuHeadroom) ?? '—'}`}
+        unit="%"
+        badge="SystemHealth"
+        badgeColor={Colors.dark.primary}
+        subtitle="Android 16+ API"
+        source={adpf.cpuHeadroom == null ? 'unavailable' : 'hardware'}
+      />
 
       {/* GPU & frames */}
       <SectionHeader title="GPU & frame pacing" />
-      <View style={styles.grid}>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="Frame interval"
-            value={gpu.frameRenderTimeMs}
-            unit="ms"
-            badge={`budget ${gpu.targetBudgetMs} ms`}
-            badgeColor={gpu.isStuttering ? Colors.dark.warning : Colors.dark.success}
-            subtitle={`max ${gpu.maxFrameMs ?? '—'} ms • jank ${gpu.droppedFrameCount}`}
-            source={gpu.frameRenderTimeMs == null ? 'unavailable' : 'hardware'}
-          />
-        </View>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="Presented FPS"
-            value={gpu.measuredFps}
-            unit="FPS"
-            badge={adpf.targetFps ? `${adpf.targetFps} Hz mode` : '—'}
-            badgeColor={Colors.dark.success}
-            subtitle="Choreographer, 1 s window"
-            source={gpu.measuredFps == null ? 'unavailable' : 'hardware'}
-          />
-        </View>
-      </View>
+      <MetricCard
+        title="Frame interval"
+        value={gpu.frameRenderTimeMs}
+        unit="ms"
+        badge={`budget ${gpu.targetBudgetMs} ms`}
+        badgeColor={gpu.isStuttering ? Colors.dark.warning : Colors.dark.success}
+        subtitle={`max ${gpu.maxFrameMs ?? '—'} ms • jank ${gpu.droppedFrameCount}`}
+        source={gpu.frameRenderTimeMs == null ? 'unavailable' : 'hardware'}
+      />
+      <MetricCard
+        title="Presented FPS"
+        value={gpu.measuredFps}
+        unit="FPS"
+        badge={adpf.targetFps ? `${adpf.targetFps} Hz mode` : '—'}
+        badgeColor={Colors.dark.success}
+        subtitle="Choreographer, 1 s window"
+        source={gpu.measuredFps == null ? 'unavailable' : 'hardware'}
+      />
       <MetricCard
         title="GPU"
         value={gpu.gpuRenderer ?? null}
@@ -288,30 +270,24 @@ export const DashboardScreen: React.FC = () => {
 
       {/* Power & atmosphere */}
       <SectionHeader title="Power & atmosphere" />
-      <View style={styles.grid}>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="Battery"
-            value={device.batteryLevel}
-            unit="%"
-            badge={device.isCharging ? 'CHARGING' : 'DISCHARGING'}
-            badgeColor={device.isCharging ? Colors.dark.success : Colors.dark.warning}
-            subtitle={device.lowPowerMode ? 'Battery Saver on' : 'Normal power profile'}
-            source="hardware"
-          />
-        </View>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="Barometer"
-            value={sensors.barometer.pressure}
-            unit="hPa"
-            badge={`${sensors.barometer.relativeAltitude ?? 0} m ISA`}
-            badgeColor={Colors.dark.tertiary}
-            subtitle="Goermicro SPA18001"
-            source="hardware"
-          />
-        </View>
-      </View>
+      <MetricCard
+        title="Battery"
+        value={device.batteryLevel}
+        unit="%"
+        badge={device.isCharging ? 'CHARGING' : 'DISCHARGING'}
+        badgeColor={device.isCharging ? Colors.dark.success : Colors.dark.warning}
+        subtitle={device.lowPowerMode ? 'Battery Saver on' : 'Normal power profile'}
+        source="hardware"
+      />
+      <MetricCard
+        title="Barometer"
+        value={sensors.barometer.pressure}
+        unit="hPa"
+        badge={`${sensors.barometer.relativeAltitude ?? 0} m ISA`}
+        badgeColor={Colors.dark.tertiary}
+        subtitle="Goermicro SPA18001"
+        source="hardware"
+      />
 
       {/* Security */}
       <SectionHeader title="Security" />
@@ -377,7 +353,5 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
   chipText: { color: Colors.dark.text, fontSize: 10, fontWeight: '600' },
-  grid: { flexDirection: 'row', marginHorizontal: -6 },
-  gridCol: { flex: 1, paddingHorizontal: 6 },
   obsLine: { color: Colors.dark.textMuted, fontSize: 11, fontVariant: ['tabular-nums'], marginTop: 3 },
 });

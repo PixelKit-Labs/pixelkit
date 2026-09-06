@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 7,
     borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: Colors.dark.background,
   },
-  wordmarkText: { fontFamily: Fonts.sansSemi, fontSize: 13, letterSpacing: 3.4, color: Colors.dark.text },
+  wordmarkText: { fontFamily: Fonts.sansSemi, fontSize: 13, letterSpacing: 3.4, color: Colors.dark.text, paddingRight: 6 },
   chip: {
     flexDirection: 'row', alignItems: 'center', height: 30, paddingHorizontal: 11, borderRadius: Radius.pill,
     borderWidth: 1, borderColor: Colors.dark.cardBorder, backgroundColor: Colors.dark.card, gap: 6,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'baseline', paddingVertical: 6,
     borderBottomWidth: 1, borderBottomColor: Colors.dark.cardBorder,
   },
-  teleLabel: { ...Type.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: Colors.dark.textMuted },
+  teleLabel: { ...Type.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: Colors.dark.textMuted, flexShrink: 0, marginRight: 8 },
   teleValue: { ...Type.mono, marginLeft: 'auto', textAlign: 'right', flexShrink: 1 },
   reactor: { alignItems: 'center', paddingVertical: 8 },
   halo: { position: 'absolute' },
