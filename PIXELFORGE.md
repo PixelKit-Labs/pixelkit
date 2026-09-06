@@ -12,6 +12,25 @@ This document serves as the **canonical API Reference and Blueprint for AI agent
 
 ---
 
+## 🛠️ Android CLI & Tooling Integration
+
+PixelForge integrates with Google's official **Android CLI** (`android.exe`).
+
+### Installation
+* **Windows**: `curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"`
+* **macOS**: `curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | bash`
+* **Linux**: `curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash`
+
+### Project Describing (`android describe`)
+Agents and tools can analyze project structure, build targets, and APK artifact outputs:
+```bash
+android describe --project_dir=<path>
+```
+* **Device Inspection**: `android layout` (JSON UI tree) & `android screen` (visual bounds & screenshots).
+* **CLI Skills**: Built-in skill instructions available in `.agents/skills/android-cli/`.
+
+---
+
 ## 🏛️ Project Architecture
 
 ```text
