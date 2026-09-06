@@ -87,7 +87,8 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
 | **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, stopListeningAndTranscribe()` | Voice speech-to-text token transcription |
 | **Vision AI** | `useVisionAI()` | `captureAndAnalyze(cameraRef), analysis` | Multimodal camera inspection |
-$1| **On-device Nano** | `useGeminiNano()` | `status, info, messages, partial, sendMessage(prompt), download()` | Gemini Nano through AICore; latency and tok/s measured on device |
+| **Conversational** | `useGemini()` | `messages, isLoading, sendMessage(prompt)` | gemini-3.8-flash chat via ai.chats |
+| **On-device Nano** | `useGeminiNano()` | `status, info, messages, partial, sendMessage(prompt), download()` | Gemini Nano through AICore; latency and tok/s measured on device |
 | **Bluetooth LE** | `useBLE()` | `peripherals, isScanning, startScan()` | Nearby beacon & tracker discovery |
 | **NFC Radio** | `useNFC()` | `lastScannedTag, isScanning, startScan()` | Contactless smart tags / RFID |
 | **Flashlight** | `useTorch()` | `isTorchOn, toggleTorch(), startStrobe()` | Dual-LED torch & SOS strobe |

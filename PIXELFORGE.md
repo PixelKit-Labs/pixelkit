@@ -64,17 +64,17 @@ pixel-delta/ (PixelForge Framework)
 │   │   ├── useSecurity.ts      # SecureStore on the Android Keystore (StrongBox)
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
-│   │   ├── useCapabilities.ts  # Device capability resolution (thermometer/HiLight/UWB/Nano tier/API level)
+│   │   ├── useCapabilities.ts  # Device capability resolution (HiLight/UWB/Nano tier/API level)
 │   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
 │   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
 │   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
-│   │   ├── useTemperature.ts   # [Pixel 8-10 Pro] Infrared thermometer; absent on Pixel 11 Pro (estimated)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
 │   │   ├── useTPU.ts           # AICore / Gemini Nano stack detection (inference lives in useGeminiNano)
 │   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
-$1│   │   ├── useGeminiNano.ts    # Gemini Nano on-device chat, status, download, measured latency
+│   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
+│   │   ├── useGeminiNano.ts    # Gemini Nano on-device chat, status, download, measured latency
 │   │   ├── useVisionAI.ts      # Multimodal camera capture & visual scene inspection
 │   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
 │   │
@@ -118,7 +118,6 @@ import {
   useADPF, 
   useBiometrics,
   useSecurity,
-  useTemperature,
   useUWB,
   useBLE,
   useNFC,
@@ -187,18 +186,7 @@ console.log(`Transcribed voice: "${result?.transcript}" (${result?.latencyMs}ms)
 
 ---
 
-### 6. `useTemperature()` — [Pixel Pro Exclusive] Infrared Thermometer
-Interfaces with the camera bar infrared thermopile sensor for non-contact object and liquid temperature sensing:
-```typescript
-const { reading, measureTemperature, setMaterialPreset } = useTemperature();
-setMaterialPreset('liquid'); // 'liquid', 'organic', 'metal', 'glass'
-const temp = await measureTemperature();
-console.log(`Temperature: ${temp.celsius}°C (${temp.fahrenheit}°F)`);
-```
-
----
-
-### 7. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
+### 6. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
 Distance and Angle-of-Arrival to UWB targets (ranging simulated until RangingManager):
 ```typescript
 const { activeTargets, isRanging, startRanging } = useUWB();
@@ -210,7 +198,7 @@ activeTargets.forEach(target => {
 
 ---
 
-### 8. `useBLE()` — Bluetooth Low Energy Beacon & Peripheral Discovery
+### 7. `useBLE()` — Bluetooth Low Energy Beacon & Peripheral Discovery
 Discovers nearby fitness bands, smart home peripherals, and BLE beacons with signal strength distance estimation:
 ```typescript
 const { isScanning, peripherals, startScan } = useBLE();
@@ -220,7 +208,7 @@ peripherals.forEach(p => console.log(`${p.name}: ${p.rssi} dBm (~${p.estimatedDi
 
 ---
 
-### 9. `useTorch()` — Rear LED Flashlight & SOS Strobe
+### 8. `useTorch()` — Rear LED Flashlight & SOS Strobe
 Direct hardware flashlight control with emergency signaling:
 ```typescript
 const { isTorchOn, toggleTorch, startStrobe, stopStrobe } = useTorch();
@@ -230,7 +218,7 @@ startStrobe(100); // 100ms rapid strobe
 
 ---
 
-### 10. `useSensors()` — 6-Axis IMU & Barometer Altimeter
+### 9. `useSensors()` — 6-Axis IMU & Barometer Altimeter
 ```typescript
 const { accelerometer, gyroscope, barometer } = useSensors(50);
 console.log(`Altitude: ${barometer.relativeAltitude}m, Air Pressure: ${barometer.pressure} hPa`);
@@ -238,7 +226,7 @@ console.log(`Altitude: ${barometer.relativeAltitude}m, Air Pressure: ${barometer
 
 ---
 
-### 11. `useHaptics()` — Linear Resonant Actuator Tactile Feedback
+### 10. `useHaptics()` — Linear Resonant Actuator Tactile Feedback
 ```typescript
 const { light, medium, heavy, success, warning, error } = useHaptics();
 success(); // Dual pulse confirmation waveform
@@ -246,7 +234,7 @@ success(); // Dual pulse confirmation waveform
 
 ---
 
-### 12. `useGemini()` & `useVisionAI()` — Conversational & Vision AI
+### 11. `useGemini()` & `useVisionAI()` — Conversational & Vision AI
 ```typescript
 // Conversational AI
 const { messages, sendMessage } = useGemini();
@@ -268,7 +256,7 @@ console.log(`Vision result: ${visionResult?.description}`);
    ```
 2. Open **Expo Go** on your Pixel 11 Pro.
 3. Scan the terminal QR code.
-4. Test the Silicon HUD, tactile haptics, CPU/GPU pacing, infrared thermometer, UWB radar, and Gemini voice lab live!
+4. Test the Silicon HUD, tactile haptics, CPU/GPU pacing, UWB radar, and Gemini voice lab live!
 
 ---
 

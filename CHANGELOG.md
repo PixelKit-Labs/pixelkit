@@ -4,6 +4,15 @@ All notable changes to PixelForge are recorded here. The format follows [Keep a 
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.4] - 2026-09-06
+
+### Removed
+- `useTemperature`, the `TemperatureReading` type, the `hasThermometer` capability, the Silicon "IR thermometer" card, the Docs entry, and every documentation row and section for it. The Pixel 11 Pro has no thermometer (sensor list checked on device); the hook only ever targeted Pixel 8-10 Pro.
+
+### Fixed
+- README: every line had carried a stray prefix since 1.0.2 (a substitution whose escaped pipe became an empty alternation). Restored from 1.0.1 with the intended edits reapplied.
+- README, PIXELFORGE, `docs/HARDWARE_API.md`, `docs/AI_PRIMER.md`, `docs/README.md` and the hardware research note: lines that the 1.0.2 and 1.0.3 doc scripts replaced with a literal `$1` are restored.
+
 ## [1.0.3] - 2026-09-06
 
 ### Added

@@ -224,39 +224,6 @@ function StatusRing() {
     aiTip: 'AI Tip: Call triggerGeminiPulse() whenever Gemini AI begins generating tokens or executing tool calls for glanceable signaling.',
   },
   {
-    id: 'useTemperature',
-    name: 'useTemperature',
-    category: 'pro',
-    chipBadge: 'IR Thermopile (Pixel 8-10 Pro)',
-    badgeColor: '#FDD663',
-    summary: 'Non-contact thermometer on Pixel 8-10 Pro. Absent on Pixel 11 Pro: reports availability "estimated".',
-    description: 'Infrared thermopile hook for Pixel 8 Pro, 9 Pro and 10 Pro. The Pixel 11 Pro family removed the sensor (the slot holds the HiLight LED array), so isHardwareSupported is false and readings are labelled software estimates. Supports material emissivity presets (organic, liquid, metal, glass).',
-    signature: 'useTemperature(): TemperatureState',
-    returns: [
-      'isHardwareSupported: boolean  // false on Pixel 11 Pro family',
-      "availability: 'hardware' | 'estimated'",
-      'reading: TemperatureReading { celsius, fahrenheit, materialPreset }',
-      'isMeasuring: boolean',
-      'measureTemperature(preset?): Promise<TemperatureReading>',
-    ],
-    example: `import { useTemperature } from './src';
-
-function Thermometer() {
-  const { isHardwareSupported, availability, reading, measureTemperature, isMeasuring } = useTemperature();
-  return (
-    <View>
-      {!isHardwareSupported && <Text>No IR thermometer on this Pixel ({availability})</Text>}
-      <Text>{reading.celsius.toFixed(1)}°C / {reading.fahrenheit.toFixed(1)}°F</Text>
-      <Button
-        title={isMeasuring ? "Measuring..." : "Scan Surface"}
-        onPress={() => measureTemperature('liquid')}
-      />
-    </View>
-  );
-}`,
-    aiTip: 'AI Tip: Check isHardwareSupported (or useCapabilities().hasThermometer) before rendering thermometer UI; on Pixel 11 Pro show the estimate label, never present it as a sensor reading.',
-  },
-  {
     id: 'useUWB',
     name: 'useUWB',
     category: 'pro',
@@ -682,12 +649,12 @@ function LocationHUD() {
     chipBadge: 'Device Identity',
     badgeColor: '#C4EED0',
     summary: 'Resolves what this Pixel physically has and which Android 16/17 APIs exist.',
-    description: 'Single source of truth read by every Pro-exclusive hook. Derives thermometer, HiLight, UWB, Titan M3 presence and the expected Gemini Nano tier from the device model, and gates Android 16/17 platform APIs (RangingManager, haptic envelopes, AppFunctions) from the API level. Pure resolver in src/core/capabilities.ts.',
+    description: 'Single source of truth read by every Pro-exclusive hook. Derives HiLight, UWB, Titan M3 presence and the expected Gemini Nano tier from the device model, and gates Android 16/17 platform APIs (RangingManager, haptic envelopes, AppFunctions) from the API level. Pure resolver in src/core/capabilities.ts.',
     signature: 'useCapabilities(): DeviceCapabilities',
     returns: [
       'modelName: string, isPixel: boolean, pixelGeneration: number | null',
       'isProModel: boolean, isFoldable: boolean, androidApiLevel: number | null',
-      'hasThermometer, hasHiLight, hasUWB, hasTitanM3: boolean',
+      'hasHiLight, hasUWB, hasTitanM3: boolean',
       "geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none'",
       'supportsRangingApi, supportsHapticEnvelopes, supportsAppFunctions, supportsAndroid17Apis: boolean',
     ],
@@ -698,12 +665,11 @@ function ProFeatures() {
   return (
     <View>
       <Text>{caps.modelName} · API {caps.androidApiLevel} · {caps.geminiNanoTier}</Text>
-      {caps.hasThermometer && <ThermometerCard />}
       {caps.hasHiLight && <HiLightCard />}
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Never hard-code "Pixel 11 Pro" assumptions. Read useCapabilities() first; the Pixel 11 Pro has no thermometer, and HiLight has no public API.',
+    aiTip: 'AI Tip: Never hard-code "Pixel 11 Pro" assumptions. Read useCapabilities() first; the Pixel 11 Pro has no thermometer, and HiLight needs a privileged permission.',
   },
   {
     id: 'useAudio',

@@ -22,7 +22,7 @@ let logged = false;
  * @example
  * ```typescript
  * const caps = useCapabilities();
- * if (!caps.hasThermometer) hideThermometerCard();
+ * if (!caps.hasHiLight) hideHiLightCard();
  * if (caps.verification === 'device' && caps.hasUWB) enableRanging();
  * ```
  */

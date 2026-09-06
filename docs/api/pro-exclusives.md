@@ -1,5 +1,5 @@
 # Pixel Pro Exclusives API Reference 🎯
-> **HiLight Camera Bar LED Ring, Ultra-Wideband (UWB) Spatial Radar, and Infrared Thermometer**
+> **HiLight Camera Bar LED Ring and Ultra-Wideband (UWB) Ranging**
 
 This document covers hardware capabilities exclusive to Google's flagship Pro models.
 
@@ -9,7 +9,6 @@ This document covers hardware capabilities exclusive to Google's flagship Pro mo
 
 * [`useHiLight`](#usehilight) - Rear Camera Bar Multi-Color Notification & Gemini Status Ring
 * [`useUWB`](#useuwb) - Ultra-Wideband Ranging & Angle-of-Arrival (AoA)
-* [`useTemperature`](#usetemperature) - Infrared Thermometer Sensor (Legacy Pro & Ambient)
 
 ---
 
@@ -118,28 +117,3 @@ export function RadarHUD() {
 }
 ```
 
----
-
-## `useTemperature`
-
-Samples thermal infrared radiation from surfaces and liquids.
-> **Note**: The **Pixel 11 Pro, Pro XL and Pro Fold have no thermometer**. The camera bar thermopile slot now holds the **HiLight** multi-color LED array. This hook is maintained for Pixel 8 Pro, 9 Pro, and 10 Pro hardware. On every other device `isHardwareSupported` is `false`, `availability` is `'estimated'`, and readings are software estimates that must be labelled as such. Gate UI with `useCapabilities().hasThermometer`.
-
-### Signature
-```typescript
-function useTemperature(): {
-  isHardwareSupported: boolean;              // false on Pixel 11 Pro family
-  availability: 'hardware' | 'estimated';
-  reading: TemperatureReading;
-  materialPreset: string;
-  isMeasuring: boolean;
-  measureTemperature: (preset?: string) => Promise<TemperatureReading>;
-  setMaterialPreset: (preset: string) => void;
-};
-```
-
-### Material Presets
-* `'organic'`: Calibrated for skin and organic matter.
-* `'liquid'`: Calibrated for beverages, water, and soups.
-* `'metal'`: Calibrated for cookware and metallic surfaces.
-* `'glass'`: Calibrated for windows and glassware.

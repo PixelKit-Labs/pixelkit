@@ -44,7 +44,6 @@ interface DeviceCapabilities {
   modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
   pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
   androidApiLevel: number | null;
-  hasThermometer: boolean;          // Pixel 8 Pro, 9 Pro, 10 Pro only
   hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold (no public API; simulated)
   hasUWB: boolean;                  // Pro models since Pixel 6 Pro, all Folds
   hasTitanM3: boolean;              // Pixel 11 family
@@ -59,7 +58,7 @@ interface DeviceCapabilities {
 ### Example
 ```typescript
 const caps = useCapabilities();
-if (!caps.hasThermometer) hideThermometerCard();
+if (!caps.hasHiLight) hideHiLightCard();
 if (caps.geminiNanoTier === 'nano-v4') enableThinkingMode();
 ```
 

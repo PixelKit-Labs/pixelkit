@@ -94,7 +94,8 @@ Reverse wired charging and bypass charging supported. IP68. Camera bar 40% thinn
 - Multi-colour LED array (reports say ~8 addressable LEDs) embedded around the rear flash.
 - Google's use cases: Gemini listening / processing / responding states during hands-free use, favourite-contact call colours, face-down glanceable notifications.
 - **Not available to third-party apps** per Google. HiLight Studio (open source, sideloaded) drives it through the Android `lights` system service using Shizuku/ADB shell permission, which must be re-granted after every reboot. Patterns it exposes: Wave, Breathe, Rainbow, Pulse, Comet; per-LED colour, saturation, intensity, brightness.
-$1- **Measured 2026-09-06** (see [HILIGHT_LED_ARRAY.md](./HILIGHT_LED_ARRAY.md)): eight `Light.LIGHT_TYPE_APPLICATION` (10) lights, ids 1-8, RGB + animation capabilities, 33 ms minimum update period. A shell-uid probe from this repo set and read back all eight; the gate is `CONTROL_DEVICE_LIGHTS` (signature|privileged), not a missing API.
+- Implication: `useHiLight` should expose an `availability: 'unsupported' | 'simulated' | 'shizuku'` field and default to simulation.
+- **Measured 2026-09-06** (see [HILIGHT_LED_ARRAY.md](./HILIGHT_LED_ARRAY.md)): eight `Light.LIGHT_TYPE_APPLICATION` (10) lights, ids 1-8, RGB + animation capabilities, 33 ms minimum update period. A shell-uid probe from this repo set and read back all eight; the gate is `CONTROL_DEVICE_LIGHTS` (signature|privileged), not a missing API.
 
 ### 2.8 Pixel 11 Pro Fold specifics
 

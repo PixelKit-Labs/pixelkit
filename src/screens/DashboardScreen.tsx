@@ -2,8 +2,7 @@
  * @file DashboardScreen.tsx
  * @description Silicon and hardware telemetry HUD. Every value is either read from the device through
  * the PixelNative module / Expo modules or shown as "—". Cards carry a provenance tag (HW / DERIVED /
- * SIMULATED / N/A). Pro-exclusive features that have no public API (HiLight) or no hardware on this
- * device (thermometer) say so. A live observability panel lists the latest hook events.
+ * SIMULATED / N/A). Pro-exclusive features gated behind a privileged permission (HiLight) say so. A live observability panel lists the latest hook events.
  */
 
 import React, { useState } from 'react';
@@ -19,7 +18,6 @@ import { useBiometrics } from '../hardware/useBiometrics';
 import { useDisplay } from '../hardware/useDisplay';
 import { useTorch } from '../hardware/useTorch';
 import { useHiLight } from '../hardware/useHiLight';
-import { useTemperature } from '../hardware/useTemperature';
 import { useUWB } from '../hardware/useUWB';
 import { useCapabilities } from '../hardware/useCapabilities';
 import { useObservability } from '../core/observability';
@@ -46,7 +44,6 @@ export const DashboardScreen: React.FC = () => {
   const display = useDisplay();
   const torch = useTorch();
   const hilight = useHiLight();
-  const temp = useTemperature();
   const uwb = useUWB();
   const obs = useObservability();
 
@@ -237,29 +234,14 @@ export const DashboardScreen: React.FC = () => {
           <HapticButton title={hilight.isActive ? 'Off' : 'Toggle'} onPress={hilight.toggle} variant="outline" style={{ flex: 1, marginLeft: 4 }} />
         </View>
       )}
-      <View style={styles.grid}>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="IR thermometer"
-            value={temp.isHardwareSupported ? temp.reading.celsius : null}
-            unit="°C"
-            badge={temp.isHardwareSupported ? 'HARDWARE' : 'NO SENSOR'}
-            badgeColor={temp.isHardwareSupported ? Colors.dark.success : Colors.dark.error}
-            subtitle={temp.isHardwareSupported ? 'Pixel 8-10 Pro thermopile' : 'Removed on Pixel 11 Pro'}
-            source={temp.isHardwareSupported ? 'hardware' : 'unavailable'}
-          />
-        </View>
-        <View style={styles.gridCol}>
-          <MetricCard
-            title="UWB ranging"
-            value={caps.hasUWB ? 'Radio present' : 'No radio'}
-            badge="SIMULATED"
-            badgeColor={Colors.dark.warning}
-            subtitle={caps.hasUWB ? 'Android 16 RangingManager not wired yet' : '—'}
-            source="simulated"
-          />
-        </View>
-      </View>
+      <MetricCard
+        title="UWB ranging"
+        value={caps.hasUWB ? 'Radio present' : 'No radio'}
+        badge="SIMULATED"
+        badgeColor={Colors.dark.warning}
+        subtitle={caps.hasUWB ? 'Android 16 RangingManager not wired yet' : '—'}
+        source="simulated"
+      />
       {caps.hasUWB && (
         <HapticButton title={uwb.isRanging ? 'Simulated ranging…' : 'Run simulated UWB ranging'} onPress={uwb.startRanging} disabled={uwb.isRanging} variant="secondary" style={styles.actionButton} />
       )}
@@ -376,8 +358,6 @@ const styles = StyleSheet.create({
     paddingTop: 12, paddingBottom: 6, paddingHorizontal: 16, marginBottom: 6, overflow: 'hidden',
   },
   heroTelemetry: { marginTop: 8 },
-  grid: { flexDirection: 'row', marginHorizontal: -6 },
-  gridCol: { flex: 1, paddingHorizontal: 6 },
   actionButton: { marginBottom: 16 },
   rowButtons: { flexDirection: 'row', marginBottom: 12 },
   displayControlRow: {
@@ -391,5 +371,7 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
   chipText: { color: Colors.dark.text, fontSize: 10, fontWeight: '600' },
+  grid: { flexDirection: 'row', marginHorizontal: -6 },
+  gridCol: { flex: 1, paddingHorizontal: 6 },
   obsLine: { color: Colors.dark.textMuted, fontSize: 11, fontVariant: ['tabular-nums'], marginTop: 3 },
 });

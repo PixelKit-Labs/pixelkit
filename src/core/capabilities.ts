@@ -2,7 +2,7 @@
  * @file capabilities.ts
  * @description Pure, side-effect-free resolution of Pixel hardware capabilities from device identity.
  * Encodes what physically exists on each Pixel generation so that Pro-exclusive hooks
- * (`useTemperature`, `useHiLight`, `useUWB`) and platform-gated features (Ranging API,
+ * (`useHiLight`, `useUWB`) and platform-gated features (Ranging API,
  * haptic envelopes, AppFunctions) can report `unsupported` instead of pretending.
  *
  * Ground truth (Sept 2026): Pixel 11 Pro / Pro XL / Pro Fold removed the IR thermometer and
@@ -31,8 +31,6 @@ export interface DeviceCapabilities {
   isFoldable: boolean;
   /** Android API level (36 = Android 16, 37 = Android 17), null on web */
   androidApiLevel: number | null;
-  /** Rear infrared thermopile: Pixel 8 Pro, 9 Pro, 10 Pro only */
-  hasThermometer: boolean;
   /** HiLight multi-colour LED array around the flash: Pixel 11 Pro family only (no public API) */
   hasHiLight: boolean;
   /** Ultra-Wideband radio: Pro models since Pixel 6 Pro and all Pixel Folds */
@@ -102,7 +100,6 @@ export function resolveCapabilities(
     isProModel,
     isFoldable,
     androidApiLevel: api,
-    hasThermometer: isProModel && !isFoldable && generation != null && generation >= 8 && generation <= 10,
     hasHiLight: isPixel && generation != null && generation >= 11 && (isProModel || isFoldable),
     hasUWB: isPixel && ((isProModel && generation != null && generation >= 6) || isFoldable),
     hasTitanM3: isPixel && generation != null && generation >= 11,

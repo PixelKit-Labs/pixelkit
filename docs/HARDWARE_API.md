@@ -16,7 +16,6 @@ This document is the consolidated reference for every hook in the PixelForge SDK
    - [useADPF](#useadpf) (Android Dynamic Performance Framework)
 3. [Pixel Pro Exclusive Silicon](#pixel-pro-exclusive-silicon)
    - [useHiLight](#usehilight) (Camera Bar Notification Ring)
-   - [useTemperature](#usetemperature) (IR Thermopile Legacy / Ambient)
    - [useUWB](#useuwb) (Ultra-Wideband Spatial Radar)
 4. [Neural & Intelligence Hooks](#neural--intelligence-hooks)
    - [useGemini](#usegemini) (gemini-3.8-flash chat)
@@ -73,7 +72,6 @@ import {
   useMemory, 
   useADPF, 
   useHiLight,
-  useTemperature, 
   useUWB, 
   useSensors, 
   useHaptics, 
@@ -193,19 +191,6 @@ function NotificationRing() {
 
 ---
 
-### `useTemperature`
-* **File Path**: `src/hardware/useTemperature.ts`
-* **Target Hardware**: Infrared Thermopile Sensor (Pixel 8 Pro / 9 Pro / 10 Pro **only**).
-* **Description**: Samples thermal radiation from surfaces and liquids without physical contact. The **Pixel 11 Pro, Pro XL and Pro Fold have no thermometer**; the slot now holds the **HiLight** LED array. The hook reads `useCapabilities().hasThermometer` and exposes `isHardwareSupported: boolean` and `availability: 'hardware' | 'estimated'`. When `estimated`, readings are software estimates and UI must label them as such.
-
-#### Interface (additions)
-```typescript
-isHardwareSupported: boolean;                 // false on Pixel 11 Pro family
-availability: 'hardware' | 'estimated';
-```
-
----
-
 ### `useUWB`
 * **File Path**: `src/hardware/useUWB.ts`
 * **Target Hardware**: Ultra-Wideband (UWB) Spatial Radar Transceiver.
@@ -218,7 +203,10 @@ availability: 'hardware' | 'estimated';
 ### `useGemini`
 * **File Path**: `src/ai/useGemini.ts`
 * **Target Hardware**: Google Gen AI SDK (`@google/genai`) configured for gemini-3.8-flash.
-$1
+* **Description**: Multi-turn chat over `ai.chats`, API token counts and latency. There is no simulated fallback; without a key every call rejects.
+
+---
+
 ### `useGeminiNano`
 * **File Path**: `src/ai/useGeminiNano.ts` + `modules/pixel-nano` (Kotlin)
 * **Target Hardware**: Gemini Nano on the Tensor G6 TPU through **AICore**, reached with `com.google.mlkit:genai-prompt:1.0.0-beta4`. Verified on Pixel 11 Pro with AICore `0.release.prod_aicore_20260723.00_RC11`.
@@ -377,14 +365,13 @@ stopRecording(): Promise<string | null>;  // file URI
 ### `useCapabilities`
 * **File Path**: `src/hardware/useCapabilities.ts` (pure resolver in `src/core/capabilities.ts`)
 * **Target Hardware**: Device identity via `expo-device`.
-* **Description**: Single source of truth for what the current Pixel physically has and which Android platform APIs are available. Every Pro-exclusive hook (`useTemperature`, `useHiLight`, `useUWB`) and every Android 16/17-gated feature reads from it. Values are memoised for the app lifetime.
+* **Description**: Single source of truth for what the current Pixel physically has and which Android platform APIs are available. Every Pro-exclusive hook (`useHiLight`, `useUWB`) and every Android 16/17-gated feature reads from it. Values are memoised for the app lifetime.
 
 #### Interface
 ```typescript
 modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
 pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
 androidApiLevel: number | null;
-hasThermometer: boolean;          // Pixel 8-10 Pro only
 hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold
 hasUWB: boolean;                  // Pro since Pixel 6 Pro, all Folds
 hasTitanM3: boolean;              // Pixel 11 family

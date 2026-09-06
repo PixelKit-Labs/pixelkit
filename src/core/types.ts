@@ -255,20 +255,6 @@ export interface BLEPeripheral {
 }
 
 /**
- * Pixel Pro infrared thermometer temperature reading.
- */
-export interface TemperatureReading {
-  /** Measured temperature in Celsius */
-  celsius: number;
-  /** Measured temperature in Fahrenheit */
-  fahrenheit: number;
-  /** Target surface emissivity preset ('default', 'liquid', 'organic', 'metal') */
-  materialPreset: string;
-  /** Timestamp of reading */
-  timestamp: number;
-}
-
-/**
  * Ultra-Wideband (UWB) ranging target.
  */
 export interface UWBSpatialTarget {
