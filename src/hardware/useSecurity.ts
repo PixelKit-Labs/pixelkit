@@ -1,7 +1,7 @@
 /**
  * @file useSecurity.ts
- * @description Hardware-backed cryptographic key and secret storage via Android Keystore and Titan M3.
- * Stores sensitive credentials, AI API keys, and auth tokens in an isolated cryptographic enclave.
+ * @description Secret storage via expo-secure-store, which encrypts values with a key held in the
+ * Android Keystore (StrongBox-backed on devices that have it, including the Pixel 11 Pro).
  */
 
 import * as SecureStore from 'expo-secure-store';
@@ -79,11 +79,11 @@ export function useSecurity() {
     getSecureItem,
     /** Delete stored value */
     deleteSecureItem,
-    /** Whether encryption is backed by physical security enclave silicon */
+    /** True on Android: expo-secure-store uses the Android Keystore (StrongBox when present) */
     isHardwareBacked: Platform.OS === 'android',
-    /** Dedicated hardware security coprocessor identification */
-    securityModule: 'Titan M3',
-    /** Whether hardware supports Post-Quantum Cryptography (PQC) algorithms */
-    isPostQuantumProtected: true,
+    /** Keystore backend as reported by the platform; StrongBox presence is verified by useCapabilities().hasStrongBox */
+    securityModule: Platform.OS === 'android' ? 'Android Keystore' : 'none',
+    /** Post-quantum key types (ML-DSA) exist on Android 17 but are not used by SecureStore; always false here */
+    isPostQuantumProtected: false,
   };
 }

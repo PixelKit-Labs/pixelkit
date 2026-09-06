@@ -37,7 +37,7 @@ export interface DeviceCapabilities {
   hasHiLight: boolean;
   /** Ultra-Wideband radio: Pro models since Pixel 6 Pro and all Pixel Folds */
   hasUWB: boolean;
-  /** Titan M3 security chip with post-quantum cryptography: Pixel 11 family */
+  /** Titan M3 security chip: Pixel 11 family (per Google; not readable from the device) */
   hasTitanM3: boolean;
   /** Gemini Nano tier AICore is expected to serve (ML Kit `checkStatus()` remains the runtime truth) */
   geminiNanoTier: GeminiNanoTier;

@@ -1,54 +1,49 @@
-# Claude Code Instructions for PixelForge SDK ⚡
-> **Hardware & AI Framework for Google Pixel 11 Pro (Tensor G6 2nm)**
+# PixelForge: Agent Guide
 
----
+This file is the single source of truth for any coding agent (Claude, Gemini, Antigravity, Codex, Delta) working in this repository. `CLAUDE.md` and `GEMINI.md` are identical copies; keep all three in sync.
 
-## 🚨 MANDATORY RULE: Always Keep Docs Up To Date
+## Project
 
-Whenever you make **ANY** changes to this codebase (creating or modifying hooks, updating TypeScript types, changing UI screens, altering configurations, or adding features):
+PixelForge is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and a local Kotlin Expo Module, `modules/pixel-native`. Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four screens: Silicon (dashboard), AI Lab, Sensors, Docs.
 
-1. **Update `docs/`**:
-   - Update API specifications in `docs/api/` (`silicon-compute.md`, `pro-exclusives.md`, `neural-ai.md`, etc.) and `docs/HARDWARE_API.md`.
-   - Update AI recipes & guidelines in `docs/ai-guidance/` and `docs/AI_PRIMER.md`.
-   - Update getting started guides in `docs/getting-started/`.
-2. **Update `README.md` & `PIXELFORGE.md`**:
-   - Keep the feature matrix, hardware mapping tables, and architecture directory trees 100% accurate.
-3. **Update On-Device Docs (`src/screens/DocsScreen.tsx`)**:
-   - Any new or modified hook must be reflected in the interactive in-app documentation viewer with an updated signature, TypeScript recipe, and AI tip.
-4. **Docs must NEVER be an afterthought or omitted**. Every change that alters behavior or exports must include its corresponding documentation updates.
+Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
 
----
+## Rules
 
-## 🏛️ Project Architecture & Silicon Mapping
+1. **Changelog on every change.** Every change to the codebase bumps the patch version by 0.0.1 and adds an entry to `CHANGELOG.md` in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together and increment `expo.android.versionCode` by 1. Minor and major bumps are the maintainer's call.
+2. **Docs in sync.** Any change to a hook, type, screen, config, or dependency updates: `docs/api/*` and `docs/HARDWARE_API.md` (API), `docs/ai-guidance/*` and `docs/AI_PRIMER.md` (agent rules), `docs/getting-started/*` (setup), `README.md` and `PIXELFORGE.md` (feature matrix, tree, examples), and `src/screens/DocsScreen.tsx` (in-app entries with a working example).
+3. **No mocks.** Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (`src/core/observability.ts`). Never substitute a plausible default for a value that could not be read; render `null` as "—" and pass `source` to `MetricCard`. Only NFC, BLE, UWB and HiLight are currently simulated, and every surface that shows them says so.
+4. **Comments state facts.** JSDoc and comments describe what the code does and which Android API it uses. No marketing language.
+5. **Design system.** Use tokens from `src/theme/colors.ts` and primitives from `src/components/Decor.tsx`. One accent (cyan) for interaction; green = well, red = wrong, amber = a human or tool must act, violet = the model or external streams. Geist for language, Geist Mono for numbers and labels. Panels use wash + hairline + specular, no shadows or gradient fills. Buttons are solid (one per group) or outlined. Only the reactor glows.
+6. **Single import.** App code imports hooks and components from `./src`.
+7. **Haptics on every touchable** via `HapticButton` or `useHaptics`.
+8. **Secrets** go through `useSecurity().saveSecureItem()` or `saveApiKey()` (SecureStore, hardware-backed Android Keystore). Never in plaintext storage.
+9. **Coordinate with other agents.** Run `git status` and `git log --oneline -5` before editing; another agent may have committed. Prefer targeted edits over whole-file rewrites on files touched recently by others.
 
-* **Target Device**: Google Pixel 11 Pro
-* **Processor**: Google Tensor G6 ("Malibu") fabricated on TSMC 2nm (N2)
-* **CPU Topology**: 7-Core Asymmetrical (1x ARM C1-Ultra @ 4.11GHz + 4x C-1 Pro @ 3.38GHz + 2x C-1 Pro @ 2.65GHz)
-* **GPU**: PowerVR / IMG CXTP (Vulkan 1.3 / OpenGL ES 3.2, 8.33ms budget for 120Hz LTPO)
-* **Security**: Titan M3 Security Coprocessor with Post-Quantum Cryptography (PQC)
-* **Camera Bar**: Multi-color "HiLight" glanceable notification & Gemini AI status LED ring (`useHiLight`)
-* **Camera Array**: 50MP Wide + 48MP Ultrawide + 48MP Periscope (120x Generative AI Zoom, Camera Looks, Ultra Low Light Video in 5-10 lux)
-* **Display**: 3,600 nits Super Actua 1-120Hz LTPO OLED (`Colors.dark.background = '#07060E'` for true OLED black)
-* **Modem**: MediaTek M90 (Wi-Fi 7, 5G Sub-6/mmWave, Satellite SOS)
-* **Charging**: Pixelsnap Qi2.2 25W magnetic wireless charging
+## Validation
 
----
+- `npm run typecheck` must pass with 0 errors.
+- `npx expo export -p android` must bundle.
+- Native changes: build from the space-free junction `C:\dev\pixel-delta\android` with `.\gradlew.bat assembleDebug` (JDK 17, SDK at `%LOCALAPPDATA%\Android\Sdk`), then `adb install -r -g android/app/build/outputs/apk/debug/app-debug.apk`.
+- On-device checks: `adb logcat -s ReactNativeJS | grep PixelForge` for provenance events; `dumpsys` for independent confirmation (see `docs/research/DEVICE_TEST_REPORT_2026-09-06.md`).
 
-## 🛠️ Development & Validation Commands
+## Tooling
 
-* **TypeScript Typecheck**: `npm run typecheck` (`tsc --noEmit`) - Must pass with 0 errors.
-* **Metro Bundler Check**: `npx expo export -p android` - Verifies Hermes bytecode compilation.
-* **Android CLI**: `android describe --project_dir=.`, `android layout`, `android screen`.
-* **Agent Skills (`.agents/skills/`)**:
-  - `android-cli`: Android CLI, SDK management, AVD controls, UI layout inspection.
-  - `expo/skills` (26 skills via `npx skills add expo/skills` & `skills-lock.json`): `expo-router`, `expo-native-ui`, `expo-ui`, `expo-module`, `expo-design-system`, `expo-animation`, `eas-app-stores`, `eas-hosting`, `eas-observe`, `eas-simulator`, `eas-update`, `eas-workflows`, etc.
+- **Expo docs:** https://docs.expo.dev/versions/v57.0.0/ (SDK 57 only). The Expo MCP server is registered in `.mcp.json`; `npm run start:mcp` starts Metro with local MCP capabilities.
+- **Android CLI** (`%USERPROFILE%\AppData\AndroidCLI\android.exe`): `android docs search "<query>"` / `android docs fetch kb://…` (offline official docs, use before web search), `android describe --project_dir=.`, `android layout`, `android screen capture`, `android sdk`, `android emulator`, `android skills add <id>`.
+- **Agent skills** in `.agents/skills/`: `android-cli` plus the official Expo skills (`skills-lock.json`, `npx skills add expo/skills`). Read a skill's `SKILL.md` before the related task.
+- **Device:** the Pixel is paired over wireless adb (`adb pair` / `adb connect 10.0.0.47:<port>`); use `adb reverse tcp:8081 tcp:8081` so the dev client loads Metro from `localhost`.
 
----
+## Map
 
-## 📋 The 5 Golden Rules of PixelForge
-
-1. **Single Import Rule**: Always import from `./src` (e.g. `import { useCPU, useHiLight, useSensors } from './src'`). Never write raw listeners.
-2. **Physical Sensation Rule**: Trigger `useHaptics` on all touchable elements (`selection`, `light`, `medium`, `heavy`, `success`, `warning`, `error`).
-3. **Thermal & Frame Budget Rule**: Respect 8.33ms 120Hz frame budget. Use `useADPF()` to check thermal headroom before heavy jobs.
-4. **True OLED Black Rule**: Use `#07060E` for dark backgrounds to save battery on self-emissive OLED panels.
-5. **Titan M3 Enclave Rule**: Store sensitive keys and tokens exclusively in `useSecurity().saveSecureItem()` which encrypts into the Titan M3 PQC vault.
+```
+App.tsx                      shell: fonts, scrims, wordmark, tabs
+modules/pixel-native/        Kotlin Expo Module + TS bridge (index.ts)
+src/core/                    types, capabilities, observability
+src/hardware/                device hooks
+src/ai/                      Gemini hooks, TPU/AICore detection, client
+src/theme/                   colors (tokens), mode (state → colour)
+src/components/              HapticButton, MetricCard, SensorVisualizer, Decor
+src/screens/                 Dashboard, AILab, SensorsLab, Docs
+docs/                        api, guides, research, primers
+```

@@ -322,10 +322,10 @@ function Assistant() {
     id: 'useSpeechAI',
     name: 'useSpeechAI',
     category: 'ai',
-    chipBadge: 'Acoustic Beamforming Array',
+    chipBadge: 'expo-audio → Gemini audio',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Voice audio recording with decibel metering and speech-to-text token transcription.',
-    description: 'Captures voice audio using the Pixel quad-mic array, monitors real-time sound levels in dBFS, and converts audio packets into transcribed text tokens.',
+    summary: 'Records 16 kHz mono through the voice_recognition source and transcribes with Gemini. Error without an API key; nothing simulated.',
+    description: 'Uses useAudio for capture (dBFS metering) and gemini-3.8-flash audio input for transcription. Keeps lastRecordingUri and sets error when no key is configured. On-device ML Kit speech recognition is planned.',
     signature: 'useSpeechAI(): SpeechAIState',
     returns: [
       'isListening: boolean',
@@ -536,25 +536,26 @@ function AuthButton() {
     id: 'useSecurity',
     name: 'useSecurity',
     category: 'radios',
-    chipBadge: 'Titan M3 (PQC Protected)',
-    badgeColor: '#C2E7FF',
-    summary: 'Hardware-backed encrypted key and secret storage via Titan M3 with Post-Quantum Cryptography.',
-    description: 'Encrypts and persists credentials directly inside the Titan M3 hardware security coprocessor with quantum-resistant key derivation.',
+    chipBadge: 'Android Keystore · StrongBox',
+    badgeColor: '#6FDCF2',
+    summary: 'Secret storage through expo-secure-store, encrypted with an Android Keystore key (StrongBox on Pixel 11 Pro).',
+    description: 'saveSecureItem/getSecureItem/deleteSecureItem wrap expo-secure-store with WHEN_UNLOCKED_THIS_DEVICE_ONLY. StrongBox presence is reported by useCapabilities().hasStrongBox. No post-quantum algorithms are used.',
     signature: 'useSecurity(): SecurityState',
     returns: [
-      'saveSecureItem(key, value): Promise<void>',
+      'saveSecureItem(key, value): Promise<boolean>',
       'getSecureItem(key): Promise<string | null>',
-      'deleteSecureItem(key): Promise<void>',
-      'securityModule: "Titan M3"',
-      'isPostQuantumProtected: boolean',
+      'deleteSecureItem(key): Promise<boolean>',
+      'isHardwareBacked: boolean',
+      "securityModule: 'Android Keystore' | 'none'",
+      'isPostQuantumProtected: false',
     ],
     example: `import { useSecurity } from './src';
 
 function KeyManager() {
-  const { saveSecureItem, getSecureItem } = useSecurity();
-  return <Button title="Save Key (PQC Vault)" onPress={() => saveSecureItem("api_key", "secret_123")} />;
+  const { saveSecureItem } = useSecurity();
+  return <Button title="Save key" onPress={() => saveSecureItem("api_key", "secret_123")} />;
 }`,
-    aiTip: 'AI Tip: Titan M3 supports Post-Quantum Cryptography (PQC) to future-proof cryptographic keys against quantum decryption.',
+    aiTip: 'AI Tip: Store every secret through saveSecureItem. Do not describe the keystore as post-quantum; SecureStore uses classical AES keys.',
   },
   {
     id: 'useBLE',
@@ -814,7 +815,7 @@ Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useSensors, useGemini, useHaptics).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
 3. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
-4. Use true OLED black (#07060E) for backgrounds via Colors.dark.background.
+4. Use true OLED black (#0E1119) for backgrounds via Colors.dark.background.
 5. Store sensitive keys exclusively in the Titan M3 enclave using useSecurity().saveSecureItem().
 6. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).`;
 
@@ -1055,7 +1056,7 @@ Always adhere to these requirements:
             </Text>
             <Text style={styles.ruleItem}>
               <Text style={styles.ruleNum}>4. True OLED Black: </Text>
-              Style backgrounds with <Text style={styles.codeInline}>#07060E</Text> to turn off pixels.
+              Style backgrounds with <Text style={styles.codeInline}>#0E1119</Text> to turn off pixels.
             </Text>
             <Text style={styles.ruleItem}>
               <Text style={styles.ruleNum}>5. Titan M3 Enclave: </Text>
@@ -1213,7 +1214,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   toastText: {
-    color: '#07060E',
+    color: '#0E1119',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',

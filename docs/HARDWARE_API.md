@@ -1,7 +1,7 @@
-# PixelForge Hardware API Reference ⚡
-> **Exhaustive Technical Manual for Google Pixel 11 Pro Silicon & Neural Architecture**
+# PixelForge Hardware API Reference
+> **Hook-by-hook reference for the Google Pixel 11 Pro build**
 
-This document provides a comprehensive technical reference for every hardware hook and module in the PixelForge SDK. All modules are designed to run in React Native (Expo SDK 57) on the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor fabricated on **TSMC 2nm (N2)**.
+This document is the consolidated reference for every hook in the PixelForge SDK (React Native, Expo SDK 57) on the **Google Pixel 11 Pro** (Android 17, Google Tensor G6). Device facts are taken from .
 
 ---
 
@@ -9,18 +9,18 @@ This document provides a comprehensive technical reference for every hardware ho
 
 1. [Architectural Overview](#architectural-overview)
 2. [Silicon & Compute Hooks](#silicon--compute-hooks)
-   - [useCPU](#usecpu) (Tensor G6 7-Core 2nm)
-   - [useGPU](#usegpu) (PowerVR / IMG Vulkan 1.3)
-   - [useTPU](#usetpu) (Google Tensor TPU)
-   - [useMemory](#usememory) (16GB LPDDR5X RAM)
+   - [useCPU](#usecpu) (Tensor G6 7-core, cpufreq)
+   - [useGPU](#usegpu) (PowerVR CXTP-48-1536, Vulkan 1.4)
+   - [useTPU](#usetpu) (AICore / Gemini Nano detection)
+   - [useMemory](#usememory) (ActivityManager memory)
    - [useADPF](#useadpf) (Android Dynamic Performance Framework)
 3. [Pixel Pro Exclusive Silicon](#pixel-pro-exclusive-silicon)
    - [useHiLight](#usehilight) (Camera Bar Notification Ring)
    - [useTemperature](#usetemperature) (IR Thermopile Legacy / Ambient)
    - [useUWB](#useuwb) (Ultra-Wideband Spatial Radar)
 4. [Neural & Intelligence Hooks](#neural--intelligence-hooks)
-   - [useGemini](#usegemini) (Gemini 2.5 Flash / TPU)
-   - [useSpeechAI](#usespeechai) (Beamforming Array Speech-to-Text)
+   - [useGemini](#usegemini) (gemini-3.8-flash chat)
+   - [useSpeechAI](#usespeechai) (expo-audio → Gemini transcription)
    - [useVisionAI](#usevisionai) (Multimodal Scene Inspection)
 5. [Sensors & Physical Actuators](#sensors--physical-actuators)
    - [useSensors](#usesensors) (6-Axis IMU & Barometer)
@@ -28,13 +28,13 @@ This document provides a comprehensive technical reference for every hardware ho
    - [useTorch](#usetorch) (Dual-LED Flashlight & Strobe)
    - [useHaptics](#usehaptics) (Linear Resonant Actuator)
 6. [Radios & Hardware Security](#radios--hardware-security)
-   - [useBiometrics](#usebiometrics) (Titan M3 Ultrasonic & Face Unlock)
-   - [useSecurity](#usesecurity) (Titan M3 Post-Quantum Cryptography Keystore)
+   - [useBiometrics](#usebiometrics) (Ultrasonic fingerprint & face unlock)
+   - [useSecurity](#usesecurity) (SecureStore on the Android Keystore)
    - [useBLE](#useble) (Bluetooth 5.4 LE)
    - [useNFC](#usenfc) (NDEF Controller)
    - [useLocation](#uselocation) (Dual-Band L1/L5 GNSS)
 7. [System & Media Hooks](#system--media-hooks)
-   - [useAudio](#useaudio) (Quad-Mic dBFS Sound Meter)
+   - [useAudio](#useaudio) (expo-audio dBFS meter)
    - [useDisplay](#usedisplay) (3,600 nits 120Hz LTPO OLED)
    - [useDevice](#usedevice) (Pixelsnap Qi2.2 25W & Battery)
    - [useNetwork](#usenetwork) (MediaTek M90 Wi-Fi 7 & 5G Modem)
@@ -43,7 +43,7 @@ This document provides a comprehensive technical reference for every hardware ho
 
 ## 🏛️ Architectural Overview
 
-PixelForge connects React Native applications directly to the bare silicon of the Google Pixel 11 Pro.
+PixelForge exposes Pixel 11 Pro hardware to React Native through Expo modules and the local PixelNative module.
 
 ```
 +-------------------------------------------------------------------------+
@@ -58,8 +58,8 @@ PixelForge connects React Native applications directly to the bare silicon of th
         |                  |                    |                  |
 +---------------+  +---------------+  +------------------+  +---------------+
 |  CPU / GPU    |  |  Tensor TPU   |  | Pro Exclusives   |  | Titan M3      |
-|  Tensor G6    |  |  NNAPI/LiteRT |  | HiLight LED Ring |  | Quantum Vault |
-|  TSMC 2nm N2  |  |  Gemini 2.5   |  | UWB Radar AoA    |  | Biometrics    |
+|  Tensor G6    |  |  NNAPI/LiteRT |  | HiLight LED Ring |  | StrongBox     |
+|  real cpufreq |  |  Gemini 3.8   |  | UWB (simulated)  |  | Biometrics    |
 +---------------+  +---------------+  +------------------+  +---------------+
 ```
 
@@ -310,8 +310,8 @@ resonantFrequencyHz: number | null; supportedPrimitives: string[]; source: Telem
 
 ### `useSecurity`
 * **File Path**: `src/hardware/useSecurity.ts`
-* **Target Hardware**: Titan M3 Security Coprocessor with **Post-Quantum Cryptography (PQC)**.
-* **Description**: Quantum-resistant encrypted hardware KeyStore storage via `expo-secure-store`.
+* **Target Hardware**: Android Keystore; StrongBox present on Pixel 11 Pro (`android.hardware.strongbox_keystore`, verified by `useCapabilities`).
+* **Description**: Secret storage through `expo-secure-store` (AES keys in the Android Keystore, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`). No post-quantum algorithms are used; `isPostQuantumProtected` is always `false`.
 
 #### Interface
 ```typescript

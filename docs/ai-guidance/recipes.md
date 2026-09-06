@@ -10,7 +10,7 @@ This document provides complete, production-grade code recipes for common agenti
 1. [Voice-to-Action AI Loop with HiLight Visual Pulse](#recipe-1-voice-to-action-ai-loop-with-hilight-visual-pulse)
 2. [Adaptive Sensor Telemetry with ADPF Thermal Pacing](#recipe-2-adaptive-sensor-telemetry-with-adpf-thermal-pacing)
 3. [Camera Looks & 120x Generative AI Zoom Inspector](#recipe-3-camera-looks--120x-generative-ai-zoom-inspector)
-4. [Titan M3 Post-Quantum Encrypted Credential Vault](#recipe-4-titan-m3-post-quantum-encrypted-credential-vault)
+4. [Encrypted Credential Vault](#recipe-4-encrypted-credential-vault)
 5. [UWB Centimeter Spatial Target Tracker](#recipe-5-uwb-centimeter-spatial-target-tracker)
 
 ---
@@ -153,22 +153,22 @@ export function ProPhotoSuite() {
 
 ---
 
-## Recipe 4: Titan M3 Post-Quantum Encrypted Credential Vault
+## Recipe 4: Encrypted Credential Vault
 
-Persists and verifies cryptographic keys in the Titan M3 quantum-resistant hardware enclave:
+Persists secrets through SecureStore (Android Keystore, StrongBox on Pixel 11 Pro) behind a biometric check:
 
 ```tsx
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { useSecurity, useBiometrics, HapticButton } from './src';
 
-export function QuantumVault() {
+export function CredentialVault() {
   const security = useSecurity();
   const biometrics = useBiometrics();
   const [status, setStatus] = useState<string>('Locked');
 
   const handleUnlock = async () => {
-    const verified = await biometrics.authenticate('Unlock Titan M3 Quantum Vault');
+    const verified = await biometrics.authenticate('Unlock credential vault');
     if (verified) {
       const secret = await security.getSecureItem('USER_AGENT_TOKEN');
       setStatus(secret ? 'Unlocked (Token Retrieved)' : 'Unlocked (No Key Found)');

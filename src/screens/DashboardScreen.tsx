@@ -25,9 +25,10 @@ import { useCapabilities } from '../hardware/useCapabilities';
 import { useObservability } from '../core/observability';
 import { MetricCard } from '../components/MetricCard';
 import { HapticButton } from '../components/HapticButton';
-import { Colors, Gradients, Type } from '../theme/colors';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SectionHeader, OrbitRings, Chip } from '../components/Decor';
+import { Colors } from '../theme/colors';
+import { resolveMode } from '../theme/mode';
+import { isPixelNativeAvailable } from '../../modules/pixel-native';
+import { SectionHeader, Reactor, TelemetryRow } from '../components/Decor';
 
 const fmt = (v: number | null | undefined, digits = 0) => (v == null ? null : Number(v.toFixed(digits)));
 const pct = (v: number | null | undefined) => (v == null ? null : Math.round(v * 100));
@@ -60,6 +61,7 @@ export const DashboardScreen: React.FC = () => {
 
   const brand = device.brand ? device.brand.charAt(0).toUpperCase() + device.brand.slice(1) : '';
   const recentEvents = obs.events.slice(-8).reverse();
+  const mode = resolveMode({ nativeAvailable: isPixelNativeAvailable, thermalStatusCode: adpf.thermalStatusCode, busy: cpu.isBenchmarking || tpu.isBenchmarking });
 
   return (
     <ScrollView
@@ -69,23 +71,16 @@ export const DashboardScreen: React.FC = () => {
         <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 500); }} tintColor={Colors.dark.primary} />
       }
     >
-      {/* Hero */}
+      {/* Reactor: the one element that glows. State comes from the mode map. */}
       <View style={styles.hero}>
-        <LinearGradient colors={[...Gradients.hero]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-        <OrbitRings size={300} rings={6} style={{ top: -120, right: -110 }} />
-        <View style={styles.heroTop}>
-          <Chip label={`Android ${device.osVersion} · API ${caps.androidApiLevel ?? '?'}`} color={Colors.dark.secondary} />
-          <View style={[styles.onlineBadge]}>
-            <View style={[styles.onlineDot, { backgroundColor: device.isConnected ? Colors.dark.success : Colors.dark.error }]} />
-            <Text style={styles.onlineText}>{device.networkType}</Text>
-          </View>
-        </View>
-        <Text style={styles.heroEyebrow}>{brand} · {caps.verification === 'device' ? 'device-verified' : 'model table'}</Text>
-        <Text style={styles.heroTitle}>{device.modelName}</Text>
-        <View style={styles.heroChips}>
-          <Chip label={display.refreshRateHz ? `${display.refreshRateHz} Hz${display.hasArrSupport ? ' · ARR' : ''}` : '— Hz'} color={Colors.dark.tertiary} />
-          <Chip label={`Gemini Nano ${caps.geminiNanoTier.replace('nano-', '')}`} color={Colors.dark.tensorGlow} />
-          <Chip label={adpf.thermalStatus} color={adpf.thermalStatusCode === 0 ? Colors.dark.success : Colors.dark.warning} />
+        <Reactor mode={mode} detail={`${brand} ${device.modelName}`} />
+        <View style={styles.heroTelemetry}>
+          <TelemetryRow label="android" value={`${device.osVersion} · API ${caps.androidApiLevel ?? '?'}`} />
+          <TelemetryRow label="display" value={display.refreshRateHz ? `${display.refreshRateHz} Hz${display.hasArrSupport ? ' · ARR' : ''}` : '—'} />
+          <TelemetryRow label="thermal" value={adpf.thermalHeadroom != null ? `${adpf.thermalStatus} · ${adpf.thermalHeadroom.toFixed(2)}` : adpf.thermalStatus} tone={adpf.thermalStatusCode === 0 ? 'on' : 'warn'} />
+          <TelemetryRow label="nano tier" value={caps.geminiNanoTier} tone="muted" />
+          <TelemetryRow label="capabilities" value={caps.verification === 'device' ? 'device-verified' : 'model table'} tone={caps.verification === 'device' ? 'on' : 'muted'} />
+          <TelemetryRow label="network" value={device.networkType.toLowerCase()} tone={device.isConnected ? 'on' : 'off'} />
         </View>
       </View>
 
@@ -377,16 +372,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
   content: { padding: 16, paddingBottom: 120 },
   hero: {
-    backgroundColor: Colors.dark.card, borderRadius: 28, borderWidth: 1, borderColor: Colors.dark.cardBorder,
-    padding: 20, marginBottom: 8, overflow: 'hidden',
+    backgroundColor: Colors.dark.card, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.cardBorder,
+    paddingTop: 12, paddingBottom: 6, paddingHorizontal: 16, marginBottom: 6, overflow: 'hidden',
   },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  heroEyebrow: { ...Type.label, color: Colors.dark.textMuted, marginBottom: 4 },
-  heroTitle: { ...Type.display, color: Colors.dark.text, marginBottom: 14 },
-  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  onlineBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surfaceVariant, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginLeft: 8 },
-  onlineDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  onlineText: { color: Colors.dark.text, fontSize: 11, fontWeight: '700' },
+  heroTelemetry: { marginTop: 8 },
   grid: { flexDirection: 'row', marginHorizontal: -6 },
   gridCol: { flex: 1, paddingHorizontal: 6 },
   actionButton: { marginBottom: 16 },

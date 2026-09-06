@@ -1,37 +1,26 @@
 /**
  * @file MetricCard.tsx
- * @description Glass telemetry card: hairline border, faint top sheen, small-caps title, chip badge,
- * large tabular value, optional provenance tag (HW / DERIVED / SIMULATED / N/A). The header wraps so
- * long badges drop under the title instead of overlapping it.
+ * @description A headline number on a panel. Panel material: white wash, hairline border, 1 px
+ * specular top edge. Label and badge in mono; value in sans. The optional provenance tag
+ * (HW / DERIVED / SIMULATED / N/A) is how the UI stays honest about where a number came from.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Gradients, Radius, Type } from '../theme/colors';
+import { Colors, Fonts, Radius, Type } from '../theme/colors';
 import type { TelemetrySource } from '../core/observability';
 
-/**
- * Properties for the MetricCard component.
- */
 export interface MetricCardProps {
-  /** Metric header title */
   title: string;
-  /** Primary numeric or string telemetry value. `null`/`undefined` renders as "—" */
+  /** `null`/`undefined` renders as "—" */
   value: string | number | null | undefined;
-  /** Optional unit suffix (e.g., 'FPS', 'ms', 'hPa', '%') */
   unit?: string;
-  /** Explanatory secondary text below the value */
   subtitle?: string;
-  /** Status badge chip text rendered in the header */
   badge?: string;
-  /** Accent color of the status badge border and text */
   badgeColor?: string;
-  /** Optional header icon element */
   icon?: React.ReactNode;
-  /** Telemetry provenance; renders a small tag in the footer */
   source?: TelemetrySource;
-  /** Larger value typography for hero metrics */
+  /** Larger value for a hero tile */
   emphasis?: boolean;
 }
 
@@ -42,14 +31,6 @@ const SOURCE_STYLE: Record<TelemetrySource, { label: string; color: string }> = 
   unavailable: { label: 'N/A', color: Colors.dark.error },
 };
 
-/**
- * Reusable telemetry card primitive for hardware HUD and diagnostic dashboards.
- *
- * @example
- * ```tsx
- * <MetricCard title="Thermal headroom" value={0.41} badge="NOMINAL" source="hardware" />
- * ```
- */
 export const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
@@ -66,8 +47,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const isLongText = typeof display === 'string' && display.length > 18;
   return (
     <View style={styles.card}>
-      <LinearGradient colors={[...Gradients.card]} style={StyleSheet.absoluteFill} pointerEvents="none" />
-      <View style={styles.sheen} pointerEvents="none" />
+      <View style={styles.specular} pointerEvents="none" />
       <View style={styles.header}>
         <View style={styles.titleRow}>
           {icon}
@@ -100,27 +80,27 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.dark.card,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.dark.cardBorder,
-    padding: 16,
-    marginBottom: 12,
+    padding: 14,
+    marginBottom: 10,
     overflow: 'hidden',
   },
-  sheen: {
+  specular: {
     position: 'absolute',
     top: 0,
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: Colors.dark.specular,
   },
   header: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
     gap: 6,
   },
   titleRow: {
@@ -135,9 +115,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   badge: {
-    paddingHorizontal: 9,
+    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.sm,
     borderWidth: 1,
     maxWidth: '100%',
   },
@@ -152,33 +132,31 @@ const styles = StyleSheet.create({
   value: {
     ...Type.value,
     color: Colors.dark.text,
-    fontVariant: ['tabular-nums'],
   },
   valueEmphasis: {
     fontSize: 40,
-    letterSpacing: -1.2,
+    letterSpacing: -1,
   },
   valueText: {
-    fontSize: 17,
-    lineHeight: 23,
-    letterSpacing: -0.2,
-    fontWeight: '600',
+    fontFamily: Fonts.sansMedium,
+    fontSize: 16,
+    lineHeight: 22,
+    letterSpacing: 0,
   },
   unit: {
+    ...Type.mono,
     color: Colors.dark.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
     marginLeft: 6,
   },
   subtitle: {
     ...Type.caption,
     color: Colors.dark.textMuted,
-    marginTop: 6,
+    marginTop: 5,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 9,
   },
   sourceDot: {
     width: 6,
@@ -187,8 +165,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   sourceText: {
+    ...Type.micro,
     fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1,
   },
 });

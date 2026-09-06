@@ -35,7 +35,8 @@
         "android.permission.BODY_SENSORS",
         "android.permission.UWB_RANGING"
       ],
-      "predictiveBackGestureEnabled": true
+      "predictiveBackGestureEnabled": true,
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -57,7 +58,8 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

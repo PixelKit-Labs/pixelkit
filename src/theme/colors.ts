@@ -1,92 +1,122 @@
 /**
  * @file colors.ts
- * @description PixelForge design system tokens.
- * Aesthetic: deep near-black indigo surfaces (true OLED black stays cheap on the LTPO panel), violet
- * glow accents, warm gold line-art details, glass cards with hairline borders, pill-shaped controls.
- * All primary tokens are 6-digit hex so callers can append a 2-digit alpha (e.g. `${primary}22`).
+ * @description PixelForge design tokens, aligned with the Delta console design system.
+ *
+ * Rules carried over from Delta:
+ * - Colour carries meaning. Cyan is the one accent (the thing to press, the user). Green = well,
+ *   red = wrong, amber = a human or a tool has to act, violet = external streams and the model.
+ * - Near-black field with a blue cast; depth from hairlines and washes, not shadows or gradients.
+ * - Geist for language, Geist Mono for every number and label. Numerals are tabular.
+ * - Exactly one element is allowed to glow: the reactor on the dashboard.
+ *
+ * Primary tokens are 6-digit hex so callers can append a 2-digit alpha (`${primary}22`).
  */
 
 export const Colors = {
-  /** OLED dark theme (default on Pixel). */
   dark: {
-    /** True deep OLED background (near-black indigo) */
-    background: '#07060E',
-    /** Elevated surface (header, nav, sheets) */
-    surface: '#0E0B1C',
-    /** Secondary surface (inputs, secondary buttons) */
-    surfaceVariant: '#171330',
-    /** Card fill (glass over the background) */
-    card: '#120F24',
-    /** Hairline card border */
-    cardBorder: '#26203F',
-    /** Violet primary (interactive, section labels) */
-    primary: '#B794FF',
-    /** Filled container behind primary content */
-    primaryContainer: '#3B1D7A',
-    /** Lighter violet for secondary emphasis */
-    secondary: '#D8C4FF',
-    /** Warm gold used for line-art and highlights */
-    tertiary: '#F2CF8C',
-    /** Saturated accent for gradients and active states */
-    accent: '#8B5CF6',
-    /** Primary text */
-    text: '#F5F2FF',
-    /** Muted text */
-    textMuted: '#9C95B8',
-    success: '#7CE3A6',
-    warning: '#F7C66A',
-    error: '#FF8FA3',
-    /** Tensor / AI status cyan */
-    tensorGlow: '#7DEBFF',
+    /** Page field: near-black with a blue cast (Delta --background) */
+    background: '#0E1119',
+    /** Opaque panel face (Delta --panel-solid) */
+    surface: '#151925',
+    /** Secondary surface: inputs, secondary buttons (white 8%) */
+    surfaceVariant: 'rgba(255,255,255,0.08)',
+    /** Panel wash (white 5.5%) */
+    card: 'rgba(255,255,255,0.055)',
+    /** Hairline (white 10%) */
+    cardBorder: 'rgba(255,255,255,0.10)',
+    /** The accent: cyan. Interactive, "you", the thing to press */
+    primary: '#6FDCF2',
+    /** Text that sits on a solid accent fill */
+    onPrimary: '#101826',
+    /** Low-alpha accent container (user bubbles, selected rows) */
+    primaryContainer: '#123842',
+    /** Violet: external streams and the model (Gemini) */
+    secondary: '#A18BF6',
+    /** Amber: a human or a tool must act */
+    tertiary: '#F0BE4F',
+    /** Alias of the accent for legacy callers */
+    accent: '#6FDCF2',
+    /** Body text */
+    text: '#F4F5F8',
+    /** Secondary text; clears 4.5:1 on the field */
+    textMuted: '#A8ADB8',
+    /** Well: connected, succeeded, within budget */
+    success: '#46D786',
+    /** Amber: caution, gated, tool activity */
+    warning: '#F0BE4F',
+    /** Wrong: failed, refused, over a limit */
+    error: '#F25C55',
+    /** The model / AI stack (violet, same as secondary) */
+    tensorGlow: '#A18BF6',
+    /** PixelForge itself (Delta --hud-persona) */
+    persona: '#F09AC1',
+    /** Specular hairline on panels (white 16%) */
+    specular: 'rgba(255,255,255,0.16)',
   },
-  /** Light theme (kept for parity; the app ships dark-first). */
   light: {
-    background: '#F7F5FF',
-    surface: '#FFFFFF',
-    surfaceVariant: '#EEEAFB',
-    card: '#FFFFFF',
-    cardBorder: '#E3DEF5',
-    primary: '#6D3BEA',
-    primaryContainer: '#E6DBFF',
-    secondary: '#5B2FC7',
+    background: '#ECEEF3',
+    surface: '#F5F6F9',
+    surfaceVariant: 'rgba(0,0,0,0.06)',
+    card: 'rgba(255,255,255,0.78)',
+    cardBorder: 'rgba(0,0,0,0.10)',
+    primary: '#1F7A9C',
+    onPrimary: '#FFFFFF',
+    primaryContainer: '#D7EEF6',
+    secondary: '#5B44C9',
     tertiary: '#9A6B00',
-    accent: '#7C3AED',
-    text: '#17132A',
-    textMuted: '#645D80',
+    accent: '#1F7A9C',
+    text: '#171A22',
+    textMuted: '#5E6472',
     success: '#1E8E4E',
-    warning: '#B26A00',
+    warning: '#9A6B00',
     error: '#C62842',
-    tensorGlow: '#0891B2',
+    tensorGlow: '#5B44C9',
+    persona: '#B03A72',
+    specular: 'rgba(255,255,255,0.95)',
   },
 };
 
-/** Gradient stops (top→bottom or left→right as used). */
+/** Scrims that give the glass something to refract. Vertical fades only; no gradient buttons. */
 export const Gradients = {
-  /** Primary action pill */
-  primary: ['#7C3AED', '#C084FC'] as const,
-  /** Danger action pill */
-  danger: ['#E0426A', '#FF8FA3'] as const,
-  /** Ambient glow at the top of screens */
-  glow: ['rgba(124,58,237,0.55)', 'rgba(124,58,237,0.18)', 'rgba(7,6,14,0)'] as const,
-  /** Hero card fill */
-  hero: ['rgba(139,92,246,0.28)', 'rgba(139,92,246,0.06)'] as const,
-  /** Subtle card sheen */
-  card: ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.015)'] as const,
+  scrimCyan: ['rgba(111,220,242,0.10)', 'rgba(111,220,242,0.0)'] as const,
+  scrimViolet: ['rgba(161,139,246,0.08)', 'rgba(161,139,246,0.0)'] as const,
+  /** Kept for callers that still reference them; render as flat accent fills */
+  primary: ['#6FDCF2', '#6FDCF2'] as const,
+  danger: ['#F25C55', '#F25C55'] as const,
+  hero: ['rgba(111,220,242,0.10)', 'rgba(111,220,242,0.0)'] as const,
+  card: ['rgba(255,255,255,0.0)', 'rgba(255,255,255,0.0)'] as const,
+  glow: ['rgba(111,220,242,0.14)', 'rgba(111,220,242,0.0)'] as const,
 };
 
-export const Radius = { sm: 12, md: 18, lg: 24, xl: 28, pill: 999 } as const;
+/** Radii step down as elements nest. Panels 12, small boxes 8, pills only for real pills. */
+export const Radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 } as const;
 export const Spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
-/** Type scale (sizes in dp). Weights: 800 display, 700 titles/values, 600 labels, 400 body. */
+/** Font family names as registered with expo-font (see App.tsx). Android falls back silently until loaded. */
+export const Fonts = {
+  sans: 'Geist_400Regular',
+  sansMedium: 'Geist_500Medium',
+  sansSemi: 'Geist_600SemiBold',
+  sansBold: 'Geist_700Bold',
+  mono: 'GeistMono_400Regular',
+  monoMedium: 'GeistMono_500Medium',
+  monoSemi: 'GeistMono_600SemiBold',
+} as const;
+
+/** Type scale. Language in Geist, machine output and labels in Geist Mono. */
 export const Type = {
-  display: { fontSize: 30, fontWeight: '800' as const, letterSpacing: -0.8 },
-  title: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.5 },
-  value: { fontSize: 28, fontWeight: '700' as const, letterSpacing: -0.8 },
-  heading: { fontSize: 16, fontWeight: '700' as const, letterSpacing: -0.2 },
-  body: { fontSize: 14, fontWeight: '400' as const, lineHeight: 20 },
-  label: { fontSize: 11, fontWeight: '700' as const, letterSpacing: 1.2, textTransform: 'uppercase' as const },
-  caption: { fontSize: 12, fontWeight: '500' as const, lineHeight: 17 },
-  micro: { fontSize: 10, fontWeight: '700' as const, letterSpacing: 0.6 },
+  display: { fontFamily: Fonts.sansSemi, fontSize: 30, letterSpacing: -0.6 },
+  title: { fontFamily: Fonts.sansSemi, fontSize: 22, letterSpacing: -0.3 },
+  heading: { fontFamily: Fonts.sansSemi, fontSize: 16 },
+  body: { fontFamily: Fonts.sans, fontSize: 15, lineHeight: 22 },
+  caption: { fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17 },
+  /** Headline number on a tile: sans, proportional figures */
+  value: { fontFamily: Fonts.sansSemi, fontSize: 28, letterSpacing: -0.5 },
+  /** Section label: mono, 11px, semibold, 0.14em tracking, uppercase */
+  label: { fontFamily: Fonts.monoSemi, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' as const },
+  /** Machine output in lists and chips */
+  mono: { fontFamily: Fonts.mono, fontSize: 12, fontVariant: ['tabular-nums'] as ['tabular-nums'] },
+  micro: { fontFamily: Fonts.monoSemi, fontSize: 10, letterSpacing: 0.8 },
 };
 
 /** Shape of the active theme color palette. */

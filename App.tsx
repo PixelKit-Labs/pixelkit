@@ -1,32 +1,32 @@
 /**
  * @file App.tsx
- * @description Primary application container for PixelForge.
- * Deep-indigo shell with an ambient violet glow, brand mark, native-module status chip, 4-tab screen
- * switcher, and a floating glass navigation pill. Edge-to-edge safe: insets come from
- * react-native-safe-area-context (React Native's built-in SafeAreaView is iOS-only).
+ * @description Application shell: fonts, scrims, wordmark header with a status chip, the four
+ * screens, and the bottom navigation. Selection is an underline so labels never move.
+ * Insets come from react-native-safe-area-context (React Native's SafeAreaView is iOS-only).
  */
 
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from '@expo-google-fonts/geist';
+import { GeistMono_400Regular, GeistMono_500Medium, GeistMono_600SemiBold } from '@expo-google-fonts/geist-mono';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AILabScreen } from './src/screens/AILabScreen';
 import { SensorsLabScreen } from './src/screens/SensorsLabScreen';
 import { DocsScreen } from './src/screens/DocsScreen';
-import { GlowBackdrop } from './src/components/Decor';
+import { Scrims, Wordmark, StatChip } from './src/components/Decor';
 import { useHaptics } from './src/hardware/useHaptics';
-import { Colors, Gradients, Radius, Type } from './src/theme/colors';
+import { Colors, Fonts } from './src/theme/colors';
 import { isPixelNativeAvailable } from './modules/pixel-native';
 
 type Tab = 'dashboard' | 'ai' | 'sensors' | 'docs';
 
-const TABS: { key: Tab; title: string; glyph: string }[] = [
-  { key: 'dashboard', title: 'Silicon', glyph: '◈' },
-  { key: 'ai', title: 'AI Lab', glyph: '✦' },
-  { key: 'sensors', title: 'Sensors', glyph: '◎' },
-  { key: 'docs', title: 'Docs', glyph: '≡' },
+const TABS: { key: Tab; title: string }[] = [
+  { key: 'dashboard', title: 'Silicon' },
+  { key: 'ai', title: 'AI Lab' },
+  { key: 'sensors', title: 'Sensors' },
+  { key: 'docs', title: 'Docs' },
 ];
 
 function Shell() {
@@ -43,29 +43,18 @@ function Shell() {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      <GlowBackdrop height={360} />
+      <Scrims />
 
-      {/* Header */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        <View style={styles.brandingRow}>
-          <LinearGradient colors={[...Gradients.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>⚡</Text>
-          </LinearGradient>
-          <View>
-            <Text style={styles.appName}>PixelForge</Text>
-            <Text style={styles.appTagline}>Hardware & AI framework</Text>
-          </View>
-        </View>
-
-        <View style={[styles.statusPill, !isPixelNativeAvailable && styles.statusPillWarn]}>
-          <View style={[styles.statusDot, { backgroundColor: isPixelNativeAvailable ? Colors.dark.success : Colors.dark.warning }]} />
-          <Text style={[styles.statusPillText, !isPixelNativeAvailable && styles.statusPillTextWarn]}>
-            {isPixelNativeAvailable ? 'Native live' : 'JS only'}
-          </Text>
-        </View>
+      <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+        <Wordmark />
+        <StatChip
+          label={isPixelNativeAvailable ? 'native' : 'native'}
+          value={isPixelNativeAvailable ? 'live' : 'off'}
+          tone={isPixelNativeAvailable ? 'ok' : 'warn'}
+          dot
+        />
       </View>
 
-      {/* Screen */}
       <View style={styles.screenContainer}>
         {currentTab === 'dashboard' && <DashboardScreen />}
         {currentTab === 'ai' && <AILabScreen />}
@@ -73,18 +62,14 @@ function Shell() {
         {currentTab === 'docs' && <DocsScreen />}
       </View>
 
-      {/* Floating glass nav */}
-      <View style={[styles.navWrapper, { paddingBottom: Math.max(insets.bottom, 12) }]} pointerEvents="box-none">
+      <View style={[styles.navWrapper, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <View style={styles.navBar}>
           {TABS.map(t => {
             const active = currentTab === t.key;
             return (
-              <Pressable key={t.key} onPress={() => select(t.key)} style={({ pressed }) => [styles.navItem, pressed && { opacity: 0.8 }]}>
-                {active && (
-                  <LinearGradient colors={[...Gradients.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-                )}
-                <Text style={[styles.navGlyph, active && styles.navGlyphActive]}>{t.glyph}</Text>
+              <Pressable key={t.key} onPress={() => select(t.key)} accessibilityRole="tab" accessibilityState={{ selected: active }} style={styles.navItem}>
                 <Text style={[styles.navText, active && styles.navTextActive]}>{t.title}</Text>
+                <View style={[styles.navUnderline, active && styles.navUnderlineActive]} />
               </Pressable>
             );
           })}
@@ -95,6 +80,15 @@ function Shell() {
 }
 
 export default function App() {
+  useFonts({
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    Geist_700Bold,
+    GeistMono_400Regular,
+    GeistMono_500Medium,
+    GeistMono_600SemiBold,
+  });
   return (
     <SafeAreaProvider>
       <Shell />
@@ -112,59 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  brandingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  logoBadgeText: {
-    fontSize: 18,
-  },
-  appName: {
-    ...Type.heading,
-    fontSize: 18,
-    color: Colors.dark.text,
-  },
-  appTagline: {
-    ...Type.caption,
-    fontSize: 11,
-    color: Colors.dark.textMuted,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Radius.pill,
-  },
-  statusPillWarn: {
-    borderColor: `${Colors.dark.warning}66`,
-  },
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    marginRight: 7,
-  },
-  statusPillText: {
-    ...Type.micro,
-    fontSize: 11,
-    color: Colors.dark.text,
-  },
-  statusPillTextWarn: {
-    color: Colors.dark.warning,
+    paddingBottom: 10,
   },
   screenContainer: {
     flex: 1,
@@ -174,44 +116,40 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: 16,
+    paddingTop: 6,
   },
   navBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(14,11,28,0.92)',
-    borderRadius: Radius.pill,
-    padding: 5,
+    backgroundColor: 'rgba(21,25,37,0.94)',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 12,
+    borderColor: Colors.dark.cardBorder,
+    paddingHorizontal: 4,
   },
   navItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: Radius.pill,
-    overflow: 'hidden',
-  },
-  navGlyph: {
-    fontSize: 14,
-    color: Colors.dark.textMuted,
-    marginBottom: 1,
-  },
-  navGlyphActive: {
-    color: '#FFFFFF',
+    minHeight: 48,
+    paddingTop: 6,
   },
   navText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
     color: Colors.dark.textMuted,
   },
   navTextActive: {
-    color: '#FFFFFF',
+    color: Colors.dark.text,
+  },
+  navUnderline: {
+    marginTop: 6,
+    height: 2,
+    width: 22,
+    borderRadius: 1,
+    backgroundColor: 'transparent',
+  },
+  navUnderlineActive: {
+    backgroundColor: Colors.dark.primary,
   },
 });

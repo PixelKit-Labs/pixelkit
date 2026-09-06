@@ -36,7 +36,7 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Camera & Looks** | `useCamera()` | 120x Generative AI Zoom, Camera Looks tone-mapping & Ultra Low Light Video |
 | **Multimodal Vision** | `useVisionAI()` | Ultra HDR camera capture, gallery picker, and Gemini Multimodal scene analysis |
 | **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
-| **Conversational AI** | `useGemini()` | Multi-turn reasoning, streaming chat, token telemetry, Titan M3 quantum key vault |
+| **Conversational AI** | `useGemini()` | Multi-turn chat on gemini-3.8-flash via ai.chats, API token counts, key in SecureStore; no simulated replies |
 | **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband transceiver for centimeter-level AoA tracking |
 | **Device Capabilities** | `useCapabilities()` | Resolves what this Pixel physically has (thermometer, HiLight, UWB, Titan M3, Gemini Nano tier) and which Android 16/17 APIs exist |
 | **IR Thermometer** | `useTemperature()` | **[Pixel 8-10 Pro only]** Infrared thermopile sensor; **absent on Pixel 11 Pro** (reports `availability: 'estimated'`) |
@@ -45,7 +45,7 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Flashlight / Torch** | `useTorch()` | CameraManager torch with 21 brightness levels (Android 13+), system torch callback, SOS strobe |
 | **Super Actua Display**| `useDisplay()` | Live refresh rate + ARR support, 1-120 Hz mode list, HDR types, preferred-rate control, wake lock, brightness |
 | **Biometrics** | `useBiometrics()` | Titan M3-backed under-display Fingerprint and Class 3 Face Unlock authentication |
-| **Quantum Keystore** | `useSecurity()` | Titan M3 Post-Quantum Cryptography (PQC) hardware-backed encrypted secret vault |
+| **Secure Storage** | `useSecurity()` | expo-secure-store on the Android Keystore (StrongBox present on Pixel 11 Pro); classical AES, no post-quantum claims |
 | **Satellite & Modem** | `useNetwork()` | MediaTek M90 modem, Wi-Fi 7, 5G Sub-6/mmWave, and Satellite SOS connectivity |
 | **Satellite GNSS** | `useLocation()` | Multi-band dual-frequency L1/L5 GPS receiver, speed, altitude, and compass heading |
 | **Pixelsnap & Power** | `useDevice()` | Pixelsnap Qi2.2 25W magnetic wireless charging, battery health, and PMIC telemetry |
@@ -151,7 +151,7 @@ Pixel delta/ (PixelForge Framework)
 │   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
 │   │   ├── useDisplay.ts       # 3,600 nits 120Hz LTPO OLED display, screen wake lock & brightness
 │   │   ├── useBiometrics.ts    # Titan M3 in-display Fingerprint & Face Unlock auth
-│   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
+│   │   ├── useSecurity.ts      # SecureStore on the Android Keystore (StrongBox)
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
 │   │   ├── useCapabilities.ts  # Device capability resolution (what this Pixel really has)
@@ -169,7 +169,8 @@ Pixel delta/ (PixelForge Framework)
 │   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
 │   │
 │   ├── theme/
-│   │   └── colors.ts           # Material 3 Expressive & Pure OLED Black tokens
+│   │   ├── colors.ts           # Design tokens (Delta-aligned): field, accent, meaning colours, Geist type
+│   │   └── mode.ts             # State → colour/label map for the reactor and status chip
 │   │
 │   ├── components/             # Reusable UI Primitives (PixelForge design system)
 │   │   ├── HapticButton.tsx    # Gradient / white CTA / glass pill button with haptics
@@ -278,7 +279,7 @@ The central sitemap and entry portal for all developer guides and reference manu
 
 ### 🚀 Getting Started
 * **[Quickstart Guide](./docs/getting-started/quickstart.md)**: Workstation prerequisites, Android CLI setup, and launching on physical Pixel devices.
-* **[Silicon Architecture](./docs/getting-started/architecture.md)**: Deep dive into Tensor G6 7-core 2nm, PowerVR GPU, Titan M3 PQC, and Pixelsnap Qi2.2 magnetic charging.
+* **[Silicon Architecture](./docs/getting-started/architecture.md)**: Overview of the Tensor G6 7-core CPU, PowerVR GPU, Titan M3 PQC, and Pixelsnap Qi2.2 magnetic charging.
 
 ### 📚 API Reference (By Subsystem)
 * **[Silicon & Compute](./docs/api/silicon-compute.md)**: `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`.

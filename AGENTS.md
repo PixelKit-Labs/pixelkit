@@ -1,50 +1,49 @@
-# Expo HAS CHANGED
+# PixelForge: Agent Guide
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+This file is the single source of truth for any coding agent (Claude, Gemini, Antigravity, Codex, Delta) working in this repository. `CLAUDE.md` and `GEMINI.md` are identical copies; keep all three in sync.
 
----
+## Project
 
-# Android CLI & Project Describing
+PixelForge is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and a local Kotlin Expo Module, `modules/pixel-native`. Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four screens: Silicon (dashboard), AI Lab, Sensors, Docs.
 
-The official Google Android CLI (`android.exe`) is installed and available in PATH (`%USERPROFILE%\AppData\AndroidCLI\android.exe`).
+Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
 
-### Project Describing (`android describe`)
-When analyzing an Android project or locating build targets and APK outputs:
-* Run `android describe --project_dir=<path>` to analyze the project and generate descriptive metadata JSON files.
-* Use the resulting metadata to identify build targets, APK locations, and artifact outputs efficiently.
+## Rules
 
-### Device Interaction & Layout Inspection
-* Use `android layout` to retrieve the JSON UI layout tree of a connected device or emulator.
-* Use `android screen` to capture screenshots and obtain bounding coordinates for UI elements.
-* Follow the instructions in `.agents/skills/android-cli/` when executing journeys or device interactions.
+1. **Changelog on every change.** Every change to the codebase bumps the patch version by 0.0.1 and adds an entry to `CHANGELOG.md` in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together and increment `expo.android.versionCode` by 1. Minor and major bumps are the maintainer's call.
+2. **Docs in sync.** Any change to a hook, type, screen, config, or dependency updates: `docs/api/*` and `docs/HARDWARE_API.md` (API), `docs/ai-guidance/*` and `docs/AI_PRIMER.md` (agent rules), `docs/getting-started/*` (setup), `README.md` and `PIXELFORGE.md` (feature matrix, tree, examples), and `src/screens/DocsScreen.tsx` (in-app entries with a working example).
+3. **No mocks.** Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (`src/core/observability.ts`). Never substitute a plausible default for a value that could not be read; render `null` as "—" and pass `source` to `MetricCard`. Only NFC, BLE, UWB and HiLight are currently simulated, and every surface that shows them says so.
+4. **Comments state facts.** JSDoc and comments describe what the code does and which Android API it uses. No marketing language.
+5. **Design system.** Use tokens from `src/theme/colors.ts` and primitives from `src/components/Decor.tsx`. One accent (cyan) for interaction; green = well, red = wrong, amber = a human or tool must act, violet = the model or external streams. Geist for language, Geist Mono for numbers and labels. Panels use wash + hairline + specular, no shadows or gradient fills. Buttons are solid (one per group) or outlined. Only the reactor glows.
+6. **Single import.** App code imports hooks and components from `./src`.
+7. **Haptics on every touchable** via `HapticButton` or `useHaptics`.
+8. **Secrets** go through `useSecurity().saveSecureItem()` or `saveApiKey()` (SecureStore, hardware-backed Android Keystore). Never in plaintext storage.
+9. **Coordinate with other agents.** Run `git status` and `git log --oneline -5` before editing; another agent may have committed. Prefer targeted edits over whole-file rewrites on files touched recently by others.
 
-### Android Skills Integration
-* The `android-cli` skill is installed in `.agents/skills/android-cli/`.
-* Consult `.agents/skills/android-cli/SKILL.md` for CLI command details, SDK management (`android sdk`), and emulator controls.
+## Validation
 
-### Official Expo Agent Skills
-* Official Expo agent skills are installed in `.agents/skills/` (managed via `skills-lock.json` and `npx skills add expo/skills`).
-* 26 specialized skills are available for Expo development:
-  - **Navigation & UI**: `expo-router`, `expo-native-ui`, `expo-ui`, `expo-design-system`, `expo-animation`
-  - **Modules & Native**: `expo-module`, `expo-migrate-module`, `expo-brownfield`, `expo-dev-client`
-  - **Data, Web & DOM**: `expo-data-fetching`, `expo-dom`, `expo-web-to-native`, `expo-examples`
-  - **Deployment & EAS**: `eas-app-stores`, `eas-hosting`, `eas-observe`, `eas-simulator`, `eas-update`, `eas-update-insights`, `eas-workflows`
-  - **Project Management**: `expo-overview`, `expo-project-structure`, `expo-upgrade`, `expo-skill-eval`, `expo-skill-feedback`
-* Consult each skill's `SKILL.md` before executing related tasks.
+- `npm run typecheck` must pass with 0 errors.
+- `npx expo export -p android` must bundle.
+- Native changes: build from the space-free junction `C:\dev\pixel-delta\android` with `.\gradlew.bat assembleDebug` (JDK 17, SDK at `%LOCALAPPDATA%\Android\Sdk`), then `adb install -r -g android/app/build/outputs/apk/debug/app-debug.apk`.
+- On-device checks: `adb logcat -s ReactNativeJS | grep PixelForge` for provenance events; `dumpsys` for independent confirmation (see `docs/research/DEVICE_TEST_REPORT_2026-09-06.md`).
 
----
+## Tooling
 
-# Mandatory Documentation Synchronization Rule
+- **Expo docs:** https://docs.expo.dev/versions/v57.0.0/ (SDK 57 only). The Expo MCP server is registered in `.mcp.json`; `npm run start:mcp` starts Metro with local MCP capabilities.
+- **Android CLI** (`%USERPROFILE%\AppData\AndroidCLI\android.exe`): `android docs search "<query>"` / `android docs fetch kb://…` (offline official docs, use before web search), `android describe --project_dir=.`, `android layout`, `android screen capture`, `android sdk`, `android emulator`, `android skills add <id>`.
+- **Agent skills** in `.agents/skills/`: `android-cli` plus the official Expo skills (`skills-lock.json`, `npx skills add expo/skills`). Read a skill's `SKILL.md` before the related task.
+- **Device:** the Pixel is paired over wireless adb (`adb pair` / `adb connect 10.0.0.47:<port>`); use `adb reverse tcp:8081 tcp:8081` so the dev client loads Metro from `localhost`.
 
-**CRITICAL REQUIREMENT FOR ALL CODING AGENTS (Antigravity, Claude, Gemini, Delta)**:
-Whenever you make ANY changes to the codebase (adding/modifying hooks, updating types, changing UI screens, adding hardware features, or modifying dependencies):
-1. **You MUST immediately update the corresponding documentation files in `docs/`**:
-   - API changes $\rightarrow$ `docs/api/` (`silicon-compute.md`, `pro-exclusives.md`, `neural-ai.md`, etc.) and `docs/HARDWARE_API.md`
-   - AI guidelines/rules $\rightarrow$ `docs/ai-guidance/` and `docs/AI_PRIMER.md`
-   - Architectural shifts $\rightarrow$ `docs/getting-started/` and `docs/index.md`
-2. **You MUST keep `README.md` and `PIXELFORGE.md` up to date**:
-   - The feature matrix, directory trees, and hook examples must reflect real code.
-3. **You MUST update the In-App Documentation Browser (`src/screens/DocsScreen.tsx`)**:
-   - Any new hook or updated signature must appear in the interactive on-device viewer with a working TypeScript example and AI tip.
-4. **Documentation must NEVER be omitted, deferred, or allowed to fall out of sync with code**. Every commit that alters functionality must include its documentation updates.
+## Map
 
+```
+App.tsx                      shell: fonts, scrims, wordmark, tabs
+modules/pixel-native/        Kotlin Expo Module + TS bridge (index.ts)
+src/core/                    types, capabilities, observability
+src/hardware/                device hooks
+src/ai/                      Gemini hooks, TPU/AICore detection, client
+src/theme/                   colors (tokens), mode (state → colour)
+src/components/              HapticButton, MetricCard, SensorVisualizer, Decor
+src/screens/                 Dashboard, AILab, SensorsLab, Docs
+docs/                        api, guides, research, primers
+```

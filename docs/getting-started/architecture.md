@@ -14,7 +14,7 @@ This document outlines the silicon engineering and hardware subsystem design of 
 | **GPU** | PowerVR / IMG CXTP | Vulkan 1.3 / OpenGL ES 3.2, 8.33ms 120 FPS frame budget |
 | **TPU / NPU**| Google Tensor TPU | +50% neural compute power, LiteRT / NNAPI delegates |
 | **RAM** | LPDDR5X Unified | 12 GB (256GB models) or 16 GB (512GB / 1TB models) |
-| **Security**| Google Titan M3 | Post-Quantum Cryptography (PQC) secure boot & quantum keystore |
+| **Security**| Google Titan M3 + Android Keystore | StrongBox keystore (verified); Google states PQC secure boot; SecureStore uses classical AES |
 | **Modem** | MediaTek M90 | Wi-Fi 7 (802.11be), 5G Sub-6/mmWave, Direct-to-Cell Satellite SOS |
 | **Display** | Super Actua LTPO OLED | 3,600 nits peak, 1-120Hz variable refresh, anti-scratch glass |
 | **Actuators**| Linear Resonant Actuator (LRA) | Precision mechanical tactile click profiles |
@@ -43,7 +43,7 @@ Replaces previous Samsung Exynos modems, eliminating thermal buildup and drain d
 
 ---
 
-## 🛡️ Titan M3 Security Coprocessor & Post-Quantum Cryptography (PQC)
+## 🛡️ Titan M3 Security Coprocessor & Keystore
 
 The **Titan M3** coprocessor introduces quantum-resistant algorithms to mobile hardware:
 * **Quantum-Resistant Secure Boot**: Protects OS kernel verification against quantum computing attack vectors.

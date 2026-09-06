@@ -1,5 +1,5 @@
 # Radios & Hardware Security API Reference 🔐
-> **Titan M3 Post-Quantum Cryptography, Biometrics, Bluetooth LE, NFC, and Dual-Band GNSS**
+> **Android Keystore secure storage, Biometrics, Bluetooth LE, NFC, and Dual-Band GNSS**
 
 This document covers wireless radios, near-field interactions, satellite positioning, and hardware-backed cryptographic security on the Pixel 11 Pro.
 
@@ -8,7 +8,7 @@ This document covers wireless radios, near-field interactions, satellite positio
 ## 📑 Module Index
 
 * [`useBiometrics`](#usebiometrics) - Ultrasonic In-Screen Fingerprint & Class 3 Face Unlock
-* [`useSecurity`](#usesecurity) - Titan M3 Post-Quantum Cryptography (PQC) KeyStore
+* [`useSecurity`](#usesecurity) - SecureStore on the Android Keystore (StrongBox)
 * [`useBLE`](#useble) - Bluetooth 5.4 Low Energy Scanner & Beacon Proximity
 * [`useNFC`](#usenfc) - Contactless NDEF / RFID Smart Tag Controller
 * [`useLocation`](#uselocation) - Dual-Frequency Multi-Band GNSS (GPS L1/L5)
@@ -37,7 +37,7 @@ function useBiometrics(): BiometricState & {
 
 ## `useSecurity`
 
-Cryptographic key persistence backed by the **Titan M3** security coprocessor with **Post-Quantum Cryptography (PQC)**.
+Secret persistence through `expo-secure-store`, which encrypts values with an AES key held in the **Android Keystore** (StrongBox-backed on the Pixel 11 Pro). No post-quantum algorithms are involved; `isPostQuantumProtected` is always `false`.
 
 ### Signature
 ```typescript
@@ -60,7 +60,7 @@ export function VaultManager() {
   const { saveSecureItem, getSecureItem } = useSecurity();
 
   const handleSave = async () => {
-    await saveSecureItem("USER_VAULT_KEY", "quantum_resistant_secret_token");
+    await saveSecureItem("USER_VAULT_KEY", "secret_token");
   };
 
   return <HapticButton title="Save to Titan M3 Vault" onPress={handleSave} />;

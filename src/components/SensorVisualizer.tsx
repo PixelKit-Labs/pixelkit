@@ -70,9 +70,9 @@ export const SensorVisualizer: React.FC<SensorVisualizerProps> = ({
         <Text style={styles.title}>{label}</Text>
         {caption ? <Text style={styles.caption}>{caption}</Text> : null}
       </View>
-      {renderAxis('X', vector.x, '#FF5252')}
-      {renderAxis('Y', vector.y, '#69F0AE')}
-      {renderAxis('Z', vector.z, '#448AFF')}
+      {renderAxis('X', vector.x, Colors.dark.primary)}
+      {renderAxis('Y', vector.y, Colors.dark.secondary)}
+      {renderAxis('Z', vector.z, Colors.dark.tertiary)}
       <Text style={styles.scale}>±{range} {unit}</Text>
     </View>
   );

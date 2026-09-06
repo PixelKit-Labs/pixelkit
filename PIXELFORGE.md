@@ -1,12 +1,12 @@
-# PixelForge SDK ⚡
+# PixelForge SDK
 > **The Hardware & AI Framework for Google Pixel & Android**  
-> *Engineered for high-performance mobile applications and AI-driven bots.*
+> *Hardware and AI framework for the Google Pixel 11 Pro.*
 
 ---
 
 ## 📖 Executive Summary
 
-**PixelForge** is a production-grade, modular framework and SDK designed to bridge Google Pixel hardware silicon (Tensor G6 7-Core CPU, PowerVR GPU Vulkan pipeline, Tensor TPU, Titan M3 Post-Quantum Security Enclave, 120Hz LTPO display, HiLight notification ring, UWB Spatial Radar, and 6-axis sensors) with modern Generative AI capabilities (Google Gemini, Vision AI, Speech AI, and LiteRT).
+**PixelForge** is a modular Expo SDK 57 framework that exposes Google Pixel 11 Pro hardware (Tensor G6 CPU, PowerVR GPU, AICore/TPU, Android Keystore, 1-120 Hz LTPO display, HiLight, UWB, IMU and environmental sensors) as typed React hooks, with cloud Gemini for chat, vision and speech.
 
 This document serves as the **canonical API Reference and Blueprint for AI agents (including the future Delta Bot)** and developers building on top of this framework.
 
@@ -49,7 +49,7 @@ pixel-delta/ (PixelForge Framework)
 │   │   └── types.ts            # Strongly-typed telemetry, silicon, and AI models
 │   │
 │   ├── hardware/               # Physical Silicon & Hardware Abstractions
-│   │   ├── useCPU.ts           # Tensor G6 7-Core cluster (4.11GHz C1-Ultra, C-1 Pro) on TSMC 2nm
+│   │   ├── useCPU.ts           # /proc/cpuinfo + cpufreq topology, frequencies, governor, load
 │   │   ├── useGPU.ts           # PowerVR / Vulkan frame pacing (8.33ms budget) & dropped frames
 │   │   ├── useMemory.ts        # LPDDR5X RAM usage, free memory & Low Memory Killer (LMK) protection
 │   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
@@ -60,8 +60,8 @@ pixel-delta/ (PixelForge Framework)
 │   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
 │   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
 │   │   ├── useDisplay.ts       # 3,600 nits 120Hz LTPO OLED display, screen wake lock & brightness
-│   │   ├── useBiometrics.ts    # Titan M3 in-display Fingerprint & Face Unlock auth
-│   │   ├── useSecurity.ts      # Titan M3 Post-Quantum Cryptography (PQC) KeyStore
+│   │   ├── useBiometrics.ts    # Ultrasonic fingerprint & face unlock (expo-local-authentication)
+│   │   ├── useSecurity.ts      # SecureStore on the Android Keystore (StrongBox)
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
 │   │   ├── useCapabilities.ts  # Device capability resolution (thermometer/HiLight/UWB/Nano tier/API level)
@@ -72,19 +72,21 @@ pixel-delta/ (PixelForge Framework)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
-│   │   ├── useTPU.ts           # Google Tensor TPU hardware accelerator & latency benchmarker
+│   │   ├── useTPU.ts           # AICore / Gemini Nano stack detection (inference not wired yet)
 │   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
 │   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
 │   │   ├── useVisionAI.ts      # Multimodal camera capture & visual scene inspection
 │   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
 │   │
 │   ├── theme/
-│   │   └── colors.ts           # Material 3 Expressive & Pure OLED Black tokens
+│   │   ├── colors.ts           # Design tokens (Delta-aligned): field, accent, meaning colours, Geist type
+│   │   └── mode.ts             # State → colour/label map for the reactor and status chip
 │   │
 │   ├── components/             # Reusable UI Primitives
-│   │   ├── HapticButton.tsx    # Tactile touch button with haptic feedback
-│   │   ├── MetricCard.tsx      # Real-time hardware telemetry display card
-│   │   └── SensorVisualizer.tsx# Live 3-axis motion visualizer
+│   │   ├── HapticButton.tsx    # Solid / outlined button with haptics
+│   │   ├── MetricCard.tsx      # Panel tile with provenance tag
+│   │   ├── SensorVisualizer.tsx# Centred 3-axis bars
+│   │   └── Decor.tsx           # Scrims, wordmark, reactor, section labels, chips, telemetry rows
 │   │
 │   └── screens/
 │       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)

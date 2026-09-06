@@ -56,9 +56,9 @@ The Pixel 11 Pro features a 3,600 nits 120Hz LTPO display with an **8.33ms frame
 * When `thermalStatus === 'severe'` or `'critical'`, dynamically downscale background AI batch sizes and reduce sensor update intervals to 200ms or higher.
 
 ### 4. The True OLED Black Rule
-Pixels utilize self-emissive Super Actua OLED panels. Always style dark backgrounds with the signature OLED true-black `#07060E` from `Colors.dark.background`. True black turns individual OLED pixels completely off, saving battery.
+Pixels utilize self-emissive Super Actua OLED panels. Always style dark backgrounds with the signature OLED true-black `#0E1119` from `Colors.dark.background`. True black turns individual OLED pixels completely off, saving battery.
 
-### 5. The Titan M3 Post-Quantum Enclave Rule
+### 5. The Secure Storage Rule
 Never write sensitive user data or API keys into plaintext AsyncStorage or unencrypted files. Always persist credentials through `useSecurity().saveSecureItem()` or `useGemini().setApiKey()`, which securely encrypt keys into the **Titan M3** hardware security coprocessor with **Post-Quantum Cryptography (PQC)**.
 
 ### 6. The Visual Context Rule (React Grab & Android Layout)
@@ -93,7 +93,7 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **Flashlight** | `useTorch()` | `isTorchOn, toggleTorch(), startStrobe()` | Dual-LED torch & SOS strobe |
 | **120Hz Display** | `useDisplay()` | `isKeepAwake, toggleKeepAwake(), brightness` | Display wake-lock & LTPO refresh |
 | **Titan M3 Auth** | `useBiometrics()` | `hasHardware, isEnrolled, authenticate(reason)` | Ultrasonic fingerprint & Face Unlock |
-| **Security Keys** | `useSecurity()` | `saveSecureItem(), getSecureItem(), isPostQuantumProtected` | Titan M3 Post-Quantum KeyStore |
+| **Security Keys** | `useSecurity()` | `saveSecureItem(), getSecureItem(), isHardwareBacked` | SecureStore on the Android Keystore (StrongBox) |
 | **GNSS Location** | `useLocation()` | `latitude, longitude, altitude, heading, speed` | Dual-band L1/L5 GPS positioning |
 | **MediaTek M90** | `useNetwork()` | `ipAddress, networkType, isConnected, isAirplaneMode` | Wi-Fi 7 / 5G & Satellite modem |
 
@@ -111,8 +111,8 @@ Always adhere to these requirements:
 3. When running Gemini AI, trigger the rear HiLight ring via useHiLight().triggerGeminiPulse() for face-down visual signaling.
 4. Support Camera Looks tone mapping presets and up to 120x Generative AI Zoom via useCamera().
 5. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
-6. Use true OLED black (#07060E) for backgrounds via Colors.dark.background.
-7. Store sensitive keys exclusively in the Titan M3 quantum-resistant enclave using useSecurity().saveSecureItem().
+6. Use true OLED black (#0E1119) for backgrounds via Colors.dark.background.
+7. Store sensitive keys exclusively through useSecurity().saveSecureItem() (SecureStore, Android Keystore).
 8. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).
 ```
 
