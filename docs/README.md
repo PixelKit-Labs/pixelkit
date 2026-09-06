@@ -26,6 +26,9 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 ### 🛠️ [Guides & Diagnostics](./guides/)
 * **[Troubleshooting & Diagnostics](./guides/troubleshooting.md)**: Expo SDK 57 specifics, camera permissions, keep-awake tags, Hermes bytecode compilation, and thermal throttling mitigations.
 
+### 🔬 [Hardware Research & Gap Analysis](./research/)
+* **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 (API 37) surfaces, on-device Gemini Nano ML Kit integration roadmap, and native Kotlin module plan.
+
 ### 📑 Consolidated Single-File Manuals
 * **[HARDWARE_API.md](./HARDWARE_API.md)**: Complete 23-module API reference in a single document.
 * **[AI_PRIMER.md](./AI_PRIMER.md)**: Complete AI agent operational manual in a single document.
