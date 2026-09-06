@@ -196,16 +196,13 @@ function ThermalMonitor() {
     category: 'pro',
     chipBadge: 'HiLight Ring (Pro Exclusive)',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Eight-LED HiLight array. With Shizuku running and granted, the PixelHiLight module drives the real LEDs through a shell-uid helper (availability "shizuku"); otherwise the colour and pattern are mirrored on screen ("simulated").',
-    description: 'Android 17 exposes the array as eight Light.LIGHT_TYPE_APPLICATION lights (RGB + animation, 33 ms update period), but every session needs CONTROL_DEVICE_LIGHTS, which only shell, root or a Shizuku helper holds. connect() requests Shizuku permission and binds modules/pixel-hilight HiLightService (uid 2000). The helper enforces a 60 s cap per request, a 50 % duty cycle per 10 min, and the stuck-LED clearing sequence. See docs/research/HILIGHT_LED_ARRAY.md.',
+    summary: 'State model for the Pixel 11 Pro eight-LED HiLight camera bar ring. Mirrored on-screen with haptic feedback (simulated; Google exposes no third-party LED API).',
+    description: 'The Pixel 11 Pro features eight RGB LEDs around the camera flash. Android restricts CONTROL_DEVICE_LIGHTS to system apps with no public third-party API. useHiLight provides a strongly-typed state machine for patterns, colours, and brightness, mirrored honestly on screen and through the linear resonant actuator (LRA).',
     signature: 'useHiLight(): HiLightState',
     returns: [
-      "availability: 'shizuku' | 'simulated' | 'unsupported'",
-      "source: 'hardware' | 'simulated' | 'unavailable'",
-      'shizuku: { shizukuInstalled, shizukuRunning, permissionGranted, serviceBound } | null',
-      'helper: { uid, count, litMsInWindow, dutyLimitMs, lights[] } | null',
+      "availability: 'simulated' | 'unsupported'",
+      "source: 'simulated' | 'unavailable'",
       'isActive: boolean · currentColor: string · mode: HiLightMode · brightness: number',
-      'connect(): Promise<boolean> · disconnect(): void',
       'triggerGeminiPulse(durationMs?) · triggerContactAlert(colorHex, durationMs?)',
       'setColor(hex) · setMode(mode) · setBrightness(level) · turnOff() · toggle()',
     ],
@@ -216,13 +213,12 @@ function StatusRing() {
   return (
     <View>
       <Text>HiLight: {hilight.availability} · {hilight.mode}</Text>
-      {hilight.availability !== 'shizuku' && <Button title="Connect Shizuku" onPress={() => hilight.connect()} />}
       <Button title="Gemini AI Pulse" onPress={() => hilight.triggerGeminiPulse(4000)} />
       <Button title="Contact Alert" onPress={() => hilight.triggerContactAlert('#81C995', 4000)} />
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Read availability before promising light. Only "shizuku" drives the LEDs; "simulated" is an on-screen mirror. Never claim a colour was shown when the helper refused (duty guard) or is not bound.',
+    aiTip: 'AI Tip: Availability is "simulated" on Pixel 11 Pro. It mirrors state on screen; no third-party API exists to drive the physical LEDs directly.',
   },
   {
     id: 'useUWB',

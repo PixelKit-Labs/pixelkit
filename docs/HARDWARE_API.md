@@ -150,27 +150,22 @@ isStuttering: boolean; gpuMemoryUsageMB: null; source: TelemetrySource;
 
 ### `useHiLight`
 * **File Path**: `src/hardware/useHiLight.ts`
-* **Target Hardware**: Eight `Light.LIGHT_TYPE_APPLICATION` RGB LEDs around the flash (ids 1-8, 33 ms update period), reached through `android.hardware.lights.ILightsManager`. Verified on Pixel 11 Pro (see `docs/research/HILIGHT_LED_ARRAY.md`).
-* **Description**: The LEDs sit behind `CONTROL_DEVICE_LIGHTS` (signature|privileged). With Shizuku installed, running and granted, `connect()` binds `modules/pixel-hilight` `HiLightService` (uid 2000) and the colour methods drive the real LEDs (`availability: 'shizuku'`, `source: 'hardware'`). Without it the state is mirrored on screen (`'simulated'`). The helper caps every request at 60 s, limits lit time to 50 % of any 10-minute window, and runs the stuck-LED clearing sequence on every clear.
+* **Target Hardware**: Eight `Light.LIGHT_TYPE_APPLICATION` RGB LEDs around the flash (ids 1-8, 33 ms update period) on Pixel 11 Pro-class devices.
+* **Description**: Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. `useHiLight` provides a strongly-typed state machine for patterns, colours, and brightness, mirrored honestly on screen (`availability: 'simulated'`, `source: 'simulated'`) and through LRA haptics.
 
 #### Interface
 ```typescript
 type HiLightMode = 'off' | 'glow' | 'breathing' | 'pulse' | 'gemini_thinking' | 'incoming_call' | 'notification';
 
 interface HiLightState {
-  availability: 'shizuku' | 'simulated' | 'unsupported';
+  availability: 'simulated' | 'unsupported';
   isHardwareSupported: boolean;
-  source: 'hardware' | 'simulated' | 'unavailable';
-  shizuku: HiLightStatus | null;   // installed / running / permission / bound, read live
-  helper: HiLightInfo | null;      // uid, light ids, duty accounting from the shell helper
-  error: string | null;
+  source: 'simulated' | 'unavailable';
   isActive: boolean;
   currentColor: string;
   mode: HiLightMode;
-  brightness: number; // 0.0 to 1.0, applied by scaling RGB
+  brightness: number; // 0.0 to 1.0
   isFaceDownMode: boolean;
-  connect: () => Promise<boolean>;
-  disconnect: () => void;
   setColor: (hexColor: string) => void;
   setMode: (mode: HiLightMode) => void;
   setBrightness: (level: number) => void;

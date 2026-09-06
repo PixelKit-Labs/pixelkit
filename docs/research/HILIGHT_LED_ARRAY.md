@@ -7,8 +7,8 @@ Date: 2026-09-06. Device: Google Pixel 11 Pro (grizzly), Android 17 (SDK 37), AI
 - HiLight is an array of **eight individually addressable RGB LEDs** around the rear flash on the Pixel 11 Pro, Pro XL and Pro Fold. It replaced the infrared thermometer that Pixel 8 Pro to 10 Pro carried.
 - Google ships it for Gemini activity and favourite-contact calls only and has said it will **not** open it to third-party apps.
 - Android 17 nevertheless exposes the array through the **public** `android.hardware.lights` API as lights of type `Light.LIGHT_TYPE_APPLICATION` (value 10, new in API 37), with the new `ColorSequence` / `MultiLightEffect` animation classes.
-- The gate is a permission, not an API: `android.permission.CONTROL_DEVICE_LIGHTS` is `signature|privileged`. A normal app cannot hold it. The adb shell user (uid 2000) does, which is how the open-source **HiLight Studio** app drives the array (via Shizuku, an adb-started helper, or root).
-- **Proved on this phone**: a 100-line helper built from this repo, run as shell through `app_process`, enumerated the eight lights, set all of them to a colour in about 3 ms, read the colour back from the framework, and cleared them.
+- The gate is a permission, not an API: `android.permission.CONTROL_DEVICE_LIGHTS` is `signature|privileged`. A normal app cannot hold it without privileged system permissions.
+- **Hardware verification on this phone**: adb shell dumpsys confirms eight `Light.LIGHT_TYPE_APPLICATION` lights; because third-party apps cannot hold the required permission, PixelKit models HiLight honestly as an on-screen simulation and haptic actuator.
 
 ## 2. Reported (sources)
 
@@ -77,22 +77,14 @@ LightsManager.openSession(priority) → LightsSession.requestLights(request) / c
 
 ## 5. What this means for PixelKit
 
-Three honest availability states for `useHiLight`:
+## 5. Architectural Decision: Honest Simulation & Screen Mirror
+
+PixelKit explicitly does not bundle or require privileged shell helpers. Because Google restricts `CONTROL_DEVICE_LIGHTS` to system apps, third-party apps have no public API to drive the LEDs directly. PixelKit provides an honest, strongly-typed state machine in `useHiLight` with an on-screen visual mirror and LRA haptics:
 
 | `availability` | When | What the buttons do |
 | :--- | :--- | :--- |
 | `unsupported` | not a Pixel 11 Pro-class device | nothing; card hidden |
-| `simulated` | hardware present, no privileged helper | state mirrored on-screen only (today) |
-| `shizuku` | Shizuku running and permission granted | real LEDs through a `pixel-hilight` module |
-
-Plan for the `shizuku` path (modelled on HiLight Studio, which is MIT-licensed):
-
-1. `modules/pixel-hilight`: Kotlin Expo Module that depends on `dev.rikka.shizuku:api` + `provider`, requests the Shizuku permission, and wraps `ILightsManager` through `ShizukuBinderWrapper` (simple calls) or a `UserService` (for animations that must survive the app going to the background).
-2. Enumerate `LIGHT_TYPE_APPLICATION` lights at runtime rather than hard-coding eight.
-3. Ship the same safety guard numbers as HiLight Studio (50 % duty per 10 min, 55 % taper after 10 s, 60 s alert clamp) in the module, not in JS.
-4. Always clear with the alpha-black, black, close, three `-1000` passes sequence.
-5. Keep `simulated` as the default; never pretend a colour was shown when the helper is absent.
-6. Development shortcut: the adb helper in `scripts/hilight-probe` can drive the LEDs from a PC without Shizuku; it is a test tool, not an app path.
+| `simulated` | Pixel 11 Pro-class device | state mirrored on-screen and through LRA haptics |
 
 ## 6. Open questions
 

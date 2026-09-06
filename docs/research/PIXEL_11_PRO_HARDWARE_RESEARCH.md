@@ -11,7 +11,7 @@
 The Pixel 11 Pro launched **August 12, 2026** (on sale August 20) running **Android 17** on **Tensor G6** with a **Titan M3** security chip. Compared with the Pixel 10 Pro, the hardware deltas that matter to an SDK are:
 
 1. **Thermometer removed.** The rear IR thermopile is gone on every Pixel 11 Pro model. The slot now holds the multi-colour **HiLight** LED array around the flash. `useTemperature` therefore targets Pixel 8 Pro to 10 Pro only and must be capability-gated.
-2. **HiLight has no public third-party API.** Google has stated third-party apps cannot drive the LEDs. Community apps (HiLight Studio) reach it through the Android `lights` system service with shell-level access (ADB/Shizuku), re-granted every reboot. Our `useHiLight` must remain a simulation/state-model unless the user opts in to a Shizuku bridge.
+2. **HiLight has no public third-party API.** Google has stated third-party apps cannot drive the LEDs. `useHiLight` provides a simulation and state-model with on-screen mirror and LRA haptics, reporting `availability: 'simulated'`.
 3. **Gemini Nano 4 is the headline.** It runs on-device via AICore and is exposed to apps through the **ML Kit GenAI Prompt API** (`com.google.mlkit:genai-prompt`). PixelKit currently only calls cloud Gemini through `@google/genai`. An on-device path is the single biggest missing capability.
 4. **Android 17 adds API 37 surfaces** we can wrap: RAW14 capture, dynamic camera session outputs, vendor camera extensions, UWB DL-TDOA (FiRA 4.0), Wi-Fi proximity ranging, ML-DSA post-quantum keys in hardware, Handoff API, EyeDropper, `FEATURE_NEURAL_PROCESSING_UNIT` declaration, Health Connect device data providers, and lock-free MessageQueue.
 5. **Expo SDK 57 ships compileSdk 36.** Android 17 APIs would need compileSdk 37, but (verified 2026-09-05) the Android 17 SDK is published only as `platforms/android-37.0` and Expo 57's AGP 8.12 cannot resolve `compileSdk 37`; stay on 36 and guard API-37 calls at runtime. Anything not covered by an Expo module (Gemini Nano, UWB, HiLight, Health Connect, CameraX Extensions) needs a local **Expo Module** (Kotlin) plus a config plugin. That means a dev client / prebuild workflow, not Expo Go.
@@ -93,8 +93,8 @@ Reverse wired charging and bypass charging supported. IP68. Camera bar 40% thinn
 
 - Multi-colour LED array (reports say ~8 addressable LEDs) embedded around the rear flash.
 - Google's use cases: Gemini listening / processing / responding states during hands-free use, favourite-contact call colours, face-down glanceable notifications.
-- **Not available to third-party apps** per Google. HiLight Studio (open source, sideloaded) drives it through the Android `lights` system service using Shizuku/ADB shell permission, which must be re-granted after every reboot. Patterns it exposes: Wave, Breathe, Rainbow, Pulse, Comet; per-LED colour, saturation, intensity, brightness.
-- Implication: `useHiLight` should expose an `availability: 'unsupported' | 'simulated' | 'shizuku'` field and default to simulation.
+- **Not available to third-party apps** per Google. The hardware lights service requires `CONTROL_DEVICE_LIGHTS` (signature|privileged).
+- Implication: `useHiLight` exposes `availability: 'unsupported' | 'simulated'` and acts as an on-screen visualizer and LRA haptic feedback trigger.
 - **Measured 2026-09-06** (see [HILIGHT_LED_ARRAY.md](./HILIGHT_LED_ARRAY.md)): eight `Light.LIGHT_TYPE_APPLICATION` (10) lights, ids 1-8, RGB + animation capabilities, 33 ms minimum update period. A shell-uid probe from this repo set and read back all eight; the gate is `CONTROL_DEVICE_LIGHTS` (signature|privileged), not a missing API.
 
 ### 2.8 Pixel 11 Pro Fold specifics
@@ -155,7 +155,7 @@ Legend: **Real** = calls a real Expo/RN API · **Sim** = simulated telemetry onl
 | `useMemory` | Sim | Android 17 memory limiter kills | Use `expo-device` `totalMemory` + `ApplicationExitInfo` native read |
 | `useADPF` | ? | ADPF hints need native `PerformanceHintManager` | Local Expo Module for `PerformanceHintManager` and `PowerManager.getThermalHeadroom()` |
 | `useTemperature` | Sim | **Sensor removed on Pixel 11 Pro** | Gate on `Device.modelName` and report `unsupported`; keep for Pixel 8-10 Pro |
-| `useHiLight` | Sim | No public API | Add `availability` field; optional Shizuku bridge behind a flag |
+| `useHiLight` | Sim | No public API | Strongly-typed state machine; honest on-screen simulation and LRA haptics |
 | `useUWB` | Sim | Real UWB present; Android 17 DL-TDOA | Local Expo Module over `androidx.core.uwb` (`UwbManager`, `RangingParameters`) |
 | `useBLE` | Sim | BT 6.0, LE Audio | Adopt `react-native-ble-plx` or an Expo Module; add LE Audio route detection |
 | `useNFC` | Sim | Present | Adopt `react-native-nfc-manager` |
@@ -189,7 +189,7 @@ Legend: **Real** = calls a real Expo/RN API · **Sim** = simulated telemetry onl
 8. **`useSecurity` PQC**: ML-DSA key pair in StrongBox/Titan M3 with sign/verify; fall back to EC on older devices.
 9. **`useHealthConnect`**: steps, heart rate, sleep via Health Connect with Android 17 device-data-provider attribution. Pairs with Pixel Watch 5.
 10. **`useFoldPosture`**: WindowManager `FoldingFeature` (flat, half-opened, tabletop, book) and window size class for the Pro Fold.
-11. **`useHiLight` Shizuku bridge** (opt-in, documented as unsupported by Google).
+11. **`useHiLight`**: simulated state machine + LRA haptics (no third-party API available from Google).
 
 ### P2: Android 17 conveniences and template polish
 

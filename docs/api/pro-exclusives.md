@@ -14,46 +14,33 @@ This document covers hardware capabilities exclusive to Google's flagship Pro mo
 
 ## `useHiLight`
 
-Drives the eight-LED **HiLight** array around the Pixel 11 Pro flash. Android 17 exposes it as eight `Light.LIGHT_TYPE_APPLICATION` lights (RGB + animation, 33 ms update period), but every lights session needs `CONTROL_DEVICE_LIGHTS`, a signature|privileged permission a third-party app cannot hold. The hook therefore has two paths (measured facts in [HILIGHT_LED_ARRAY.md](../research/HILIGHT_LED_ARRAY.md)):
+State model for the eight-LED **HiLight** array around the Pixel 11 Pro flash. Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. The hook provides a strongly-typed state machine for patterns, colours, and brightness, mirrored honestly on screen (`availability: 'simulated'`, `source: 'simulated'`) and through the linear resonant actuator (LRA).
 
 | `availability` | Condition | Effect of the colour methods | `source` |
 | :--- | :--- | :--- | :--- |
-| `'shizuku'` | Shizuku installed, running, granted, helper bound | Real LEDs through `modules/pixel-hilight` | `'hardware'` |
-| `'simulated'` | Pixel 11 Pro-class device without the helper | State only, mirrored on screen | `'simulated'` |
+| `'simulated'` | Pixel 11 Pro-class device | State maintained, mirrored on screen & LRA haptics | `'simulated'` |
 | `'unsupported'` | No HiLight array | Nothing | `'unavailable'` |
-
-### The helper (`modules/pixel-hilight`)
-`connect()` requests Shizuku permission and binds `HiLightService`, which Shizuku spawns as uid 2000 (shell). The service reaches `android.hardware.lights.ILightsManager` by reflection, enumerates the application-type lights at runtime, and enforces hardware protection that JS cannot bypass:
-* every request auto-clears after at most **60 s**;
-* the LEDs may be lit for at most **50 % of any 10-minute window** (`setColors` returns `false` when refused);
-* every clear writes alpha-only black, canonical black, closes the session, then repeats the black writes in three fresh priority `-1000` sessions (the stuck-LED mitigation HiLight Studio documents).
-
-Shizuku must be started again after every reboot (Wireless debugging or `adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh`).
 
 ### Signature
 ```typescript
 function useHiLight(): {
-  availability: 'shizuku' | 'simulated' | 'unsupported';
+  availability: 'simulated' | 'unsupported';
   isHardwareSupported: boolean;
-  source: 'hardware' | 'simulated' | 'unavailable';
-  shizuku: { shizukuInstalled: boolean; shizukuRunning: boolean; shizukuVersion: number | null; shizukuUid: number | null; permissionGranted: boolean; serviceBound: boolean } | null;
-  helper: { uid: number; pid: number; count: number; sessionOpen: boolean; litMsInWindow: number; dutyLimitMs: number; hardMaxMs: number; initError: string | null; lights: { id: number; ordinal: number; type: number }[] } | null;
-  error: string | null;
-  isActive: boolean; currentColor: string; mode: HiLightMode; brightness: number; isFaceDownMode: boolean;
-  connect: () => Promise<boolean>;
-  disconnect: () => void;
+  source: 'simulated' | 'unavailable';
+  isActive: boolean;
+  currentColor: string;
+  mode: HiLightMode;
+  brightness: number;
+  isFaceDownMode: boolean;
   setColor: (hexColor: string) => void;
   setMode: (mode: HiLightMode) => void;
-  setBrightness: (level: number) => void;          // scales RGB; the hardware has no brightness channel
-  triggerGeminiPulse: (durationMs?: number) => void; // cyan hold
+  setBrightness: (level: number) => void;
+  triggerGeminiPulse: (durationMs?: number) => void;
   triggerContactAlert: (hexColor: string, durationMs?: number) => void;
   turnOff: () => void;
   toggle: () => void;
 };
 ```
-
-### Native module surface (`modules/pixel-hilight/index.ts`)
-`getStatus()`, `requestPermission()`, `bind()`, `unbind()`, `info()`, `readback()`, `setAll(argb, maxMs)`, `setColors(ids, colors, maxMs)`, `clear()`, event `onState`. Colours are ARGB numbers; `hexToArgb('#00E5FF')` converts.
 
 ### Example
 ```tsx
@@ -65,10 +52,7 @@ export function HiLightHUD() {
   const hilight = useHiLight();
   return (
     <View>
-      <Text>{hilight.availability} · {hilight.error ?? 'ok'}</Text>
-      {hilight.availability !== 'shizuku' && (
-        <HapticButton title="Connect Shizuku helper" onPress={() => hilight.connect()} variant="primary" />
-      )}
+      <Text>{hilight.availability} · {hilight.mode}</Text>
       <HapticButton title="Gemini thinking (4 s)" onPress={() => hilight.triggerGeminiPulse(4000)} variant="secondary" />
       <HapticButton title="Contact alert (green)" onPress={() => hilight.triggerContactAlert('#81C995', 3000)} variant="secondary" />
     </View>

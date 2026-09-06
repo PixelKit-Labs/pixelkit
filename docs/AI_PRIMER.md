@@ -81,7 +81,7 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **PowerVR GPU** | `useGPU()` | `frameRenderTimeMs, droppedFrameCount, isStuttering` | Monitor 8.33ms 120 FPS frame budget |
 | **Tensor TPU** | `useTPU()` | `activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec` | Benchmark local neural inference |
 | **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
-| **HiLight LED Ring**| `useHiLight()` | `availability, connect(), triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array; `availability` is `shizuku` (real LEDs) or `simulated` |
+| **HiLight LED Ring**| `useHiLight()` | `availability, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array state model mirrored on-screen (`simulated`) |
 | **UWB Radar** | `useUWB()` | `activeTargets, isRanging, startRanging()` | [Pixel Pro] Distance & AoA (ranging simulated until RangingManager) |
 | **Camera & Looks** | `useCamera()` | `zoomFactor, maxZoomFactor, selectedLook, setLook()` | expo-camera zoom; Camera Looks are UI state only |
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |

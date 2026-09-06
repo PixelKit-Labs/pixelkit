@@ -4,6 +4,17 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.6] - 2026-09-06
+
+### Removed
+- Completely removed Shizuku privileged shell helper integration: deleted `modules/pixel-hilight` (Kotlin module + AIDL binder IPC) and `scripts/hilight-probe/`.
+- Removed Shizuku connection state, helper bind/unbind logic, and connect action buttons from `useHiLight` and UI surfaces.
+
+### Changed
+- Restored `useHiLight` to a pure, honest on-screen simulation and LRA haptic actuator (`availability: 'simulated'`, `source: 'simulated'`) without privileged external dependencies.
+- Updated `HardwareAvailability` union type in `src/core/capabilities.ts` to remove `'shizuku'`.
+- Synchronized documentation, agent rules (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`), `README.md`, `docs/HARDWARE_API.md`, `docs/AI_PRIMER.md`, `docs/README.md`, `docs/api/pro-exclusives.md`, and in-app `DocsScreen.tsx` to reflect the pure simulation architecture for HiLight.
+
 ## [1.0.5] - 2026-09-06
 
 ### Changed
