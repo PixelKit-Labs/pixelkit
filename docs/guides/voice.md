@@ -451,7 +451,7 @@ Voices such as `Kore`, `Puck`, `Charon`, `Aoede` are shared between TTS and Live
 
 ## 6. The Pixel status language: HiLight + haptics
 
-Google's Gemini shows **listening → processing → responding** on the HiLight ring when the phone is face down. Third-party apps cannot drive the LEDs, so PixelForge mirrors the exact state machine on screen and through the LRA so the experience is consistent:
+Google's Gemini shows **listening → processing → responding** on the HiLight ring when the phone is face down. Third-party apps cannot drive the LEDs, so PixelKit mirrors the exact state machine on screen and through the LRA so the experience is consistent:
 
 | Agent state | `useHiLight()` | `useHaptics()` | Screen |
 | :--- | :--- | :--- | :--- |

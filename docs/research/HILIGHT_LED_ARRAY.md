@@ -75,7 +75,7 @@ LightsManager.openSession(priority) → LightsSession.requestLights(request) / c
 
 `LightsManager` is a normal system service (`Context.LIGHTS_SERVICE`), but every session call checks `CONTROL_DEVICE_LIGHTS`. On this phone `pm grant` cannot hand that permission to a third-party app.
 
-## 5. What this means for PixelForge
+## 5. What this means for PixelKit
 
 Three honest availability states for `useHiLight`:
 

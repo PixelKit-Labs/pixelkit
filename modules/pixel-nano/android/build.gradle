@@ -3,7 +3,7 @@ plugins {
   id 'expo-module-gradle-plugin'
 }
 
-group = 'com.pixelforge'
+group = 'com.pixelkit'
 version = '0.1.0'
 
 android {

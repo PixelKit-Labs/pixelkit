@@ -1,11 +1,11 @@
-# PixelForge AI Primer & Agent Guidance Manual 🤖⚡
-> **The Official Operating Manual for AI Coding Assistants Building on PixelForge (Google Pixel 11 Pro)**
+# PixelKit AI Primer & Agent Guidance Manual 🤖⚡
+> **The Official Operating Manual for AI Coding Assistants Building on PixelKit (Google Pixel 11 Pro)**
 
 ---
 
 ## 🎯 Purpose of this Primer
 
-This document is the **canonical system prompt extension and operational primer** for any AI agent (Antigravity, Claude, ChatGPT, Cursor, Gemini) tasked with writing, refactoring, or expanding applications on top of the **PixelForge SDK** for the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor.
+This document is the **canonical system prompt extension and operational primer** for any AI agent (Antigravity, Claude, ChatGPT, Cursor, Gemini) tasked with writing, refactoring, or expanding applications on top of the **PixelKit SDK** for the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor.
 
 When generating code or architecting features, AI models must adhere strictly to the rules, hardware constraints, architectural patterns, and code recipes outlined herein.
 
@@ -69,7 +69,7 @@ When iterating on UI components:
 ---
 
 ### 7. The Telemetry Provenance Rule (No Mocks)
-Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Only NFC, BLE, UWB and HiLight remain `simulated`, and any UI that shows them must say so. Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelForge`.
+Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Only NFC, BLE, UWB and HiLight remain `simulated`, and any UI that shows them must say so. Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
 
 ---
 
@@ -81,7 +81,7 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **PowerVR GPU** | `useGPU()` | `frameRenderTimeMs, droppedFrameCount, isStuttering` | Monitor 8.33ms 120 FPS frame budget |
 | **Tensor TPU** | `useTPU()` | `activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec` | Benchmark local neural inference |
 | **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
-| **HiLight LED Ring**| `useHiLight()` | `isActive, mode, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear camera bar status ring |
+| **HiLight LED Ring**| `useHiLight()` | `availability, connect(), triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array; `availability` is `shizuku` (real LEDs) or `simulated` |
 | **UWB Radar** | `useUWB()` | `activeTargets, isRanging, startRanging()` | [Pixel Pro] Distance & AoA (ranging simulated until RangingManager) |
 | **Camera & Looks** | `useCamera()` | `zoomFactor, maxZoomFactor, selectedLook, setLook()` | expo-camera zoom; Camera Looks are UI state only |
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
@@ -105,7 +105,7 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 When instructing another AI model or configuring an IDE prompt, copy and paste this system prompt:
 
 ```markdown
-You are building an application using the PixelForge SDK on a Google Pixel 11 Pro (Tensor G6 2nm).
+You are building an application using the PixelKit SDK on a Google Pixel 11 Pro (Tensor G6 2nm).
 Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useHiLight, useSensors, useGemini, useHaptics, useCamera).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.

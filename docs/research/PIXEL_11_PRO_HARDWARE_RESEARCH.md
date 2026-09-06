@@ -2,7 +2,7 @@
 
 > **Date:** 2026-09-05 · **Author:** Claude (research pass) · **Status:** Research only, no code changed
 > **Round 2 corrections:** see [PIXEL_11_PRO_DEEP_DIVE.md](./PIXEL_11_PRO_DEEP_DIVE.md). Notably: use Android 16 `RangingManager` instead of `androidx.core.uwb`; `expo-widgets` is iOS-only; ML Kit Prompt API is at `1.0.0-beta4` with System Instructions; a third-party constrained-satellite-network API exists.
-> **Purpose:** Establish ground truth for the Pixel 11 Pro / Pro XL / Pro Fold and Android 17 (API 37), compare it against what PixelForge currently models, and propose what to add to the SDK/template next.
+> **Purpose:** Establish ground truth for the Pixel 11 Pro / Pro XL / Pro Fold and Android 17 (API 37), compare it against what PixelKit currently models, and propose what to add to the SDK/template next.
 
 ---
 
@@ -12,7 +12,7 @@ The Pixel 11 Pro launched **August 12, 2026** (on sale August 20) running **Andr
 
 1. **Thermometer removed.** The rear IR thermopile is gone on every Pixel 11 Pro model. The slot now holds the multi-colour **HiLight** LED array around the flash. `useTemperature` therefore targets Pixel 8 Pro to 10 Pro only and must be capability-gated.
 2. **HiLight has no public third-party API.** Google has stated third-party apps cannot drive the LEDs. Community apps (HiLight Studio) reach it through the Android `lights` system service with shell-level access (ADB/Shizuku), re-granted every reboot. Our `useHiLight` must remain a simulation/state-model unless the user opts in to a Shizuku bridge.
-3. **Gemini Nano 4 is the headline.** It runs on-device via AICore and is exposed to apps through the **ML Kit GenAI Prompt API** (`com.google.mlkit:genai-prompt`). PixelForge currently only calls cloud Gemini through `@google/genai`. An on-device path is the single biggest missing capability.
+3. **Gemini Nano 4 is the headline.** It runs on-device via AICore and is exposed to apps through the **ML Kit GenAI Prompt API** (`com.google.mlkit:genai-prompt`). PixelKit currently only calls cloud Gemini through `@google/genai`. An on-device path is the single biggest missing capability.
 4. **Android 17 adds API 37 surfaces** we can wrap: RAW14 capture, dynamic camera session outputs, vendor camera extensions, UWB DL-TDOA (FiRA 4.0), Wi-Fi proximity ranging, ML-DSA post-quantum keys in hardware, Handoff API, EyeDropper, `FEATURE_NEURAL_PROCESSING_UNIT` declaration, Health Connect device data providers, and lock-free MessageQueue.
 5. **Expo SDK 57 ships compileSdk 36.** Android 17 APIs would need compileSdk 37, but (verified 2026-09-05) the Android 17 SDK is published only as `platforms/android-37.0` and Expo 57's AGP 8.12 cannot resolve `compileSdk 37`; stay on 36 and guard API-37 calls at runtime. Anything not covered by an Expo module (Gemini Nano, UWB, HiLight, Health Connect, CameraX Extensions) needs a local **Expo Module** (Kotlin) plus a config plugin. That means a dev client / prebuild workflow, not Expo Go.
 6. **`expo-av` is legacy.** The project still imports `Audio` from `expo-av` (v16.0.8). SDK 57 documentation lists `expo-audio` and `expo-video` as the supported packages. `useAudio` and `useSpeechAI` should migrate.
@@ -103,7 +103,7 @@ Tensor G6, 16 GB RAM, gearless hinge (3x durability), 10.1 mm folded / 5 mm open
 
 ---
 
-## 3. Android 17 (API 37) Developer Surface Relevant to PixelForge
+## 3. Android 17 (API 37) Developer Surface Relevant to PixelKit
 
 | Area | API | Hook opportunity |
 | :--- | :--- | :--- |
@@ -122,7 +122,7 @@ Tensor G6, 16 GB RAM, gearless hinge (3x durability), 10.1 mm folded / 5 mm open
 
 ## 4. On-Device AI: Gemini Nano 4 via ML Kit GenAI
 
-**Why it matters:** Pixel 11 ships **Gemini Nano 4** (nano-v4 tier; Pixel 9/10 get nano-v3). Google's own Pixel developer post leads with "ML Kit GenAI Prompt API" as the way to reach it. PixelForge's `useGemini`, `useVisionAI`, and `useSpeechAI` are cloud-only today, so the SDK does not touch the TPU it advertises.
+**Why it matters:** Pixel 11 ships **Gemini Nano 4** (nano-v4 tier; Pixel 9/10 get nano-v3). Google's own Pixel developer post leads with "ML Kit GenAI Prompt API" as the way to reach it. PixelKit's `useGemini`, `useVisionAI`, and `useSpeechAI` are cloud-only today, so the SDK does not touch the TPU it advertises.
 
 **Implementation facts (ML Kit docs, Sept 2026):**
 
@@ -214,7 +214,7 @@ Everything in P0/P1 that is not an Expo package (Gemini Nano, UWB, CameraX Exten
 ## 8. Corrections to Current Docs Worth Applying
 
 - Process node: state "TSMC 3 nm-class (reported 2 nm N2)" or omit; sources conflict.
-- Remove "Infrared Thermometer" from the Pixel 11 Pro executive summary in PIXELFORGE.md; mark as Pixel 8-10 Pro legacy.
+- Remove "Infrared Thermometer" from the Pixel 11 Pro executive summary in PIXELKIT.md; mark as Pixel 8-10 Pro legacy.
 - Titan M2 references in README (`useGemini` row, `useBiometrics` row) should read Titan M3.
 - Main sensor is unchanged from Pixel 10 Pro (50 MP 1/1.3"); only the telephoto is new.
 - Wired charging is 30 W on the Pro, 45 W on the Pro XL only.

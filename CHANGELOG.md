@@ -1,8 +1,17 @@
 # Changelog
 
-All notable changes to PixelForge are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
+All notable changes to PixelKit are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
+
+## [1.0.5] - 2026-09-06
+
+### Changed
+- Rebranded framework from **PixelForge** to **PixelKit** (`pixelkit`): reflects its identity as the developer SDK and starter template for the Google Pixel 11 Pro (Tensor G6, Android 17).
+- Updated package and application metadata in `package.json` and `app.json` (`name: "PixelKit"`, `slug: "pixelkit"`, `package: "com.pixelkit.sdk"`).
+- Renamed canonical documentation from `PIXELFORGE.md` to `PIXELKIT.md` and updated all documentation references, UI wordmarks (`PIXELKIT`), and agent guides (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`).
+- Migrated logging prefix from `[PixelForge]` to `[PixelKit]` in `src/core/observability.ts` and `DashboardScreen.tsx` while preserving backward compatibility for stored Gemini API keys.
+- Updated Kotlin modules group ID to `com.pixelkit`.
 
 ## [1.0.4] - 2026-09-06
 

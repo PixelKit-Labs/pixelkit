@@ -23,9 +23,9 @@
 
 ## 2. Store & Platform Deadlines That Bind the Template
 
-| Requirement | Date | Status for PixelForge |
+| Requirement | Date | Status for PixelKit |
 | :--- | :--- | :--- |
-| New apps and updates must target **API 36** (Android 16) | **2026-08-31** (passed; extension possible to 2026-11-01) | Expo 57 defaults compileSdk/targetSdk 36 and PixelForge pins them explicitly. **compileSdk 37 does not build**: the Android 17 SDK exists only as minor-versioned `platforms/android-37.0`, and AGP 8.12 (Expo 57) fails with "Failed to find target with hash string 'android-37'". Verified 2026-09-05 on a fresh SDK install. Use runtime `SDK_INT >= 37` guards until Expo ships an AGP with minor-SDK support. |
+| New apps and updates must target **API 36** (Android 16) | **2026-08-31** (passed; extension possible to 2026-11-01) | Expo 57 defaults compileSdk/targetSdk 36 and PixelKit pins them explicitly. **compileSdk 37 does not build**: the Android 17 SDK exists only as minor-versioned `platforms/android-37.0`, and AGP 8.12 (Expo 57) fails with "Failed to find target with hash string 'android-37'". Verified 2026-09-05 on a fresh SDK install. Use runtime `SDK_INT >= 37` guards until Expo ships an AGP with minor-SDK support. |
 | Native libraries must be **16 KB page-size** aligned | Enforcement **2027-02-01** | RN ≥ 0.77 is aligned; every local Expo Module and third-party `.so` (ML Kit, LiteRT, BLE libs) must be verified with Android Studio's APK Analyzer "Alignment" tab or `zipalign -c -P 16`. |
 | CameraX Extensions require **CameraX 1.6+** on some devices | 2026-11-01 | Applies to P1 camera work. |
 | Apps targeting 36+ get **edge-to-edge enforced**, predictive back on by default, large-screen orientation/resizability attributes ignored on ≥600 dp | Already active | RN 0.86 (Expo 57) carries the edge-to-edge fixes. `app.json` already sets `predictiveBackGestureEnabled`. Fold requires adaptive layouts. |
@@ -34,7 +34,7 @@
 
 ## 3. Platform APIs Missed in Round 1 (Android 16 + 17)
 
-Grouped by which PixelForge hook they change. All verified in the Android 16/17 "Features and APIs" pages.
+Grouped by which PixelKit hook they change. All verified in the Android 16/17 "Features and APIs" pages.
 
 ### 3.1 Performance & thermals (turns `useADPF` from simulated into real)
 
@@ -130,7 +130,7 @@ Gemini multi-step actions across 40+ apps; **Rambler** (rambling voice input tur
 
 ### 6.1 Android CLI (v1.0.16261425) is more than `describe`
 
-| Command | Use for PixelForge |
+| Command | Use for PixelKit |
 | :--- | :--- |
 | `android docs search "<query>"` / `android docs fetch kb://…` | Offline official Android docs (5,174 articles). Agents should use this **before** web search for Android APIs. |
 | `android skills list | find | add <id>` | Installs Google-maintained agent skills into `.agents/skills/`. |

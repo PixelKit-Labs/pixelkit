@@ -27,7 +27,7 @@ export const GlowBackdrop: React.FC<{ height?: number; style?: StyleProp<ViewSty
  * Identity mark: a small triangle (the Delta family geometry) beside the name in caps with open
  * tracking. It does not glow.
  */
-export const Wordmark: React.FC<{ name?: string; style?: StyleProp<ViewStyle> }> = ({ name = 'PixelForge', style }) => (
+export const Wordmark: React.FC<{ name?: string; style?: StyleProp<ViewStyle> }> = ({ name = 'PixelKit', style }) => (
   <View style={[styles.wordmark, style]}>
     <View style={styles.mark}>
       <View style={styles.markTriangle} />

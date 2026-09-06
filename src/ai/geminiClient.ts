@@ -7,7 +7,8 @@ import { GoogleGenAI } from '@google/genai';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const API_KEY_STORAGE_KEY = 'PIXELFORGE_GEMINI_API_KEY';
+const API_KEY_STORAGE_KEY = 'PIXELKIT_GEMINI_API_KEY';
+const LEGACY_API_KEY_STORAGE_KEY = 'PIXELFORGE_GEMINI_API_KEY';
 
 /** Cloud model used for chat, vision and transcription (Gemini API "Models" page, Sept 2026). */
 export const GEMINI_MODEL = 'gemini-3.8-flash';
@@ -23,9 +24,16 @@ export const NO_API_KEY_MESSAGE =
 export async function getStoredApiKey(): Promise<string | null> {
   try {
     if (Platform.OS === 'web') {
-      return localStorage.getItem(API_KEY_STORAGE_KEY) || process.env.EXPO_PUBLIC_GEMINI_API_KEY || null;
+      return (
+        localStorage.getItem(API_KEY_STORAGE_KEY) ||
+        localStorage.getItem(LEGACY_API_KEY_STORAGE_KEY) ||
+        process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
+        null
+      );
     }
-    const secureKey = await SecureStore.getItemAsync(API_KEY_STORAGE_KEY);
+    const secureKey =
+      (await SecureStore.getItemAsync(API_KEY_STORAGE_KEY)) ||
+      (await SecureStore.getItemAsync(LEGACY_API_KEY_STORAGE_KEY));
     return secureKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || null;
   } catch {
     return process.env.EXPO_PUBLIC_GEMINI_API_KEY || null;

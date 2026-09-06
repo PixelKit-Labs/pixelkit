@@ -1,18 +1,18 @@
-# PixelForge Guides: Built-in AI, Function Calling & Voice 🧠🎙️
+# PixelKit Guides: Built-in AI, Function Calling & Voice 🧠🎙️
 
 > Production guides for building on the Pixel 11 Pro's on-device intelligence (Gemini Nano 4 via AICore), Gemini cloud models, and the phone's voice pipeline. Written for Expo SDK 57 / React Native 0.86 / Android 17 (API 37).
 
 | Guide | What you will build |
 | :--- | :--- |
 | **[On-Device AI with Gemini Nano](./on-device-ai-gemini-nano.md)** | A local Expo Module that bridges the ML Kit GenAI Prompt API to React Native, a `useGeminiNano` hook, structured output, thinking mode, multimodal prompts, and a hybrid on-device / cloud router. |
-| **[Function Calling & Tools](./function-calling.md)** | A single hardware tool registry that PixelForge hooks register into, executed by cloud Gemini (native function calling), by Gemini Nano on device (structured output), and exposed to the system Gemini assistant through Android AppFunctions. |
+| **[Function Calling & Tools](./function-calling.md)** | A single hardware tool registry that PixelKit hooks register into, executed by cloud Gemini (native function calling), by Gemini Nano on device (structured output), and exposed to the system Gemini assistant through Android AppFunctions. |
 | **[Voice: Speech In, Speech Out, Live Agents](./voice.md)** | On-device streaming speech recognition (ML Kit GenAI Speech Recognition, Advanced mode on Pixel 10/11), realtime bidirectional voice agents with the Gemini Live API and ephemeral tokens, text-to-speech, and HiLight / haptic status feedback. |
 
 ---
 
 ## 1. Decide where inference runs
 
-Every AI feature in PixelForge should be routed through **one decision**, made once per request:
+Every AI feature in PixelKit should be routed through **one decision**, made once per request:
 
 ```text
                      ┌───────────────────────────────┐
@@ -59,7 +59,7 @@ Every AI feature in PixelForge should be routed through **one decision**, made o
 - **Tensor G6 TPU**: +50% TPU compute over G5; Google quotes on-device AI "3.5x faster, 3.5x less energy". Only reachable from apps via **AICore** (ML Kit GenAI, Firebase AI Logic hybrid, or the AICore Developer Preview with Gemma 4). There is no direct TPU handle.
 - **Gemini Nano 4** ships on Pixel 11 (tier `nano-v4`). Pixel 9/10 get `nano-v3`. Nano 4 adds 140+ languages, better multimodal understanding, structured output and thinking. Two variants: E2B (fast) and E4B (full, better reasoning).
 - **Android 17**: apps that touch the NPU directly must declare `android.hardware.neural_processing_unit`. ML Kit does not need it, but declare it `required="false"` if you also ship LiteRT models.
-- **HiLight** (rear LED array) is what Google's own Gemini uses to show listening / thinking / responding when the phone is face down. There is **no third-party API**; PixelForge mirrors the same state machine on-screen via `useHiLight` (simulated) plus `useHaptics`.
+- **HiLight** (rear LED array) is what Google's own Gemini uses to show listening / thinking / responding when the phone is face down. There is **no third-party API**; PixelKit mirrors the same state machine on-screen via `useHiLight` (simulated) plus `useHaptics`.
 - **Mics**: multi-mic array with `VOICE_RECOGNITION` audio source giving hardware noise suppression. Use it, not `MIC`, for speech.
 - **Titan M3**: store the Gemini API key and ephemeral token secrets only through `useSecurity().saveSecureItem()`.
 

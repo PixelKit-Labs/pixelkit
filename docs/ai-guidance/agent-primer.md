@@ -1,5 +1,5 @@
 # AI Agent Operational Primer 🤖⚡
-> **Operating Instructions & Foundational Laws for Autonomous Agents on PixelForge**
+> **Operating Instructions & Foundational Laws for Autonomous Agents on PixelKit**
 
 This document serves as the **operational primer and system prompt extension** for any AI agent (Antigravity, Claude, ChatGPT, Cursor, Gemini) writing or maintaining software for the **Google Pixel 11 Pro**.
 
@@ -64,7 +64,7 @@ When inspecting or editing UI components:
 When configuring an IDE or instructing another LLM, paste this prompt:
 
 ```markdown
-You are building an application using the PixelForge SDK on a Google Pixel 11 Pro (Tensor G6 2nm).
+You are building an application using the PixelKit SDK on a Google Pixel 11 Pro (Tensor G6 2nm).
 Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useHiLight, useSensors, useGemini, useHaptics, useCamera).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.

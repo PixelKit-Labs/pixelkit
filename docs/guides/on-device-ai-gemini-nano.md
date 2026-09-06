@@ -412,7 +412,7 @@ export function buildNanoTurn(history: { role: 'user' | 'model'; text: string }[
 
 // usage
 await nano.generate(buildNanoTurn(history, text), {
-  systemInstruction: 'You are PixelForge, a concise hardware assistant. Answer in two sentences or fewer.',
+  systemInstruction: 'You are PixelKit, a concise hardware assistant. Answer in two sentences or fewer.',
 });
 ```
 
@@ -556,7 +556,7 @@ Always surface `source` in the UI ("On-device · Gemini Nano 4" vs "Cloud · Gem
 
 For the four canned tasks, ML Kit's feature APIs give better quality than a hand-written prompt and are supported on far more devices than the Prompt API:
 
-| API | Artifact | Use in PixelForge |
+| API | Artifact | Use in PixelKit |
 | :--- | :--- | :--- |
 | Summarization | `genai-summarization` | Summarise sensor logs, chat threads, docs |
 | Proofreading | `genai-proofreading` | Fix dictated text from `useSpeechAI` |

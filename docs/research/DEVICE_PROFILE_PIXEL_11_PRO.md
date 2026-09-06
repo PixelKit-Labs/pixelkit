@@ -1,6 +1,6 @@
 # Device Profile: Pixel 11 Pro ("grizzly"), captured from hardware
 
-> **Captured:** 2026-09-05 via `adb` over wireless debugging from the PixelForge dev build session. Everything below is read from the device, not from marketing pages. Use it to settle spec disputes and to write capability checks.
+> **Captured:** 2026-09-05 via `adb` over wireless debugging from the PixelKit dev build session. Everything below is read from the device, not from marketing pages. Use it to settle spec disputes and to write capability checks.
 
 ## Identity
 
@@ -91,7 +91,7 @@ Camera HAL device v1.4. Static metadata includes `pixelArraySizeMaximumResolutio
 
 Wireless debugging: mDNS `_adb-tls-connect._tcp` on port 42641, pairing service on a rotating port. Device IP 10.0.0.47 on the dev LAN.
 
-## What this changes for PixelForge
+## What this changes for PixelKit
 
 1. `useCapabilities()` resolves correctly here: `hasThermometer=false`, `hasHiLight=true`, `hasUWB=true`, `hasTitanM3=true`, `geminiNanoTier='nano-v4'`, `androidApiLevel=37`, all `supports*` true.
 2. `useADPF` can read real thermal headroom; `useDisplay` can read ARR and the 1 to 120 Hz ladder; `useHaptics` can use envelopes.

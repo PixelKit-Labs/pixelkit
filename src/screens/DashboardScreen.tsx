@@ -221,11 +221,20 @@ export const DashboardScreen: React.FC = () => {
       <SectionHeader title="Pixel Pro exclusives" />
       <MetricCard
         title="HiLight camera-bar LED"
-        value={hilight.isActive ? 'Illuminated (virtual)' : 'Standby'}
+        value={hilight.isActive ? (hilight.availability === 'shizuku' ? `On ${hilight.currentColor}` : `Virtual ${hilight.currentColor}`) : 'Standby'}
         badge={hilight.availability.toUpperCase()}
-        badgeColor={hilight.availability === 'simulated' ? Colors.dark.warning : Colors.dark.error}
-        subtitle={hilight.isHardwareSupported ? '8 LEDs in the lights service; driving them needs the privileged CONTROL_DEVICE_LIGHTS permission (Shizuku path planned). State mirrored on-screen' : 'Not on this device'}
-        source={hilight.availability === 'simulated' ? 'simulated' : 'unavailable'}
+        badgeColor={hilight.availability === 'shizuku' ? Colors.dark.success : hilight.availability === 'simulated' ? Colors.dark.warning : Colors.dark.error}
+        subtitle={
+          !hilight.isHardwareSupported ? 'Not on this device'
+          : hilight.availability === 'shizuku'
+            ? `Shell helper uid ${hilight.helper?.uid ?? '—'} • ${hilight.helper?.count ?? '—'} LEDs • lit ${Math.round((hilight.helper?.litMsInWindow ?? 0) / 1000)} s of ${Math.round((hilight.helper?.dutyLimitMs ?? 300000) / 1000)} s allowed per 10 min`
+            : !hilight.shizuku ? '8 LEDs behind CONTROL_DEVICE_LIGHTS; PixelHiLight module not in this build'
+            : !hilight.shizuku.shizukuInstalled ? '8 LEDs behind CONTROL_DEVICE_LIGHTS. Install Shizuku (Play Store) to drive them'
+            : !hilight.shizuku.shizukuRunning ? 'Shizuku installed but not running. Start it from Wireless debugging, then Connect'
+            : !hilight.shizuku.permissionGranted ? 'Shizuku running. Connect to grant this app'
+            : 'Shizuku granted. Connect to bind the helper'
+        }
+        source={hilight.source}
       />
       {hilight.isHardwareSupported && (
         <View style={styles.rowButtons}>
@@ -234,6 +243,15 @@ export const DashboardScreen: React.FC = () => {
           <HapticButton title={hilight.isActive ? 'Off' : 'Toggle'} onPress={hilight.toggle} variant="outline" style={{ flex: 1, marginLeft: 4 }} />
         </View>
       )}
+      {hilight.isHardwareSupported && hilight.shizuku && (
+        <HapticButton
+          title={hilight.availability === 'shizuku' ? 'Disconnect Shizuku helper' : 'Connect Shizuku helper'}
+          onPress={() => { if (hilight.availability === 'shizuku') hilight.disconnect(); else void hilight.connect(); }}
+          variant={hilight.availability === 'shizuku' ? 'outline' : 'primary'}
+          style={styles.actionButton}
+        />
+      )}
+      {hilight.error && <Text style={styles.hilightError}>{hilight.error}</Text>}
       <MetricCard
         title="UWB ranging"
         value={caps.hasUWB ? 'Radio present' : 'No radio'}
@@ -338,7 +356,7 @@ export const DashboardScreen: React.FC = () => {
             </View>
           ))}
         </View>
-        <Text style={[styles.obsTitle, { marginTop: 10 }]}>Recent events (adb logcat -s ReactNativeJS | grep PixelForge)</Text>
+        <Text style={[styles.obsTitle, { marginTop: 10 }]}>Recent events (adb logcat -s ReactNativeJS | grep PixelKit)</Text>
         {recentEvents.length === 0 && <Text style={styles.obsLine}>—</Text>}
         {recentEvents.map((e, i) => (
           <Text key={`${e.ts}-${i}`} style={[styles.obsLine, e.level === 'error' && { color: Colors.dark.error }, e.level === 'warn' && { color: Colors.dark.warning }]} numberOfLines={2}>
@@ -360,6 +378,7 @@ const styles = StyleSheet.create({
   heroTelemetry: { marginTop: 8 },
   actionButton: { marginBottom: 16 },
   rowButtons: { flexDirection: 'row', marginBottom: 12 },
+  hilightError: { color: Colors.dark.error, fontSize: 12, lineHeight: 17, marginTop: -6, marginBottom: 12 },
   displayControlRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     backgroundColor: Colors.dark.card, padding: 14, borderRadius: 16, borderWidth: 1,

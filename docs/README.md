@@ -1,7 +1,7 @@
-# PixelForge SDK Documentation ⚡
+# PixelKit SDK Documentation ⚡
 > **The Official Developer & AI Agent Documentation Portal for Google Pixel 11 Pro**
 
-Welcome to the comprehensive documentation suite for the **PixelForge SDK**. This framework directly unlocks the bare silicon, sensory suite, and neural hardware of the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor fabricated on **TSMC 2nm (N2)**.
+Welcome to the comprehensive documentation suite for the **PixelKit SDK**. This framework directly unlocks the bare silicon, sensory suite, and neural hardware of the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor fabricated on **TSMC 2nm (N2)**.
 
 ---
 
@@ -20,7 +20,7 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 * **[System & Media](./api/system-media.md)**: `useAudio`, `useDisplay` (3,600 nits 120Hz LTPO), `useDevice`, `useNetwork` (MediaTek M90 modem, Satellite SOS).
 
 ### 🤖 [AI Agent Guidance](./ai-guidance/)
-* **[Agent Operational Primer](./ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelForge, and copy-paste system prompt directives.
+* **[Agent Operational Primer](./ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelKit, and copy-paste system prompt directives.
 * **[Production Recipes](./ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, face-down HiLight visual signaling, and spatial tracking.
 * **Agent Skills & Tooling**: 26 official Expo agent skills (`.agents/skills/` tracked via `skills-lock.json`) covering navigation, UI, modules, animations, and deployment alongside Google `android-cli`.
 
@@ -53,7 +53,7 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 +-------------------------------------------------------------------------+
                                      |
 +-------------------------------------------------------------------------+
-|                           PIXELFORGE SDK                                |
+|                            PIXELKIT SDK                                 |
 |                        (src/index.ts Re-exports)                        |
 +-------------------------------------------------------------------------+
         |                  |                    |                  |

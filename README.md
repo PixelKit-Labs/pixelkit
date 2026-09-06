@@ -1,4 +1,4 @@
-# PixelForge SDK ⚡
+# PixelKit SDK ⚡
 > **The Hardware & AI Framework for Google Pixel & Android**  
 > *Engineered for high-performance mobile applications and autonomous AI agents.*
 
@@ -13,9 +13,9 @@
 
 ## 📖 Overview
 
-**PixelForge** is a modular framework and developer SDK designed specifically to unlock 100% of the hardware silicon and on-device machine learning capabilities of the **Google Pixel 11 Pro** (and modern Android devices). 
+**PixelKit** is a modular framework and developer SDK designed specifically to unlock 100% of the hardware silicon and on-device machine learning capabilities of the **Google Pixel 11 Pro** (and modern Android devices). 
 
-Instead of dealing with fragmented low-level Android APIs or complex native bridges, PixelForge abstracts the phone's physical hardware into 24 typed, reusable **React hooks** with integrated tactile haptics, thermal headroom management, and multimodal Gemini AI intelligence.
+Instead of dealing with fragmented low-level Android APIs or complex native bridges, PixelKit abstracts the phone's physical hardware into 24 typed, reusable **React hooks** with integrated tactile haptics, thermal headroom management, and multimodal Gemini AI intelligence.
 
 It is structured as an authoritative foundation for developers and autonomous AI coding agents (including the upcoming **Delta Bot**) to build, test, and ship mobile experiences rapidly.
 
@@ -30,7 +30,7 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **Tensor TPU / NPU** | `useTPU()` | AICore / Private Compute Services detection (Gemini Nano host), NPU feature flag; inference itself is `useGeminiNano()` |
 | **LPDDR5X RAM** | `useMemory()` | ActivityManager total/available/LMK threshold, Java + native heaps, GC request |
 | **Dynamic Thermals** | `useADPF()` | PowerManager thermal headroom + status listener, thresholds, Android 16+ SystemHealth CPU/GPU headroom, display target vs measured FPS |
-| **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Camera bar multi-color notification & Gemini AI status ring |
+| **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Eight-LED camera-bar array; real LEDs through a Shizuku shell helper (`modules/pixel-hilight`), on-screen mirror otherwise |
 | **Motion & Atmosphere**| `useSensors()` | 6-Axis IMU (Gyro/Accel), Barometer (hypsometric altimeter), Magnetometer, Light |
 | **Tactile Haptics** | `useHaptics()` | LRA patterns plus Android 16 envelope effects (PWLE v2, 134.4 Hz resonance) and primitive compositions |
 | **Camera & Looks** | `useCamera()` | expo-camera lens, zoom, flash and permission state; Camera Looks kept as UI state (Pixel Camera app feature) |
@@ -83,7 +83,7 @@ The official Google Android CLI provides tools to manage SDK components, inspect
 
 ## 🛠️ Android CLI & Project Describing (`android describe`)
 
-PixelForge integrates directly with `android describe`:
+PixelKit integrates directly with `android describe`:
 
 ```bash
 # Analyze project structure and generate JSON metadata for build targets and APK outputs
@@ -103,9 +103,9 @@ android describe --project_dir=.
 ## 🏛️ Project Structure
 
 ```text
-Pixel delta/ (PixelForge Framework)
+Pixel delta/ (PixelKit Framework)
 ├── App.tsx                     # Main App Shell & 4-Tab Navigator (HUD, AI Lab, Sensors, Docs)
-├── PIXELFORGE.md               # Canonical AI Reference & Prompt Manual
+├── PIXELKIT.md                 # Canonical AI Reference & Prompt Manual
 ├── README.md                   # Complete Developer Reference & Quickstart
 ├── AGENTS.md                   # Antigravity agent guidelines & Android CLI rules
 ├── CLAUDE.md                   # Claude agent guidelines mirror & mandatory doc sync rule
@@ -173,7 +173,7 @@ Pixel delta/ (PixelForge Framework)
 │   │   ├── colors.ts           # Design tokens (Delta-aligned): field, accent, meaning colours, Geist type
 │   │   └── mode.ts             # State → colour/label map for the reactor and status chip
 │   │
-│   ├── components/             # Reusable UI Primitives (PixelForge design system)
+│   ├── components/             # Reusable UI Primitives (PixelKit design system)
 │   │   ├── HapticButton.tsx    # Gradient / white CTA / glass pill button with haptics
 │   │   ├── MetricCard.tsx      # Glass telemetry card with provenance tag
 │   │   ├── SensorVisualizer.tsx# Centred 3-axis bars with per-sensor ranges
@@ -238,7 +238,7 @@ Release checklist: `CHANGELOG.md` entry, version fields bumped together, `npm ru
 
 ---
 
-## 💡 How to Build With PixelForge
+## 💡 How to Build With PixelKit
 
 All hooks and UI components are available from a single centralized import:
 
@@ -289,7 +289,7 @@ export default function MyPixelTool() {
 
 ## 📚 Comprehensive Documentation Suite
 
-PixelForge features an exhaustive, multi-tier documentation system kept in continuous synchronization with the codebase:
+PixelKit features an exhaustive, multi-tier documentation system kept in continuous synchronization with the codebase:
 
 ### 🧭 [Documentation Hub (docs/README.md)](./docs/README.md)
 The central sitemap and entry portal for all developer guides and reference manuals.
@@ -307,7 +307,7 @@ The central sitemap and entry portal for all developer guides and reference manu
 * **[System & Media](./docs/api/system-media.md)**: `useAudio`, `useDisplay`, `useDevice`, `useNetwork`.
 
 ### 🤖 AI Agent Guidance & Primers
-* **[Agent Operational Primer](./docs/ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelForge, and copy-paste system prompts.
+* **[Agent Operational Primer](./docs/ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelKit, and copy-paste system prompts.
 * **[Production Recipes](./docs/ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, HiLight visual signaling, and spatial tracking.
 
 ### 🛠️ Production Guides & Diagnostics

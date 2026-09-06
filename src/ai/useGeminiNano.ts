@@ -22,7 +22,7 @@ const MODULE = 'useGeminiNano';
 const MAX_HISTORY_CHARS = 6000;
 
 export const NANO_SYSTEM_INSTRUCTION =
-  'You are PixelForge, a concise hardware assistant running on-device on a Google Pixel 11 Pro. Answer in two or three sentences.';
+  'You are PixelKit, a concise hardware assistant running on-device on a Google Pixel 11 Pro. Answer in two or three sentences.';
 
 /**
  * AICore keeps no conversation state. Behaviour goes in the system instruction; the recent transcript is

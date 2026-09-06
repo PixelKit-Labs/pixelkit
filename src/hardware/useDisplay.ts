@@ -13,7 +13,7 @@ import PixelNative, { type DisplayInfo } from '../../modules/pixel-native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useDisplay';
-const KEEP_AWAKE_TAG = 'pixelforge-display';
+const KEEP_AWAKE_TAG = 'pixelkit-display';
 const POLL_MS = 2000;
 
 /**

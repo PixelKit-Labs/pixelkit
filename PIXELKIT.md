@@ -1,4 +1,4 @@
-# PixelForge SDK
+# PixelKit SDK
 > **The Hardware & AI Framework for Google Pixel & Android**  
 > *Hardware and AI framework for the Google Pixel 11 Pro.*
 
@@ -6,7 +6,7 @@
 
 ## 📖 Executive Summary
 
-**PixelForge** is a modular Expo SDK 57 framework that exposes Google Pixel 11 Pro hardware (Tensor G6 CPU, PowerVR GPU, AICore/TPU, Android Keystore, 1-120 Hz LTPO display, HiLight, UWB, IMU and environmental sensors) as typed React hooks, with cloud Gemini for chat, vision and speech.
+**PixelKit** is a modular Expo SDK 57 framework that exposes Google Pixel 11 Pro hardware (Tensor G6 CPU, PowerVR GPU, AICore/TPU, Android Keystore, 1-120 Hz LTPO display, HiLight, UWB, IMU and environmental sensors) as typed React hooks, with cloud Gemini for chat, vision and speech.
 
 This document serves as the **canonical API Reference and Blueprint for AI agents (including the future Delta Bot)** and developers building on top of this framework.
 
@@ -14,7 +14,7 @@ This document serves as the **canonical API Reference and Blueprint for AI agent
 
 ## 🛠️ Android CLI & Tooling Integration
 
-PixelForge integrates with Google's official **Android CLI** (`android.exe`).
+PixelKit integrates with Google's official **Android CLI** (`android.exe`).
 
 ### Installation
 * **Windows**: `curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"`
@@ -34,9 +34,9 @@ android describe --project_dir=<path>
 ## 🏛️ Project Architecture
 
 ```text
-pixel-delta/ (PixelForge Framework)
+pixel-delta/ (PixelKit Framework)
 ├── App.tsx                     # Main App Shell & 4-Tab Navigator (HUD, AI Lab, Sensors, Docs)
-├── PIXELFORGE.md               # Canonical AI Reference & SDK Documentation
+├── PIXELKIT.md                 # Canonical AI Reference & SDK Documentation
 ├── README.md                   # Developer Setup & Prerequisites
 ├── skills-lock.json            # Deterministic lockfile for installed agent skills
 ├── app.json                    # Android 15/16 Permissions & 120Hz LTPO Manifest
@@ -262,7 +262,7 @@ console.log(`Vision result: ${visionResult?.description}`);
 
 ## 🤖 Instructions for AI Agents Building Apps
 
-When an AI agent (such as Delta) builds an application on top of PixelForge:
+When an AI agent (such as Delta) builds an application on top of PixelKit:
 1. **Import from `./src`**: Never re-implement hardware wrappers or sensors.
 2. **Prioritize Tactile Haptics**: Always call `useHaptics()` on user interactions.
 3. **Respect Thermal & Memory Headroom**: Query `useADPF()` and `useMemory()` before intensive workloads.

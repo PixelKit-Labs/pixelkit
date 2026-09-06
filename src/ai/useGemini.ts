@@ -14,7 +14,7 @@ import { logEvent, recordMetric } from '../core/observability';
 const MODULE = 'useGemini';
 
 const SYSTEM_INSTRUCTION =
-  'You are PixelForge, a concise hardware and AI assistant running on a Google Pixel 11 Pro. Answer in a few sentences unless asked for detail.';
+  'You are PixelKit, a concise hardware and AI assistant running on a Google Pixel 11 Pro. Answer in a few sentences unless asked for detail.';
 
 export function useGemini() {
   const [messages, setMessages] = useState<AIMessage[]>([]);

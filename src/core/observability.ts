@@ -1,6 +1,6 @@
 /**
  * @file observability.ts
- * @description Lightweight observability layer for PixelForge telemetry.
+ * @description Lightweight observability layer for PixelKit telemetry.
  * Every hook tags each reading with a TelemetrySource so the UI, docs, and logs can always answer
  * "is this number real?". Events are kept in a ring buffer for the on-device debug panel and echoed
  * to `console.log` with a stable prefix so they are greppable via `adb logcat -s ReactNativeJS`.
@@ -27,7 +27,7 @@ export interface MetricRecord {
   ts: number;
 }
 
-const LOG_PREFIX = '[PixelForge]';
+const LOG_PREFIX = '[PixelKit]';
 const MAX_EVENTS = 400;
 
 const events: TelemetryEvent[] = [];
@@ -44,7 +44,7 @@ function notify() {
   }, 250); // ≤4 Hz UI updates
 }
 
-/** Record a lifecycle or diagnostic event. Always logged to the console with the PixelForge prefix. */
+/** Record a lifecycle or diagnostic event. Always logged to the console with the PixelKit prefix. */
 export function logEvent(module: string, event: string, data?: Record<string, unknown>, level: TelemetryEvent['level'] = 'info'): void {
   const e: TelemetryEvent = { ts: Date.now(), module, event, data, level };
   events.push(e);

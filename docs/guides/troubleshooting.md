@@ -1,7 +1,7 @@
 # Troubleshooting & Diagnostics Guide 🛠️
 > **Common Issues, Expo SDK 57 Nuances, Permissions, and Hardware Diagnostics**
 
-This guide outlines common errors, hardware lifecycle caveats, and resolution steps for PixelForge developers.
+This guide outlines common errors, hardware lifecycle caveats, and resolution steps for PixelKit developers.
 
 ---
 
@@ -29,7 +29,7 @@ Always pass a unique tag when activating or deactivating:
 ```typescript
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
-const TAG = 'pixelforge_display_lock';
+const TAG = 'pixelkit_display_lock';
 
 // ✅ CORRECT
 await activateKeepAwakeAsync(TAG);

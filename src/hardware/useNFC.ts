@@ -34,7 +34,7 @@ export function useNFC() {
     setTimeout(() => {
       setLastScannedTag({
         id: '04:A2:5C:8B:11:FE',
-        payload: 'https://pixelforge.dev/device/pixel11pro',
+        payload: 'https://pixelkit.dev/device/pixel11pro',
         tech: 'Ndef',
         timestamp: Date.now(),
       });

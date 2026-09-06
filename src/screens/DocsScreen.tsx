@@ -196,18 +196,18 @@ function ThermalMonitor() {
     category: 'pro',
     chipBadge: 'HiLight Ring (Pro Exclusive)',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Virtual state for the eight-LED HiLight array. Google ships no third-party path; the LEDs are gated by a privileged permission, so the app mirrors the intended colour and pattern on screen.',
-    description: 'The array is exposed by Android 17 as eight Light.LIGHT_TYPE_APPLICATION lights (RGB + animation, 33 ms update period) but every session needs CONTROL_DEVICE_LIGHTS, which only shell, root or a Shizuku helper holds. availability is "simulated" on Pixel 11 Pro-class devices and "unsupported" elsewhere. See docs/research/HILIGHT_LED_ARRAY.md for the measured facts and the planned Shizuku path.',
+    summary: 'Eight-LED HiLight array. With Shizuku running and granted, the PixelHiLight module drives the real LEDs through a shell-uid helper (availability "shizuku"); otherwise the colour and pattern are mirrored on screen ("simulated").',
+    description: 'Android 17 exposes the array as eight Light.LIGHT_TYPE_APPLICATION lights (RGB + animation, 33 ms update period), but every session needs CONTROL_DEVICE_LIGHTS, which only shell, root or a Shizuku helper holds. connect() requests Shizuku permission and binds modules/pixel-hilight HiLightService (uid 2000). The helper enforces a 60 s cap per request, a 50 % duty cycle per 10 min, and the stuck-LED clearing sequence. See docs/research/HILIGHT_LED_ARRAY.md.',
     signature: 'useHiLight(): HiLightState',
     returns: [
-      'isActive: boolean',
-      'currentColor: string',
-      'mode: HiLightMode',
-      'brightness: number (0.0 to 1.0)',
-      'triggerGeminiPulse(durationMs?: number): void',
-      'triggerContactAlert(colorHex: string, durationMs?: number): void',
-      'setColor(hex: string): void',
-      'toggle(): void',
+      "availability: 'shizuku' | 'simulated' | 'unsupported'",
+      "source: 'hardware' | 'simulated' | 'unavailable'",
+      'shizuku: { shizukuInstalled, shizukuRunning, permissionGranted, serviceBound } | null',
+      'helper: { uid, count, litMsInWindow, dutyLimitMs, lights[] } | null',
+      'isActive: boolean · currentColor: string · mode: HiLightMode · brightness: number',
+      'connect(): Promise<boolean> · disconnect(): void',
+      'triggerGeminiPulse(durationMs?) · triggerContactAlert(colorHex, durationMs?)',
+      'setColor(hex) · setMode(mode) · setBrightness(level) · turnOff() · toggle()',
     ],
     example: `import { useHiLight } from './src';
 
@@ -215,13 +215,14 @@ function StatusRing() {
   const hilight = useHiLight();
   return (
     <View>
-      <Text>HiLight Status: {hilight.mode}</Text>
+      <Text>HiLight: {hilight.availability} · {hilight.mode}</Text>
+      {hilight.availability !== 'shizuku' && <Button title="Connect Shizuku" onPress={() => hilight.connect()} />}
       <Button title="Gemini AI Pulse" onPress={() => hilight.triggerGeminiPulse(4000)} />
       <Button title="Contact Alert" onPress={() => hilight.triggerContactAlert('#81C995', 4000)} />
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Call triggerGeminiPulse() whenever Gemini AI begins generating tokens or executing tool calls for glanceable signaling.',
+    aiTip: 'AI Tip: Read availability before promising light. Only "shizuku" drives the LEDs; "simulated" is an on-screen mirror. Never claim a colour was shown when the helper refused (duty guard) or is not bound.',
   },
   {
     id: 'useUWB',
@@ -811,7 +812,7 @@ export const DocsScreen: React.FC = () => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  const SYSTEM_PROMPT_DIRECTIVE = `You are building an application using the PixelForge SDK on a Google Pixel 11 Pro.
+  const SYSTEM_PROMPT_DIRECTIVE = `You are building an application using the PixelKit SDK on a Google Pixel 11 Pro.
 Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useSensors, useGemini, useHaptics).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
@@ -824,7 +825,7 @@ Always adhere to these requirements:
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Header Banner */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>PixelForge Documentation ⚡</Text>
+        <Text style={styles.headerTitle}>PixelKit Documentation ⚡</Text>
         <Text style={styles.headerSubtitle}>
           Complete Hardware & AI API Reference for Google Pixel 11 Pro
         </Text>
@@ -1176,7 +1177,7 @@ Always adhere to these requirements:
       {/* Footer Info */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          PixelForge SDK ⚡ Expo SDK 57 • React 19 • React Native 0.86 • Google Pixel 11 Pro
+          PixelKit SDK ⚡ Expo SDK 57 • React 19 • React Native 0.86 • Google Pixel 11 Pro
         </Text>
       </View>
     </ScrollView>

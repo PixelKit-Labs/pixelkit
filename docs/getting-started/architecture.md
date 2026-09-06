@@ -1,7 +1,7 @@
 # Pixel 11 Pro Silicon & System Architecture ⚡
 > **Hardware Specifications, TSMC 2nm Process, Tensor G6 Malibu, and Titan M3**
 
-This document outlines the silicon engineering and hardware subsystem design of the **Google Pixel 11 Pro** and how PixelForge interfaces with each layer.
+This document outlines the silicon engineering and hardware subsystem design of the **Google Pixel 11 Pro** and how PixelKit interfaces with each layer.
 
 ---
 

@@ -1,7 +1,7 @@
-# PixelForge Quickstart Guide 🚀
+# PixelKit Quickstart Guide 🚀
 > **Developer Setup, Workstation Prerequisites, and Pixel 11 Pro Deployment**
 
-This guide walks you through setting up your development workstation and launching PixelForge on your Google Pixel 11 Pro.
+This guide walks you through setting up your development workstation and launching PixelKit on your Google Pixel 11 Pro.
 
 ---
 

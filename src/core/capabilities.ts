@@ -14,7 +14,7 @@
 export type GeminiNanoTier = 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';
 
 /** Whether a Pro-exclusive hook can talk to real silicon, has to simulate, or is absent. */
-export type HardwareAvailability = 'hardware' | 'simulated' | 'estimated' | 'unsupported';
+export type HardwareAvailability = 'hardware' | 'shizuku' | 'simulated' | 'estimated' | 'unsupported';
 
 export interface DeviceCapabilities {
   /** Marketing model name, e.g. "Pixel 11 Pro" */
@@ -31,7 +31,7 @@ export interface DeviceCapabilities {
   isFoldable: boolean;
   /** Android API level (36 = Android 16, 37 = Android 17), null on web */
   androidApiLevel: number | null;
-  /** HiLight multi-colour LED array around the flash: Pixel 11 Pro family only (no public API) */
+  /** HiLight multi-colour LED array around the flash: Pixel 11 Pro family only (privileged permission; Shizuku path) */
   hasHiLight: boolean;
   /** Ultra-Wideband radio: Pro models since Pixel 6 Pro and all Pixel Folds */
   hasUWB: boolean;

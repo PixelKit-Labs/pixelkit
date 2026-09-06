@@ -1,6 +1,6 @@
 # Function Calling & Hardware Tools 🛠️
 
-> One tool registry, three execution paths. PixelForge hooks (torch, haptics, HiLight, camera, sensors, location…) register as tools once. Cloud Gemini calls them with native function calling, Gemini Nano calls them on device via structured output, and the system Gemini assistant calls them through Android **AppFunctions**.
+> One tool registry, three execution paths. PixelKit hooks (torch, haptics, HiLight, camera, sensors, location…) register as tools once. Cloud Gemini calls them with native function calling, Gemini Nano calls them on device via structured output, and the system Gemini assistant calls them through Android **AppFunctions**.
 
 ---
 
@@ -95,7 +95,7 @@ export async function runTool(name: string, rawArgs: unknown) {
 }
 ```
 
-### 2.1 Registering PixelForge hardware as tools
+### 2.1 Registering PixelKit hardware as tools
 
 Hooks are React-scoped, so register tools from a component that owns the hooks (e.g. `AILabScreen`) and keep the registry module-level.
 
@@ -339,7 +339,7 @@ export function parseToolCode(text: string) {
 
 ---
 
-## 5. Path C: Expose PixelForge to the system Gemini assistant with AppFunctions
+## 5. Path C: Expose PixelKit to the system Gemini assistant with AppFunctions
 
 AppFunctions (Android 16+, Jetpack `androidx.appfunctions` 1.0.0-alpha10) let **agent apps** such as Gemini discover and execute functions your app publishes, like an on-device MCP server. Integration with Gemini itself is in private preview (trusted testers, as of mid-2026), but the platform API and `adb` tooling are usable today, so build and verify now.
 
@@ -374,10 +374,10 @@ data class HardwareStatus(val batteryPct: Int, val thermalHeadroom: Double, val 
 
 @RequiresApi(36)
 @AppFunctionServiceEntryPoint(
-  serviceName = "PixelForgeAppFunctionService",
-  appFunctionXmlFileName = "pixelforge_app_functions",
+  serviceName = "PixelKitAppFunctionService",
+  appFunctionXmlFileName = "pixelkit_app_functions",
 )
-abstract class BasePixelForgeAppFunctionService : AppFunctionService() {
+abstract class BasePixelKitAppFunctionService : AppFunctionService() {
 
   /**
    * Turn the phone's rear flashlight on or off. Use sos=true for an emergency strobe.
@@ -399,12 +399,12 @@ abstract class BasePixelForgeAppFunctionService : AppFunctionService() {
 
 ```xml
 <service
-  android:name=".appfunctions.PixelForgeAppFunctionService"
+  android:name=".appfunctions.PixelKitAppFunctionService"
   android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"
   android:exported="true"
   tools:targetApi="36">
   <property android:name="android.app.appfunctions.schema" android:value="app_functions_schema.xsd" />
-  <property android:name="android.app.appfunctions.v2" android:value="pixelforge_app_functions.xml" />
+  <property android:name="android.app.appfunctions.v2" android:value="pixelkit_app_functions.xml" />
   <intent-filter>
     <action android:name="android.app.appfunctions.AppFunctionService" />
   </intent-filter>
@@ -418,20 +418,20 @@ Add this through an Expo config plugin (`withAndroidManifest`) so `expo prebuild
 
 ```kotlin
 AppFunctionManager.getInstance(context)?.setAppFunctionEnabled(
-  BasePixelForgeAppFunctionServiceIds.SET_TORCH_ID,
+  BasePixelKitAppFunctionServiceIds.SET_TORCH_ID,
   AppFunctionManager.APP_FUNCTION_STATE_ENABLED,
 )
 ```
 
 ```bash
-adb shell cmd app_function list-app-functions | grep --after-context 10 com.pixelforge.sdk
+adb shell cmd app_function list-app-functions | grep --after-context 10 com.pixelkit.sdk
 adb shell "cmd app_function execute-app-function \
-  --package com.pixelforge.sdk \
-  --function 'expo.modules.pixelnano.appfunctions.BasePixelForgeAppFunctionService#setTorch' \
+  --package com.pixelkit.sdk \
+  --function 'expo.modules.pixelnano.appfunctions.BasePixelKitAppFunctionService#setTorch' \
   --parameters '{\"params\": {\"on\": true, \"sos\": false}}'"
 ```
 
-If your app is also an **agent** (PixelForge's Delta Bot calling other apps), request `android.permission.EXECUTE_APP_FUNCTIONS` and use `AppFunctionManager` to enumerate and execute other apps' functions, then feed them into the registry as cloud tools.
+If your app is also an **agent** (PixelKit's Delta Bot calling other apps), request `android.permission.EXECUTE_APP_FUNCTIONS` and use `AppFunctionManager` to enumerate and execute other apps' functions, then feed them into the registry as cloud tools.
 
 ---
 

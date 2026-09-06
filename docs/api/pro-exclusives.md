@@ -14,51 +14,63 @@ This document covers hardware capabilities exclusive to Google's flagship Pro mo
 
 ## `useHiLight`
 
-Directly controls the **HiLight** multi-color LED notification ring integrated into the Pixel 11 Pro camera bar visor.
+Drives the eight-LED **HiLight** array around the Pixel 11 Pro flash. Android 17 exposes it as eight `Light.LIGHT_TYPE_APPLICATION` lights (RGB + animation, 33 ms update period), but every lights session needs `CONTROL_DEVICE_LIGHTS`, a signature|privileged permission a third-party app cannot hold. The hook therefore has two paths (measured facts in [HILIGHT_LED_ARRAY.md](../research/HILIGHT_LED_ARRAY.md)):
+
+| `availability` | Condition | Effect of the colour methods | `source` |
+| :--- | :--- | :--- | :--- |
+| `'shizuku'` | Shizuku installed, running, granted, helper bound | Real LEDs through `modules/pixel-hilight` | `'hardware'` |
+| `'simulated'` | Pixel 11 Pro-class device without the helper | State only, mirrored on screen | `'simulated'` |
+| `'unsupported'` | No HiLight array | Nothing | `'unavailable'` |
+
+### The helper (`modules/pixel-hilight`)
+`connect()` requests Shizuku permission and binds `HiLightService`, which Shizuku spawns as uid 2000 (shell). The service reaches `android.hardware.lights.ILightsManager` by reflection, enumerates the application-type lights at runtime, and enforces hardware protection that JS cannot bypass:
+* every request auto-clears after at most **60 s**;
+* the LEDs may be lit for at most **50 % of any 10-minute window** (`setColors` returns `false` when refused);
+* every clear writes alpha-only black, canonical black, closes the session, then repeats the black writes in three fresh priority `-1000` sessions (the stuck-LED mitigation HiLight Studio documents).
+
+Shizuku must be started again after every reboot (Wireless debugging or `adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh`).
 
 ### Signature
 ```typescript
-function useHiLight(): HiLightState;
+function useHiLight(): {
+  availability: 'shizuku' | 'simulated' | 'unsupported';
+  isHardwareSupported: boolean;
+  source: 'hardware' | 'simulated' | 'unavailable';
+  shizuku: { shizukuInstalled: boolean; shizukuRunning: boolean; shizukuVersion: number | null; shizukuUid: number | null; permissionGranted: boolean; serviceBound: boolean } | null;
+  helper: { uid: number; pid: number; count: number; sessionOpen: boolean; litMsInWindow: number; dutyLimitMs: number; hardMaxMs: number; initError: string | null; lights: { id: number; ordinal: number; type: number }[] } | null;
+  error: string | null;
+  isActive: boolean; currentColor: string; mode: HiLightMode; brightness: number; isFaceDownMode: boolean;
+  connect: () => Promise<boolean>;
+  disconnect: () => void;
+  setColor: (hexColor: string) => void;
+  setMode: (mode: HiLightMode) => void;
+  setBrightness: (level: number) => void;          // scales RGB; the hardware has no brightness channel
+  triggerGeminiPulse: (durationMs?: number) => void; // cyan hold
+  triggerContactAlert: (hexColor: string, durationMs?: number) => void;
+  turnOff: () => void;
+  toggle: () => void;
+};
 ```
 
-### Properties
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `isActive` | `boolean` | Whether the HiLight ring is physically illuminated |
-| `currentColor` | `string` | Current RGB hex color (`#00E5FF`, `#8AB4F8`, `#81C995`, etc.) |
-| `mode` | `HiLightMode` | Active pattern (`'off' \| 'glow' \| 'breathing' \| 'pulse' \| 'gemini_thinking' \| 'incoming_call' \| 'notification'`) |
-| `brightness` | `number` | Illumination intensity (0.0 to 1.0) |
-| `isFaceDownMode` | `boolean` | True if glanceable mode is active when resting face-down |
-
-### Methods
-* `triggerGeminiPulse(durationMs?: number): void`: Pulses the signature cyan breathing animation while Gemini AI reasons.
-* `triggerContactAlert(colorHex: string, durationMs?: number): void`: Triggers custom contact alert color.
-* `setColor(hex: string): void`: Sets static color.
-* `setMode(mode: HiLightMode): void`: Changes animation profile.
-* `turnOff(): void`: Extinguishes the LED ring.
-* `toggle(): void`: Toggles on/off state.
+### Native module surface (`modules/pixel-hilight/index.ts`)
+`getStatus()`, `requestPermission()`, `bind()`, `unbind()`, `info()`, `readback()`, `setAll(argb, maxMs)`, `setColors(ids, colors, maxMs)`, `clear()`, event `onState`. Colours are ARGB numbers; `hexToArgb('#00E5FF')` converts.
 
 ### Example
 ```tsx
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { useHiLight, HapticButton } from './src';
 
 export function HiLightHUD() {
   const hilight = useHiLight();
-
   return (
     <View>
-      <HapticButton
-        title="Trigger Gemini Thinking Pulse"
-        onPress={() => hilight.triggerGeminiPulse(4000)}
-        variant="secondary"
-      />
-      <HapticButton
-        title="Alert Pulse (Green)"
-        onPress={() => hilight.triggerContactAlert('#81C995', 3000)}
-        variant="primary"
-      />
+      <Text>{hilight.availability} · {hilight.error ?? 'ok'}</Text>
+      {hilight.availability !== 'shizuku' && (
+        <HapticButton title="Connect Shizuku helper" onPress={() => hilight.connect()} variant="primary" />
+      )}
+      <HapticButton title="Gemini thinking (4 s)" onPress={() => hilight.triggerGeminiPulse(4000)} variant="secondary" />
+      <HapticButton title="Contact alert (green)" onPress={() => hilight.triggerContactAlert('#81C995', 3000)} variant="secondary" />
     </View>
   );
 }

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "PixelForge",
-    "slug": "pixel-forge",
-    "version": "1.0.4",
+    "name": "PixelKit",
+    "slug": "pixelkit",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -10,7 +10,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.pixelforge.sdk",
+      "package": "com.pixelkit.sdk",
       "adaptiveIcon": {
         "backgroundColor": "#121316",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -36,7 +36,7 @@
         "android.permission.UWB_RANGING"
       ],
       "predictiveBackGestureEnabled": true,
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +46,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "PixelForge uses the microphone for on-device speech recognition, decibel metering, and Gemini voice sessions."
+          "microphonePermission": "PixelKit uses the microphone for on-device speech recognition, decibel metering, and Gemini voice sessions."
         }
       ],
       [

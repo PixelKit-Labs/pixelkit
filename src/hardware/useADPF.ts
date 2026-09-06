@@ -16,7 +16,7 @@ import type { PerformanceHeadroom } from '../core/types';
 const MODULE = 'useADPF';
 const HEADROOM_POLL_MS = 10_000;
 
-/** Android PowerManager.THERMAL_STATUS_* → PixelForge label */
+/** Android PowerManager.THERMAL_STATUS_* → PixelKit label */
 export function thermalStatusLabel(status: number): PerformanceHeadroom['thermalStatus'] {
   switch (status) {
     case 0: return 'nominal';

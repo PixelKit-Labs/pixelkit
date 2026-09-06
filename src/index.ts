@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Master entry barrel for PixelForge SDK.
+ * @description Master entry barrel for PixelKit SDK.
  * Exports strongly-typed hardware hooks, Tensor AI services, and Material 3 UI primitives.
  *
  * @example

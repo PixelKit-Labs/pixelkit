@@ -1,6 +1,6 @@
 /**
  * @file colors.ts
- * @description PixelForge design tokens, aligned with the Delta console design system.
+ * @description PixelKit design tokens, aligned with the Delta console design system.
  *
  * Rules carried over from Delta:
  * - Colour carries meaning. Cyan is the one accent (the thing to press, the user). Green = well,
@@ -48,7 +48,7 @@ export const Colors = {
     error: '#F25C55',
     /** The model / AI stack (violet, same as secondary) */
     tensorGlow: '#A18BF6',
-    /** PixelForge itself (Delta --hud-persona) */
+    /** PixelKit itself (Delta --hud-persona) */
     persona: '#F09AC1',
     /** Specular hairline on panels (white 16%) */
     specular: 'rgba(255,255,255,0.16)',

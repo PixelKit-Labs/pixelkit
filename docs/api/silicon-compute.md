@@ -162,7 +162,7 @@ function useADPF(): {
 | `simulated` | Placeholder until a native path exists; must be labelled in UI |
 | `unavailable` | The API/hardware is absent; value is `null` |
 
-APIs: `logEvent(module, event, data?, level?)` (console-logged with the `[PixelForge]` prefix so `adb logcat -s ReactNativeJS | grep PixelForge` shows them), `recordMetric(module, metric, value, source)`, `useObservability()` (events + latest metrics + per-module source summary, ≤4 Hz), `getSourceSummary()`. `MetricCard` renders the `source` prop as a footer tag.
+APIs: `logEvent(module, event, data?, level?)` (console-logged with the `[PixelKit]` prefix so `adb logcat -s ReactNativeJS | grep PixelKit` shows them), `recordMetric(module, metric, value, source)`, `useObservability()` (events + latest metrics + per-module source summary, ≤4 Hz), `getSourceSummary()`. `MetricCard` renders the `source` prop as a footer tag.
 
 ---
 

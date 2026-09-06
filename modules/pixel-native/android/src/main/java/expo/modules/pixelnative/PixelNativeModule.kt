@@ -31,7 +31,7 @@ class NativeUnavailableException(what: String, why: String) :
   CodedException("E_PIXEL_NATIVE_UNAVAILABLE", "$what unavailable: $why", null)
 
 /**
- * PixelNative: real Android platform telemetry and actuators for PixelForge.
+ * PixelNative: real Android platform telemetry and actuators for PixelKit.
  * Everything here reads or drives actual hardware/OS state. Nothing is fabricated;
  * when an API is missing on the device the function reports null or throws.
  */
