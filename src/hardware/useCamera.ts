@@ -61,8 +61,8 @@ export function useCamera() {
   };
 
   /**
-   * Sets the camera zoom factor (0.5x ultrawide, 1.0x wide, 5.0x optical periscope, up to 120x Generative AI zoom).
-   * @param ratio Normalized zoom multiplier up to 120x.
+   * Sets the zoom factor passed to expo-camera.
+   * @param ratio Zoom multiplier, clamped to maxZoomFactor.
    */
   const setZoom = (ratio: number) => {
     const clamped = Math.max(0.5, Math.min(120.0, ratio));
@@ -84,7 +84,7 @@ export function useCamera() {
   };
 
   /**
-   * Toggles on-device Ultra Low Light Video neural denoising (5-10 lux candlelight mode).
+   * Flips the low-light video UI flag. The Pixel Camera mode itself is not controllable from third-party apps.
    */
   const toggleUltraLowLightVideo = () => {
     setCameraState(prev => ({
@@ -97,13 +97,13 @@ export function useCamera() {
     ...cameraState,
     /** Toggle between front and back lenses */
     toggleFacing,
-    /** Set zoom ratio (0.5x to 120x) */
+    /** Set zoom ratio */
     setZoom,
     /** Set flash mode */
     setFlash,
     /** Select active Camera Look profile */
     setLook,
-    /** Toggle Ultra Low Light Video mode */
+    /** Toggle the low-light video UI flag */
     toggleUltraLowLightVideo,
   };
 }

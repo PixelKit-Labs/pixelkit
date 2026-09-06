@@ -9,15 +9,15 @@ This document provides complete, production-grade code recipes for common agenti
 
 1. [Voice-to-Action AI Loop with HiLight Visual Pulse](#recipe-1-voice-to-action-ai-loop-with-hilight-visual-pulse)
 2. [Adaptive Sensor Telemetry with ADPF Thermal Pacing](#recipe-2-adaptive-sensor-telemetry-with-adpf-thermal-pacing)
-3. [Camera Looks & 120x Generative AI Zoom Inspector](#recipe-3-camera-looks--120x-generative-ai-zoom-inspector)
+3. [Camera Looks & Zoom Inspector](#recipe-3-camera-looks--zoom-inspector)
 4. [Encrypted Credential Vault](#recipe-4-encrypted-credential-vault)
-5. [UWB Centimeter Spatial Target Tracker](#recipe-5-uwb-centimeter-spatial-target-tracker)
+5. [UWB Spatial Target Tracker](#recipe-5-uwb-spatial-target-tracker)
 
 ---
 
 ## Recipe 1: Voice-to-Action AI Loop with HiLight Visual Pulse
 
-Captures speech via the quad-mic array, transcribes tokens, pulses the camera bar **HiLight** ring, and routes queries to Gemini 2.5 Flash:
+Records from the microphone (VOICE_RECOGNITION source), transcribes with Gemini, mirrors the **HiLight** state on screen, and routes queries to gemini-3.8-flash:
 
 ```tsx
 import React from 'react';
@@ -105,9 +105,9 @@ export function AdaptiveTelemetryHUD() {
 
 ---
 
-## Recipe 3: Camera Looks & 120x Generative AI Zoom Inspector
+## Recipe 3: Camera Looks & Zoom Inspector
 
-Allows switching sensor-level tone mapping styles and cycling zoom ratios up to 120x:
+Switches the Camera Look label (UI state; Looks belong to the Pixel Camera app) and drives expo-camera zoom up to `maxZoomFactor`:
 
 ```tsx
 import React from 'react';
@@ -139,10 +139,10 @@ export function ProPhotoSuite() {
         ))}
       </View>
       <HapticButton
-        title="Trigger 120x AI Zoom"
+        title="Max zoom"
         onPress={() => {
           selection();
-          camera.setZoom(120.0);
+          camera.setZoom(camera.maxZoomFactor);
         }}
         variant="secondary"
       />
@@ -186,9 +186,9 @@ export function CredentialVault() {
 
 ---
 
-## Recipe 5: UWB Centimeter Spatial Target Tracker
+## Recipe 5: UWB Spatial Target Tracker
 
-Renders real-time spatial vectors to nearby anchors:
+Renders distance and angle to UWB targets. Ranging is simulated until the RangingManager path lands; the radio itself is verified by `useCapabilities`:
 
 ```tsx
 import React from 'react';
@@ -201,7 +201,7 @@ export function SpatialRadarView() {
   return (
     <View style={{ padding: 16 }}>
       <HapticButton
-        title={isRanging ? "Stop Radar" : "Start Centimeter UWB Radar"}
+        title={isRanging ? "Stop Radar" : "Start UWB Ranging"}
         onPress={isRanging ? stopRanging : startRanging}
         variant={isRanging ? "danger" : "primary"}
       />

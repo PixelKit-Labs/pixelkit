@@ -33,11 +33,11 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Camera bar multi-color notification & Gemini AI status ring |
 | **Motion & Atmosphere**| `useSensors()` | 6-Axis IMU (Gyro/Accel), Barometer (hypsometric altimeter), Magnetometer, Light |
 | **Tactile Haptics** | `useHaptics()` | LRA patterns plus Android 16 envelope effects (PWLE v2, 134.4 Hz resonance) and primitive compositions |
-| **Camera & Looks** | `useCamera()` | 120x Generative AI Zoom, Camera Looks tone-mapping & Ultra Low Light Video |
+| **Camera & Looks** | `useCamera()` | expo-camera lens, zoom, flash and permission state; Camera Looks kept as UI state (Pixel Camera app feature) |
 | **Multimodal Vision** | `useVisionAI()` | Ultra HDR camera capture, gallery picker, and Gemini Multimodal scene analysis |
 | **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
 | **Conversational AI** | `useGemini()` | Multi-turn chat on gemini-3.8-flash via ai.chats, API token counts, key in SecureStore; no simulated replies |
-| **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband transceiver for centimeter-level AoA tracking |
+| **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband distance & AoA; radio verified, ranging simulated until RangingManager |
 | **Device Capabilities** | `useCapabilities()` | Resolves what this Pixel physically has (thermometer, HiLight, UWB, Titan M3, Gemini Nano tier) and which Android 16/17 APIs exist |
 | **IR Thermometer** | `useTemperature()` | **[Pixel 8-10 Pro only]** Infrared thermopile sensor; **absent on Pixel 11 Pro** (reports `availability: 'estimated'`) |
 | **Contactless NFC** | `useNFC()` | NFC radio controller, NDEF smart tag reader/writer, and simulation runner |
@@ -145,7 +145,7 @@ Pixel delta/ (PixelForge Framework)
 │   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
 │   │   ├── useSensors.ts       # 6-Axis Motion (Gyro/Accel), Barometer/Altimeter, Compass, Light
 │   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms & mechanical ticks
-│   │   ├── useCamera.ts        # Camera Looks tone-mapping, 120x AI Zoom & Ultra Low Light Video
+│   │   ├── useCamera.ts        # expo-camera zoom, flash, lens; Look label as UI state
 │   │   ├── useHiLight.ts       # [Pixel Pro Exclusive] Rear camera bar notification LED ring
 │   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
 │   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
@@ -217,6 +217,23 @@ Pixel delta/ (PixelForge Framework)
    * **Physical Device (Fast Refresh)**: Install **Expo Go** from Google Play on your Pixel 11 Pro, scan the terminal QR code, and watch UI edits reflect live in <500ms.
    * **Web Browser Preview & React Grab**: Run `npm run web` (or press `w` in Metro) to preview and inspect layout at `http://localhost:8081`. Hold **`Ctrl+C`** / **`Cmd+C`** and click any visual element to copy its exact source location and component stack for AI agents.
    * **Android Emulator**: Press `a` in Metro to launch on an active Android Virtual Device (AVD).
+
+---
+
+## 📦 Release Build (v1.0.0)
+
+Versioning follows `CHANGELOG.md`: every change bumps the patch version and adds an entry. Current: **1.0.0** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 1).
+
+```bash
+npm run typecheck
+npx expo export -p android                 # Hermes bundle check
+cd android && ./gradlew assembleRelease     # release APK (Windows: build from the space-free junction, see docs/getting-started/quickstart.md)
+# output: android/app/build/outputs/apk/release/app-release.apk
+```
+
+The generated Gradle project signs release builds with the **debug keystore** until a release keystore is configured (`android/app/build.gradle` → `signingConfigs.release`) or the app is built with EAS (`eas build -p android`). Do not upload a debug-signed APK to Google Play.
+
+Release checklist: `CHANGELOG.md` entry, version fields bumped together, `npm run typecheck` clean, `npx expo export` clean, on-device pass recorded in `docs/research/DEVICE_TEST_REPORT_<date>.md`.
 
 ---
 
@@ -303,6 +320,10 @@ The central sitemap and entry portal for all developer guides and reference manu
 ### 🔬 Research & Deep Dives
 * **[Pixel 11 Pro Hardware Research](./docs/research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 (API 37) surfaces, and SDK gap analysis.
 * **[Pixel 11 Pro Deep Dive (Round 2)](./docs/research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections, Android 16/17 APIs (`RangingManager`, ADPF headroom, ARR), and store deadlines.
+
+### 📝 Change Log & Agent Guide
+* **[CHANGELOG.md](./CHANGELOG.md)**: Release history; every change adds an entry and bumps the patch version.
+* **[AGENTS.md](./AGENTS.md)**: Rules for any coding agent (identical to `CLAUDE.md` and `GEMINI.md`).
 
 ### 📑 Consolidated Single-File Manuals
 * **[HARDWARE_API.md](./docs/HARDWARE_API.md)**: Complete 24-module hardware and AI API manual in a single file.

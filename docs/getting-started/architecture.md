@@ -19,8 +19,8 @@ This document outlines the silicon engineering and hardware subsystem design of 
 | **Display** | Super Actua LTPO OLED | 3,600 nits peak, 1-120Hz variable refresh, anti-scratch glass |
 | **Actuators**| Linear Resonant Actuator (LRA) | Precision mechanical tactile click profiles |
 | **Visual Bar**| HiLight LED Ring | Rear camera bar multi-color notification & Gemini AI status ring |
-| **Camera** | Triple Optical System | 50MP Wide, 48MP Ultrawide, 48MP 5x Periscope (120x AI Zoom) |
-| **Spatial** | Ultra-Wideband (UWB) | Centimeter-level spatial ranging & Angle-of-Arrival (AoA) |
+| **Camera** | Triple Optical System | 50MP Wide, 48MP Ultrawide, 48MP 5x Periscope |
+| **Spatial** | Ultra-Wideband (UWB) | Ranging & Angle-of-Arrival (simulated until RangingManager) |
 | **Power** | Pixelsnap Qi2.2 | 25W magnetic wireless charging (MagSafe accessory compatible) |
 
 ---
@@ -81,5 +81,5 @@ Integrated into the camera flash visor, **HiLight** replaces the legacy infrared
   ┌──────────────┬───┴──────────┬──────────────┬──────────────┐
   ▼              ▼              ▼              ▼              ▼
 Tensor G6      PowerVR        Titan M3       CameraX        Sensors
-CPU / TPU      GPU            PQC HSM        120x Zoom      IMU / UWB
+CPU / TPU      GPU            Keystore       Zoom           IMU / UWB
 ```

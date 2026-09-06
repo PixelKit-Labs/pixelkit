@@ -1,7 +1,6 @@
 /**
  * @file geminiClient.ts
- * @description Google Gen AI SDK client factory and secure API key persistence.
- * Leverages Titan M3 hardware-backed SecureStore to persist user API keys without plaintext exposure.
+ * @description Google Gen AI SDK client factory and API key persistence in SecureStore (Android Keystore).
  */
 
 import { GoogleGenAI } from '@google/genai';
@@ -34,7 +33,7 @@ export async function getStoredApiKey(): Promise<string | null> {
 }
 
 /**
- * Securely writes the Gemini API key into the device hardware security enclave.
+ * Writes the Gemini API key to SecureStore (Android Keystore-backed).
  * @param key The Google Gemini API key (e.g. AIzaSy...).
  * @returns Promise resolving to true on successful write.
  */

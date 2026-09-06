@@ -269,12 +269,12 @@ export interface TemperatureReading {
 }
 
 /**
- * Ultra-Wideband (UWB) high-precision spatial tracking target.
+ * Ultra-Wideband (UWB) ranging target.
  */
 export interface UWBSpatialTarget {
   /** Identifier of the target UWB anchor or peer device */
   deviceId: string;
-  /** Centimeter-level distance in meters */
+  /** Distance in meters */
   distanceMeters: number;
   /** Horizontal azimuth angle in degrees (-180 to +180) */
   azimuthDegrees: number;
@@ -285,7 +285,7 @@ export interface UWBSpatialTarget {
 }
 
 /**
- * Real-time sensor-level tone mapping styles for Pixel 11 Pro Camera Looks.
+ * Camera Looks names from the Pixel Camera app. Not controllable by third-party apps; kept as UI state.
  */
 export type CameraLook =
   | 'Original'
@@ -305,9 +305,9 @@ export type CameraLook =
 export interface CameraTelemetry {
   /** Selected lens orientation: 'back' (main array) or 'front' (selfie) */
   facing: 'back' | 'front';
-  /** Optical/digital zoom factor (e.g. 0.5x ultra-wide, 1.0x wide, 5.0x periscope telephoto up to 120x AI Zoom) */
+  /** Zoom factor requested from expo-camera */
   zoomFactor: number;
-  /** Maximum zoom ceiling supported (120x Super Res Zoom on Pixel 11 Pro) */
+  /** App-side zoom ceiling */
   maxZoomFactor: number;
   /** Flash illumination mode ('auto', 'on', 'off') */
   flashMode: 'auto' | 'on' | 'off';
@@ -315,7 +315,7 @@ export interface CameraTelemetry {
   hasPermission: boolean;
   /** Active sensor-level Camera Look profile */
   selectedLook: CameraLook;
-  /** Whether on-device Ultra Low Light Video neural denoising is active (5-10 lux) */
+  /** UI flag for the Pixel Camera low-light video mode; not controllable by third-party apps */
   isUltraLowLightVideoActive: boolean;
 }
 

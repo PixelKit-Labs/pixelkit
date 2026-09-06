@@ -15,7 +15,7 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 * **[Silicon & Compute](./api/silicon-compute.md)**: `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`.
 * **[Pixel Pro Exclusives](./api/pro-exclusives.md)**: `useHiLight` (camera bar notification ring), `useUWB` (spatial radar AoA), `useTemperature` (backward compatibility & ambient).
 * **[Neural & AI](./api/neural-ai.md)**: `useGemini`, `useSpeechAI`, `useVisionAI`, `geminiClient`.
-* **[Sensors & Actuators](./api/sensors-actuators.md)**: `useSensors` (6-axis IMU + Barometer), `useCamera` (Camera Looks & 120x Zoom), `useTorch`, `useHaptics` (LRA tactile profiles).
+* **[Sensors & Actuators](./api/sensors-actuators.md)**: `useSensors` (6-axis IMU + Barometer), `useCamera` (expo-camera zoom, flash, lens), `useTorch`, `useHaptics` (LRA tactile profiles).
 * **[Radios & Security](./api/radios-security.md)**: `useBiometrics`, `useSecurity` (Titan M3 Post-Quantum Cryptography), `useBLE`, `useNFC`, `useLocation` (dual-band GNSS).
 * **[System & Media](./api/system-media.md)**: `useAudio`, `useDisplay` (3,600 nits 120Hz LTPO), `useDevice`, `useNetwork` (MediaTek M90 modem, Satellite SOS).
 
@@ -59,7 +59,7 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 +---------------+  +---------------+  +------------------+  +---------------+
 |  CPU / GPU    |  |  Tensor TPU   |  | Pro Exclusives   |  | Titan M3      |
 |  Tensor G6    |  |  NNAPI/LiteRT |  | HiLight LED Ring |  | Quantum Vault |
-|  TSMC 2nm N2  |  |  Gemini 2.5   |  | UWB Radar AoA    |  | Biometrics    |
+|  TSMC 2nm N2  |  |  Gemini 3.8   |  | UWB Radar AoA    |  | Biometrics    |
 +---------------+  +---------------+  +------------------+  +---------------+
 ```
 

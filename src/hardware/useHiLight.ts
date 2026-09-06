@@ -1,8 +1,8 @@
 /**
  * @file useHiLight.ts
- * @description Hardware controller for the Pixel 11 Pro "HiLight" rear camera bar notification LED ring.
- * Replaces traditional thermopiles with a multi-color glanceable notification and AI status ring.
- * Supports dynamic breathing, Gemini thinking pulses, and face-down contact alert patterns.
+ * @description State model for the Pixel 11 Pro HiLight LED array. Google exposes no third-party API for
+ * the LEDs, so this hook keeps the intended colour/pattern state and the app renders it on screen.
+ * `availability` is 'simulated' on devices that have the array and 'unsupported' elsewhere.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -42,7 +42,7 @@ export interface HiLightState {
   setMode: (mode: HiLightMode) => void;
   /** Set LED ring brightness */
   setBrightness: (level: number) => void;
-  /** Trigger signature Google Gemini AI thinking pulse animation */
+  /** Show the Gemini-thinking pulse pattern (virtual; no LED API) */
   triggerGeminiPulse: (durationMs?: number) => void;
   /** Trigger custom color alert for favorite contact or event */
   triggerContactAlert: (hexColor: string, durationMs?: number) => void;

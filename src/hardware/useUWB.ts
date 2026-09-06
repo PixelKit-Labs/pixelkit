@@ -1,7 +1,7 @@
 /**
  * @file useUWB.ts
- * @description Pixel Pro Exclusive Ultra-Wideband (UWB) Spatial Positioning hook.
- * Connects to the SR100T / UWB transceiver for centimeter-precision distance and Angle-of-Arrival (AoA) tracking.
+ * @description UWB ranging targets (distance, azimuth, elevation). The radio is verified by useCapabilities;
+ * ranging itself is simulated until the Android 16 RangingManager path is implemented.
  */
 
 import { useState } from 'react';
@@ -32,7 +32,7 @@ export function useUWB() {
   ]);
 
   /**
-   * Starts high-precision time-of-flight (ToF) ranging sessions.
+   * Starts a simulated ranging session (no RangingManager yet).
    */
   const startRanging = async (): Promise<void> => {
     setIsRanging(true);

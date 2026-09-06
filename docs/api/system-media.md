@@ -1,5 +1,5 @@
 # System & Media API Reference 📱
-> **Quad-Mic Audio Metering, 3,600 nits Super Actua Display, Pixelsnap Qi2.2 Battery, and MediaTek M90 Modem**
+> **Microphone Metering, 3,600 nits Super Actua Display, Pixelsnap Qi2.2 Battery, and MediaTek M90 Modem**
 
 This document covers system telemetry, media capture, power, and wireless modem subsystems.
 
@@ -7,7 +7,7 @@ This document covers system telemetry, media capture, power, and wireless modem 
 
 ## 📑 Module Index
 
-* [`useAudio`](#useaudio) - Quad-Mic Recording & Real-Time dBFS Sound Metering
+* [`useAudio`](#useaudio) - expo-audio recording (VOICE_RECOGNITION source) & dBFS metering
 * [`useDisplay`](#usedisplay) - 3,600 nits Super Actua Display & Wake-Lock
 * [`useDevice`](#usedevice) - Pixelsnap Qi2.2 25W Charging, Thermals & Battery Telemetry
 * [`useNetwork`](#usenetwork) - MediaTek M90 Modem, Wi-Fi 7 & Satellite SOS

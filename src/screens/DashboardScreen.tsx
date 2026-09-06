@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
 import { useDevice } from '../hardware/useDevice';
 import { useADPF } from '../hardware/useADPF';
 import { useCPU } from '../hardware/useCPU';
@@ -75,7 +75,7 @@ export const DashboardScreen: React.FC = () => {
       <View style={styles.hero}>
         <Reactor mode={mode} detail={`${brand} ${device.modelName}`} />
         <View style={styles.heroTelemetry}>
-          <TelemetryRow label="android" value={`${device.osVersion} · API ${caps.androidApiLevel ?? '?'}`} />
+          <TelemetryRow label="android" value={Platform.OS === 'android' ? `${device.osVersion} · API ${caps.androidApiLevel ?? '?'}` : '—'} />
           <TelemetryRow label="display" value={display.refreshRateHz ? `${display.refreshRateHz} Hz${display.hasArrSupport ? ' · ARR' : ''}` : '—'} />
           <TelemetryRow label="thermal" value={adpf.thermalHeadroom != null ? `${adpf.thermalStatus} · ${adpf.thermalHeadroom.toFixed(2)}` : adpf.thermalStatus} tone={adpf.thermalStatusCode === 0 ? 'on' : 'warn'} />
           <TelemetryRow label="nano tier" value={caps.geminiNanoTier} tone="muted" />

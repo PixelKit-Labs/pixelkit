@@ -55,7 +55,7 @@ pixel-delta/ (PixelForge Framework)
 │   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
 │   │   ├── useSensors.ts       # 6-Axis Motion (Gyro/Accel), Barometer/Altimeter, Compass, Light
 │   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms & mechanical ticks
-│   │   ├── useCamera.ts        # Camera Looks tone-mapping, 120x AI Zoom & Ultra Low Light Video
+│   │   ├── useCamera.ts        # expo-camera zoom, flash, lens; Look label as UI state
 │   │   ├── useHiLight.ts       # [Pixel Pro Exclusive] Rear camera bar notification LED ring
 │   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
 │   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
@@ -198,7 +198,7 @@ console.log(`Temperature: ${temp.celsius}°C (${temp.fahrenheit}°F)`);
 ---
 
 ### 7. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
-Centimeter-level spatial tracking and Angle-of-Arrival (AoA) localization:
+Distance and Angle-of-Arrival to UWB targets (ranging simulated until RangingManager):
 ```typescript
 const { activeTargets, isRanging, startRanging } = useUWB();
 await startRanging();

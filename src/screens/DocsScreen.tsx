@@ -260,10 +260,10 @@ function Thermometer() {
     id: 'useUWB',
     name: 'useUWB',
     category: 'pro',
-    chipBadge: 'UWB Radar AoA (Pro Exclusive)',
+    chipBadge: 'UWB radio present · SIMULATED',
     badgeColor: '#4785FF',
-    summary: 'Centimeter-level spatial distance and Angle-of-Arrival (AoA) tracking for spatial anchors.',
-    description: 'Pixel Pro exclusive Ultra-Wideband spatial radar. Computes exact distance in meters and azimuth/elevation angles to nearby compatible anchors, tags, or Pixel devices.',
+    summary: 'UWB distance and angle-of-arrival targets. The radio is verified present; ranging is simulated until the Android 16 RangingManager path lands.',
+    description: 'Returns distance (m), azimuth and elevation per target. useCapabilities().hasUWB is device-verified; activeTargets are simulated values and are labelled SIMULATED in the UI.',
     signature: 'useUWB(): UWBState',
     returns: [
       'isSupported: boolean',
@@ -293,17 +293,18 @@ function SpatialRadar() {
     id: 'useGemini',
     name: 'useGemini',
     category: 'ai',
-    chipBadge: 'Gemini 2.5 Flash / TPU',
+    chipBadge: 'gemini-3.8-flash · ai.chats',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Conversational reasoning, token streaming, and automatic Titan M3 API key retrieval.',
-    description: 'Official Google Gen AI SDK integration for multi-turn chats. Automatically pulls API keys from Titan M3 encrypted storage and supports offline simulation mode.',
+    summary: 'Multi-turn Gemini chat with a system instruction, API-reported token counts, and the key loaded from SecureStore. No simulated replies.',
+    description: 'Wraps @google/genai ai.chats.create() on gemini-3.8-flash. Without an API key, sendMessage appends a system-role error message; with a key, replies carry latencyMs and usageMetadata token counts.',
     signature: 'useGemini(): GeminiState',
     returns: [
-      'messages: ChatMessage[]',
+      'messages: AIMessage[]  // system role = local error',
       'isLoading: boolean',
-      'sendMessage(text: string): Promise<string>',
-      'clearHistory(): void',
-      'setApiKey(key: string): Promise<void>',
+      'sendMessage(text: string): Promise<void>',
+      'clearMessages(): void',
+      'hasApiKey: boolean · setApiKey(key | null)',
+      'model: string',
     ],
     example: `import { useGemini } from './src';
 
@@ -316,7 +317,7 @@ function Assistant() {
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Always configure setApiKey() through Titan M3 storage; do not hardcode Gemini API keys in source code.',
+    aiTip: 'AI Tip: Keys come from saveApiKey() (SecureStore). Never hardcode a Gemini key, and never fake a reply when the key is missing.',
   },
   {
     id: 'useSpeechAI',
@@ -443,16 +444,16 @@ function TactileCard() {
     id: 'useCamera',
     name: 'useCamera',
     category: 'sensors',
-    chipBadge: '120x AI Zoom & Looks',
+    chipBadge: 'expo-camera · Looks are UI state',
     badgeColor: '#81C995',
-    summary: 'Camera Looks live tone-mapping, 120x Generative AI Zoom, and on-device Ultra Low Light Video.',
-    description: 'Controls CameraX optical system on Pixel 11 Pro: lens switching, 120x Super Res AI Zoom ceiling, sensor-level Camera Looks (Original, Natural, Shadows, Velvet, Editorial), and real-time Ultra Low Light Video denoising (5-10 lux).',
+    summary: 'Lens, zoom, flash and permission state over expo-camera. Camera Looks and 120x zoom belong to the Pixel Camera app and are represented here as UI state only.',
+    description: 'expo-camera does not expose Pixel Camera features (Camera Looks, Super Res Zoom, Video Boost). selectedLook and maxZoomFactor are app-side state, not hardware pipeline control; real extension probing needs a CameraX 1.6+ module.',
     signature: 'useCamera(): CameraState',
     returns: [
       'hasPermission: boolean',
       'lensType: "front" | "back"',
-      'zoomFactor: number (0.5x to 120x)',
-      'maxZoomFactor: 120.0',
+      'zoomFactor: number  // expo-camera zoom',
+      'maxZoomFactor: number  // app-side ceiling',
       'selectedLook: CameraLook',
       'isUltraLowLightVideoActive: boolean',
       'setLook(look: CameraLook): void',
@@ -464,7 +465,7 @@ function CameraControl() {
   const { zoomFactor, setZoom, setLook } = useCamera();
   return (
     <View>
-      <Button title="120x AI Zoom" onPress={() => setZoom(120.0)} />
+      <Button title="Zoom 5x" onPress={() => setZoom(5)} />
       <Button title="Apply Editorial Look" onPress={() => setLook('Editorial')} />
     </View>
   );
@@ -509,10 +510,10 @@ function Flashlight() {
     id: 'useBiometrics',
     name: 'useBiometrics',
     category: 'radios',
-    chipBadge: 'Titan M3 Biometrics',
+    chipBadge: 'Ultrasonic fingerprint · face',
     badgeColor: '#C2E7FF',
     summary: 'Ultrasonic under-display fingerprint and Class 3 3D Face Unlock.',
-    description: 'Performs hardware-backed biometric verification using the Titan M3 security enclave.',
+    description: 'expo-local-authentication over BiometricPrompt. On the Pixel 11 Pro this drives the ultrasonic under-display fingerprint sensor and face unlock; verified via BiometricService logs.',
     signature: 'useBiometrics(): BiometricsState',
     returns: [
       'hasHardware: boolean',
@@ -619,8 +620,8 @@ function NFCReader() {
     category: 'radios',
     chipBadge: 'Dual-Band GNSS (L1/L5)',
     badgeColor: '#C2E7FF',
-    summary: 'High-precision dual-frequency GNSS positioning, altitude, heading, and speed.',
-    description: 'Interfaces with GPS L1/L5, Galileo, and GLONASS constellations for centimeter-grade location fixes.',
+    summary: 'Dual-band GNSS (L1/L5) position, altitude, heading and speed via expo-location.',
+    description: 'expo-location fixes with reported accuracy in metres. Accuracy depends on the fix; no centimetre claims.',
     signature: 'useLocation(): LocationState',
     returns: [
       'latitude: number',
@@ -816,7 +817,7 @@ Always adhere to these requirements:
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
 3. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
 4. Use true OLED black (#0E1119) for backgrounds via Colors.dark.background.
-5. Store sensitive keys exclusively in the Titan M3 enclave using useSecurity().saveSecureItem().
+5. Store sensitive keys exclusively through useSecurity().saveSecureItem() (SecureStore, Android Keystore).
 6. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).`;
 
   return (
@@ -1059,7 +1060,7 @@ Always adhere to these requirements:
               Style backgrounds with <Text style={styles.codeInline}>#0E1119</Text> to turn off pixels.
             </Text>
             <Text style={styles.ruleItem}>
-              <Text style={styles.ruleNum}>5. Titan M3 Enclave: </Text>
+              <Text style={styles.ruleNum}>5. Secure Storage: </Text>
               Persist all secret keys via <Text style={styles.codeInline}>useSecurity().saveSecureItem()</Text>.
             </Text>
           </View>

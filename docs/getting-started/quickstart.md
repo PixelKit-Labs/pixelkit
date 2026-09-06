@@ -120,7 +120,7 @@ To enable AI agent visual verification, automated screenshotting, and `testID` e
 
 ## 🔑 Environment Variables & API Keys
 
-To use Google Gemini 2.5 Flash multimodal reasoning and voice transcription:
+To use gemini-3.8-flash chat, vision and voice transcription:
 1. Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env

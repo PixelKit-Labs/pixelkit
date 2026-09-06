@@ -8,7 +8,7 @@ This document covers hardware capabilities exclusive to Google's flagship Pro mo
 ## 📑 Module Index
 
 * [`useHiLight`](#usehilight) - Rear Camera Bar Multi-Color Notification & Gemini Status Ring
-* [`useUWB`](#useuwb) - Ultra-Wideband Centimeter Spatial Radar & Angle-of-Arrival (AoA)
+* [`useUWB`](#useuwb) - Ultra-Wideband Ranging & Angle-of-Arrival (AoA)
 * [`useTemperature`](#usetemperature) - Infrared Thermometer Sensor (Legacy Pro & Ambient)
 
 ---
@@ -69,7 +69,7 @@ export function HiLightHUD() {
 
 ## `useUWB`
 
-Interfaces with the Ultra-Wideband (UWB) spatial radar transceiver for centimeter-level time-of-flight (ToF) ranging and Angle-of-Arrival (AoA).
+Distance and Angle-of-Arrival to UWB targets. The radio is verified by `useCapabilities`; ranging is simulated until the Android 16 RangingManager path is implemented.
 
 ### Signature
 ```typescript
@@ -86,7 +86,7 @@ function useUWB(): {
 ```typescript
 interface UWBSpatialTarget {
   deviceId: string;
-  distanceMeters: number;     // Centimeter-level precision (e.g. 0.82m)
+  distanceMeters: number;     // Distance in metres (simulated today)
   azimuthDegrees: number;     // Horizontal angle (-180° to +180°)
   elevationDegrees: number;   // Vertical angle (-90° to +90°)
   signalQuality: number;      // 0.0 to 1.0 line-of-sight score

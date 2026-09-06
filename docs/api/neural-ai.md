@@ -1,5 +1,5 @@
 # Neural & AI API Reference 🧠
-> **Google Gemini 2.5 Flash, Voice Speech-to-Text, Multimodal Vision, and Titan M3 Keystore**
+> **Google gemini-3.8-flash, Voice Speech-to-Text, Multimodal Vision, and Titan M3 Keystore**
 
 This document covers conversational reasoning, speech audio transcription, multimodal camera scene inspection, and hardware-secured API key management.
 
@@ -8,7 +8,7 @@ This document covers conversational reasoning, speech audio transcription, multi
 ## 📑 Module Index
 
 * [`useGemini`](#usegemini) - Multi-Turn Conversational Reasoning & Streaming
-* [`useSpeechAI`](#usespeechai) - Quad-Mic Speech-to-Text Transcription Pipeline
+* [`useSpeechAI`](#usespeechai) - Microphone recording & Gemini transcription
 * [`useVisionAI`](#usevisionai) - Multimodal Camera Scene & Document Analysis
 * [`geminiClient`](#geminiclient) - Titan M3 Encrypted Credential Management
 

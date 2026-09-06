@@ -1,5 +1,5 @@
 # Sensors & Physical Actuators API Reference 📡
-> **6-Axis IMU & Barometer, Camera Looks & 120x Zoom, Dual-LED Torch, and Linear Resonant Actuator Haptics**
+> **6-Axis IMU & Barometer, Camera Zoom & Looks, Torch, and Linear Resonant Actuator Haptics**
 
 This document covers physical sensors and mechanical actuation modules on the Pixel 11 Pro.
 
@@ -8,7 +8,7 @@ This document covers physical sensors and mechanical actuation modules on the Pi
 ## 📑 Module Index
 
 * [`useSensors`](#usesensors) - 6-Axis IMU, Barometer, Compass, and Ambient Light
-* [`useCamera`](#usecamera) - Camera Looks, 120x Super Res AI Zoom & Ultra Low Light Video
+* [`useCamera`](#usecamera) - expo-camera zoom, flash, lens and Camera Look state
 * [`useTorch`](#usetorch) - Hardware Dual-LED Torch & SOS Optical Strobe
 * [`useHaptics`](#usehaptics) - Linear Resonant Actuator (LRA) Mechanical Tactile Feedback
 
@@ -58,7 +58,7 @@ export function AltitudeHUD() {
 
 ## `useCamera`
 
-Controls the Pixel 11 Pro triple optical camera array (50MP Wide + 48MP Ultrawide + 48MP Periscope Telephoto). Supports **Camera Looks** live tone-mapping styles, up to **120x Generative AI Super Res Zoom**, and **On-Device Ultra Low Light Video** (5–10 lux candlelight mode).
+Wraps expo-camera lens, zoom, flash and permission state. **Camera Looks**, Super Res Zoom and low-light video modes belong to the Pixel Camera app and are not reachable from third-party apps; the hook keeps a Look label and a low-light flag as UI state only.
 
 ### Signature
 ```typescript
@@ -93,12 +93,12 @@ import { View } from 'react-native';
 import { useCamera, HapticButton } from './src';
 
 export function ProCameraControls() {
-  const { zoomFactor, setZoom, selectedLook, setLook } = useCamera();
+  const { zoomFactor, maxZoomFactor, setZoom, selectedLook, setLook } = useCamera();
 
   return (
     <View>
       <HapticButton title="5x Optical Telephoto" onPress={() => setZoom(5.0)} />
-      <HapticButton title="120x AI Super Res Zoom" onPress={() => setZoom(120.0)} />
+      <HapticButton title="Max zoom" onPress={() => setZoom(maxZoomFactor)} />
       <HapticButton title={`Look: ${selectedLook}`} onPress={() => setLook('Velvet')} />
     </View>
   );

@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Pressable } from 'react-native';
+import { StyleSheet, View, Text, Pressable, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from '@expo-google-fonts/geist';
 import { GeistMono_400Regular, GeistMono_500Medium, GeistMono_600SemiBold } from '@expo-google-fonts/geist-mono';
@@ -91,7 +91,16 @@ export default function App() {
   });
   return (
     <SafeAreaProvider>
-      <Shell />
+      {Platform.OS === 'web' ? (
+        // On the web the app keeps its phone proportions: a centred column on the same field.
+        <View style={styles.webField}>
+          <View style={styles.webColumn}>
+            <Shell />
+          </View>
+        </View>
+      ) : (
+        <Shell />
+      )}
     </SafeAreaProvider>
   );
 }
@@ -100,6 +109,20 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.dark.background,
+  },
+  webField: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#0A0C12',
+  },
+  webColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 520,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    overflow: 'hidden',
   },
   topBar: {
     flexDirection: 'row',

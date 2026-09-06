@@ -24,7 +24,7 @@ This document is the consolidated reference for every hook in the PixelForge SDK
    - [useVisionAI](#usevisionai) (Multimodal Scene Inspection)
 5. [Sensors & Physical Actuators](#sensors--physical-actuators)
    - [useSensors](#usesensors) (6-Axis IMU & Barometer)
-   - [useCamera](#usecamera) (Camera Looks & 120x AI Zoom)
+   - [useCamera](#usecamera) (expo-camera zoom, flash, lens)
    - [useTorch](#usetorch) (Dual-LED Flashlight & Strobe)
    - [useHaptics](#usehaptics) (Linear Resonant Actuator)
 6. [Radios & Hardware Security](#radios--hardware-security)
@@ -207,7 +207,7 @@ availability: 'hardware' | 'estimated';
 ### `useUWB`
 * **File Path**: `src/hardware/useUWB.ts`
 * **Target Hardware**: Ultra-Wideband (UWB) Spatial Radar Transceiver.
-* **Description**: Performs centimeter-precision spatial distance ranging and Angle-of-Arrival (AoA) azimuth/elevation tracking for spatial anchors and smart devices.
+* **Description**: Distance, azimuth and elevation to UWB targets. The radio is verified by `useCapabilities`; ranging is simulated until the RangingManager path lands.
 
 ---
 
@@ -215,14 +215,14 @@ availability: 'hardware' | 'estimated';
 
 ### `useGemini`
 * **File Path**: `src/ai/useGemini.ts`
-* **Target Hardware**: Google Gen AI SDK (`@google/genai`) configured for Gemini 2.5 Flash / Gemini Nano.
-* **Description**: Manages multi-turn conversations, token generation metrics, streaming thoughts, tool calls, and offline simulation fallback. Automatically pairs with `useHiLight` for visual feedback.
+* **Target Hardware**: Google Gen AI SDK (`@google/genai`) configured for gemini-3.8-flash.
+* **Description**: Multi-turn chat over `ai.chats`, API token counts and latency. There is no simulated fallback; without a key every call rejects.
 
 ---
 
 ### `useSpeechAI`
 * **File Path**: `src/ai/useSpeechAI.ts`
-* **Target Hardware**: Multi-Mic Acoustic Beamforming Array + Speech-to-Text Pipeline.
+* **Target Hardware**: Microphone (VOICE_RECOGNITION source, 16 kHz mono) + Gemini audio transcription.
 * **Description**: Records voice audio with real-time decibel metering, submits speech packets to AI models, and returns transcribed tokens.
 
 ---
@@ -246,7 +246,7 @@ availability: 'hardware' | 'estimated';
 ### `useCamera`
 * **File Path**: `src/hardware/useCamera.ts`
 * **Target Hardware**: Triple Camera Array (50MP Wide, 48MP Ultrawide, 48MP Periscope Telephoto).
-* **Description**: Controls CameraX lifecycle, active lens switching, up to **120x Generative AI Super Res Zoom**, **Camera Looks** tone mapping presets (*Original, Natural, Shadows, Vanilla, Editorial, Velvet, Classic, Digi, Black Tie, Minimal*), and **On-Device Ultra Low Light Video** mode (5-10 lux candlelight).
+* **Description**: expo-camera lens switching, zoom, flash and permission state. Camera Looks (*Original, Natural, Shadows, Vanilla, Editorial, Velvet, Classic, Digi, Black Tie, Minimal*), Super Res Zoom and low-light video are Pixel Camera app features; the hook holds a Look label and low-light flag as UI state only.
 
 #### Interface
 ```typescript

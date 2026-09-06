@@ -82,12 +82,12 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **Tensor TPU** | `useTPU()` | `activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec` | Benchmark local neural inference |
 | **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
 | **HiLight LED Ring**| `useHiLight()` | `isActive, mode, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear camera bar status ring |
-| **UWB Radar** | `useUWB()` | `activeTargets, isRanging, startRanging()` | [Pixel Pro] Centimeter spatial distance & AoA |
-| **Camera & Looks** | `useCamera()` | `zoomFactor (up to 120x), selectedLook, setLook(), toggleUltraLowLightVideo()` | Sensor-level tone mapping & 120x AI Zoom |
+| **UWB Radar** | `useUWB()` | `activeTargets, isRanging, startRanging()` | [Pixel Pro] Distance & AoA (ranging simulated until RangingManager) |
+| **Camera & Looks** | `useCamera()` | `zoomFactor, maxZoomFactor, selectedLook, setLook()` | expo-camera zoom; Camera Looks are UI state only |
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
 | **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, stopListeningAndTranscribe()` | Voice speech-to-text token transcription |
 | **Vision AI** | `useVisionAI()` | `captureAndAnalyze(cameraRef), analysis` | Multimodal camera inspection |
-| **Conversational** | `useGemini()` | `messages, isLoading, sendMessage(prompt)` | Gemini 2.5 Flash reasoning stream |
+| **Conversational** | `useGemini()` | `messages, isLoading, sendMessage(prompt)` | gemini-3.8-flash chat via ai.chats |
 | **Bluetooth LE** | `useBLE()` | `peripherals, isScanning, startScan()` | Nearby beacon & tracker discovery |
 | **NFC Radio** | `useNFC()` | `lastScannedTag, isScanning, startScan()` | Contactless smart tags / RFID |
 | **Flashlight** | `useTorch()` | `isTorchOn, toggleTorch(), startStrobe()` | Dual-LED torch & SOS strobe |
@@ -109,7 +109,7 @@ Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useHiLight, useSensors, useGemini, useHaptics, useCamera).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
 3. When running Gemini AI, trigger the rear HiLight ring via useHiLight().triggerGeminiPulse() for face-down visual signaling.
-4. Support Camera Looks tone mapping presets and up to 120x Generative AI Zoom via useCamera().
+4. Treat Camera Looks and Super Res Zoom as Pixel Camera app features; useCamera() exposes expo-camera zoom and a Look label only.
 5. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
 6. Use true OLED black (#0E1119) for backgrounds via Colors.dark.background.
 7. Store sensitive keys exclusively through useSecurity().saveSecureItem() (SecureStore, Android Keystore).
@@ -151,7 +151,7 @@ export function SmartAssistant() {
 }
 ```
 
-### Recipe 2: Camera Looks & 120x Super Res AI Zoom
+### Recipe 2: Camera Looks & Zoom
 ```tsx
 import React from 'react';
 import { View } from 'react-native';
@@ -172,10 +172,10 @@ export function ProPhotoView() {
         variant="outline"
       />
       <HapticButton
-        title="120x Generative AI Zoom"
+        title="Max zoom"
         onPress={() => {
           selection();
-          camera.setZoom(120.0);
+          camera.setZoom(camera.maxZoomFactor);
         }}
         variant="primary"
       />
