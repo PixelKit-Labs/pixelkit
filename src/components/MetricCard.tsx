@@ -1,15 +1,14 @@
 /**
  * @file MetricCard.tsx
- * @description Card component for displaying hardware telemetry, silicon metrics, and status badges.
- * Built with dark-mode OLED borders, tabular numerals for jump-free real-time rendering, a
- * wrap-safe header (long badges drop below the title instead of overlapping it), and an optional
- * provenance tag so every number says whether it came from hardware, was derived, is simulated,
- * or is unavailable.
+ * @description Glass telemetry card: hairline border, faint top sheen, small-caps title, chip badge,
+ * large tabular value, optional provenance tag (HW / DERIVED / SIMULATED / N/A). The header wraps so
+ * long badges drop under the title instead of overlapping it.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, Gradients, Radius, Type } from '../theme/colors';
 import type { TelemetrySource } from '../core/observability';
 
 /**
@@ -32,6 +31,8 @@ export interface MetricCardProps {
   icon?: React.ReactNode;
   /** Telemetry provenance; renders a small tag in the footer */
   source?: TelemetrySource;
+  /** Larger value typography for hero metrics */
+  emphasis?: boolean;
 }
 
 const SOURCE_STYLE: Record<TelemetrySource, { label: string; color: string }> = {
@@ -58,25 +59,29 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   badgeColor = Colors.dark.primary,
   icon,
   source,
+  emphasis = false,
 }) => {
   const display = value === null || value === undefined ? '—' : value;
   const src = source ? SOURCE_STYLE[source] : null;
+  const isLongText = typeof display === 'string' && display.length > 18;
   return (
     <View style={styles.card}>
+      <LinearGradient colors={[...Gradients.card]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      <View style={styles.sheen} pointerEvents="none" />
       <View style={styles.header}>
         <View style={styles.titleRow}>
           {icon}
           <Text style={[styles.title, { marginLeft: icon ? 6 : 0 }]} numberOfLines={2}>{title}</Text>
         </View>
         {badge && (
-          <View style={[styles.badge, { backgroundColor: `${badgeColor}25`, borderColor: badgeColor }]}>
+          <View style={[styles.badge, { backgroundColor: `${badgeColor}1F`, borderColor: `${badgeColor}55` }]}>
             <Text style={[styles.badgeText, { color: badgeColor }]} numberOfLines={1}>{badge}</Text>
           </View>
         )}
       </View>
 
       <View style={styles.valueRow}>
-        <Text style={styles.value}>{display}</Text>
+        <Text style={[styles.value, emphasis && styles.valueEmphasis, isLongText && styles.valueText]}>{display}</Text>
         {unit && display !== '—' && <Text style={styles.unit}>{unit}</Text>}
       </View>
 
@@ -95,18 +100,27 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.dark.card,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.dark.cardBorder,
     padding: 16,
     marginBottom: 12,
+    overflow: 'hidden',
+  },
+  sheen: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.10)',
   },
   header: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
     gap: 6,
   },
   titleRow: {
@@ -116,52 +130,55 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
+    ...Type.label,
     color: Colors.dark.textMuted,
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
     flexShrink: 1,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: Radius.pill,
     borderWidth: 1,
     maxWidth: '100%',
   },
   badgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    ...Type.micro,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    flexWrap: 'wrap',
   },
   value: {
+    ...Type.value,
     color: Colors.dark.text,
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.5,
     fontVariant: ['tabular-nums'],
+  },
+  valueEmphasis: {
+    fontSize: 40,
+    letterSpacing: -1.2,
+  },
+  valueText: {
+    fontSize: 17,
+    lineHeight: 23,
+    letterSpacing: -0.2,
+    fontWeight: '600',
   },
   unit: {
     color: Colors.dark.textMuted,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     marginLeft: 6,
   },
   subtitle: {
+    ...Type.caption,
     color: Colors.dark.textMuted,
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 17,
+    marginTop: 6,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
   sourceDot: {
     width: 6,
@@ -171,7 +188,7 @@ const styles = StyleSheet.create({
   },
   sourceText: {
     fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
 });

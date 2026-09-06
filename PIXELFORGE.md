@@ -130,33 +130,33 @@ import {
 
 ---
 
-### 1. `useCPU()` — Multi-Core Cluster Telemetry
-Inspects the Google Tensor CPU cluster (Prime, Performance, and Efficiency cores) and runs multi-threaded compute factorization benchmarks:
+> **No mocks rule.** Every hook reads real device state through Expo modules or the local `PixelNative` module (`modules/pixel-native`). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). The only remaining simulations are NFC, BLE, UWB and HiLight, and they are labelled `simulated` in every surface.
+
+### 1. `useCPU()` — Real CPU topology and load
+`/proc/cpuinfo` part ids and cpufreq sysfs via PixelNative. On Pixel 11 Pro: `1x Arm C1-Ultra @ 4.11 GHz + 4x Arm C1-Pro @ 3.38 GHz + 2x Arm C1-Pro @ 2.65 GHz`, governor `sched_pixel`.
 ```typescript
-const { coreTopology, coreCount, cpuLoadPercent, benchmarkCPU } = useCPU();
-const durationMs = await benchmarkCPU();
-console.log(`Factorization benchmark completed in ${durationMs}ms`);
+const { coreTopology, cpuLoadPercent, appCpuPercent, cores, benchmarkCPU } = useCPU();
+// cpuLoadPercent = cluster frequency utilisation (HW); appCpuPercent = this process (DERIVED); null until read
+const ms = await benchmarkCPU(); // real JS single-thread prime sieve
 ```
 
 ---
 
-### 2. `useGPU()` — Vulkan Graphics & 120 FPS Pacing
-Monitors frame render times against the **8.33ms (120 FPS)** budget:
+### 2. `useGPU()` — GPU identity and Choreographer frame pacing
 ```typescript
-const { gpuRenderer, frameRenderTimeMs, droppedFrameCount, isStuttering } = useGPU();
-if (isStuttering) {
-  console.warn(`Frame render took ${frameRenderTimeMs}ms (exceeds 8.33ms budget)`);
-}
+const { gpuRenderer, measuredFps, frameRenderTimeMs, targetBudgetMs, isStuttering } = useGPU();
+// gpuRenderer on Pixel 11 Pro: "ANGLE (Imagination Technologies, Vulkan 1.4.317 (PowerVR C-Series CXTP-48-1536 MC1)…"
+if (isStuttering) console.warn(`avg frame ${frameRenderTimeMs} ms exceeds ${targetBudgetMs} ms`);
 ```
 
 ---
 
-### 3. `useTPU()` — Google Tensor Neural Processing Unit
-Direct hardware acceleration for on-device machine learning:
+### 3. `useTPU()` — On-device AI stack detection
+The TPU is reachable only through AICore (Gemini Nano via ML Kit) or LiteRT. Inference metrics are `null` until the `pixel-nano` module lands.
 ```typescript
-const { activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec, benchmarkTPU } = useTPU();
-await benchmarkTPU();
-console.log(`TPU Latency: ${lastInferenceLatencyMs} ms (${throughputTokensPerSec} tokens/sec)`);
+const { aicoreInstalled, aicoreVersion, hasNpuFeature, benchmarkTPU } = useTPU();
+// Pixel 11 Pro: AICore 0.release.prod_aicore_20260723.00_RC11
+const r = await benchmarkTPU(); // real JS matmul, r.activeDelegate === 'CPU Fallback'
 ```
 
 ---

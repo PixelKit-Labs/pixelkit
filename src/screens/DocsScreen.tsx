@@ -39,56 +39,61 @@ const DOC_MODULES: DocModule[] = [
     id: 'useCPU',
     name: 'useCPU',
     category: 'silicon',
-    chipBadge: 'Tensor G6 (7-Core 2nm)',
-    badgeColor: '#8AB4F8',
-    summary: 'Monitors Tensor G6 Malibu 7-core cluster (1x C1-Ultra @ 4.11GHz, 4x C-1 Pro, 2x C-1 Pro) on TSMC 2nm.',
-    description: 'Queries the custom Tensor G6 multi-core CPU architecture fabricated on TSMC 2nm (N2). Provides dynamic clock frequency estimates, real-time load estimation, and a multi-threaded compute benchmark.',
+    chipBadge: 'Tensor G6 · /proc/cpuinfo + cpufreq',
+    badgeColor: '#B794FF',
+    summary: 'Real 7-core topology (1x C1-Ultra 4.11 GHz + 4x C1-Pro 3.38 GHz + 2x C1-Pro 2.65 GHz), per-core MHz, governor, and load.',
+    description: 'Reads core part ids from /proc/cpuinfo and frequencies from cpufreq sysfs through the PixelNative module. cpuLoadPercent is cluster frequency utilisation (HW); appCpuPercent is this process\'s CPU share (DERIVED). Android hides system /proc/stat, so no system load is invented. benchmarkCPU runs a real JS prime sieve.',
     signature: 'useCPU(): CPUState',
     returns: [
-      'coreTopology: string',
-      'coreCount: number (7 cores)',
-      'cpuLoadPercent: number',
-      'nodeProcess: "TSMC 2nm (N2)"',
-      'isBenchmarking: boolean',
-      'benchmarkCPU(iterations?: number): Promise<number>',
+      'coreTopology: string  // built from real clusters',
+      'coreCount: number',
+      'cpuLoadPercent: number | null  // HW',
+      'appCpuPercent: number | null   // DERIVED',
+      'cores: { index, name, curMHz, maxMHz }[]',
+      'governorMode: string  // e.g. "sched_pixel"',
+      'benchmarkCPU(): Promise<number>',
+      "source: 'hardware' | 'unavailable'",
     ],
     example: `import { useCPU } from './src';
 
 function CPUWidget() {
-  const { coreCount, cpuLoadPercent, nodeProcess, benchmarkCPU } = useCPU();
+  const { coreTopology, cpuLoadPercent, cores, benchmarkCPU } = useCPU();
   return (
     <View>
-      <Text>Tensor G6 ({nodeProcess}): {coreCount} Cores (Load: {cpuLoadPercent}%)</Text>
-      <Button title="Benchmark" onPress={() => benchmarkCPU(100000)} />
+      <Text>{coreTopology}</Text>
+      <Text>{cpuLoadPercent ?? '—'}% · {cores.map(c => c.curMHz).join('/')} MHz</Text>
+      <Button title="JS benchmark" onPress={() => benchmarkCPU()} />
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Tensor G6 features an asymmetrical 7-core design optimized for thermal headroom. Heavy tasks run on the 4.11GHz C1-Ultra.',
+    aiTip: 'AI Tip: Values are null until the PixelNative module answers; never substitute a default number. cpuLoadPercent is frequency utilisation, not scheduler load.',
   },
   {
     id: 'useGPU',
     name: 'useGPU',
     category: 'silicon',
-    chipBadge: 'Mali-G715 / Immortalis',
-    badgeColor: '#8AB4F8',
-    summary: 'Tracks 120Hz LTPO frame pacing, dropped frames, and GPU memory usage against 8.33ms budget.',
-    description: 'Hooks into the graphics pipeline to monitor frame rendering times against the 8.33ms budget for 120 FPS. Detects stutter conditions and visual hitching.',
+    chipBadge: 'PowerVR CXTP-48-1536 · Vulkan 1.4',
+    badgeColor: '#B794FF',
+    summary: 'GPU identity from EGL and real Choreographer frame pacing (presented FPS, avg/max frame interval, jank).',
+    description: 'GL_RENDERER/GL_VENDOR/GL_VERSION are read through an offscreen EGL context and the Vulkan version from the system feature. Frame timing is measured on the UI thread with Choreographer in 1 s windows. GPU memory is not exposed by Android and is null.',
     signature: 'useGPU(): GPUState',
     returns: [
-      'api: "Vulkan 1.3"',
-      'targetFPS: 120',
-      'frameBudgetMs: 8.33',
-      'frameRenderTimeMs: number',
-      'droppedFrameCount: number',
+      'gpuRenderer: string | null',
+      'graphicsApi: string | null',
+      'frameRenderTimeMs: number | null  // avg interval, last 1 s',
+      'measuredFps: number | null',
+      'droppedFrameCount: number  // cumulative jank',
+      'targetBudgetMs: number  // 8.33 @ 120 Hz',
       'isStuttering: boolean',
+      'gpuMemoryUsageMB: null',
     ],
     example: `import { useGPU } from './src';
 
 function GPUHUD() {
-  const { frameRenderTimeMs, isStuttering } = useGPU();
+  const { frameRenderTimeMs, measuredFps, targetBudgetMs, isStuttering } = useGPU();
   return (
-    <Text style={{ color: isStuttering ? '#F28B82' : '#81C995' }}>
-      Render: {frameRenderTimeMs.toFixed(2)} ms / 8.33 ms
+    <Text style={{ color: isStuttering ? '#FF8FA3' : '#7CE3A6' }}>
+      {measuredFps ?? '—'} FPS · {frameRenderTimeMs ?? '—'} ms / {targetBudgetMs} ms
     </Text>
   );
 }`,
@@ -98,46 +103,50 @@ function GPUHUD() {
     id: 'useTPU',
     name: 'useTPU',
     category: 'silicon',
-    chipBadge: 'Google Tensor TPU',
+    chipBadge: 'AICore · Gemini Nano host',
     badgeColor: Colors.dark.tensorGlow,
-    summary: 'Hardware neural acceleration delegate tracking and local token inference benchmarking.',
-    description: 'Tracks whether neural workloads run via NNAPI_TPU, LiteRT_XNNPACK, or GPU_FALLBACK. Measures inference latency and calculates token throughput.',
+    summary: 'Detects the on-device AI stack (AICore, Private Compute Services, NPU flag). Inference metrics are null until Gemini Nano is wired.',
+    description: 'The TPU is only reachable through AICore (ML Kit GenAI) or LiteRT, so this hook reports what is verifiably installed and refuses to invent latency numbers. benchmarkTPU() runs a real 256×256 JS matmul and reports it as CPU Fallback.',
     signature: 'useTPU(): TPUState',
     returns: [
-      'activeDelegate: string',
-      'lastInferenceLatencyMs: number',
-      'throughputTokensPerSec: number',
-      'benchmarkTPU(): Promise<void>',
+      'aicoreInstalled: boolean',
+      'aicoreVersion: string | null',
+      'privateComputeServicesVersion: string | null',
+      'hasNpuFeature: boolean | null',
+      'lastInferenceLatencyMs: number | null  // null until pixel-nano',
+      'cpuFallbackLatencyMs: number | null',
+      'benchmarkTPU(): Promise<TPUAcceleration>',
     ],
     example: `import { useTPU } from './src';
 
-function TPUWidget() {
-  const { activeDelegate, throughputTokensPerSec, benchmarkTPU } = useTPU();
+function AIStack() {
+  const { aicoreInstalled, aicoreVersion, cpuFallbackLatencyMs, benchmarkTPU } = useTPU();
   return (
     <View>
-      <Text>Delegate: {activeDelegate}</Text>
-      <Text>Speed: {throughputTokensPerSec} tokens/sec</Text>
-      <Button title="Test TPU" onPress={benchmarkTPU} />
+      <Text>AICore: {aicoreInstalled ? aicoreVersion : 'not installed'}</Text>
+      <Text>CPU matmul: {cpuFallbackLatencyMs ?? '—'} ms</Text>
+      <Button title="CPU fallback benchmark" onPress={() => benchmarkTPU()} />
     </View>
   );
 }`,
-    aiTip: 'AI Tip: Use useTPU to verify hardware acceleration before launching multi-turn AI loops.',
+    aiTip: 'AI Tip: Check aicoreInstalled before offering on-device AI. Do not present cpuFallbackLatencyMs as TPU performance.',
   },
   {
     id: 'useMemory',
     name: 'useMemory',
     category: 'silicon',
-    chipBadge: '16GB LPDDR5X RAM',
-    badgeColor: '#8AB4F8',
-    summary: 'Monitors unified system RAM, free memory thresholds, and triggers cache purging.',
-    description: 'Provides live telemetry of LPDDR5X physical RAM usage, free memory headroom, and Low Memory Killer (LMK) protection status.',
+    chipBadge: 'ActivityManager · 12 GB LPDDR5X',
+    badgeColor: '#B794FF',
+    summary: 'Real system RAM (total/available/LMK threshold), this app\'s Java and native heaps, and a GC request.',
+    description: 'ActivityManager.getMemoryInfo polled every 2 s plus Runtime and Debug heap readings. purgeCaches() requests a garbage collection and re-reads; it never pretends to free system RAM.',
     signature: 'useMemory(): MemoryState',
     returns: [
-      'totalRAMMB: number',
-      'usedRAMMB: number',
-      'freeRAMMB: number',
-      'isLowMemory: boolean',
-      'purgeCaches(): Promise<void>',
+      'totalRAMMB / usedRAMMB / freeRAMMB: number',
+      'isLowMemory: boolean  // kernel flag',
+      'lowMemoryThresholdMB: number',
+      'appJavaHeapMB / appJavaHeapMaxMB / appNativeHeapMB: number',
+      'purgeCaches(): void',
+      "source: 'hardware' | 'unavailable'",
     ],
     example: `import { useMemory } from './src';
 
@@ -156,22 +165,25 @@ function MemoryHUD() {
     id: 'useADPF',
     name: 'useADPF',
     category: 'silicon',
-    chipBadge: 'ADPF Kernel Subsystem',
-    badgeColor: '#FDD663',
-    summary: 'Android Dynamic Performance Framework thermal headroom and CPU/GPU power budgeting.',
-    description: 'Directly queries the Android thermal subsystem to get normalized thermal headroom (0.0 to 1.0) and thermal status warnings.',
+    chipBadge: 'PowerManager · SystemHealth',
+    badgeColor: '#F7C66A',
+    summary: 'Real thermal headroom (10 s poll), live thermal status, Android 16+ CPU/GPU headroom, display target FPS and measured FPS.',
+    description: 'PowerManager.getThermalHeadroom (0 cool → 1 throttling) and its thresholds, a thermal status listener, SystemHealthManager CPU/GPU headroom when the device reports it, and Choreographer FPS against the display mode.',
     signature: 'useADPF(): ADPFState',
     returns: [
-      'thermalStatus: ThermalStatus',
-      'thermalHeadroom: number',
-      'powerEfficiencyMode: boolean',
+      'thermalHeadroom: number | null',
+      'thermalThresholds: Record<string, number> | null',
+      "thermalStatus: 'nominal' | 'light' | 'moderate' | 'severe' | 'critical'",
+      'cpuHeadroom / gpuHeadroom: number | null  // Android 16+',
+      'targetFps / currentFps: number | null',
+      "reportWorkDuration(ms): 'WITHIN_BUDGET' | 'BOOST_REQUESTED'",
     ],
     example: `import { useADPF } from './src';
 
 function ThermalMonitor() {
-  const { thermalStatus, thermalHeadroom } = useADPF();
+  const { thermalStatus, thermalHeadroom, currentFps, targetFps } = useADPF();
   return (
-    <Text>Thermals: {thermalStatus} (Headroom: {(thermalHeadroom * 100).toFixed(0)}%)</Text>
+    <Text>{thermalStatus} · headroom {thermalHeadroom ?? '—'} · {currentFps ?? '—'}/{targetFps ?? '—'} FPS</Text>
   );
 }`,
     aiTip: 'AI Tip: If thermalStatus is "severe" or "critical", throttle sensor sampling and postpone background inference.',
@@ -402,18 +414,18 @@ function SensorHUD() {
     id: 'useHaptics',
     name: 'useHaptics',
     category: 'sensors',
-    chipBadge: 'Linear Resonant Actuator',
-    badgeColor: '#81C995',
-    summary: 'Precision mechanical haptic feedback matching Pixel tactile click profiles.',
-    description: 'Directly drives the Pixel Linear Resonant Actuator (LRA) to produce tactile pulses: selection tick, light tap, medium click, heavy thud, success double-pulse, and error buzz.',
+    chipBadge: 'LRA 134.4 Hz · PWLE v2 envelopes',
+    badgeColor: '#7CE3A6',
+    summary: 'Pixel tactile patterns plus Android 16 envelope effects and primitive compositions with the vibrator\'s real capabilities.',
+    description: 'Standard patterns via expo-haptics. Through PixelNative: resonant frequency, amplitude control, supported primitives, playEnvelope() (BasicEnvelopeBuilder, Android 16+) and playPrimitives() (Composition). Presets in HapticEnvelopes: thinkingRamp, doublePulse, spring.',
     signature: 'useHaptics(): HapticsState',
     returns: [
-      'selection(): Promise<void>',
-      'light(): Promise<void>',
-      'medium(): Promise<void>',
-      'heavy(): Promise<void>',
-      'success(): Promise<void>',
-      'error(): Promise<void>',
+      'selection | light | medium | heavy | success | warning | error(): Promise<void>',
+      'playEnvelope(points, initialSharpness?): boolean  // Android 16+',
+      'playPrimitives(steps): boolean',
+      'envelopeSupported: boolean',
+      'resonantFrequencyHz: number | null',
+      'supportedPrimitives: string[]',
     ],
     example: `import { useHaptics } from './src';
 
@@ -463,17 +475,20 @@ function CameraControl() {
     id: 'useTorch',
     name: 'useTorch',
     category: 'sensors',
-    chipBadge: 'Dual-LED Flashlight',
-    badgeColor: '#81C995',
-    summary: 'Hardware flashlight toggle and rhythmic optical SOS emergency strobe.',
-    description: 'Directly controls the rear camera bar dual-LED flashlight. Includes an emergency SOS strobe function that pulses optical signals.',
+    chipBadge: 'CameraManager · 21 levels',
+    badgeColor: '#7CE3A6',
+    summary: 'Real rear flash control via CameraManager.setTorchMode with Android 13+ variable brightness; state follows the system torch callback.',
+    description: 'Drives the rear camera flash through the PixelNative module. isTorchOn mirrors CameraManager.TorchCallback so Quick Settings changes are reflected. Pixel 11 Pro exposes 21 strength levels. Strobe toggles the hardware at ≥120 ms.',
     signature: 'useTorch(): TorchState',
     returns: [
-      'isTorchOn: boolean',
-      'isStrobeActive: boolean',
-      'toggleTorch(): Promise<void>',
-      'startStrobe(): Promise<void>',
-      'stopStrobe(): void',
+      'isAvailable: boolean',
+      'isTorchOn: boolean  // from system callback',
+      'isStrobing: boolean',
+      'maxStrengthLevel: number | null',
+      'setTorch(on, strengthLevel?): Promise<boolean>',
+      'toggleTorch(): Promise<boolean>',
+      'startStrobe(intervalMs?): void / stopStrobe(): void',
+      "source: 'hardware' | 'unavailable'",
     ],
     example: `import { useTorch } from './src';
 
@@ -687,16 +702,20 @@ function SoundMeter() {
     id: 'useDisplay',
     name: 'useDisplay',
     category: 'system',
-    chipBadge: '1-120Hz LTPO Super Actua',
+    chipBadge: '1-120 Hz ARR · HDR10/HLG/HDR10+',
     badgeColor: '#E3E2E6',
-    summary: 'Display wake-lock management and screen brightness control.',
-    description: 'Prevents the display from sleeping during active AI generation or telemetry viewing, and sets screen brightness.',
+    summary: 'Real display mode: live refresh rate, supported rates, resolution, HDR, ARR support, preferred-rate control, wake lock and brightness.',
+    description: 'Reads android.view.Display every 2 s (ARR changes the rate live) through PixelNative. setPreferredRefreshRate() sets the window preferred rate, verified in dumpsys display as a frameRateOverride for this uid.',
     signature: 'useDisplay(): DisplayState',
     returns: [
-      'isKeepAwake: boolean',
-      'brightness: number',
-      'toggleKeepAwake(): Promise<void>',
-      'setBrightness(val: number): Promise<void>',
+      'refreshRateHz: number  // active mode',
+      'hasArrSupport: boolean | null',
+      'supportedRefreshRates: number[]',
+      'resolution: { width, height, densityDpi } | null',
+      'hdrTypes: number[] / isHdr / maxLuminance',
+      'setPreferredRefreshRate(hz): Promise<boolean>',
+      'isKeepAwake / toggleKeepAwake()',
+      'brightness / setScreenBrightness(v)',
     ],
     example: `import { useDisplay } from './src';
 
@@ -795,7 +814,7 @@ Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useSensors, useGemini, useHaptics).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
 3. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
-4. Use true OLED black (#0B0D11) for backgrounds via Colors.dark.background.
+4. Use true OLED black (#07060E) for backgrounds via Colors.dark.background.
 5. Store sensitive keys exclusively in the Titan M3 enclave using useSecurity().saveSecureItem().
 6. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).`;
 
@@ -1036,7 +1055,7 @@ Always adhere to these requirements:
             </Text>
             <Text style={styles.ruleItem}>
               <Text style={styles.ruleNum}>4. True OLED Black: </Text>
-              Style backgrounds with <Text style={styles.codeInline}>#0B0D11</Text> to turn off pixels.
+              Style backgrounds with <Text style={styles.codeInline}>#07060E</Text> to turn off pixels.
             </Text>
             <Text style={styles.ruleItem}>
               <Text style={styles.ruleNum}>5. Titan M3 Enclave: </Text>
@@ -1170,7 +1189,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: 16,
@@ -1194,7 +1213,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   toastText: {
-    color: '#0B0D11',
+    color: '#07060E',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',

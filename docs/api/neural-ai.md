@@ -16,28 +16,28 @@ This document covers conversational reasoning, speech audio transcription, multi
 
 ## `useGemini`
 
-Official Google Gen AI SDK integration (`@google/genai`) configured for Gemini 2.5 Flash with fallback simulation and hardware-backed API key resolution.
+Official Google Gen AI SDK integration (`@google/genai` 2.21) on **`gemini-3.8-flash`** (`GEMINI_MODEL` in `geminiClient.ts`) with real multi-turn history via `ai.chats.create()` and a system instruction. **There is no simulated fallback**: without an API key, `sendMessage` appends a `system`-role message containing `NO_API_KEY_MESSAGE` and logs `sendMessage without key`. Token counts come from the API's `usageMetadata`.
 
 ### Signature
 ```typescript
 function useGemini(): {
-  messages: AIMessage[];
+  messages: AIMessage[];                 // role 'system' entries are local errors, not model output
   isLoading: boolean;
-  error: string | null;
-  sendMessage: (prompt: string) => Promise<string>;
-  clearHistory: () => void;
-  apiKey: string | null;
-  setApiKey: (key: string) => Promise<void>;
+  sendMessage: (prompt: string) => Promise<void>;
+  clearMessages: () => void;             // also resets the chat session
+  hasApiKey: boolean;
+  setApiKey: (key: string | null) => void;
+  model: string;                         // 'gemini-3.8-flash'
 };
 ```
 
 ### Properties
 | Property | Type | Description |
 | :--- | :--- | :--- |
-| `messages` | `AIMessage[]` | Multi-turn chat message history |
-| `isLoading` | `boolean` | True while neural reasoning tokens stream |
-| `error` | `string \| null` | API or network error description |
-| `apiKey` | `string \| null` | Masked API key loaded from Titan M3 Keystore |
+| `messages` | `AIMessage[]` | Multi-turn chat history; model replies carry `latencyMs` and API `tokenCount` |
+| `isLoading` | `boolean` | True while a request is in flight |
+| `hasApiKey` | `boolean` | Whether a key is loaded from SecureStore |
+| `model` | `string` | Cloud model id in use |
 
 ### Example
 ```tsx
@@ -75,17 +75,20 @@ export function AssistantChat() {
 
 ## `useSpeechAI`
 
-Acoustic voice recording using the Pixel multi-mic beamforming array with real-time decibel metering and speech-to-text transcription.
+Voice capture through `useAudio` (expo-audio, 16 kHz mono via the `voice_recognition` source, verified in `dumpsys audio` as `src:VOICE_RECOGNITION pack:com.pixelforge.sdk`) and transcription through Gemini audio understanding (`gemini-3.8-flash`). **No simulated transcript**: without a key the recording is kept (`lastRecordingUri`) and `error` is set to `NO_API_KEY_MESSAGE`. On-device streaming recognition (ML Kit GenAI Speech Recognition) is the planned replacement; see `docs/guides/voice.md`.
 
 ### Signature
 ```typescript
 function useSpeechAI(): {
   isListening: boolean;
   isTranscribing: boolean;
-  voiceDecibels: number;
-  lastTranscript: SpeechTranscriptionResult | null;
-  startListening: () => Promise<void>;
+  voiceDecibels: number;                              // dBFS
+  lastTranscript: SpeechTranscriptionResult | null;   // confidence is null (Gemini does not report one)
+  lastRecordingUri: string | null;
+  error: string | null;
+  startListening: () => Promise<boolean>;
   stopListeningAndTranscribe: () => Promise<SpeechTranscriptionResult | null>;
+  model: string;
 };
 ```
 
@@ -134,25 +137,27 @@ export function VoiceCommander() {
 
 ## `useVisionAI`
 
-Takes raw photo buffers from the camera or photo picker and routes multimodal prompts directly to Gemini Vision.
+Captures a photo (camera or gallery via expo-image-picker) and sends it to Gemini with a JSON response schema (`responseJsonSchema`), so **the description and labels come from the model**, not from hard-coded strings. Without a key the image is kept and `error` is set; nothing is simulated.
 
 ### Signature
 ```typescript
 function useVisionAI(): {
   isAnalyzing: boolean;
-  analysisResult: VisionAnalysisResult | null;
-  lastImageUri: string | null;
-  captureAndAnalyze: (useCameraSource?: boolean, customPrompt?: string) => Promise<VisionAnalysisResult | null>;
-  clearAnalysis: () => void;
+  analysis: VisionAnalysisResult | null;      // { description, labels[], latencyMs, timestamp }
+  selectedImageUri: string | null;
+  error: string | null;                        // permission, missing key, or API error
+  captureAndAnalyze: (useCamera?: boolean) => Promise<VisionAnalysisResult | null>;
+  model: string;
 };
 ```
 
 ### Properties
 | Property | Type | Description |
 | :--- | :--- | :--- |
-| `isAnalyzing` | `boolean` | True while multimodal vision model runs |
-| `analysisResult` | `VisionAnalysisResult` | Scene description, detected object labels, and latency |
-| `lastImageUri` | `string \| null` | Local file URI of the captured photo |
+| `isAnalyzing` | `boolean` | True while the multimodal request is in flight |
+| `analysis` | `VisionAnalysisResult` | Model-generated description and 1–5 labels, with latency |
+| `selectedImageUri` | `string \| null` | Local file URI of the captured photo |
+| `error` | `string \| null` | Why the last call produced no analysis |
 
 ---
 

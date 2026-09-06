@@ -28,7 +28,8 @@ import { useCapabilities } from '../hardware/useCapabilities';
 import { saveApiKey } from '../ai/geminiClient';
 import { HapticButton } from '../components/HapticButton';
 import { MetricCard } from '../components/MetricCard';
-import { Colors } from '../theme/colors';
+import { Colors, Type } from '../theme/colors';
+import { SectionHeader } from '../components/Decor';
 
 export const AILabScreen: React.FC = () => {
   const gemini = useGemini();
@@ -150,7 +151,7 @@ export const AILabScreen: React.FC = () => {
           </View>
         )}
 
-        <Text style={styles.sectionHeader}>Voice → text (Gemini audio)</Text>
+        <SectionHeader title="Voice → text (Gemini audio)" />
         <View style={styles.card}>
           <Text style={styles.cardDesc}>Records 16 kHz mono through the voice-recognition mic path, then transcribes with {speech.model}.</Text>
           <HapticButton
@@ -169,7 +170,7 @@ export const AILabScreen: React.FC = () => {
           )}
         </View>
 
-        <Text style={styles.sectionHeader}>Vision (Gemini multimodal)</Text>
+        <SectionHeader title="Vision (Gemini multimodal)" />
         <View style={styles.card}>
           <Text style={styles.cardDesc}>Capture or pick a photo; the description and labels come back as structured JSON from the model.</Text>
           <View style={styles.row}>
@@ -197,7 +198,7 @@ export const AILabScreen: React.FC = () => {
           )}
         </View>
 
-        <Text style={styles.sectionHeader}>Conversation</Text>
+        <SectionHeader title="Conversation" />
         <View style={styles.chatContainer}>
           {gemini.messages.length === 0 && (
             <Text style={styles.cardDesc}>Ask something below. Replies are real Gemini responses with API-reported token counts.</Text>
@@ -250,13 +251,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
   content: { padding: 16, paddingBottom: 24 },
   header: { marginBottom: 16 },
-  title: { color: Colors.dark.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  title: { ...Type.title, color: Colors.dark.text },
   subtitle: { color: Colors.dark.textMuted, fontSize: 13, marginTop: 2 },
   row: { flexDirection: 'row' },
-  sectionHeader: {
-    color: Colors.dark.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase',
-    letterSpacing: 1.2, marginTop: 18, marginBottom: 10, marginLeft: 4,
-  },
   keyButton: { marginBottom: 12 },
   keyContainer: {
     backgroundColor: Colors.dark.surface, padding: 16, borderRadius: 16, borderWidth: 1,
@@ -297,7 +294,7 @@ const styles = StyleSheet.create({
   loadingBubble: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.card, padding: 12, borderRadius: 16, alignSelf: 'flex-start' },
   thinkingText: { color: Colors.dark.textMuted, fontSize: 12, marginLeft: 8 },
   inputContainer: {
-    flexDirection: 'row', padding: 12, backgroundColor: Colors.dark.surface, borderTopWidth: 1,
+    flexDirection: 'row', padding: 12, paddingBottom: 96, backgroundColor: Colors.dark.surface, borderTopWidth: 1,
     borderTopColor: Colors.dark.cardBorder, alignItems: 'center',
   },
   textInput: {

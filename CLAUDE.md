@@ -28,7 +28,7 @@ Whenever you make **ANY** changes to this codebase (creating or modifying hooks,
 * **Security**: Titan M3 Security Coprocessor with Post-Quantum Cryptography (PQC)
 * **Camera Bar**: Multi-color "HiLight" glanceable notification & Gemini AI status LED ring (`useHiLight`)
 * **Camera Array**: 50MP Wide + 48MP Ultrawide + 48MP Periscope (120x Generative AI Zoom, Camera Looks, Ultra Low Light Video in 5-10 lux)
-* **Display**: 3,600 nits Super Actua 1-120Hz LTPO OLED (`Colors.dark.background = '#0B0D11'` for true OLED black)
+* **Display**: 3,600 nits Super Actua 1-120Hz LTPO OLED (`Colors.dark.background = '#07060E'` for true OLED black)
 * **Modem**: MediaTek M90 (Wi-Fi 7, 5G Sub-6/mmWave, Satellite SOS)
 * **Charging**: Pixelsnap Qi2.2 25W magnetic wireless charging
 
@@ -50,5 +50,5 @@ Whenever you make **ANY** changes to this codebase (creating or modifying hooks,
 1. **Single Import Rule**: Always import from `./src` (e.g. `import { useCPU, useHiLight, useSensors } from './src'`). Never write raw listeners.
 2. **Physical Sensation Rule**: Trigger `useHaptics` on all touchable elements (`selection`, `light`, `medium`, `heavy`, `success`, `warning`, `error`).
 3. **Thermal & Frame Budget Rule**: Respect 8.33ms 120Hz frame budget. Use `useADPF()` to check thermal headroom before heavy jobs.
-4. **True OLED Black Rule**: Use `#0B0D11` for dark backgrounds to save battery on self-emissive OLED panels.
+4. **True OLED Black Rule**: Use `#07060E` for dark backgrounds to save battery on self-emissive OLED panels.
 5. **Titan M3 Enclave Rule**: Store sensitive keys and tokens exclusively in `useSecurity().saveSecureItem()` which encrypts into the Titan M3 PQC vault.

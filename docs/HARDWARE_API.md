@@ -88,67 +88,61 @@ import {
 
 ## 💻 Silicon & Compute Hooks
 
+> **All silicon hooks read real device state through the `PixelNative` module (`modules/pixel-native`). Values that cannot be read are `null` and every hook exposes `source: TelemetrySource` (`hardware | derived | simulated | unavailable`). See `docs/api/silicon-compute.md` for full signatures.**
+
 ### `useCPU`
 * **File Path**: `src/hardware/useCPU.ts`
-* **Target Hardware**: Google Tensor G6 ("Malibu") 7-Core Asymmetrical Cluster fabricated on **TSMC 2nm (N2)**:
-  * 1x ARM C1-Ultra Prime Core @ 4.11 GHz
-  * 4x ARM C-1 Pro Performance Cores @ 3.38 GHz
-  * 2x ARM C-1 Pro Efficiency Cores @ 2.65 GHz
-* **Description**: Monitors 7-core topology, dynamic frequency scaling, real-time CPU load estimates, and runs multi-threaded prime factorization benchmarks.
+* **Target Hardware**: Google Tensor G6 7-core cluster. Verified on Pixel 11 Pro from `/proc/cpuinfo` + cpufreq: **1x Arm C1-Ultra @ 4.11 GHz + 4x Arm C1-Pro @ 3.38 GHz + 2x Arm C1-Pro @ 2.65 GHz**, governor `sched_pixel`. (Process node is not exposed by the device and is not claimed.)
+* **Description**: Real topology, per-core current/max MHz, kernel governor, cluster frequency utilisation (HW) and this app's CPU share (DERIVED). `benchmarkCPU()` is a real JS single-thread prime sieve.
 
 #### Interface
 ```typescript
-interface CPUTelemetry {
-  coreTopology: string;
-  coreCount: number; // 7 cores
-  cpuLoadPercent: number;
-  governorMode: 'performance' | 'balanced' | 'powersave';
-  lastBenchmarkDurationMs: number;
-  nodeProcess?: string; // "TSMC 2nm (N2)"
-}
+coreTopology: string; coreCount: number;
+cpuLoadPercent: number | null;     // cluster frequency utilisation
+appCpuPercent: number | null;      // process time / wall time
+cores: { index; part; name; curMHz; maxMHz; minMHz }[];
+clusters: { part; name; maxMHz; count }[];
+governorMode: string;              // read-only
+lastBenchmarkDurationMs: number | null; isBenchmarking: boolean;
+benchmarkCPU(): Promise<number>; source: TelemetrySource;
 ```
 
 ---
 
 ### `useGPU`
 * **File Path**: `src/hardware/useGPU.ts`
-* **Target Hardware**: PowerVR / IMG CXTP GPU running Vulkan 1.3 / OpenGL ES 3.2.
-* **Description**: Monitors GPU render pacing against the 120Hz LTPO display target (8.33ms budget). Detects dropped frames, stutter conditions, and estimates GPU memory consumption.
+* **Target Hardware**: Verified via EGL on Pixel 11 Pro: `ANGLE (Imagination Technologies, Vulkan 1.4.317 (PowerVR C-Series CXTP-48-1536 MC1))`, OpenGL ES 3.2.
+* **Description**: Renderer/vendor/GL version from an offscreen EGL context, Vulkan version from the system feature, and **Choreographer** frame pacing (presented FPS, avg/max frame interval, jank frames > 1.5× expected). GPU memory is not exposed by Android → `null`.
 
 #### Interface
 ```typescript
-interface GPUState {
-  api: 'Vulkan 1.3' | 'OpenGL ES 3.2';
-  targetFPS: 120;
-  frameBudgetMs: 8.33;
-  frameRenderTimeMs: number;
-  droppedFrameCount: number;
-  gpuMemoryUsageMB: number;
-  isStuttering: boolean;
-  renderPacingScore: number;
-}
+gpuRenderer: string | null; gpuVendor: string | null; graphicsApi: string | null;
+frameRenderTimeMs: number | null; maxFrameMs: number | null; measuredFps: number | null;
+droppedFrameCount: number; jankFramesLastSecond: number;
+targetBudgetMs: number;            // 8.33 @120 Hz
+isStuttering: boolean; gpuMemoryUsageMB: null; source: TelemetrySource;
 ```
 
 ---
 
 ### `useTPU`
 * **File Path**: `src/ai/useTPU.ts`
-* **Target Hardware**: Google Tensor Neural Processing Unit (TPU).
-* **Description**: Tracks hardware neural acceleration delegates (NNAPI, LiteRT / XNNPACK, GPU Fallback). Benchmarks tensor operations and token generation throughput (up to 50% faster on G6).
+* **Target Hardware**: Tensor TPU via **AICore** (Gemini Nano host). Verified on Pixel 11 Pro: AICore `0.release.prod_aicore_20260723.00_RC11`, Private Compute Services `1.0.release.962568596`.
+* **Description**: Detects the on-device AI stack (needs `<queries>` for package visibility). Inference metrics stay `null` until the `pixel-nano` ML Kit module lands; `benchmarkTPU()` runs a real JS matmul labelled **CPU Fallback**.
 
 ---
 
 ### `useMemory`
 * **File Path**: `src/hardware/useMemory.ts`
-* **Target Hardware**: Up to 16 GB LPDDR5X Ultra-High-Speed Unified RAM.
-* **Description**: Live telemetry of physical memory, system heap allocation, Low Memory Killer (LMK) protection thresholds, and cache purging methods.
+* **Target Hardware**: 12 GB LPDDR5X on Pixel 11 Pro (reports 11,647 MB total).
+* **Description**: `ActivityManager.getMemoryInfo` (total/available/threshold/low-memory), Java and native heaps of this process, polled every 2 s. `purgeCaches()` requests a GC and re-reads.
 
 ---
 
 ### `useADPF`
 * **File Path**: `src/hardware/useADPF.ts`
-* **Target Hardware**: Android Dynamic Performance Framework (ADPF) Kernel Subsystem.
-* **Description**: Queries thermal headroom and GPU/CPU power budgets directly from the Android kernel to prevent thermal throttling.
+* **Target Hardware**: Android Dynamic Performance Framework.
+* **Description**: `PowerManager.getThermalHeadroom` (10 s poll; 0.55 measured at status NONE), thermal status listener, headroom thresholds, Android 16+ `SystemHealthManager` CPU/GPU headroom (null when unsupported), display-mode `targetFps` and Choreographer `currentFps`.
 
 ---
 
@@ -276,15 +270,32 @@ interface CameraState {
 
 ### `useTorch`
 * **File Path**: `src/hardware/useTorch.ts`
-* **Target Hardware**: Rear Dual-LED Camera Bar Flash.
-* **Description**: Direct hardware flashlight toggle and rhythmic emergency SOS optical strobe.
+* **Target Hardware**: Rear camera flash LED via `CameraManager.setTorchMode` and Android 13+ `turnOnTorchWithStrengthLevel`. Verified on Pixel 11 Pro: camera id 0, **21 brightness levels**; the camera HAL logs "Torch for camera id 0 turned on".
+* **Description**: Real torch control; `isTorchOn` follows the system torch callback (Quick Settings toggles are reflected). Strobe toggles the hardware at ≥120 ms.
+
+#### Interface
+```typescript
+isAvailable: boolean; isTorchOn: boolean; isStrobing: boolean;
+maxStrengthLevel: number | null; error: string | null; source: TelemetrySource;
+setTorch(on, strengthLevel?): Promise<boolean>; toggleTorch(): Promise<boolean>;
+startStrobe(intervalMs?): void; stopStrobe(): void;
+```
 
 ---
 
 ### `useHaptics`
 * **File Path**: `src/hardware/useHaptics.ts`
-* **Target Hardware**: Linear Resonant Actuator (LRA) Haptic Engine.
-* **Description**: High-fidelity tactile patterns matching Pixel mechanical click profiles (`selection`, `light`, `medium`, `heavy`, `success`, `warning`, `error`).
+* **Target Hardware**: LRA via `expo-haptics` plus `PixelNative` vibrator access. Verified on Pixel 11 Pro: resonant **134.4 Hz**, Q 14.5, amplitude control, `CAP_COMPOSE_PWLE_EFFECTS_V2` (Android 16 envelope effects supported), primitives CLICK/TICK/QUICK_RISE/SLOW_RISE/QUICK_FALL/THUD/SPIN/LOW_TICK.
+* **Description**: Standard patterns (`selection`, `light`, `medium`, `heavy`, `success`, `warning`, `error`), Android 16 **envelope effects** (`playEnvelope(points)` with presets `HapticEnvelopes.thinkingRamp | doublePulse | spring`), and primitive compositions (`playPrimitives(steps)`).
+
+#### Interface
+```typescript
+triggerHaptic(type): Promise<void>; selection() … error(): Promise<void>;
+playEnvelope(points: { intensity; sharpness; durationMs }[], initialSharpness?): boolean;
+playPrimitives(steps: { primitive; scale?; delayMs? }[]): boolean; cancel(): void;
+hasAmplitudeControl: boolean | null; envelopeSupported: boolean;
+resonantFrequencyHz: number | null; supportedPrimitives: string[]; source: TelemetrySource;
+```
 
 ---
 
@@ -382,8 +393,16 @@ supportsAndroid17Apis: boolean;   // API 37+
 
 ### `useDisplay`
 * **File Path**: `src/hardware/useDisplay.ts`
-* **Target Hardware**: 3,600 nits 1-120Hz LTPO Super Actua OLED Display.
-* **Description**: Display wake-lock management and screen brightness control.
+* **Target Hardware**: 1-120 Hz LTPO Super Actua OLED. Verified on Pixel 11 Pro: active mode 120 Hz, `hasArrSupport = true`, rates 120/60/40/30/24/20/15/10/5/2/1 Hz, HDR10 · HLG · HDR10+, render mode 1080×2410 (panel native 1280×2856), 420 dpi.
+* **Description**: Real `Display` mode telemetry polled every 2 s, `setPreferredRefreshRate(hz)` (confirmed as `frameRateOverride` in `dumpsys display`), brightness via expo-brightness, wake lock via expo-keep-awake (tagged).
+
+#### Interface
+```typescript
+refreshRateHz: number; hasArrSupport: boolean | null; supportedRefreshRates: number[];
+resolution: { width; height; densityDpi } | null; hdrTypes: number[]; isHdr: boolean; maxLuminance: number | null;
+setPreferredRefreshRate(hz): Promise<boolean>; isKeepAwake: boolean; toggleKeepAwake(): Promise<void>;
+brightness: number; setScreenBrightness(v): Promise<void>; source: TelemetrySource;
+```
 
 ---
 

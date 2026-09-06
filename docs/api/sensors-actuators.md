@@ -109,37 +109,63 @@ export function ProCameraControls() {
 
 ## `useTorch`
 
-Directly operates the camera bar rear dual-LED hardware flashlight.
+Operates the rear camera flash LED through Android `CameraManager.setTorchMode` and, on Android 13+, `turnOnTorchWithStrengthLevel` (variable brightness). State follows the system torch callback, so Quick Settings toggles are reflected. Verified on Pixel 11 Pro: camera id `0`, **21 strength levels**; the camera HAL logs `Torch for camera id 0 turned on`.
 
 ### Signature
 ```typescript
 function useTorch(): {
-  isTorchOn: boolean;
+  isAvailable: boolean;                 // rear camera with flash + native module present
+  isTorchOn: boolean;                   // from CameraManager.TorchCallback
   isStrobing: boolean;
+  maxStrengthLevel: number | null;      // Android 13+
+  error: string | null;
+  source: 'hardware' | 'unavailable';
+  setTorch: (on: boolean, strengthLevel?: number) => Promise<boolean>;
   toggleTorch: () => Promise<boolean>;
-  startStrobe: (intervalMs?: number) => void;
+  startStrobe: (intervalMs?: number) => void;   // ≥ 120 ms; the HAL needs ~50-100 ms per switch
   stopStrobe: () => void;
 };
+```
+
+### Example
+```tsx
+const torch = useTorch();
+<HapticButton title={torch.isTorchOn ? 'Torch off' : 'Torch on'} onPress={() => torch.toggleTorch()} disabled={!torch.isAvailable} />
+<HapticButton title="Dim" onPress={() => torch.setTorch(true, 1)} />
 ```
 
 ---
 
 ## `useHaptics`
 
-Drives the Linear Resonant Actuator (LRA) to produce tactile pulses that match Google Pixel physical feedback standards.
+Drives the Linear Resonant Actuator: standard Pixel patterns through `expo-haptics`, plus the vibrator's real capabilities and **Android 16 envelope effects** (`VibrationEffect.BasicEnvelopeBuilder`) and primitive compositions through the PixelNative module. Verified on Pixel 11 Pro: resonant **134.4 Hz**, Q 14.5, amplitude control, `CAP_COMPOSE_PWLE_EFFECTS_V2` (envelopes supported), primitives `CLICK, TICK, QUICK_RISE, SLOW_RISE, QUICK_FALL, THUD, SPIN, LOW_TICK`.
 
 ### Signature
 ```typescript
 function useHaptics(): {
   triggerHaptic: (type: HapticType) => Promise<void>;
-  selection: () => Promise<void>;
-  light: () => Promise<void>;
-  medium: () => Promise<void>;
-  heavy: () => Promise<void>;
-  success: () => Promise<void>;
-  warning: () => Promise<void>;
-  error: () => Promise<void>;
+  selection | light | medium | heavy | success | warning | error: () => Promise<void>;
+  playEnvelope: (points: EnvelopePoint[], initialSharpness?: number) => boolean;   // Android 16+
+  playPrimitives: (steps: PrimitiveStep[]) => boolean;                             // Android 11+
+  cancel: () => void;
+  hasAmplitudeControl: boolean | null;
+  envelopeSupported: boolean;
+  resonantFrequencyHz: number | null;
+  supportedPrimitives: string[];
+  source: TelemetrySource;
 };
+
+type EnvelopePoint = { intensity: number; sharpness: number; durationMs: number }; // 0..1, must end at intensity 0 (the module appends it)
+type PrimitiveStep = { primitive: 'CLICK' | 'TICK' | 'THUD' | 'SPIN' | 'QUICK_RISE' | 'SLOW_RISE' | 'QUICK_FALL' | 'LOW_TICK'; scale?: number; delayMs?: number };
+```
+
+### Presets
+`HapticEnvelopes.thinkingRamp` (Gemini is thinking), `HapticEnvelopes.doublePulse` (response ready), `HapticEnvelopes.spring` (bouncing spring from the Android haptics guide).
+
+```tsx
+const haptics = useHaptics();
+if (haptics.envelopeSupported) haptics.playEnvelope(HapticEnvelopes.thinkingRamp);
+haptics.playPrimitives([{ primitive: 'QUICK_RISE', scale: 0.8 }, { primitive: 'THUD', delayMs: 40 }]);
 ```
 
 ### Tactile Pattern Mapping

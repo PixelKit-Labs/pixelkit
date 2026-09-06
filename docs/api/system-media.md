@@ -67,15 +67,25 @@ if (caps.geminiNanoTier === 'nano-v4') enableThinkingMode();
 
 ## `useDisplay`
 
-Manages display state for the 3,600 nits peak 1-120Hz LTPO Super Actua OLED panel.
+Real display telemetry from Android `Display` (active mode refresh rate, supported refresh rates, resolution, HDR types, ARR support) polled every 2 s because adaptive refresh rate changes it live, plus brightness (expo-brightness) and the wake lock (expo-keep-awake). `setPreferredRefreshRate()` sets the window's preferred rate; verified on Pixel 11 Pro via `dumpsys display` (`frameRateOverride {uid=… frameRateHz=60}` after preferring 60 Hz). Supported rates on Pixel 11 Pro: 120 / 60 / 40 / 30 / 24 / 20 / 15 / 10 / 5 / 2 / 1 Hz, HDR10 · HLG · HDR10+, `hasArrSupport = true`.
 
 ### Signature
 ```typescript
 function useDisplay(): {
   isKeepAwake: boolean;
-  brightness: number;
   toggleKeepAwake: () => Promise<void>;
-  setBrightness: (val: number) => Promise<void>;
+  brightness: number;                          // 0..1
+  setScreenBrightness: (val: number) => Promise<void>;
+  setBrightness: (val: number) => Promise<void>;   // alias
+  refreshRateHz: number;                       // active mode, 0 until read
+  hasArrSupport: boolean | null;               // Android 16+
+  supportedRefreshRates: number[];
+  resolution: { width: number; height: number; densityDpi: number } | null;  // active mode
+  hdrTypes: number[];                          // 1 Dolby Vision, 2 HDR10, 3 HLG, 4 HDR10+
+  isHdr: boolean;
+  maxLuminance: number | null;
+  setPreferredRefreshRate: (hz: number) => Promise<boolean>;
+  source: TelemetrySource;
 };
 ```
 

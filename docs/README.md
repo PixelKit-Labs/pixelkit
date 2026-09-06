@@ -34,6 +34,7 @@ Welcome to the comprehensive documentation suite for the **PixelForge SDK**. Thi
 ### 🔬 [Research](./research/)
 * **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 API surface, hook-by-hook gap analysis, and prioritised roadmap.
 * **[Device Profile: Pixel 11 Pro (captured from hardware)](./research/DEVICE_PROFILE_PIXEL_11_PRO.md)**: adb-verified identity (Android 17 / SDK 37, Tensor G6, grizzly), CPU clocks, display modes and ARR, AICore version, feature flags (UWB, channel sounding, Wi-Fi RTT, satellite, StrongBox, no thermometer), services, haptic PWLE v2 capabilities, thermal thresholds, full sensor inventory.
+* **[Device Test Report 2026-09-06](./research/DEVICE_TEST_REPORT_2026-09-06.md)**: Hook-by-hook verification on the physical Pixel 11 Pro with independent `dumpsys`/HAL evidence (torch, audio source, refresh-rate override, wake lock, biometrics), what is still simulated, and open items.
 * **[Pixel 11 Pro Deep Dive (Round 2)](./research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections to round 1, Android 16/17 APIs missed (RangingManager, real ADPF headroom, haptic envelopes, ARR, constrained satellite networks, Advanced Protection), 2026 ML Kit / AICore timeline, Play deadlines, Android CLI docs & skills, revised hook roadmap.
 
 ### 📑 Consolidated Single-File Manuals

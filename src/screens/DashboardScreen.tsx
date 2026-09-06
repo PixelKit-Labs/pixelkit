@@ -25,7 +25,9 @@ import { useCapabilities } from '../hardware/useCapabilities';
 import { useObservability } from '../core/observability';
 import { MetricCard } from '../components/MetricCard';
 import { HapticButton } from '../components/HapticButton';
-import { Colors } from '../theme/colors';
+import { Colors, Gradients, Type } from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SectionHeader, OrbitRings, Chip } from '../components/Decor';
 
 const fmt = (v: number | null | undefined, digits = 0) => (v == null ? null : Number(v.toFixed(digits)));
 const pct = (v: number | null | undefined) => (v == null ? null : Math.round(v * 100));
@@ -67,25 +69,28 @@ export const DashboardScreen: React.FC = () => {
         <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 500); }} tintColor={Colors.dark.primary} />
       }
     >
-      {/* Identity banner */}
-      <View style={styles.banner}>
-        <View style={{ flexShrink: 1 }}>
-          <Text style={styles.brandTitle}>{brand} {device.modelName}</Text>
-          <Text style={styles.osSubtitle}>
-            Android {device.osVersion} · API {caps.androidApiLevel ?? '?'} · {display.refreshRateHz ? `${display.refreshRateHz} Hz` : '— Hz'} {display.hasArrSupport ? 'ARR' : ''}
-          </Text>
-          <Text style={styles.osSubtitle}>
-            Capabilities: {caps.verification === 'device' ? 'device-verified' : 'model table'} · Nano tier {caps.geminiNanoTier}
-          </Text>
+      {/* Hero */}
+      <View style={styles.hero}>
+        <LinearGradient colors={[...Gradients.hero]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+        <OrbitRings size={300} rings={6} style={{ top: -120, right: -110 }} />
+        <View style={styles.heroTop}>
+          <Chip label={`Android ${device.osVersion} · API ${caps.androidApiLevel ?? '?'}`} color={Colors.dark.secondary} />
+          <View style={[styles.onlineBadge]}>
+            <View style={[styles.onlineDot, { backgroundColor: device.isConnected ? Colors.dark.success : Colors.dark.error }]} />
+            <Text style={styles.onlineText}>{device.networkType}</Text>
+          </View>
         </View>
-        <View style={styles.onlineBadge}>
-          <View style={[styles.onlineDot, { backgroundColor: device.isConnected ? Colors.dark.success : Colors.dark.error }]} />
-          <Text style={styles.onlineText}>{device.networkType}</Text>
+        <Text style={styles.heroEyebrow}>{brand} · {caps.verification === 'device' ? 'device-verified' : 'model table'}</Text>
+        <Text style={styles.heroTitle}>{device.modelName}</Text>
+        <View style={styles.heroChips}>
+          <Chip label={display.refreshRateHz ? `${display.refreshRateHz} Hz${display.hasArrSupport ? ' · ARR' : ''}` : '— Hz'} color={Colors.dark.tertiary} />
+          <Chip label={`Gemini Nano ${caps.geminiNanoTier.replace('nano-', '')}`} color={Colors.dark.tensorGlow} />
+          <Chip label={adpf.thermalStatus} color={adpf.thermalStatusCode === 0 ? Colors.dark.success : Colors.dark.warning} />
         </View>
       </View>
 
       {/* CPU */}
-      <Text style={styles.sectionHeader}>Tensor G6 CPU</Text>
+      <SectionHeader title="Tensor G6 CPU" />
       <View style={styles.grid}>
         <View style={styles.gridCol}>
           <MetricCard
@@ -127,7 +132,7 @@ export const DashboardScreen: React.FC = () => {
       />
 
       {/* Thermal / ADPF */}
-      <Text style={styles.sectionHeader}>Thermal & ADPF headroom</Text>
+      <SectionHeader title="Thermal & ADPF headroom" />
       <View style={styles.grid}>
         <View style={styles.gridCol}>
           <MetricCard
@@ -153,7 +158,7 @@ export const DashboardScreen: React.FC = () => {
       </View>
 
       {/* GPU & frames */}
-      <Text style={styles.sectionHeader}>GPU & frame pacing</Text>
+      <SectionHeader title="GPU & frame pacing" />
       <View style={styles.grid}>
         <View style={styles.gridCol}>
           <MetricCard
@@ -188,7 +193,7 @@ export const DashboardScreen: React.FC = () => {
       />
 
       {/* Memory */}
-      <Text style={styles.sectionHeader}>Memory</Text>
+      <SectionHeader title="Memory" />
       <MetricCard
         title="System RAM"
         value={memory.usedRAMMB || null}
@@ -210,7 +215,7 @@ export const DashboardScreen: React.FC = () => {
       <HapticButton title="Request GC and re-read" onPress={memory.purgeCaches} variant="outline" style={styles.actionButton} />
 
       {/* On-device AI */}
-      <Text style={styles.sectionHeader}>On-device AI stack</Text>
+      <SectionHeader title="On-device AI stack" />
       <MetricCard
         title="AICore (Gemini Nano host)"
         value={tpu.aicoreInstalled ? 'Installed' : 'Not installed'}
@@ -221,7 +226,7 @@ export const DashboardScreen: React.FC = () => {
       />
 
       {/* Pro exclusives */}
-      <Text style={styles.sectionHeader}>Pixel Pro exclusives</Text>
+      <SectionHeader title="Pixel Pro exclusives" />
       <MetricCard
         title="HiLight camera-bar LED"
         value={hilight.isActive ? 'Illuminated (virtual)' : 'Standby'}
@@ -265,7 +270,7 @@ export const DashboardScreen: React.FC = () => {
       )}
 
       {/* Torch */}
-      <Text style={styles.sectionHeader}>Rear LED torch</Text>
+      <SectionHeader title="Rear LED torch" />
       <MetricCard
         title="Flashlight"
         value={torch.isAvailable ? (torch.isTorchOn ? 'ON' : 'OFF') : null}
@@ -299,7 +304,7 @@ export const DashboardScreen: React.FC = () => {
       )}
 
       {/* Power & atmosphere */}
-      <Text style={styles.sectionHeader}>Power & atmosphere</Text>
+      <SectionHeader title="Power & atmosphere" />
       <View style={styles.grid}>
         <View style={styles.gridCol}>
           <MetricCard
@@ -326,7 +331,7 @@ export const DashboardScreen: React.FC = () => {
       </View>
 
       {/* Security */}
-      <Text style={styles.sectionHeader}>Security</Text>
+      <SectionHeader title="Security" />
       <MetricCard
         title="Biometrics & keystore"
         value={biometrics.hasHardware ? 'Ready' : 'No hardware'}
@@ -346,7 +351,7 @@ export const DashboardScreen: React.FC = () => {
       </View>
 
       {/* Observability */}
-      <Text style={styles.sectionHeader}>Observability</Text>
+      <SectionHeader title="Observability" />
       <View style={styles.obsCard}>
         <Text style={styles.obsTitle}>Sources by module</Text>
         <View style={styles.chipRow}>
@@ -370,21 +375,18 @@ export const DashboardScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { padding: 16, paddingBottom: 40 },
-  banner: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: Colors.dark.surface, padding: 18, borderRadius: 20, borderWidth: 1,
-    borderColor: Colors.dark.cardBorder, marginBottom: 12,
+  content: { padding: 16, paddingBottom: 120 },
+  hero: {
+    backgroundColor: Colors.dark.card, borderRadius: 28, borderWidth: 1, borderColor: Colors.dark.cardBorder,
+    padding: 20, marginBottom: 8, overflow: 'hidden',
   },
-  brandTitle: { color: Colors.dark.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
-  osSubtitle: { color: Colors.dark.textMuted, fontSize: 12, marginTop: 2, fontWeight: '500' },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  heroEyebrow: { ...Type.label, color: Colors.dark.textMuted, marginBottom: 4 },
+  heroTitle: { ...Type.display, color: Colors.dark.text, marginBottom: 14 },
+  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   onlineBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surfaceVariant, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginLeft: 8 },
   onlineDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   onlineText: { color: Colors.dark.text, fontSize: 11, fontWeight: '700' },
-  sectionHeader: {
-    color: Colors.dark.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase',
-    letterSpacing: 1.2, marginTop: 16, marginBottom: 10, marginLeft: 4,
-  },
   grid: { flexDirection: 'row', marginHorizontal: -6 },
   gridCol: { flex: 1, paddingHorizontal: 6 },
   actionButton: { marginBottom: 16 },

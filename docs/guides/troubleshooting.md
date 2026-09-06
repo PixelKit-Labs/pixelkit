@@ -50,9 +50,9 @@ TypeScript warning or runtime error: `Property 'backgroundColor' does not exist 
 In Expo SDK 57, `<StatusBar />` from `expo-status-bar` dropped the `backgroundColor` prop in favor of root View background styling.
 
 ### Resolution
-Style the parent `<SafeAreaView>` or root `<View>` with `Colors.dark.background` (`#0B0D11`) and use `<StatusBar style="light" />`:
+Style the parent `<SafeAreaView>` or root `<View>` with `Colors.dark.background` (`#07060E`) and use `<StatusBar style="light" />`:
 ```tsx
-<SafeAreaView style={{ flex: 1, backgroundColor: '#0B0D11' }}>
+<SafeAreaView style={{ flex: 1, backgroundColor: '#07060E' }}>
   <StatusBar style="light" />
   {/* Content */}
 </SafeAreaView>

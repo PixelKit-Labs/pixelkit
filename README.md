@@ -25,14 +25,14 @@ It is structured as an authoritative foundation for developers and autonomous AI
 
 | Subsystem | Developer Hook | Physical Hardware Mapped |
 | :--- | :--- | :--- |
-| **Tensor G6 CPU** | `useCPU()` | 7-Core cluster (1x C1-Ultra @ 4.11GHz, 4x C-1 Pro, 2x C-1 Pro) on TSMC 2nm (N2) |
-| **PowerVR GPU** | `useGPU()` | Vulkan 1.3 / OpenGL ES 3.2, 120 FPS frame pacing (<= 8.33ms budget), dropped frames |
-| **Tensor TPU / NPU** | `useTPU()` | Google Tensor TPU silicon (+50% compute), NNAPI/LiteRT delegates, latency benchmarks |
-| **LPDDR5X RAM** | `useMemory()` | Up to 16 GB physical RAM allocation, free memory telemetry, LMK protection |
-| **Dynamic Thermals** | `useADPF()` | Android Dynamic Performance Framework, CPU/GPU thermal headroom, power budgeting |
+| **Tensor G6 CPU** | `useCPU()` | Real topology from /proc/cpuinfo + cpufreq (1x C1-Ultra 4.11 GHz, 4x C1-Pro 3.38 GHz, 2x C1-Pro 2.65 GHz), per-core MHz, governor, frequency utilisation, app CPU share |
+| **PowerVR GPU** | `useGPU()` | EGL renderer string (PowerVR CXTP-48-1536, Vulkan 1.4), Choreographer frame pacing: presented FPS, avg/max frame interval, jank |
+| **Tensor TPU / NPU** | `useTPU()` | AICore / Private Compute Services detection (Gemini Nano host), NPU feature flag; inference metrics null until the pixel-nano module lands |
+| **LPDDR5X RAM** | `useMemory()` | ActivityManager total/available/LMK threshold, Java + native heaps, GC request |
+| **Dynamic Thermals** | `useADPF()` | PowerManager thermal headroom + status listener, thresholds, Android 16+ SystemHealth CPU/GPU headroom, display target vs measured FPS |
 | **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Camera bar multi-color notification & Gemini AI status ring |
 | **Motion & Atmosphere**| `useSensors()` | 6-Axis IMU (Gyro/Accel), Barometer (hypsometric altimeter), Magnetometer, Light |
-| **Tactile Haptics** | `useHaptics()` | Linear Resonant Actuator (LRA) mechanical ticks, impacts, and notification waveforms |
+| **Tactile Haptics** | `useHaptics()` | LRA patterns plus Android 16 envelope effects (PWLE v2, 134.4 Hz resonance) and primitive compositions |
 | **Camera & Looks** | `useCamera()` | 120x Generative AI Zoom, Camera Looks tone-mapping & Ultra Low Light Video |
 | **Multimodal Vision** | `useVisionAI()` | Ultra HDR camera capture, gallery picker, and Gemini Multimodal scene analysis |
 | **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
@@ -42,8 +42,8 @@ It is structured as an authoritative foundation for developers and autonomous AI
 | **IR Thermometer** | `useTemperature()` | **[Pixel 8-10 Pro only]** Infrared thermopile sensor; **absent on Pixel 11 Pro** (reports `availability: 'estimated'`) |
 | **Contactless NFC** | `useNFC()` | NFC radio controller, NDEF smart tag reader/writer, and simulation runner |
 | **Bluetooth Low Energy**| `useBLE()` | BLE beacon & peripheral scanner with RSSI signal strength distance estimation |
-| **Flashlight / Torch** | `useTorch()` | Rear dual-LED hardware flashlight toggle and high-frequency SOS strobe |
-| **Super Actua Display**| `useDisplay()` | 3,600 nits 120Hz LTPO display detection, screen wake-lock persistence, brightness |
+| **Flashlight / Torch** | `useTorch()` | CameraManager torch with 21 brightness levels (Android 13+), system torch callback, SOS strobe |
+| **Super Actua Display**| `useDisplay()` | Live refresh rate + ARR support, 1-120 Hz mode list, HDR types, preferred-rate control, wake lock, brightness |
 | **Biometrics** | `useBiometrics()` | Titan M3-backed under-display Fingerprint and Class 3 Face Unlock authentication |
 | **Quantum Keystore** | `useSecurity()` | Titan M3 Post-Quantum Cryptography (PQC) hardware-backed encrypted secret vault |
 | **Satellite & Modem** | `useNetwork()` | MediaTek M90 modem, Wi-Fi 7, 5G Sub-6/mmWave, and Satellite SOS connectivity |
@@ -128,10 +128,15 @@ Pixel delta/ (PixelForge Framework)
 │   ├── guides/                 # On-device Gemini Nano, Function Calling, Voice, Diagnostics
 │   └── research/               # Ground-truth Pixel 11 Pro hardware research & deep dives
 │
+├── modules/
+│   └── pixel-native/           # Local Expo Module (Kotlin): CPU, memory, thermal, display, GPU, torch, haptics
+│
 ├── src/
 │   ├── index.ts                # Master barrel export for all hooks and UI primitives
 │   ├── core/
-│   │   └── types.ts            # Strongly-typed telemetry, silicon, and AI interfaces
+│   │   ├── types.ts            # Strongly-typed telemetry, silicon, and AI interfaces
+│   │   ├── capabilities.ts     # Pure device capability resolver + PackageManager verification
+│   │   └── observability.ts    # Telemetry provenance (hardware/derived/simulated/unavailable), event log
 │   │
 │   ├── hardware/               # Physical Silicon & Hardware Abstractions (15 hooks)
 │   │   ├── useCPU.ts           # Tensor G6 7-Core cluster (4.11GHz C1-Ultra, C-1 Pro) on TSMC 2nm
@@ -166,10 +171,11 @@ Pixel delta/ (PixelForge Framework)
 │   ├── theme/
 │   │   └── colors.ts           # Material 3 Expressive & Pure OLED Black tokens
 │   │
-│   ├── components/             # Reusable UI Primitives
-│   │   ├── HapticButton.tsx    # Tactile touch button with built-in haptic feedback
-│   │   ├── MetricCard.tsx      # Real-time hardware telemetry display card
-│   │   └── SensorVisualizer.tsx# Live 3-axis motion visualizer
+│   ├── components/             # Reusable UI Primitives (PixelForge design system)
+│   │   ├── HapticButton.tsx    # Gradient / white CTA / glass pill button with haptics
+│   │   ├── MetricCard.tsx      # Glass telemetry card with provenance tag
+│   │   ├── SensorVisualizer.tsx# Centred 3-axis bars with per-sensor ranges
+│   │   └── Decor.tsx           # Glow backdrop, orbit rings, section header, chip
 │   │
 │   └── screens/
 │       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)

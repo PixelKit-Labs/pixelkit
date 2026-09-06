@@ -20,7 +20,8 @@ import { useCapabilities } from '../hardware/useCapabilities';
 import { SensorVisualizer } from '../components/SensorVisualizer';
 import { MetricCard } from '../components/MetricCard';
 import { HapticButton } from '../components/HapticButton';
-import { Colors } from '../theme/colors';
+import { Colors, Type } from '../theme/colors';
+import { SectionHeader } from '../components/Decor';
 
 const HDR_NAMES: Record<number, string> = { 1: 'Dolby Vision', 2: 'HDR10', 3: 'HLG', 4: 'HDR10+' };
 
@@ -107,7 +108,7 @@ export const SensorsLabScreen: React.FC = () => {
             source={haptics.resonantFrequencyHz == null ? 'unavailable' : 'hardware'}
           />
 
-          <Text style={styles.sectionHeader}>Standard patterns (expo-haptics)</Text>
+          <SectionHeader title="Standard patterns (expo-haptics)" />
           <View style={styles.hapticGrid}>
             <HapticButton title="Selection Tick" onPress={haptics.selection} hapticType="selection" variant="secondary" style={styles.hapticBtn} />
             <HapticButton title="Light Impact" onPress={haptics.light} hapticType="light" variant="secondary" style={styles.hapticBtn} />
@@ -118,7 +119,7 @@ export const SensorsLabScreen: React.FC = () => {
             <HapticButton title="Error Pulse" onPress={haptics.error} hapticType="error" variant="danger" style={styles.hapticBtn} />
           </View>
 
-          <Text style={styles.sectionHeader}>Android 16 envelope effects</Text>
+          <SectionHeader title="Android 16 envelope effects" />
           <Text style={styles.sectionDesc}>
             Intensity and sharpness curves rendered by the LRA driver. {haptics.envelopeSupported ? 'Supported on this device.' : 'Not supported on this device.'}
           </Text>
@@ -149,7 +150,7 @@ export const SensorsLabScreen: React.FC = () => {
             source={caps.verification === 'device' ? 'hardware' : 'derived'}
           />
 
-          <Text style={styles.sectionHeader}>Near Field Communication</Text>
+          <SectionHeader title="Near Field Communication" />
           <MetricCard
             title="NFC transceiver"
             value={nfc.isScanning ? 'Scanning…' : (nfc.lastScannedTag ? 'Tag detected' : 'Standby')}
@@ -160,7 +161,7 @@ export const SensorsLabScreen: React.FC = () => {
           />
           <HapticButton title={nfc.isScanning ? 'Scanning (simulated)…' : 'Run simulated NFC scan'} onPress={nfc.startScan} disabled={nfc.isScanning} variant="secondary" style={{ marginBottom: 20 }} />
 
-          <Text style={styles.sectionHeader}>Bluetooth Low Energy</Text>
+          <SectionHeader title="Bluetooth Low Energy" />
           <HapticButton title={ble.isScanning ? 'Scanning (simulated)…' : 'Run simulated BLE scan'} onPress={ble.startScan} disabled={ble.isScanning} variant="secondary" style={{ marginBottom: 12 }} />
           {ble.peripherals.map((device) => (
             <MetricCard
@@ -178,7 +179,7 @@ export const SensorsLabScreen: React.FC = () => {
 
       {activeTab === 'audio' && (
         <View>
-          <Text style={styles.sectionHeader}>Microphone level (expo-audio, voice_recognition source)</Text>
+          <SectionHeader title="Microphone level (expo-audio, voice_recognition source)" />
           <MetricCard
             title="Acoustic level"
             value={audio.isRecording ? audio.meteringDecibels : null}
@@ -195,7 +196,7 @@ export const SensorsLabScreen: React.FC = () => {
             style={{ marginBottom: 16 }}
           />
 
-          <Text style={styles.sectionHeader}>Display</Text>
+          <SectionHeader title="Display" />
           <MetricCard
             title="Active refresh rate"
             value={display.refreshRateHz || null}
@@ -235,19 +236,15 @@ function flag(v: boolean | null): string {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: 16, paddingBottom: 120 },
   header: { marginBottom: 16 },
-  title: { color: Colors.dark.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  title: { ...Type.title, color: Colors.dark.text },
   subtitle: { color: Colors.dark.textMuted, fontSize: 13, marginTop: 2 },
   tabRow: { flexDirection: 'row', marginBottom: 16 },
   tabButton: { flex: 1, marginHorizontal: 2, paddingVertical: 8, paddingHorizontal: 4 },
   grid: { flexDirection: 'row', marginHorizontal: -6 },
   gridCol: { flex: 1, paddingHorizontal: 6 },
   row: { flexDirection: 'row' },
-  sectionHeader: {
-    color: Colors.dark.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase',
-    letterSpacing: 1.2, marginTop: 14, marginBottom: 6, marginLeft: 4,
-  },
   sectionDesc: { color: Colors.dark.textMuted, fontSize: 13, marginBottom: 12, marginLeft: 4, lineHeight: 18 },
   hapticGrid: { marginBottom: 8 },
   hapticBtn: { marginBottom: 8 },

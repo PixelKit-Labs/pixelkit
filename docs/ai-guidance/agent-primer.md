@@ -47,7 +47,7 @@ The Pixel 11 Pro features an **8.33ms render budget** for its 120Hz display:
 * If `thermalStatus === 'severe'` or `'critical'`, dynamically downscale background AI batches and increase sensor sampling intervals to 200ms or higher.
 
 ### Law 4: The True OLED Black Rule
-Style dark backgrounds with `#0B0D11` from `Colors.dark.background`. Self-emissive OLED pixels turn off completely, yielding infinite contrast and drastic battery savings.
+Style dark backgrounds with `#07060E` from `Colors.dark.background`. Self-emissive OLED pixels turn off completely, yielding infinite contrast and drastic battery savings.
 
 ### Law 5: The Titan M3 Post-Quantum Enclave Rule
 Never store credentials or API keys in plaintext files or unencrypted storage. Always persist secrets via `useSecurity().saveSecureItem()` which routes into the **Titan M3** hardware enclave with **Post-Quantum Cryptography (PQC)**.
@@ -71,7 +71,7 @@ Always adhere to these requirements:
 3. When running Gemini AI, trigger the rear HiLight ring via useHiLight().triggerGeminiPulse() for face-down visual signaling.
 4. Support Camera Looks tone mapping presets and up to 120x Generative AI Zoom via useCamera().
 5. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
-6. Use true OLED black (#0B0D11) for backgrounds via Colors.dark.background.
+6. Use true OLED black (#07060E) for backgrounds via Colors.dark.background.
 7. Store sensitive keys exclusively in the Titan M3 quantum-resistant enclave using useSecurity().saveSecureItem().
 8. For Expo SDK 57 compatibility: expo-keep-awake uses activateKeepAwakeAsync(tag) / deactivateKeepAwake(tag).
 ```
