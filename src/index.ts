@@ -6,12 +6,26 @@
  * @example
  * ```typescript
  * import {
+ *   useCPU,
+ *   useGPU,
+ *   useTPU,
+ *   useMemory,
  *   useSensors,
  *   useHaptics,
- *   useTPU,
+ *   useSpeechAI,
  *   useGemini,
  *   useVisionAI,
  *   useDevice,
+ *   useDisplay,
+ *   useBiometrics,
+ *   useLocation,
+ *   useTorch,
+ *   useTemperature,
+ *   useUWB,
+ *   useBLE,
+ *   useNFC,
+ *   useAudio,
+ *   useSecurity,
  *   useADPF,
  *   MetricCard,
  *   HapticButton
@@ -23,22 +37,34 @@
 export * from './core/types';
 export * from './theme/colors';
 
-// Hardware & Sensor Hooks
-export { useHaptics } from './hardware/useHaptics';
-export { useSensors } from './hardware/useSensors';
-export { useDevice } from './hardware/useDevice';
-export { useBiometrics } from './hardware/useBiometrics';
-export { useDisplay } from './hardware/useDisplay';
-export { useLocation } from './hardware/useLocation';
-export { useSecurity } from './hardware/useSecurity';
+// Compute & Silicon Hardware Hooks
+export { useCPU } from './hardware/useCPU';
+export { useGPU } from './hardware/useGPU';
+export { useMemory } from './hardware/useMemory';
 export { useADPF } from './hardware/useADPF';
+export { useDevice } from './hardware/useDevice';
+export { useDisplay } from './hardware/useDisplay';
+export { useSecurity } from './hardware/useSecurity';
+
+// Sensor & Radio Hardware Hooks
+export { useSensors } from './hardware/useSensors';
+export { useHaptics } from './hardware/useHaptics';
+export { useBiometrics } from './hardware/useBiometrics';
+export { useLocation } from './hardware/useLocation';
 export { useAudio } from './hardware/useAudio';
+export { useTorch } from './hardware/useTorch';
+export { useBLE } from './hardware/useBLE';
 export { useNFC } from './hardware/useNFC';
 
-// AI & Tensor TPU Hooks
+// Pixel Pro Exclusive Hardware Hooks
+export { useTemperature } from './hardware/useTemperature';
+export { useUWB } from './hardware/useUWB';
+
+// AI, Voice & Tensor TPU Hooks
 export { useTPU } from './ai/useTPU';
 export { useGemini } from './ai/useGemini';
 export { useVisionAI } from './ai/useVisionAI';
+export { useSpeechAI } from './ai/useSpeechAI';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';
 
 // Reusable UI Primitives

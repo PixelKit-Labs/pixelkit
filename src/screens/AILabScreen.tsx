@@ -1,8 +1,8 @@
 /**
  * @file AILabScreen.tsx
- * @description Multimodal AI and Computer Vision test laboratory.
- * Features live Gemini 2.5 conversational chat, camera image capture with vision analysis,
- * TPU token throughput telemetry, and Titan M2 encrypted API key persistence.
+ * @description Multimodal AI, Voice Speech-to-Text, and Computer Vision test laboratory.
+ * Features live Gemini 2.5 conversational chat, voice audio transcription via useSpeechAI,
+ * camera image capture with vision analysis, TPU token throughput telemetry, and Titan M2 encrypted API key persistence.
  */
 
 import React, { useState } from 'react';
@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { useGemini } from '../ai/useGemini';
 import { useVisionAI } from '../ai/useVisionAI';
+import { useSpeechAI } from '../ai/useSpeechAI';
 import { useTPU } from '../ai/useTPU';
 import { saveApiKey } from '../ai/geminiClient';
 import { HapticButton } from '../components/HapticButton';
@@ -28,6 +29,7 @@ import { Colors } from '../theme/colors';
 export const AILabScreen: React.FC = () => {
   const gemini = useGemini();
   const vision = useVisionAI();
+  const speech = useSpeechAI();
   const tpu = useTPU();
 
   const [inputPrompt, setInputPrompt] = useState('');
@@ -40,6 +42,18 @@ export const AILabScreen: React.FC = () => {
     const prompt = inputPrompt;
     setInputPrompt('');
     gemini.sendMessage(prompt);
+  };
+
+  const handleVoiceToggle = async () => {
+    if (speech.isListening) {
+      const result = await speech.stopListeningAndTranscribe();
+      if (result && result.transcript) {
+        setInputPrompt(result.transcript);
+        gemini.sendMessage(result.transcript);
+      }
+    } else {
+      await speech.startListening();
+    }
   };
 
   const handleSaveKey = async () => {
@@ -63,7 +77,7 @@ export const AILabScreen: React.FC = () => {
         {/* Header & Accelerator Status */}
         <View style={styles.header}>
           <Text style={styles.title}>Pixel AI & Vision Lab</Text>
-          <Text style={styles.subtitle}>Powered by Google Gemini & Tensor TPU</Text>
+          <Text style={styles.subtitle}>Powered by Google Gemini, Tensor TPU & Speech Pipeline</Text>
         </View>
 
         {keySavedMessage && (
@@ -109,6 +123,29 @@ export const AILabScreen: React.FC = () => {
             />
           </View>
         )}
+
+        {/* Voice Speech-to-Text Section */}
+        <Text style={styles.sectionHeader}>Voice Speech-To-Text Pipeline</Text>
+        <View style={styles.voiceCard}>
+          <Text style={styles.voiceDesc}>
+            Record your voice with the Pixel multi-mic array and transcribe spoken audio into text prompt tokens.
+          </Text>
+
+          <HapticButton
+            title={speech.isListening ? `Listening... (${speech.voiceDecibels} dB) [Tap to Finish]` : (speech.isTranscribing ? "Transcribing Audio..." : "Start Voice Input")}
+            onPress={handleVoiceToggle}
+            disabled={speech.isTranscribing}
+            variant={speech.isListening ? "danger" : "primary"}
+            style={{ marginBottom: 10 }}
+          />
+
+          {speech.lastTranscript && (
+            <View style={styles.transcriptBox}>
+              <Text style={styles.transcriptLabel}>LAST TRANSCRIPT ({speech.lastTranscript.durationSeconds}s, {speech.lastTranscript.latencyMs}ms):</Text>
+              <Text style={styles.transcriptText}>"{speech.lastTranscript.transcript}"</Text>
+            </View>
+          )}
+        </View>
 
         {/* Vision AI Camera Section */}
         <Text style={styles.sectionHeader}>Multimodal Vision Analysis</Text>
@@ -206,6 +243,13 @@ export const AILabScreen: React.FC = () => {
           returnKeyType="send"
         />
         <HapticButton
+          title={speech.isListening ? "⏹" : "🎤"}
+          onPress={handleVoiceToggle}
+          variant={speech.isListening ? "danger" : "secondary"}
+          style={styles.micButton}
+          textStyle={{ fontSize: 16 }}
+        />
+        <HapticButton
           title="Send"
           onPress={handleSend}
           disabled={gemini.isLoading || !inputPrompt.trim()}
@@ -288,6 +332,40 @@ const styles = StyleSheet.create({
     color: Colors.dark.success,
     fontSize: 13,
     fontWeight: '600',
+  },
+  voiceCard: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    padding: 16,
+    marginBottom: 16,
+  },
+  voiceDesc: {
+    color: Colors.dark.textMuted,
+    fontSize: 13,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  transcriptBox: {
+    backgroundColor: Colors.dark.surfaceVariant,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  transcriptLabel: {
+    color: Colors.dark.primary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  transcriptText: {
+    color: Colors.dark.text,
+    fontSize: 13,
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
   visionCard: {
     backgroundColor: Colors.dark.card,
@@ -426,9 +504,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 14,
-    marginRight: 8,
+    marginRight: 6,
     borderWidth: 1,
     borderColor: Colors.dark.cardBorder,
+  },
+  micButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginRight: 6,
+    borderRadius: 20,
   },
   sendButton: {
     paddingVertical: 10,

@@ -189,3 +189,112 @@ export interface LocationTelemetry {
   /** Whether fine location permissions are granted */
   hasPermission: boolean;
 }
+
+/**
+ * Multi-core CPU cluster telemetry and compute metrics.
+ */
+export interface CPUTelemetry {
+  /** CPU core topology (e.g. "1x Prime Cortex-X925 + 4x Perf + 3x Eff") */
+  coreTopology: string;
+  /** Number of active CPU execution cores */
+  coreCount: number;
+  /** Estimated CPU load percentage (0 to 100) */
+  cpuLoadPercent: number;
+  /** Execution thread frequency governor status */
+  governorMode: 'performance' | 'balanced' | 'powersave';
+  /** Last multi-threaded compute benchmark duration in milliseconds */
+  lastBenchmarkDurationMs: number;
+}
+
+/**
+ * GPU graphics acceleration and Vulkan/OpenGLES telemetry.
+ */
+export interface GPUTelemetry {
+  /** Active GPU graphics architecture name */
+  gpuRenderer: string;
+  /** Supported graphics API (e.g. 'Vulkan 1.3', 'OpenGL ES 3.2') */
+  graphicsApi: string;
+  /** Average frame render time in milliseconds (target <= 8.33ms for 120 FPS) */
+  frameRenderTimeMs: number;
+  /** Number of dropped frames in the last observation window */
+  droppedFrameCount: number;
+  /** Estimated GPU memory utilization in MB */
+  gpuMemoryUsageMB: number;
+}
+
+/**
+ * LPDDR5X system memory and cache metrics.
+ */
+export interface MemoryTelemetry {
+  /** Total system physical RAM in MB */
+  totalRAMMB: number;
+  /** Currently allocated RAM in MB */
+  usedRAMMB: number;
+  /** Free available RAM in MB */
+  freeRAMMB: number;
+  /** Whether the OS Low Memory Killer has issued a memory pressure warning */
+  isLowMemory: boolean;
+}
+
+/**
+ * Bluetooth Low Energy (BLE) peripheral discovery data.
+ */
+export interface BLEPeripheral {
+  /** Unique MAC or Bluetooth UUID */
+  id: string;
+  /** Advertised device name */
+  name: string;
+  /** Received Signal Strength Indicator in dBm */
+  rssi: number;
+  /** Estimated distance in meters based on RSSI path-loss */
+  estimatedDistanceMeters: number;
+  /** Timestamp when beacon/advertisement was received */
+  lastSeenTimestamp: number;
+}
+
+/**
+ * Pixel Pro infrared thermometer temperature reading.
+ */
+export interface TemperatureReading {
+  /** Measured temperature in Celsius */
+  celsius: number;
+  /** Measured temperature in Fahrenheit */
+  fahrenheit: number;
+  /** Target surface emissivity preset ('default', 'liquid', 'organic', 'metal') */
+  materialPreset: string;
+  /** Timestamp of reading */
+  timestamp: number;
+}
+
+/**
+ * Ultra-Wideband (UWB) high-precision spatial tracking target.
+ */
+export interface UWBSpatialTarget {
+  /** Identifier of the target UWB anchor or peer device */
+  deviceId: string;
+  /** Centimeter-level distance in meters */
+  distanceMeters: number;
+  /** Horizontal azimuth angle in degrees (-180 to +180) */
+  azimuthDegrees: number;
+  /** Vertical elevation angle in degrees (-90 to +90) */
+  elevationDegrees: number;
+  /** Line-of-sight signal quality (0.0 to 1.0) */
+  signalQuality: number;
+}
+
+/**
+ * Speech recognition and voice transcription output.
+ */
+export interface SpeechTranscriptionResult {
+  /** Transcribed textual content */
+  transcript: string;
+  /** Confidence score between 0.0 and 1.0 */
+  confidence: number;
+  /** Duration of recorded audio in seconds */
+  durationSeconds: number;
+  /** Time taken to perform transcription in milliseconds */
+  latencyMs: number;
+  /** Language detected or specified (e.g. 'en-US') */
+  language: string;
+}
+

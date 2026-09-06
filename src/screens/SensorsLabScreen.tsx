@@ -1,10 +1,11 @@
 /**
  * @file SensorsLabScreen.tsx
  * @description Interactive testing laboratory for physical Pixel hardware.
- * Provides 3 sub-panels:
+ * Provides 4 sub-panels:
  * 1. Motion: Real-time 3-axis Accelerometer, Gyroscope, Magnetometer, Barometer altimeter, Light.
- * 2. Haptics: Tactile test pad for LRA mechanical ticks and notification waveforms, plus NFC tag scanner.
- * 3. Audio & Display: Microphone decibel meter and 120Hz LTPO screen wake-lock controls.
+ * 2. Haptics: Tactile test pad for LRA mechanical ticks and notification waveforms.
+ * 3. Radios: NFC tag scanner/writer and Bluetooth Low Energy (BLE) peripheral discovery with RSSI.
+ * 4. Audio & Display: Microphone decibel meter and 120Hz LTPO screen wake-lock controls.
  */
 
 import React, { useState } from 'react';
@@ -14,6 +15,7 @@ import { useHaptics } from '../hardware/useHaptics';
 import { useAudio } from '../hardware/useAudio';
 import { useDisplay } from '../hardware/useDisplay';
 import { useNFC } from '../hardware/useNFC';
+import { useBLE } from '../hardware/useBLE';
 import { SensorVisualizer } from '../components/SensorVisualizer';
 import { MetricCard } from '../components/MetricCard';
 import { HapticButton } from '../components/HapticButton';
@@ -25,8 +27,9 @@ export const SensorsLabScreen: React.FC = () => {
   const audio = useAudio();
   const display = useDisplay();
   const nfc = useNFC();
+  const ble = useBLE();
 
-  const [activeTab, setActiveTab] = useState<'motion' | 'haptics' | 'audio'>('motion');
+  const [activeTab, setActiveTab] = useState<'motion' | 'haptics' | 'radios' | 'audio'>('motion');
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -38,13 +41,14 @@ export const SensorsLabScreen: React.FC = () => {
 
       {/* Sub-tab navigation */}
       <View style={styles.tabRow}>
-        {(['motion', 'haptics', 'audio'] as const).map((tab) => (
+        {(['motion', 'haptics', 'radios', 'audio'] as const).map((tab) => (
           <HapticButton
             key={tab}
             title={tab.toUpperCase()}
             onPress={() => setActiveTab(tab)}
             variant={activeTab === tab ? 'primary' : 'secondary'}
             style={styles.tabButton}
+            textStyle={{ fontSize: 12 }}
           />
         ))}
       </View>
@@ -154,21 +158,47 @@ export const SensorsLabScreen: React.FC = () => {
               style={styles.hapticBtn}
             />
           </View>
+        </View>
+      )}
 
-          {/* NFC Card */}
-          <Text style={styles.sectionHeader}>NFC Controller</Text>
+      {/* RADIOS TAB (NFC & BLE) */}
+      {activeTab === 'radios' && (
+        <View>
+          <Text style={styles.sectionHeader}>Near Field Communication (NFC)</Text>
           <MetricCard
-            title="NFC Radio"
+            title="NFC Transceiver"
             value={nfc.isScanning ? "Scanning..." : (nfc.lastScannedTag ? "Tag Detected" : "Standby")}
             badge="NDEF / RFID"
+            badgeColor={Colors.dark.primary}
             subtitle={nfc.lastScannedTag ? `ID: ${nfc.lastScannedTag.id} • ${nfc.lastScannedTag.payload}` : "Tap phone against smart tag"}
           />
           <HapticButton
-            title={nfc.isScanning ? "Scanning for Tags..." : "Scan Nearby NFC Tag"}
+            title={nfc.isScanning ? "Scanning for NFC Tags..." : "Scan Nearby NFC Tag"}
             onPress={nfc.startScan}
             disabled={nfc.isScanning}
             variant="secondary"
+            style={{ marginBottom: 20 }}
           />
+
+          <Text style={styles.sectionHeader}>Bluetooth Low Energy (BLE)</Text>
+          <HapticButton
+            title={ble.isScanning ? "Scanning BLE Spectrum..." : "Scan BLE Peripherals"}
+            onPress={ble.startScan}
+            disabled={ble.isScanning}
+            variant="primary"
+            style={{ marginBottom: 12 }}
+          />
+
+          {ble.peripherals.map((device) => (
+            <MetricCard
+              key={device.id}
+              title={device.name}
+              value={`${device.rssi} dBm`}
+              badge={`~${device.estimatedDistanceMeters}m`}
+              badgeColor={device.rssi > -60 ? Colors.dark.success : Colors.dark.warning}
+              subtitle={`MAC: ${device.id}`}
+            />
+          ))}
         </View>
       )}
 
@@ -241,8 +271,9 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    marginHorizontal: 3,
+    marginHorizontal: 2,
     paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   grid: {
     flexDirection: 'row',

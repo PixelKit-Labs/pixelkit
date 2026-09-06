@@ -6,7 +6,7 @@
 
 ## 📖 Executive Summary
 
-**PixelForge** is a production-grade, modular framework and SDK designed to bridge Google Pixel hardware silicon (Tensor TPU, Titan M2 Security Enclave, 120Hz LTPO display, Camera array, and 6-axis sensors) with modern Generative AI capabilities (Google Gemini, Vision AI, and LiteRT).
+**PixelForge** is a production-grade, modular framework and SDK designed to bridge Google Pixel hardware silicon (Multi-core CPU, GPU Vulkan pipeline, Tensor TPU, Titan M2 Security Enclave, 120Hz LTPO display, Infrared Thermometer, UWB Spatial Radar, and 6-axis sensors) with modern Generative AI capabilities (Google Gemini, Vision AI, Speech AI, and LiteRT).
 
 This document serves as the **canonical API Reference and Blueprint for AI agents (including the future Delta Bot)** and developers building on top of this framework.
 
@@ -35,56 +35,79 @@ android describe --project_dir=<path>
 
 ```text
 pixel-delta/ (PixelForge Framework)
-├── App.tsx                     # Main App Shell & Navigation Router
-├── app.json                    # Expo & Android 15/16 Manifest & Hardware Permissions
+├── App.tsx                     # Main App Shell & 3-Tab Navigator (HUD, AI Lab, Sensors)
+├── PIXELFORGE.md               # Canonical AI Reference & SDK Documentation
+├── README.md                   # Developer Setup & Prerequisites
+├── app.json                    # Android 15/16 Permissions & 120Hz LTPO Manifest
 ├── src/
-│   ├── index.ts                # Root barrel export for all hooks, types, and UI
+│   ├── index.ts                # Master barrel export for all hooks and primitives
 │   ├── core/
-│   │   └── types.ts            # Strongly-typed telemetry, sensor, and AI interfaces
+│   │   └── types.ts            # Strongly-typed telemetry, silicon, and AI models
+│   │
 │   ├── hardware/               # Physical Silicon & Hardware Abstractions
-│   │   ├── useSensors.ts       # 6-Axis Motion, Barometer/Altimeter, Magnetometer, Light
-│   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms
-│   │   ├── useDevice.ts        # Battery level, state, thermal state, model info
-│   │   ├── useDisplay.ts       # 120Hz LTPO display, wake lock, brightness
-│   │   ├── useBiometrics.ts    # Titan M2 Fingerprint & Face Unlock auth
-│   │   ├── useLocation.ts      # High-precision GNSS positioning & heading
-│   │   ├── useADPF.ts          # Android Dynamic Performance Framework (Headroom/Thermal)
-│   │   ├── useAudio.ts         # Mic input, decibel metering & sound recording
-│   │   ├── useNFC.ts           # RFID / NFC tag read & write controller
-│   │   └── useSecurity.ts      # Hardware-backed Titan M2 SecureStore
-│   ├── ai/                     # Intelligence & Acceleration Layer
+│   │   ├── useCPU.ts           # Multi-core cluster (Prime/Perf/Eff), CPU load & benchmarks
+│   │   ├── useGPU.ts           # Vulkan/OpenGL ES frame pacing (8.33ms budget) & dropped frames
+│   │   ├── useMemory.ts        # LPDDR5X RAM usage, free memory & Low Memory Killer (LMK) protection
+│   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
+│   │   ├── useSensors.ts       # 6-Axis Motion (Gyro/Accel), Barometer/Altimeter, Compass, Light
+│   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms & mechanical ticks
+│   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
+│   │   ├── useDevice.ts        # Battery health, thermals, charging status & model telemetry
+│   │   ├── useDisplay.ts       # 120Hz LTPO OLED display, screen wake lock & brightness
+│   │   ├── useBiometrics.ts    # Titan M2 in-display Fingerprint & Face Unlock auth
+│   │   ├── useSecurity.ts      # Hardware-backed Titan M2 SecureStore key storage
+│   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
+│   │   ├── useAudio.ts         # Multi-mic array acoustic recording & real-time dBFS metering
+│   │   ├── useBLE.ts           # Bluetooth Low Energy scanner & RSSI proximity beacon client
+│   │   ├── useNFC.ts           # Contactless NDEF / RFID tag reader & writer controller
+│   │   ├── useTemperature.ts   # [Pixel Pro] Infrared camera bar thermometer sensor
+│   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
+│   │
+│   ├── ai/                     # Intelligence & Silicon Acceleration Layer
 │   │   ├── useTPU.ts           # Google Tensor TPU hardware accelerator & latency benchmarker
-│   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning, and completions
-│   │   ├── useVisionAI.ts      # Multimodal camera snapshot & visual inspection
-│   │   └── geminiClient.ts     # Google Gen AI SDK client with secure key persistence
+│   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
+│   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
+│   │   ├── useVisionAI.ts      # Multimodal camera capture & visual scene inspection
+│   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
+│   │
 │   ├── theme/
 │   │   └── colors.ts           # Material 3 Expressive & Pure OLED Black tokens
+│   │
 │   ├── components/             # Reusable UI Primitives
 │   │   ├── HapticButton.tsx    # Tactile touch button with haptic feedback
 │   │   ├── MetricCard.tsx      # Real-time hardware telemetry display card
 │   │   └── SensorVisualizer.tsx# Live 3-axis motion visualizer
+│   │
 │   └── screens/
-│       ├── DashboardScreen.tsx # Silicon & compute HUD (FPS, CPU/GPU headroom, TPU, Battery)
-│       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and API key management
-│       └── SensorsLabScreen.tsx# Interactive sensor playground & haptics test pad
+│       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)
+│       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and Voice Speech-to-Text
+│       └── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
 ```
 
 ---
 
-## 🔌 Core Hardware APIs (AI Quick-Reference)
+## 🔌 Core Hardware & Silicon APIs
 
-Every hook can be imported directly from `./src`:
+Import any hardware or AI hook from `./src`:
 ```typescript
 import { 
+  useCPU,
+  useGPU,
+  useTPU,
+  useMemory,
+  useSpeechAI,
   useSensors, 
   useHaptics, 
-  useTPU, 
   useGemini, 
   useVisionAI, 
   useDevice, 
   useADPF, 
   useBiometrics,
-  useDisplay,
+  useTemperature,
+  useUWB,
+  useBLE,
+  useNFC,
+  useTorch,
   HapticButton, 
   MetricCard 
 } from './src';
@@ -92,145 +115,129 @@ import {
 
 ---
 
-### 1. `useSensors(updateIntervalMs?: number)`
-Connects to the phone's 6-axis IMU, barometer, and light sensors.
-* **Returns**:
-  * `accelerometer`: `{ x: number, y: number, z: number }` (gravitational acceleration in `g`)
-  * `gyroscope`: `{ x: number, y: number, z: number }` (rotational velocity in `rad/s`)
-  * `magnetometer`: `{ x: number, y: number, z: number }` (geomagnetic field in `μT`)
-  * `barometer`: `{ pressure: number, relativeAltitude?: number }` (air pressure in `hPa`, altitude in `m`)
-  * `lightLux`: `number | undefined` (ambient illumination)
-  * `isAvailable`: `boolean`
-
+### 1. `useCPU()` — Multi-Core Cluster Telemetry
+Inspects the Google Tensor CPU cluster (Prime, Performance, and Efficiency cores) and runs multi-threaded compute factorization benchmarks:
 ```typescript
-const { accelerometer, gyroscope, barometer } = useSensors(100);
-console.log(`Altitude: ${barometer.relativeAltitude}m, Tilt: X=${accelerometer.x}`);
+const { coreTopology, coreCount, cpuLoadPercent, benchmarkCPU } = useCPU();
+const durationMs = await benchmarkCPU();
+console.log(`Factorization benchmark completed in ${durationMs}ms`);
 ```
 
 ---
 
-### 2. `useHaptics()`
-Triggers crisp, mechanical-feeling tactile feedback via the Pixel's **Linear Resonant Actuator (LRA)**.
-* **Methods**:
-  * `selection()`: Ultra-light tactile tick (ideal for sliders, wheel pickers, switches).
-  * `light()`: Crisp tap (ideal for standard buttons).
-  * `medium()`: Solid tactile bump (ideal for drag-and-drop or toggles).
-  * `heavy()`: Strong physical thud (ideal for destructive actions or hits).
-  * `success()`: Double-pulse confirmation waveform.
-  * `warning()`: Alert vibration pattern.
-  * `error()`: Triple-pulse error warning.
-
+### 2. `useGPU()` — Vulkan Graphics & 120 FPS Pacing
+Monitors frame render times against the **8.33ms (120 FPS)** budget:
 ```typescript
-const haptics = useHaptics();
-<HapticButton title="Confirm" onPress={() => haptics.success()} />
+const { gpuRenderer, frameRenderTimeMs, droppedFrameCount, isStuttering } = useGPU();
+if (isStuttering) {
+  console.warn(`Frame render took ${frameRenderTimeMs}ms (exceeds 8.33ms budget)`);
+}
 ```
 
 ---
 
-### 3. `useTPU()`
-Direct interface to the **Google Tensor TPU / Neural Processing Unit**.
-* **Returns**:
-  * `activeDelegate`: `'Tensor TPU' | 'NPU' | 'GPU' | 'CPU Fallback'`
-  * `isHardwareAccelerated`: `boolean`
-  * `lastInferenceLatencyMs`: `number` (inference latency in milliseconds)
-  * `throughputTokensPerSec`: `number` (estimated token processing speed)
-  * `memoryFootprintMB`: `number` (RAM used by neural model)
-  * `isBenchmarking`: `boolean`
-  * `benchmarkTPU()`: `Promise<TPUAcceleration>` (runs real-time matrix multiplication benchmark)
-
+### 3. `useTPU()` — Google Tensor Neural Processing Unit
+Direct hardware acceleration for on-device machine learning:
 ```typescript
-const tpu = useTPU();
-await tpu.benchmarkTPU();
-console.log(`TPU Latency: ${tpu.lastInferenceLatencyMs} ms`);
+const { activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec, benchmarkTPU } = useTPU();
+await benchmarkTPU();
+console.log(`TPU Latency: ${lastInferenceLatencyMs} ms (${throughputTokensPerSec} tokens/sec)`);
 ```
 
 ---
 
-### 4. `useGemini()`
-Conversational AI engine backed by `@google/genai` (Gemini 2.5 Flash).
-* **Returns**:
-  * `messages`: `AIMessage[]` (history with roles, content, latencies, and token counts)
-  * `isLoading`: `boolean`
-  * `sendMessage(prompt: string)`: Sends a prompt, computes latency, and streams or returns response
-  * `clearMessages()`: Clears chat history
-  * `hasApiKey`: `boolean`
-  * `setApiKey(key: string)`: Updates the active key
-
+### 4. `useMemory()` — LPDDR5X System RAM & Low Memory Killer (LMK)
+Tracks RAM allocation and provides cache purging utilities:
 ```typescript
-const { messages, isLoading, sendMessage } = useGemini();
-sendMessage("Analyze telemetry and optimize sensor sampling rate.");
+const { totalRAMMB, usedRAMMB, freeRAMMB, isLowMemory, purgeCaches } = useMemory();
+if (isLowMemory) {
+  purgeCaches(); // Evicts volatile caches before Android LMK terminates the process
+}
 ```
 
 ---
 
-### 5. `useVisionAI()`
-Multimodal camera capture and visual scene inspection.
-* **Returns**:
-  * `captureAndAnalyze(useCamera: boolean)`: Opens camera (or gallery), captures frame, and sends to Gemini Vision
-  * `selectedImageUri`: `string | null`
-  * `analysis`: `{ description: string, labels: string[], latencyMs: number } | null`
-  * `isAnalyzing`: `boolean`
-
----
-
-### 6. `useADPF()`
-Android Dynamic Performance Framework for hardware thermal budgeting.
-* **Returns**:
-  * `cpuHeadroom`: `number` (0.0 to 1.0; 1.0 = full CPU capacity available)
-  * `gpuHeadroom`: `number`
-  * `thermalStatus`: `'nominal' | 'light' | 'moderate' | 'severe' | 'critical'`
-  * `currentFps`: `number` (real-time measured frame rate)
-  * `reportWorkDuration(workMs, targetBudgetMs)`: Signals the Android kernel to boost or throttle clocks
-
----
-
-### 7. `useBiometrics()` & `useSecurity()`
-Titan M2 cryptographic hardware enclave.
-* `useBiometrics().authenticate(prompt)`: Prompts for in-screen fingerprint or 3D Face Unlock.
-* `useSecurity().saveSecureItem(key, val)`: Saves encrypted token into hardware keystore.
-* `useSecurity().getSecureItem(key)`: Retrieves hardware-encrypted secret.
-
----
-
-### 8. `useDisplay()`
-* `isKeepAwake`: `boolean`
-* `toggleKeepAwake()`: Locks screen awake (prevents screen dimming during active monitoring)
-* `brightness`: `number` (0.0 to 1.0)
-* `setScreenBrightness(val)`: Sets hardware screen brightness
-* `refreshRateHz`: `120` (Pixel Pro LTPO display)
-
----
-
-### 9. `useAudio()` & `useNFC()`
-* `useAudio()`: Real-time decibel level meter (`meteringDecibels`), `startRecording()`, `stopRecording()`.
-* `useNFC()`: Polls for nearby contactless smart cards/tags (`startScan()`, `lastScannedTag`).
-
----
-
-## 🎨 UI Primitives
-
-### `HapticButton`
-Pill-shaped Material 3 button with built-in tactile vibration:
+### 5. `useSpeechAI()` — Voice Speech-To-Text & Audio Transcription
+Records voice input and passes audio directly to Gemini Multimodal Audio or edge speech pipelines:
 ```typescript
-<HapticButton 
-  title="Action" 
-  onPress={handleAction} 
-  variant="primary" // 'primary' | 'secondary' | 'outline' | 'danger'
-  hapticType="light" // 'selection' | 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
-/>
+const { isListening, voiceDecibels, startListening, stopListeningAndTranscribe } = useSpeechAI();
+await startListening();
+// User speaks...
+const result = await stopListeningAndTranscribe();
+console.log(`Transcribed voice: "${result?.transcript}" (${result?.latencyMs}ms)`);
 ```
 
-### `MetricCard`
-Displays real-time hardware telemetry with badges and subtitles:
+---
+
+### 6. `useTemperature()` — [Pixel Pro Exclusive] Infrared Thermometer
+Interfaces with the camera bar infrared thermopile sensor for non-contact object and liquid temperature sensing:
 ```typescript
-<MetricCard
-  title="Sensor Name"
-  value={42}
-  unit="ms"
-  badge="ACTIVE"
-  badgeColor="#00E5FF"
-  subtitle="Description"
-/>
+const { reading, measureTemperature, setMaterialPreset } = useTemperature();
+setMaterialPreset('liquid'); // 'liquid', 'organic', 'metal', 'glass'
+const temp = await measureTemperature();
+console.log(`Temperature: ${temp.celsius}°C (${temp.fahrenheit}°F)`);
+```
+
+---
+
+### 7. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
+Centimeter-level spatial tracking and Angle-of-Arrival (AoA) localization:
+```typescript
+const { activeTargets, isRanging, startRanging } = useUWB();
+await startRanging();
+activeTargets.forEach(target => {
+  console.log(`${target.deviceId}: ${target.distanceMeters}m at ${target.azimuthDegrees}° azimuth`);
+});
+```
+
+---
+
+### 8. `useBLE()` — Bluetooth Low Energy Beacon & Peripheral Discovery
+Discovers nearby fitness bands, smart home peripherals, and BLE beacons with signal strength distance estimation:
+```typescript
+const { isScanning, peripherals, startScan } = useBLE();
+await startScan();
+peripherals.forEach(p => console.log(`${p.name}: ${p.rssi} dBm (~${p.estimatedDistanceMeters}m)`));
+```
+
+---
+
+### 9. `useTorch()` — Rear LED Flashlight & SOS Strobe
+Direct hardware flashlight control with emergency signaling:
+```typescript
+const { isTorchOn, toggleTorch, startStrobe, stopStrobe } = useTorch();
+await toggleTorch();
+startStrobe(100); // 100ms rapid strobe
+```
+
+---
+
+### 10. `useSensors()` — 6-Axis IMU & Barometer Altimeter
+```typescript
+const { accelerometer, gyroscope, barometer } = useSensors(50);
+console.log(`Altitude: ${barometer.relativeAltitude}m, Air Pressure: ${barometer.pressure} hPa`);
+```
+
+---
+
+### 11. `useHaptics()` — Linear Resonant Actuator Tactile Feedback
+```typescript
+const { light, medium, heavy, success, warning, error } = useHaptics();
+success(); // Dual pulse confirmation waveform
+```
+
+---
+
+### 12. `useGemini()` & `useVisionAI()` — Conversational & Vision AI
+```typescript
+// Conversational AI
+const { messages, sendMessage } = useGemini();
+await sendMessage("Optimize sensor polling rate for battery longevity.");
+
+// Camera Vision Inspection
+const { captureAndAnalyze } = useVisionAI();
+const visionResult = await captureAndAnalyze(true);
+console.log(`Vision result: ${visionResult?.description}`);
 ```
 
 ---
@@ -243,14 +250,14 @@ Displays real-time hardware telemetry with badges and subtitles:
    ```
 2. Open **Expo Go** on your Pixel 11 Pro.
 3. Scan the terminal QR code.
-4. The app will launch immediately with **live hot-reloading** over Wi-Fi!
+4. Test the Silicon HUD, tactile haptics, CPU/GPU pacing, infrared thermometer, UWB radar, and Gemini voice lab live!
 
 ---
 
 ## 🤖 Instructions for AI Agents Building Apps
 
-When an AI agent (such as Delta) is tasked with building a new application using PixelForge:
-1. **Never reinvent hardware wrappers**: Import the hooks from `./src`.
-2. **Always include tactile haptics**: Bind touch events to `useHaptics` for premium physical feel.
-3. **Respect thermal headroom**: Query `useADPF()` before launching heavy recursive loops or batch processing.
-4. **Use Material 3 colors**: Always style with `Colors.dark` from `./src/theme/colors` for OLED battery savings and true black contrast.
+When an AI agent (such as Delta) builds an application on top of PixelForge:
+1. **Import from `./src`**: Never re-implement hardware wrappers or sensors.
+2. **Prioritize Tactile Haptics**: Always call `useHaptics()` on user interactions.
+3. **Respect Thermal & Memory Headroom**: Query `useADPF()` and `useMemory()` before intensive workloads.
+4. **Use Material 3 Colors**: Always style with `Colors.dark` from `./src/theme/colors` for OLED battery savings and true black contrast.
