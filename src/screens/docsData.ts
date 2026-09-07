@@ -696,54 +696,68 @@ function Confirm() {
     id: 'useCamera',
     name: 'useCamera',
     category: 'sensors',
-    chipBadge: 'expo-camera',
+    chipBadge: 'expo-camera · photo & video',
     badgeColor: SENSOR,
-    summary: 'Lens, zoom, flash and permission state for the camera.',
+    summary: 'Lens, zoom, flash and torch, plus taking photos and recording video.',
     plain:
-      'Controls which camera is active and how it is configured. Note that the Pixel Camera app\'s signature features, such as its colour Looks and long-range zoom, are not available to other apps; this hook exposes ordinary camera controls plus a Look label you can use in your own interface.',
+      'Drives the camera and captures from it. Give it a camera view to hold on to and it can take a still or record a clip, both of which land as real files you can play back, save to the gallery or send to a model. Note that the Pixel Camera app\'s own colour Looks and long-range zoom are not available to other apps.',
     description:
-      'Wraps expo-camera state: lens selection, zoom ratio, flash mode and permission. Camera Looks, Super Res Zoom and the low-light video mode belong to the Pixel Camera app and are not reachable from a third-party app, so selectedLook and the low-light flag are held purely as interface state and are documented as such rather than presented as camera control.',
+      "The hook owns a ref to a CameraView and drives it, so a screen only renders the view and attaches cameraRef and handleCameraReady. takePicture resolves with a file, its dimensions and optionally base64 for the AI hooks; startRecording resolves when the recording ends, either because you called stopRecording or because a duration or size limit was reached. Two things the API does not make obvious: zoom is a 0 to 1 fraction of the lens range rather than an optical multiplier, so a \"5x\" figure does not map onto it; and Camera Looks, Super Res Zoom and the low-light video mode belong to the Pixel Camera app and cannot be driven from here, so selectedLook is a label for your own interface.",
     signature: 'useCamera(): CameraState',
     params: [],
     returns: [
+      { name: 'cameraRef', type: 'RefObject<CameraView | null>', desc: 'Attach to your CameraView. Capture fails without it.' },
+      { name: 'viewProps', type: '{ facing, zoom, flash, enableTorch, mode }', desc: 'Spread onto the view so it reflects this hook\'s state.' },
       { name: 'facing', type: "'back' | 'front'", desc: 'Which camera is active.' },
-      { name: 'zoomFactor', type: 'number', desc: 'Current zoom as a fraction from 0.0 to 1.0.' },
-      { name: 'flashMode', type: "'auto' | 'on' | 'off'", desc: 'Flash behaviour for capture.' },
-      { name: 'mode', type: "'picture' | 'video'", desc: 'Active camera view mode.' },
-      { name: 'isReady', type: 'boolean', desc: 'True when the camera preview is initialized.' },
-      { name: 'isTorchOn', type: 'boolean', desc: 'Continuous camera torch state.' },
-      { name: 'isCapturing', type: 'boolean', desc: 'True while taking a still photo.' },
-      { name: 'lastPhoto', type: 'CapturedPhoto | null', desc: 'Most recent still photo with URI, width, and height.' },
-      { name: 'isRecording', type: 'boolean', desc: 'True while video recording is in progress.' },
-      { name: 'recordingSeconds', type: 'number', desc: 'Live elapsed duration in seconds of the current video recording.' },
-      { name: 'lastVideoUri', type: 'string | null', desc: 'Local file URI of the most recent recorded video.' },
-      { name: 'hasPermission', type: 'boolean', desc: 'Whether camera and microphone permissions are granted.' },
+      { name: 'zoomFactor', type: 'number', desc: 'Zoom as a 0 to 1 fraction of the lens range, not an optical multiplier.' },
+      { name: 'flashMode', type: "'auto' | 'on' | 'off'", desc: 'Whether the flash fires at capture.' },
+      { name: 'isTorchOn', type: 'boolean', desc: 'Continuous light, as distinct from the capture-time flash.' },
+      { name: 'mode', type: "'picture' | 'video'", desc: 'View configuration. Recording requires video.' },
+      { name: 'isReady', type: 'boolean', desc: 'Whether the preview is running and capture is possible.' },
+      { name: 'hasPermission', type: 'boolean', desc: 'Whether camera permission was granted.' },
+      { name: 'isCapturing', type: 'boolean', desc: 'True while a still is being taken.' },
+      { name: 'lastPhoto', type: 'CapturedPhoto | null', desc: 'Most recent still: uri, width, height and optional base64 and exif.' },
+      { name: 'isRecording', type: 'boolean', desc: 'True while video is recording.' },
+      { name: 'recordingSeconds', type: 'number', desc: 'Elapsed seconds of the current recording.' },
+      { name: 'lastVideoUri', type: 'string | null', desc: 'File of the most recent clip. Hand this to useVideo to play it back.' },
+      { name: 'availableLenses', type: 'string[]', desc: 'Lens identifiers the device reports, once the preview is running.' },
+      { name: 'availablePictureSizes', type: 'string[]', desc: 'Picture sizes the device supports.' },
+      { name: 'selectedLook', type: 'CameraLook', desc: 'Label only. Looks are a Pixel Camera app feature and are not applied here.' },
+      { name: 'error', type: 'string | null', desc: 'Why the last capture failed.' },
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'takePicture(options?)', type: '(options?: TakePictureOptions) => Promise<CapturedPhoto | null>', desc: 'Takes a still photo and saves it to local disk.' },
-      { name: 'startRecording(options?)', type: '(options?: StartRecordingOptions) => Promise<string | null>', desc: 'Starts recording video asynchronously until stopRecording is called.' },
-      { name: 'stopRecording()', type: '() => void', desc: 'Ends active video recording and finalizes the file.' },
+      { name: 'handleCameraReady()', type: '() => Promise<void>', desc: 'Pass to the view\'s onCameraReady so lens and size lists can be read.' },
+      { name: 'takePicture(options?)', type: '({ quality?, base64?, exif?, shutterSound? }?) => Promise<CapturedPhoto | null>', desc: 'Takes a still and resolves with the file. Pass base64 when feeding it to a model.' },
+      { name: 'startRecording(options?)', type: '({ maxDurationSeconds?, maxFileSizeBytes?, mirror? }?) => Promise<string | null>', desc: 'Records video; resolves with the file when recording ends. Switches the view to video mode.' },
+      { name: 'stopRecording()', type: '() => void', desc: 'Ends the recording, which resolves the promise from startRecording.' },
       { name: 'toggleFacing()', type: '() => void', desc: 'Switches between the front and rear camera.' },
-      { name: 'setZoom(fraction)', type: '(fraction: number) => void', desc: 'Sets zoom level from 0.0 to 1.0.' },
-      { name: 'toggleTorch()', type: '() => void', desc: 'Toggles continuous rear camera LED torch.' },
-      { name: 'setMode(mode)', type: "(mode: 'picture' | 'video') => void", desc: 'Switches between photo and video mode.' },
-      { name: 'setFlash(mode)', type: "(mode: 'auto' | 'on' | 'off') => void", desc: 'Sets camera flash mode.' },
+      { name: 'setZoom(fraction)', type: '(fraction: number) => void', desc: 'Sets zoom as a 0 to 1 fraction of the lens range.' },
+      { name: 'setZoomStep(step, total?)', type: '(step: number, totalSteps?: number) => void', desc: 'Evenly spaced zoom stops, for a control with discrete steps.' },
+      { name: 'setFlash(mode)', type: "(mode: 'auto' | 'on' | 'off') => void", desc: 'Chooses flash behaviour for the next capture.' },
+      { name: 'toggleTorch()', type: '() => void', desc: 'Turns the continuous light on or off.' },
+      { name: 'setMode(mode)', type: "(mode: 'picture' | 'video') => void", desc: 'Switches the view between stills and video.' },
+      { name: 'pausePreview() / resumePreview()', type: '() => Promise<void>', desc: 'Freezes or restarts the preview without tearing the camera down.' },
     ],
-    example: `import { useCamera } from './src';
+    example: `import { CameraView } from 'expo-camera';
+import { useCamera } from './src';
 
-function CameraBar() {
-  const { zoomFactor, maxZoomFactor, setZoom, toggleFacing } = useCamera();
+function Capture() {
+  const cam = useCamera();
+  if (!cam.hasPermission) return <Text>Camera permission needed</Text>;
   return (
     <View>
-      <Button title="Flip" onPress={toggleFacing} />
-      <Button title="Max zoom" onPress={() => setZoom(maxZoomFactor)} />
-      <Text>{zoomFactor}x</Text>
+      <CameraView ref={cam.cameraRef} onCameraReady={cam.handleCameraReady} {...cam.viewProps} style={{ flex: 1 }} />
+      <Button title="Photo" onPress={() => cam.takePicture({ base64: true })} />
+      <Button
+        title={cam.isRecording ? \`Stop (\${cam.recordingSeconds}s)\` : 'Record'}
+        onPress={() => cam.isRecording ? cam.stopRecording() : cam.startRecording({ maxDurationSeconds: 60 })}
+      />
     </View>
   );
 }`,
     agentNote:
-      'Do not tell the user a Look has been applied to the image; it has not. Treat selectedLook as a label in your own interface only.',
+      'Attach cameraRef to a mounted CameraView before calling capture, or it fails. zoom is 0..1, not a multiplier; do not pass 5 for "5x". Captures land in cache, so use useMediaLibrary().save() to keep them.',
   },
   {
     id: 'useTorch',
@@ -1214,5 +1228,203 @@ async function upload(net) {
 }`,
     agentNote:
       'Check isConnected before every network call and isMetered before anything large. Never assume Wi-Fi means free or fast.',
+  },
+  {
+    id: 'useVideo',
+    name: 'useVideo',
+    category: 'system',
+    chipBadge: 'expo-video · playback',
+    badgeColor: SYSTEM,
+    summary: 'Playing video back, with position, seeking and thumbnails.',
+    plain:
+      'Plays a video file or stream. The natural partner to the camera: record a clip, hand the file to load(), and play it. It tracks position and duration so you can draw a scrubber, and can pull out frames as images for a poster or filmstrip.',
+    description:
+      'Wraps expo-video, the SDK 57 replacement for the removed expo-av. The hook owns the player and a screen renders VideoView with it. Position, duration, buffered position and status are polled four times a second, which is enough for a scrubber without waking the JS thread every frame. Everything reported comes from the player rather than being tracked locally, so a seek made elsewhere still shows up.',
+    signature: 'useVideo(initialSource?: VideoSource): VideoState',
+    params: [
+      { name: 'initialSource', type: 'VideoSource', desc: 'Optional file URI, remote URL or bundled asset to load on mount. Defaults to null.' },
+    ],
+    returns: [
+      { name: 'player', type: 'VideoPlayer', desc: 'Pass to <VideoView player={player} />. The view renders nothing without it.' },
+      { name: 'hasSource', type: 'boolean', desc: 'Whether a source has been loaded.' },
+      { name: 'isPlaying', type: 'boolean', desc: 'Whether playback is running.' },
+      { name: 'positionSeconds', type: 'number', desc: 'Seconds into the clip. Drives a scrubber.' },
+      { name: 'durationSeconds', type: 'number', desc: 'Total length. 0 until the source reports it.' },
+      { name: 'bufferedSeconds', type: 'number', desc: 'How far ahead the player has buffered, which matters for a remote source.' },
+      { name: 'status', type: 'string', desc: 'Player status, for example loading, readyToPlay or error.' },
+      { name: 'isMuted', type: 'boolean', desc: 'Whether audio is muted.' },
+      { name: 'isLooping', type: 'boolean', desc: 'Whether the clip restarts at the end.' },
+      { name: 'playbackRate', type: 'number', desc: 'Speed multiplier; 1 is normal. Pitch is preserved.' },
+      { name: 'volume', type: 'number', desc: 'Player volume from 0 to 1.' },
+      { name: 'error', type: 'string | null', desc: 'Why the last operation failed.' },
+      SOURCE_FIELD,
+    ],
+    actions: [
+      { name: 'load(source, options?)', type: '(source, { autoplay?, loop?, muted? }?) => Promise<boolean>', desc: 'Swaps the source, for example the clip the camera just recorded.' },
+      { name: 'play() / pause() / togglePlay()', type: '() => void', desc: 'Transport controls.' },
+      { name: 'seekTo(seconds)', type: '(seconds: number) => void', desc: 'Jumps to an absolute position, clamped to the duration.' },
+      { name: 'seekBy(seconds)', type: '(seconds: number) => void', desc: 'Moves relative to now; negative rewinds.' },
+      { name: 'replay()', type: '() => void', desc: 'Restarts from the beginning.' },
+      { name: 'setMuted(b) / setLoop(b)', type: '(value: boolean) => void', desc: 'Toggles mute and looping.' },
+      { name: 'setPlaybackRate(rate)', type: '(rate: number) => void', desc: 'Sets speed between 0.25 and 4.' },
+      { name: 'setVolume(v)', type: '(value: number) => void', desc: 'Sets volume from 0 to 1.' },
+      { name: 'setKeepScreenOn(b)', type: '(keep: boolean) => void', desc: 'Stops the screen dimming mid-clip. Release it when playback ends.' },
+      { name: 'generateThumbnails(times)', type: '(times: number | number[]) => Promise<VideoThumbnail[]>', desc: 'Extracts frames as images for a poster or filmstrip.' },
+    ],
+    example: `import { VideoView } from 'expo-video';
+import { useCamera, useVideo } from './src';
+
+function Playback() {
+  const cam = useCamera();
+  const video = useVideo();
+
+  return (
+    <View>
+      <VideoView player={video.player} style={{ height: 220 }} />
+      <Button
+        title="Play last recording"
+        disabled={!cam.lastVideoUri}
+        onPress={() => cam.lastVideoUri && video.load(cam.lastVideoUri, { autoplay: true })}
+      />
+      <Text>{video.positionSeconds} / {video.durationSeconds} s</Text>
+    </View>
+  );
+}`,
+    agentNote:
+      'The view needs the player object; passing a URI to VideoView does nothing. Turn keepScreenOn off when playback ends or the screen stays lit.',
+  },
+  {
+    id: 'useSpeech',
+    name: 'useSpeech',
+    category: 'ai',
+    chipBadge: 'expo-speech · text to speech',
+    badgeColor: AI,
+    summary: 'Speaking text aloud with the voices the phone has installed.',
+    plain:
+      'Reads text out loud. This is the output half of voice: useSpeechAI listens, this one talks back. Which voices exist depends on what the user has downloaded in system settings, so check the list rather than assuming a language is available.',
+    description:
+      'Wraps expo-speech, which drives the platform speech service. speak resolves when the engine finishes, so utterances can be awaited in sequence rather than overlapping. Text longer than maxInputLength is rejected rather than silently truncated, because a cut-off sentence is worse than an error. The hook stops the engine on unmount so speech does not continue after the screen is gone.',
+    signature: 'useSpeech(): SpeechState',
+    params: [],
+    returns: [
+      { name: 'isSpeaking', type: 'boolean', desc: 'Whether the engine is talking.' },
+      { name: 'isPaused', type: 'boolean', desc: 'Whether speech is paused rather than stopped.' },
+      { name: 'voices', type: 'Voice[]', desc: 'Installed voices, each with an identifier, name, language and quality.' },
+      { name: 'voice', type: 'string | null', desc: 'Selected voice identifier, or null for the system default.' },
+      { name: 'rate', type: 'number', desc: 'Speaking speed; 1 is normal.' },
+      { name: 'pitch', type: 'number', desc: 'Voice pitch; 1 is normal.' },
+      { name: 'maxInputLength', type: 'number', desc: 'Longest string the engine accepts in one call.' },
+      { name: 'lastSpokenText', type: 'string | null', desc: 'Text of the most recent utterance.' },
+      { name: 'error', type: 'string | null', desc: 'Why the last utterance failed.' },
+      SOURCE_FIELD,
+    ],
+    actions: [
+      { name: 'speak(text, options?)', type: '(text, { language?, voice?, rate?, pitch?, volume? }?) => Promise<void>', desc: 'Speaks the text and resolves when the engine finishes. Rejects if the text is too long.' },
+      { name: 'stop()', type: '() => Promise<void>', desc: 'Stops immediately and discards the queue.' },
+      { name: 'pause() / resume()', type: '() => Promise<void>', desc: 'Suspends and continues. Not supported on every engine.' },
+      { name: 'checkSpeaking()', type: '() => Promise<boolean>', desc: 'Asks the engine directly rather than trusting the local flag.' },
+      { name: 'refreshVoices()', type: '() => Promise<Voice[]>', desc: 'Re-reads installed voices, which changes when the user downloads one.' },
+      { name: 'voicesForLanguage(tag)', type: '(languageTag: string) => Voice[]', desc: 'Filters the list to one language, for example every English voice.' },
+      { name: 'setVoice / setRate / setPitch', type: '(value) => void', desc: 'Defaults applied to later calls to speak.' },
+    ],
+    example: `import { useSpeech, useGeminiNano } from './src';
+
+function TalkBack() {
+  const speech = useSpeech();
+  const nano = useGeminiNano();
+
+  const answer = async () => {
+    const reply = await nano.generate('Describe the thermal state in one sentence.');
+    await speech.speak(reply.text, { rate: 0.95 });
+  };
+  return <Button title="Ask and speak" onPress={answer} />;
+}`,
+    agentNote:
+      'Await speak rather than firing several in a row, or they queue unpredictably. Check voices before promising a language; coverage depends on what the user installed.',
+  },
+  {
+    id: 'useMediaLibrary',
+    name: 'useMediaLibrary',
+    category: 'system',
+    chipBadge: 'expo-media-library · gallery',
+    badgeColor: SYSTEM,
+    summary: 'Saving captures to the gallery, and reading what is there.',
+    plain:
+      'Puts a photo or video into the user\'s own gallery, where it survives and other apps can see it. Without this a capture sits in the app\'s cache and disappears when the system needs space. Also lists recent items and can delete one.',
+    description:
+      'Wraps expo-media-library. SDK 57 uses the class API (Asset.create, Album.create, Query) rather than the deprecated createAssetAsync helpers, which now throw at runtime. Asset fields are async accessors, so the hook flattens each into a plain SavedMedia object that a list can render directly. Permission is more subtle than a yes or no on modern Android: access is granted per media type, and the user can share only selected items, which is what hasLimitedAccess reports.',
+    signature: 'useMediaLibrary(): MediaLibraryState',
+    params: [],
+    returns: [
+      { name: 'permissionGranted', type: 'boolean', desc: 'Whether library access was granted.' },
+      { name: 'hasLimitedAccess', type: 'boolean', desc: 'Android 13+: the user shared only selected items, so the library is not fully visible.' },
+      { name: 'isSaving', type: 'boolean', desc: 'True while a file is being written.' },
+      { name: 'isLoading', type: 'boolean', desc: 'True while the library is being read.' },
+      { name: 'recent', type: 'SavedMedia[]', desc: 'Newest items from the last loadRecent call, most recent first.' },
+      { name: 'lastSaved', type: 'SavedMedia | null', desc: 'The item this app most recently wrote.' },
+      { name: 'error', type: 'string | null', desc: 'Why the last operation failed.' },
+      SOURCE_FIELD,
+    ],
+    actions: [
+      { name: 'requestPermission(writeOnly?)', type: '(writeOnly?: boolean) => Promise<boolean>', desc: 'Asks for access. Pass true when the app only needs to save, which is a smaller ask.' },
+      { name: 'save(localUri, album?)', type: '(localUri: string, albumName?: string) => Promise<SavedMedia | null>', desc: 'Copies a capture into the gallery, creating the album if it does not exist.' },
+      { name: 'loadRecent(limit?)', type: '(limit?: number) => Promise<SavedMedia[]>', desc: 'Reads the newest items, 20 by default.' },
+      { name: 'remove(media)', type: '(media: SavedMedia) => Promise<boolean>', desc: 'Deletes an item. The system may show its own confirmation.' },
+    ],
+    example: `import { useCamera, useMediaLibrary } from './src';
+
+function Keep() {
+  const cam = useCamera();
+  const library = useMediaLibrary();
+
+  const shoot = async () => {
+    const photo = await cam.takePicture();
+    if (photo) await library.save(photo.uri, 'PixelKit');
+  };
+  return <Button title="Capture and keep" onPress={shoot} />;
+}`,
+    agentNote:
+      'A capture is not kept until you call save; cache files are collected by the system. Ask with writeOnly when you only need to save, and handle hasLimitedAccess rather than assuming the whole library is readable.',
+  },
+  {
+    id: 'useCellular',
+    name: 'useCellular',
+    category: 'system',
+    chipBadge: 'expo-cellular · modem',
+    badgeColor: SYSTEM,
+    summary: 'Carrier, radio generation and network codes from the modem.',
+    plain:
+      'Tells you whether the phone is on 5G or something slower, and which carrier is serving it. useNetwork can only say the connection is cellular; this says what kind, which is what you need before deciding to stream or download something large.',
+    description:
+      'Wraps expo-cellular. generation reflects the current data connection, so it changes as the phone moves and reads unknown when there is no cellular data attached, including on Wi-Fi. Carrier name and the mobile country and network codes need the phone-state permission on Android; without it they stay null rather than being guessed. The country and network codes together identify a carrier globally, which is more reliable than matching on the display name.',
+    signature: 'useCellular(): CellularState',
+    params: [],
+    returns: [
+      { name: 'generation', type: "'unknown' | '2G' | '3G' | '4G' | '5G'", desc: 'Radio generation of the current data connection.' },
+      { name: 'is5G', type: 'boolean', desc: 'Convenience for generation === "5G".' },
+      { name: 'carrierName', type: 'string | null', desc: 'Carrier display name. Null without the phone-state permission.' },
+      { name: 'isoCountryCode', type: 'string | null', desc: 'ISO country of the SIM.' },
+      { name: 'mobileCountryCode', type: 'string | null', desc: 'First half of the global carrier identifier.' },
+      { name: 'mobileNetworkCode', type: 'string | null', desc: 'Second half. Match on this pair rather than the display name.' },
+      { name: 'allowsVoip', type: 'boolean | null', desc: 'Whether the carrier permits voice over IP. Null when undetermined.' },
+      { name: 'permissionGranted', type: 'boolean', desc: 'Whether the phone-state permission was granted.' },
+      { name: 'error', type: 'string | null', desc: 'Why the last read failed.' },
+      SOURCE_FIELD,
+    ],
+    actions: [
+      { name: 'refresh()', type: '() => Promise<void>', desc: 'Re-reads everything the platform answers without prompting.' },
+      { name: 'requestPermission()', type: '() => Promise<boolean>', desc: 'Asks for phone state, which unlocks carrier and network codes.' },
+    ],
+    example: `import { useCellular, useNetwork } from './src';
+
+function ShouldStream() {
+  const net = useNetwork();
+  const cell = useCellular();
+  if (!net.isConnected) return <Text>Offline</Text>;
+  if (net.isMetered && !cell.is5G) return <Text>On {cell.generation}, ask before streaming</Text>;
+  return <Text>Fine to stream</Text>;
+}`,
+    agentNote:
+      'Pair with useNetwork().isMetered: generation tells you how fast, metered tells you who pays. Do not request phone state unless you actually need the carrier.',
   },
 ];

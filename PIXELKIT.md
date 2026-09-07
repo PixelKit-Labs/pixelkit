@@ -101,14 +101,18 @@ pixel-delta/ (PixelKit Framework)
 │   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
 │   │   ├── useCapabilities.ts  # Device capability resolution (HiLight/UWB/Nano tier/API level)
 │   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
+│   │   ├── useVideo.ts         # Frame-accurate video player controls & scrubber polling (expo-video)
+│   │   ├── useMediaLibrary.ts  # Media store persistence & device gallery management (expo-media-library)
 │   │   ├── useBLE.ts           # Bluetooth Low Energy adapter, channel sounding & bonded devices
 │   │   ├── useNFC.ts           # Contactless NFC adapter, antenna state & NDEF tag reader
+│   │   ├── useCellular.ts      # Mobile network telemetry: carrier, 5G/4G generation, MCC/MNC (expo-cellular)
 │   │   ├── useRadios.ts        # Unified hardware radio telemetry (NFC, BLE, UWB, RTT, Satellite)
 │   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
 │   │   ├── useTPU.ts           # AICore / Gemini Nano stack detection (inference lives in useGeminiNano)
 │   │   ├── useSpeechAI.ts      # Voice speech-to-text (dual-mode ASI offline + cloud)
+│   │   ├── useSpeech.ts        # Platform text-to-speech engine with system voices (expo-speech)
 │   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
 │   │   ├── useGeminiNano.ts    # Gemini Nano on-device chat, status, download, measured latency
 │   │   ├── useGenAITasks.ts    # On-device ML Kit GenAI (summarize, proofread, rewrite, describeImage)
@@ -164,6 +168,10 @@ import {
   useAudio,
   useDisplay,
   useTorch,
+  useVideo,
+  useMediaLibrary,
+  useCellular,
+  useSpeech,
   HapticButton, 
   MetricCard 
 } from './src';

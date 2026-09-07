@@ -25,6 +25,8 @@
  *   useBLE,
  *   useNFC,
  *   useAudio,
+ *   useVideo,
+ *   useSpeech,
  *   useSecurity,
  *   useADPF,
  *   MetricCard,
@@ -58,6 +60,9 @@ export { useBiometrics } from './hardware/useBiometrics';
 export { useLocation } from './hardware/useLocation';
 export { useNetwork } from './hardware/useNetwork';
 export { useAudio } from './hardware/useAudio';
+export { useVideo } from './hardware/useVideo';
+export { useMediaLibrary, type SavedMedia } from './hardware/useMediaLibrary';
+export { useCellular, type CellularGenerationLabel } from './hardware/useCellular';
 export { useTorch } from './hardware/useTorch';
 export { useBLE } from './hardware/useBLE';
 export { useNFC } from './hardware/useNFC';
@@ -75,6 +80,7 @@ export { useGenAITasks, type TaskTone } from './ai/useGenAITasks';
 export { useNaturalLanguageAI } from './ai/useNaturalLanguageAI';
 export { useVisionAI } from './ai/useVisionAI';
 export { useSpeechAI } from './ai/useSpeechAI';
+export { useSpeech } from './ai/useSpeech';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';
 
 // Reusable UI Primitives

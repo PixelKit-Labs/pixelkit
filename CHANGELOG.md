@@ -4,6 +4,26 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.16] - 2026-09-06
+
+### Changed
+- Restructured and elevated `README.md` to follow the GitHub standard [othneildrew/Best-README-Template](https://github.com/othneildrew/Best-README-Template):
+  - Top navigation anchor `<a id="readme-top"></a>` with back-to-top return links across every major section.
+  - Standardized reference-style badge header covering repository stats (Contributors, Forks, Stars, Issues, License) and technology stack (Expo SDK 57, React Native 0.86, Android 17 API 37, Gemini Cloud, Gemini Nano / ML Kit, TypeScript Strict, Version).
+  - Centered project logo and title hero featuring `./assets/icon.png`, concise pitch, and quick links (Explore Docs, View Gallery, Report Bug, Request Feature).
+  - Collapsible interactive Table of Contents (`<details open><summary>Table of Contents</summary>...`).
+  - "Built With" section featuring technology badges linking to official project documentation.
+  - Complete Interface & Gallery grid with side-by-side tables showcasing all 9 verified on-device screenshots captured live over ADB from the physical Google Pixel 11 Pro testbed.
+  - Preserved and expanded exhaustive technical reference: Telemetry Provenance contract, 32 typed React hooks matrix (24 Hardware + 8 AI) with additions (`useVideo`, `useMediaLibrary`, `useCellular`, `useSpeech`), verified device facts from `grizzly` hardware, HiLight UID 2000 ADB daemon protocol, and the Still Simulated honesty disclosure.
+  - Modernized Getting Started guide with Android CLI (`android.exe`) integration, quickstart commands, and wireless debugging workflow.
+  - Comprehensive interactive Roadmap with completed milestones (`[x]`) and upcoming releases (`[ ]`).
+  - Standardized open-source Contributing guidelines, MIT License notice, Contact information, and Acknowledgments.
+- Added and exported 4 new hooks across hardware and AI suites:
+  - `useVideo`: Frame-accurate video player controls via `expo-video` with scrubber polling and thumbnail extraction.
+  - `useMediaLibrary`: Media store persistence and album management via `expo-media-library`.
+  - `useCellular`: Modem telemetry via `expo-cellular` (carrier identity, 5G/4G/3G/2G generation, MCC/MNC).
+  - `useSpeech`: On-device text-to-speech engine via `expo-speech` with system voice enumeration and synthesis controls.
+
 ## [1.0.15] - 2026-09-06
 
 ### Added
