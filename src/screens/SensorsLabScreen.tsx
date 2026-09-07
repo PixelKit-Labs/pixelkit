@@ -228,22 +228,122 @@ export const SensorsLabScreen: React.FC = () => {
 
       {activeTab === 'audio' && (
         <View>
-          <SectionHeader title="Microphone level (expo-audio, voice_recognition source)" />
+          <SectionHeader title="Microphone" hint={audio.quality} />
           <MetricCard
             title="Acoustic level"
             value={audio.isRecording ? audio.meteringDecibels : null}
             unit="dBFS"
-            badge={audio.isRecording ? 'LISTENING' : (audio.permissionGranted ? 'IDLE' : 'NO PERMISSION')}
-            badgeColor={audio.isRecording ? Colors.dark.error : Colors.dark.textMuted}
-            subtitle={audio.isRecording ? '16 kHz mono AAC, 100 ms metering' : 'Start metering to read the microphone'}
-            source={audio.isRecording ? 'hardware' : 'unavailable'}
+            badge={
+              audio.isRecording
+                ? (audio.isPaused ? 'PAUSED' : audio.isSilent ? 'QUIET' : 'SIGNAL')
+                : (audio.permissionGranted ? 'IDLE' : 'NO PERMISSION')
+            }
+            badgeColor={
+              audio.isRecording
+                ? (audio.isPaused ? Colors.dark.warning : audio.isSilent ? Colors.dark.textMuted : Colors.dark.error)
+                : Colors.dark.textMuted
+            }
+            subtitle={
+              audio.isRecording
+                ? `${audio.durationSeconds.toFixed(1)} s · peak ${audio.peakDecibels} dBFS · ${audio.quality === 'speech' ? '16 kHz mono, noise suppressed' : '48 kHz stereo, unprocessed'}`
+                : 'Start the meter to read the microphone'
+            }
+            source={audio.source}
           />
-          <HapticButton
-            title={audio.isRecording ? 'Stop metering' : 'Start audio level meter'}
-            onPress={audio.isRecording ? audio.stopRecording : audio.startRecording}
-            variant={audio.isRecording ? 'danger' : 'primary'}
-            style={{ marginBottom: 16 }}
+
+          {/* Level bar: driven by the 0..1 value, because the dBFS scale reads wrong on a bar. */}
+          <View style={styles.levelTrack}>
+            <View style={[styles.levelFill, { width: `${Math.round(audio.level * 100)}%` }]} />
+          </View>
+
+          <View style={styles.audioRow}>
+            <HapticButton
+              title={audio.isRecording ? 'Stop' : 'Record'}
+              onPress={() => { void (audio.isRecording ? audio.stopRecording() : audio.startRecording()); }}
+              variant={audio.isRecording ? 'danger' : 'primary'}
+              style={{ flex: 1, marginRight: 6 }}
+            />
+            <HapticButton
+              title={audio.isPaused ? 'Resume' : 'Pause'}
+              onPress={() => { if (audio.isPaused) audio.resumeRecording(); else audio.pauseRecording(); }}
+              disabled={!audio.isRecording}
+              variant="outline"
+              style={{ flex: 1, marginLeft: 6 }}
+            />
+          </View>
+
+          <View style={styles.audioRow}>
+            <HapticButton
+              title="Speech profile"
+              onPress={() => audio.setQuality('speech')}
+              variant={audio.quality === 'speech' ? 'primary' : 'outline'}
+              style={{ flex: 1, marginRight: 6 }}
+            />
+            <HapticButton
+              title="Studio profile"
+              onPress={() => audio.setQuality('studio')}
+              variant={audio.quality === 'studio' ? 'primary' : 'outline'}
+              style={{ flex: 1, marginLeft: 6 }}
+            />
+          </View>
+
+          <MetricCard
+            title="Inputs & routing"
+            value={audio.inputs.length ? `${audio.inputs.length} available` : null}
+            badge={audio.route === 'earpiece' ? 'EARPIECE' : 'SPEAKER'}
+            badgeColor={Colors.dark.primary}
+            subtitle={
+              audio.inputs.length
+                ? audio.inputs.map(i => i.name).join(' · ')
+                : 'Microphone list resolves once recording has been prepared'
+            }
+            source={audio.inputs.length ? 'hardware' : 'unavailable'}
           />
+          <View style={styles.audioRow}>
+            <HapticButton
+              title="Route: speaker"
+              onPress={() => { void audio.setRoute('speaker'); }}
+              variant={audio.route === 'speaker' ? 'primary' : 'outline'}
+              style={{ flex: 1, marginRight: 6 }}
+            />
+            <HapticButton
+              title="Route: earpiece"
+              onPress={() => { void audio.setRoute('earpiece'); }}
+              variant={audio.route === 'earpiece' ? 'primary' : 'outline'}
+              style={{ flex: 1, marginLeft: 6 }}
+            />
+          </View>
+
+          {audio.lastRecordingUri && (
+            <>
+              <MetricCard
+                title="Last recording"
+                value={audio.isPlaying ? `${audio.playbackPositionSeconds} / ${audio.playbackDurationSeconds}` : audio.playbackDurationSeconds || null}
+                unit="s"
+                badge={audio.isPlaying ? 'PLAYING' : 'READY'}
+                badgeColor={audio.isPlaying ? Colors.dark.success : Colors.dark.textMuted}
+                subtitle="Captured on this device"
+                source="hardware"
+              />
+              <View style={styles.audioRow}>
+                <HapticButton
+                  title={audio.isPlaying ? 'Pause' : 'Play'}
+                  onPress={() => { void (audio.isPlaying ? audio.pausePlayback() : audio.playLastRecording()); }}
+                  variant="primary"
+                  style={{ flex: 1, marginRight: 6 }}
+                />
+                <HapticButton
+                  title="Stop"
+                  onPress={() => { void audio.stopPlayback(); }}
+                  disabled={!audio.isPlaying}
+                  variant="outline"
+                  style={{ flex: 1, marginLeft: 6 }}
+                />
+              </View>
+            </>
+          )}
+
+          {audio.error && <Text style={styles.audioError}>{audio.error}</Text>}
 
           <SectionHeader title="Display" />
           <MetricCard
@@ -285,7 +385,7 @@ function flag(v: boolean | null): string {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { padding: 16, paddingBottom: 120 },
+  content: { padding: 16, paddingBottom: 130 },
   header: { marginBottom: 16 },
   title: { ...Type.title, color: Colors.dark.text },
   subtitle: { color: Colors.dark.textMuted, fontSize: 13, marginTop: 2 },
@@ -295,5 +395,16 @@ const styles = StyleSheet.create({
   sectionDesc: { color: Colors.dark.textMuted, fontSize: 13, marginBottom: 12, marginLeft: 4, lineHeight: 18 },
   hapticGrid: { marginBottom: 8 },
   hapticBtn: { marginBottom: 8 },
+  audioRow: { flexDirection: 'row', marginBottom: 12 },
+  /** Level meter: 0..1 fill, so a quiet room reads as a small bar rather than a full one. */
+  levelTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.dark.cardBorder,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  levelFill: { height: 4, borderRadius: 2, backgroundColor: Colors.dark.primary },
+  audioError: { ...Type.caption, color: Colors.dark.error, marginBottom: 12 },
   hint: { color: Colors.dark.textMuted, fontSize: 12, marginLeft: 4, marginBottom: 8 },
 });

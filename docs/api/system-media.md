@@ -16,18 +16,77 @@ This document covers system telemetry, media capture, power, and wireless modem 
 
 ## `useAudio`
 
-Operates the microphone array with 100 ms decibel metering in dBFS (-160 to 0). Backed by **`expo-audio`** (the legacy `expo-av` package was removed in this project). Records mono 16 kHz AAC through the `voice_recognition` audio source so Pixel's hardware noise suppression is applied, which is the input every Google speech API expects.
+Microphone capture, level metering and playback, backed by **`expo-audio`** (the legacy `expo-av` package was removed in this project).
+
+**Capture profiles.** `speech` records 16 kHz mono through the `voice_recognition` source, which is the path that applies the platform noise suppression and the format Google's speech APIs expect. `studio` records 48 kHz stereo through `unprocessed`, the raw microphone signal with no platform processing.
+
+**Levels.** The recorder is polled every 100 ms. `meteringDecibels` is dBFS (-160 digital silence to 0 clipping) and `peakDecibels` holds the loudest value of the take. `level` maps the reading onto 0..1 with a floor at -60 dBFS, which is what a meter should be driven from; the dBFS scale is logarithmic and reads wrong on a bar. `isSilent` compares against `silenceThresholdDbfs` (-45 dBFS by default).
+
+**Inputs.** `getAvailableInputs` is only valid once the recorder has been prepared, so `inputs` populates after recording starts. Selecting an input is how you switch to an attached USB or Bluetooth microphone on Android.
+
+**Routing.** `setRoute` changes the audio mode, so it applies to the whole app rather than to one player.
 
 ### Signature
 ```typescript
+type AudioQuality = 'speech' | 'studio';
+type AudioRoute = 'speaker' | 'earpiece';
+
 function useAudio(): {
-  isRecording: boolean;
-  meteringDecibels: number;       // dBFS -160..0
-  currentDecibels: number;        // alias of meteringDecibels
+  // capture state
+  isRecording: boolean;            // true while paused as well
+  isPaused: boolean;
+  canRecord: boolean;              // RecorderState.canRecord
   permissionGranted: boolean;
-  startRecording: () => Promise<boolean>;
-  stopRecording: () => Promise<string | null>;   // recorded file URI
+  durationSeconds: number;
+  quality: AudioQuality;
+
+  // level
+  meteringDecibels: number;        // dBFS -160..0
+  currentDecibels: number;         // alias kept for older call sites
+  peakDecibels: number;
+  level: number;                   // 0..1, floored at -60 dBFS
+  isSilent: boolean;
+  silenceThresholdDbfs: number;
+  setSilenceThresholdDbfs: (dbfs: number) => void;
+
+  // inputs and routing
+  inputs: RecordingInput[];        // { name, type, uid }
+  currentInputUid: string | null;
+  route: AudioRoute;
+
+  // playback
+  lastRecordingUri: string | null;
+  isPlaying: boolean;
+  playbackPositionSeconds: number;
+  playbackDurationSeconds: number;
+
+  source: TelemetrySource;         // 'hardware' once a real sample arrives
+  error: string | null;
+
+  // actions
+  startRecording: (o?: { maxDurationSeconds?: number; quality?: AudioQuality }) => Promise<boolean>;
+  pauseRecording: () => boolean;
+  resumeRecording: () => boolean;
+  stopRecording: () => Promise<string | null>;   // file URI
+  setQuality: (q: AudioQuality) => void;
+  refreshInputs: () => RecordingInput[];
+  selectInput: (uid: string) => boolean;
+  setRoute: (r: AudioRoute) => Promise<void>;
+  playLastRecording: (uri?: string) => Promise<boolean>;
+  pausePlayback: () => void;
+  stopPlayback: () => Promise<void>;
+  seekPlayback: (seconds: number) => Promise<void>;
 };
+```
+
+### Example
+```tsx
+const audio = useAudio();
+
+await audio.startRecording({ quality: 'speech', maxDurationSeconds: 30 });
+// audio.level drives a meter; audio.isSilent gates a "say something" hint
+const uri = await audio.stopRecording();
+await audio.playLastRecording();
 ```
 
 ---

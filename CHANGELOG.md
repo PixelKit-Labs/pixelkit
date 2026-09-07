@@ -4,6 +4,22 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.14] - 2026-09-06
+
+### Added
+- `useAudio` gained the capability it was missing. Recording now supports pause and resume, an optional fixed duration and live elapsed time. Two capture profiles: `speech` (16 kHz mono through `voice_recognition`, the platform noise-suppressed path) and `studio` (48 kHz stereo through `unprocessed`, the raw microphone). Levels add a running peak, a 0..1 `level` for meters floored at -60 dBFS, and an `isSilent` flag against an adjustable threshold. Microphone enumeration and selection, speaker/earpiece routing, and playback with pause, stop and seek. All additive: the previous return fields are unchanged.
+- Sensors tab exposes the new audio surface: level bar, pause and resume, profile switch, input list, routing, and playback of the last take.
+- `src/screens/docsData.ts`: documentation content separated from presentation. Every hook now carries a plain-language explanation of what it is for, a technical account of how it works, and structured `params`, `returns` and `actions` where each field has a name, a real type and a sentence explaining it.
+
+### Changed
+- Docs tab rewritten to the app's design system. It previously used default fonts, ad-hoc pill styling and emoji, and looked unrelated to the other three screens. It now uses the shared type scale and panel material (wash, hairline, specular), `SectionHeader`, and a single cyan accent for selection instead of a different colour per category.
+- Each entry opens to labelled sections: what it does, how it works, signature, inputs, returns, actions, example and agent note. Inputs and returns are rendered as reference rows rather than a flat list of strings.
+- Filter chip counts and the module total derive from the data, so they can no longer drift. The previous hardcoded counts were wrong.
+- Removed the remaining lightning glyphs from the Docs header, footer and the `useDevice` example.
+
+### Fixed
+- Docs search now matches return and action names, not just the summary.
+
 ## [1.0.13] - 2026-09-06
 
 ### Changed

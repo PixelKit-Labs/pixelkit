@@ -20,8 +20,10 @@ This document is the consolidated reference for every hook in the PixelKit SDK (
 4. [Neural & Intelligence Hooks](#neural--intelligence-hooks)
    - [useGemini](#usegemini) (gemini-3.8-flash chat)
    - [useGeminiNano](#usegemininano) (Gemini Nano on-device via ML Kit GenAI)
-   - [useSpeechAI](#usespeechai) (expo-audio → Gemini transcription)
-   - [useVisionAI](#usevisionai) (Multimodal Scene Inspection)
+   - [useGenAITasks](#usegenaitasks) (Dedicated On-Device GenAI Task Modules)
+   - [useNaturalLanguageAI](#usenaturallanguageai) (58-Language Offline NLP Suite)
+   - [useSpeechAI](#usespeechai) (ASI Offline & Gemini Audio Speech Recognition)
+   - [useVisionAI](#usevisionai) (ML Kit On-Device Vision + Multimodal Gemini)
 5. [Sensors & Physical Actuators](#sensors--physical-actuators)
    - [useSensors](#usesensors) (6-Axis IMU & Barometer)
    - [useCamera](#usecamera) (expo-camera zoom, flash, lens)
@@ -129,7 +131,7 @@ isStuttering: boolean; gpuMemoryUsageMB: null; source: TelemetrySource;
 ### `useTPU`
 * **File Path**: `src/ai/useTPU.ts`
 * **Target Hardware**: Tensor TPU via **AICore** (Gemini Nano host). Verified on Pixel 11 Pro: AICore `0.release.prod_aicore_20260723.00_RC11`, Private Compute Services `1.0.release.962568596`.
-* **Description**: Detects the on-device AI stack (needs `<queries>` for package visibility). Inference metrics stay `null` until the `pixel-nano` ML Kit module lands; `benchmarkTPU()` runs a real JS matmul labelled **CPU Fallback**.
+* **Description**: Detects the on-device AI stack (needs `<queries>` for package visibility). Real on-device inference metrics (latency, tokens, time-to-first-token) live in `useGeminiNano()` via the `pixel-nano` module; `benchmarkTPU()` runs a real JS matmul labelled **CPU Fallback**.
 
 ---
 
@@ -220,17 +222,31 @@ function NotificationRing() {
 
 ---
 
+### `useGenAITasks`
+* **File Path**: `src/ai/useGenAITasks.ts` + `modules/pixel-nano` (Kotlin)
+* **Target Hardware**: Tensor G6 TPU via ML Kit GenAI Task APIs (AICore).
+* **Description**: Dedicated on-device task clients for Summarization (article & chat transcripts into bullets), Proofreading (grammar & sentence restructuring), Rewriting (elaborate, emojify, shorten, friendly, professional, rephrase), and Image Description. Features sub-50ms local inference with hardware observability (`source: 'hardware'`).
+
+---
+
+### `useNaturalLanguageAI`
+* **File Path**: `src/ai/useNaturalLanguageAI.ts` + `modules/pixel-nano` (Kotlin)
+* **Target Hardware**: ML Kit Natural Language Processing Engine.
+* **Description**: Offline NLP suite running directly on-device without internet access. Supports 58-language machine translation, fast language identification across 50+ languages with confidence scores, context-aware smart replies, and structured entity extraction (dates, flight numbers, monetary amounts, addresses, tracking numbers).
+
+---
+
 ### `useSpeechAI`
 * **File Path**: `src/ai/useSpeechAI.ts`
-* **Target Hardware**: Microphone (VOICE_RECOGNITION source, 16 kHz mono) + Gemini audio transcription.
-* **Description**: Records voice audio with real-time decibel metering, submits speech packets to AI models, and returns transcribed tokens.
+* **Target Hardware**: Microphone (VOICE_RECOGNITION source, 16 kHz mono) + Android System Intelligence (ASI) offline streaming recognizer & Gemini multimodal cloud fallback.
+* **Description**: Dual-mode speech recognition providing real-time on-device token streaming with decibel metering (`dBFS`) and zero network transmission, alongside cloud Gemini audio transcription.
 
 ---
 
 ### `useVisionAI`
-* **File Path**: `src/ai/useVisionAI.ts`
-* **Target Hardware**: CameraX Optical Stack + Multimodal Gemini Vision.
-* **Description**: Takes raw camera photo buffers, downscales for optimal token economy, and submits multimodal prompts to Gemini for scene analysis.
+* **File Path**: `src/ai/useVisionAI.ts` + `modules/pixel-nano` (Kotlin)
+* **Target Hardware**: CameraX Optical Stack + ML Kit On-Device Vision Subsystem & Multimodal Gemini 3.8.
+* **Description**: Full-spectrum visual intelligence suite combining on-device OCR v2 (text recognition), 1D/2D barcode & QR scanning, image concept labeling, face & 468-point 3D mesh detection, object detection & tracking, pose landmarks, selfie/subject segmentation, and cloud Gemini multimodal scene analysis with structured JSON output.
 
 ---
 
@@ -361,16 +377,33 @@ interface SecurityState {
 * **File Path**: `src/hardware/useAudio.ts`
 * **Target Hardware**: Multi-Microphone Array (`VOICE_RECOGNITION` audio source for hardware noise suppression).
 * **Backing Module**: `expo-audio` (SDK 57). The legacy `expo-av` dependency has been removed.
-* **Description**: Records mono 16 kHz AAC (the format every Google speech API expects) with 100 ms dBFS metering (-160 silence to 0 clipping).
+* **Description**: Capture with pause and resume and an optional fixed duration; two profiles (`speech` 16 kHz mono via `voice_recognition`, `studio` 48 kHz stereo via `unprocessed`); dBFS metering every 100 ms with a running peak, a 0..1 `level` for meters and a silence flag; microphone enumeration and selection; speaker/earpiece routing; and playback with seek.
 
 #### Interface
 ```typescript
-isRecording: boolean;
+// capture
+isRecording: boolean; isPaused: boolean; canRecord: boolean;
+permissionGranted: boolean; durationSeconds: number;
+quality: 'speech' | 'studio';
+// level
 meteringDecibels: number;        // dBFS, -160..0
-currentDecibels: number;         // alias of meteringDecibels
-permissionGranted: boolean;
-startRecording(): Promise<boolean>;
-stopRecording(): Promise<string | null>;  // file URI
+currentDecibels: number;         // alias
+peakDecibels: number; level: number;   // level is 0..1, floored at -60 dBFS
+isSilent: boolean; silenceThresholdDbfs: number;
+// inputs, routing, playback
+inputs: RecordingInput[]; currentInputUid: string | null;
+route: 'speaker' | 'earpiece';
+lastRecordingUri: string | null; isPlaying: boolean;
+playbackPositionSeconds: number; playbackDurationSeconds: number;
+source: TelemetrySource; error: string | null;
+// actions
+startRecording(o?: { maxDurationSeconds?: number; quality?: AudioQuality }): Promise<boolean>;
+pauseRecording(): boolean; resumeRecording(): boolean;
+stopRecording(): Promise<string | null>;
+setQuality(q): void; refreshInputs(): RecordingInput[]; selectInput(uid): boolean;
+setRoute(r): Promise<void>;
+playLastRecording(uri?): Promise<boolean>; pausePlayback(): void;
+stopPlayback(): Promise<void>; seekPlayback(seconds): Promise<void>;
 ```
 
 ---

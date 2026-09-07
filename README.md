@@ -9,7 +9,7 @@
 [![Gemini](https://img.shields.io/badge/Cloud-gemini--3.8--flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![On-device](https://img.shields.io/badge/On--device-Gemini%20Nano%20%2B%20ML%20Kit-00E5FF?style=flat-square)](https://developers.google.com/ml-kit)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict%20%C2%B7%200%20errors-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Version](https://img.shields.io/badge/version-1.0.13-6FDCF2?style=flat-square)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.14-6FDCF2?style=flat-square)](./CHANGELOG.md)
 
 ---
 
@@ -35,11 +35,23 @@ That makes PixelKit usable as ground truth by autonomous coding agents, which is
 
 ## Interface
 
-| Silicon Dashboard |
-| :---: |
-| ![Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png) |
+| Silicon Dashboard | On-Device Gemini Nano Chat |
+| :---: | :---: |
+| ![Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png) | ![On-Device Gemini Nano Chat](./docs/assets/screenshots/02_ailab_chat.png) |
 
-*Every card carries a provenance tag: `HW` read from hardware, `DERIVED` computed from hardware, `SIMULATED` state-only, `N/A` unreadable.*
+| On-Device Vision Subsystem | Offline 58-Language Translation |
+| :---: | :---: |
+| ![On-Device Vision Subsystem](./docs/assets/screenshots/04_ailab_vision.png) | ![Offline 58-Language Translation](./docs/assets/screenshots/05_ailab_language.png) |
+
+| Android 17 AppFunctions Actuators | Hardware & Sensor Lab |
+| :---: | :---: |
+| ![Android 17 AppFunctions](./docs/assets/screenshots/06_ailab_agents.png) | ![Hardware & Sensor Lab](./docs/assets/screenshots/07_sensors_lab.png) |
+
+| Physical UWB & Torch Actuators | Interactive In-App API Docs |
+| :---: | :---: |
+| ![Physical UWB & Torch](./docs/assets/screenshots/07_sensors_radios.png) | ![Interactive In-App API Docs](./docs/assets/screenshots/08_docs_screen.png) |
+
+*Captured live on the physical Google Pixel 11 Pro over ADB. Every metric carries an honest provenance tag: `HW` read directly from hardware, `DERIVED` computed from hardware readings, `SIMULATED` state-only, `N/A` unreadable.*
 
 ---
 
@@ -73,7 +85,7 @@ Events are logged with a `[PixelKit]` prefix, visible via `adb logcat -s ReactNa
 | **Haptics** | `useHaptics()` | `expo-haptics` standard patterns plus the vibrator's real capabilities (amplitude control, resonant frequency, supported primitives) and Android 16+ envelope effects via `BasicEnvelopeBuilder`. |
 | **Motion & atmosphere** | `useSensors()` | 6-axis IMU (accelerometer, gyroscope), magnetometer, barometer with hypsometric altitude, ambient light. Configurable sampling interval. |
 | **Camera** | `useCamera()` | `expo-camera` lens selection, zoom, flash and permission state. Camera Looks and Super Res Zoom belong to the Pixel Camera app and are held here as UI state only. |
-| **Audio** | `useAudio()` | `expo-audio` recording at 16 kHz mono through the `voice_recognition` source, with 100 ms dBFS metering. |
+| **Audio** | `useAudio()` | Recording with pause and resume, a fixed-duration option, and live elapsed time. Two capture profiles: `speech` (16 kHz mono through `voice_recognition`, platform noise suppression) and `studio` (48 kHz stereo through `unprocessed`). dBFS level with running peak, a 0..1 value for meters and a silence flag. Microphone enumeration and selection, speaker/earpiece routing, and playback with seek. |
 | **NFC** | `useNFC()` | Physical `NfcAdapter` state, antenna state, Android 15+ Observe Mode support. Tag reading is simulated until a native NDEF path lands. |
 | **Bluetooth LE** | `useBLE()` | Physical adapter state, Bluetooth 5.4 Channel Sounding support, bonded devices. Peripheral scanning is simulated. |
 | **UWB** | `useUWB()` | **[Pro]** Real chip state and id from `UwbManager` (`source: 'hardware'`). Ranging sessions are simulated until `RangingManager` is wired. |
@@ -330,7 +342,7 @@ if (nano.isAvailable) {
 
 ## Release build
 
-Version **1.0.13** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 14).
+Version **1.0.14** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 15).
 
 ```bash
 npm run typecheck                       # 0 errors
