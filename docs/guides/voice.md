@@ -35,6 +35,10 @@ export async function prepareMic() {
 }
 ```
 
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `prepareMic()` | none | `Promise<void>` — resolves once recording is allowed; **throws** `RECORD_AUDIO denied` when the user refuses | Requests the microphone permission and puts the session into a recording audio mode that also plays in silent mode. Call it once before any capture path. |
+
 ### 2.2 File recording for batch transcription (expo-audio)
 
 ```ts
@@ -54,6 +58,12 @@ export function useDictationRecorder() {
   return { start, stop, state };
 }
 ```
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `useDictationRecorder()` | none | `{ start, stop, state }` — `state` carries `isRecording`, `durationMillis` and `metering` in dBFS | 16 kHz mono AAC, which is what batch transcription expects. |
+| ↳ `start()` | none | `Promise<void>` | Prepares the recorder and begins capture. |
+| ↳ `stop()` | none | `Promise<string \| null>` — the recorded file URI, or `null` when nothing was captured | Finalises the file for upload. |
 
 `state.metering` drives the `SensorVisualizer` waveform and the HiLight `pulse` brightness.
 
@@ -132,6 +142,21 @@ Function("speakerFlush") { speaker?.flush() }
 Function("speakerStop") { speaker?.release(); speaker = null }
 ```
 
+**Native contracts**
+
+| Function / class | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `PcmMic(emit)` | `emit: (ByteArray) -> Unit` — called with each raw PCM chunk | the instance | Owns an `AudioRecord` on the `VOICE_RECOGNITION` source, so the Pixel's multi-mic noise suppression is applied. |
+| ↳ `start(sampleRate)` | `sampleRate: Int` — default `16000`, which is what speech models expect | `Unit` — chunks arrive on `emit` roughly every 100 ms (~3,200 bytes at 16 kHz) | Starts capture on a dedicated thread. |
+| ↳ `stop()` | none | `Unit` | Stops the loop and releases the recorder. Safe to call twice. |
+| `startPcmMic(sampleRate)` *(module Function)* | `sampleRate: Int` — capture rate in Hz | `void` — audio arrives as `onPcmChunk` events carrying `{ base64 }` | Replaces any running mic, so it is idempotent from JS. |
+| `stopPcmMic()` *(module Function)* | none | `void` | Stops capture and releases the mic. |
+| `PcmSpeaker(sampleRate)` | `sampleRate: Int` — default `24000`, the Live API's output rate | the instance | Streaming `AudioTrack` with `USAGE_ASSISTANT` attributes. |
+| ↳ `write(pcm)` | `pcm: ByteArray` — 16-bit mono PCM at the construction rate | `Int` — bytes written | Queues audio for playback. |
+| ↳ `flush()` | none | `Unit` | Drops everything queued **immediately**: this is barge-in when the user interrupts. |
+| ↳ `release()` | none | `Unit` | Frees the track. |
+| `speakerStart(rate)` / `speakerWrite(base64)` / `speakerFlush()` / `speakerStop()` *(module Functions)* | `rate: Int` — output sample rate. `base64: string` — a PCM chunk, base64 encoded. | `void` | The JS-facing playback path. `speakerFlush` is what a barge-in handler calls. |
+
 `USAGE_ASSISTANT` routes through the same audio policy Google's Gemini uses, so Bluetooth LE Audio earbuds and the phone speaker behave as users expect. On **Android 17** this usage gets its own **Assistant volume stream**, decoupled from media volume, so users can mute music while still hearing your agent. `AudioManager.MODE_ASSISTANT_CONVERSATION` exists for apps holding the assistant role; regular apps should not set it.
 
 ---
@@ -198,6 +223,15 @@ private fun sttClient(locale: String, preferAdvanced: Boolean): SpeechRecognizer
 
 Confirm the exact option/response property names against the current [Speech Recognition API reference](https://developers.google.com/ml-kit/genai/speech-recognition/android) when you compile; the API is alpha. For file input use `AudioSource.fromPfd(parcelFileDescriptor)` with raw headerless 16 kHz mono PCM16 fed at real-time rate (~32 KB/s).
 
+**Native STT contracts**
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `sttStatus(locale, preferAdvanced)` | `locale: String` — BCP-47 recogniser locale. `preferAdvanced: Boolean` — ask for the Nano-backed Advanced mode; Basic is used when it is unavailable. | `Promise<string>` — `'available' \| 'downloadable' \| 'downloading' \| 'unavailable'` | Check before offering dictation. |
+| `sttDownload(locale, preferAdvanced)` | Same as above | `Promise<string>` — the status after the download; progress arrives as `onSttDownload` events carrying `{ state }` | Fetches the recogniser model. |
+| `sttStart(locale, preferAdvanced)` | Same as above | `void` — results arrive as `onTranscript` events carrying `{ text, isFinal }`; failures as `onSttError` with `{ message }` | Cancels any running recognition first, so it is safe to call twice. |
+| `sttStop()` | none | `void` | Cancels the job and stops the recogniser. |
+
 ### 3.2 `useSpeechToText` hook
 
 ```ts
@@ -237,6 +271,19 @@ export function useSpeechToText(locale = 'en-US') {
   return { partial, finals, transcript: [...finals, partial].join(' ').trim(), isListening, status, start, stop };
 }
 ```
+
+**Hook contract**
+
+| Member | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `useSpeechToText(locale?)` | `locale?: string` — BCP-47 recogniser locale, default `'en-US'`. Changing it re-checks model availability. | The object below | On-device streaming recognition through the ML Kit model. |
+| `partial` | — | `string` | Interim text for the phrase being spoken. Empty between phrases. |
+| `finals` | — | `string[]` | Completed phrases in order. |
+| `transcript` | — | `string` | `finals` plus `partial`, joined — what you display. |
+| `isListening` | — | `boolean` | Whether the recogniser is running. Cleared on error. |
+| `status` | — | `'unknown' \| 'available' \| 'downloadable' \| 'downloading' \| 'unavailable'` | Model availability. Only `'available'` can recognise; `'downloadable'` means `start()` will fetch it first. |
+| `start()` | none | `Promise<void>` — **throws** `stt:<status>` when the model could not be made available | Ensures the model, clears previous text, and begins streaming. |
+| `stop()` | none | `string` — the full transcript, trimmed | Stops the recogniser and returns what was heard. |
 
 Wire `useSpeechAI` to prefer this and only fall back to the current cloud transcription when `status === 'unavailable'`.
 
@@ -296,6 +343,10 @@ export async function mintLiveToken() {
   return token.name;
 }
 ```
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `mintLiveToken()` | none — reads `GEMINI_API_KEY` from the server environment | `Promise<string>` — the token name to hand the client; single use, valid for one session of up to 30 minutes, and must be connected within 60 seconds | Runs **on your server**. The token is constrained to the Live model and audio modality, so a leaked one cannot be repurposed for text generation. |
 
 **Client**
 
@@ -398,6 +449,20 @@ export function useLiveVoiceAgent(opts: { systemInstruction: string; voiceName?:
 }
 ```
 
+**Hook contract**
+
+| Member | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `useLiveVoiceAgent(opts)` | `opts.systemInstruction: string` — the agent's standing instruction. `opts.voiceName?: string` — a prebuilt Live voice, default `'Kore'`. | The object below | Owns the Live session, the PCM mic and the PCM speaker. |
+| `state` | — | `'idle' \| 'connecting' \| 'listening' \| 'thinking' \| 'speaking' \| 'error'` | Drives the HiLight colour and the on-screen indicator. `'thinking'` means a tool call is running. |
+| `userText` | — | `string` | Live transcription of what the user is saying, accumulated for the current turn. |
+| `modelText` | — | `string` | Live transcription of what the model is saying. Both clear at `turnComplete`. |
+| `connect(tokenName)` | `tokenName: string` — the ephemeral token from `mintLiveToken()` | `Promise<void>` — on success the mic is streaming and `state` is `'listening'` | Opens the session, starts the 16 kHz mic and the 24 kHz speaker, and wires tool calls to the same `runTool` registry as every other path. |
+| `disconnect()` | none | `void` | Closes the session and tears down mic and speaker. Safe when already idle. |
+| `sendText(text)` | `text: string` — a typed turn | `void` | Sends text into the same session, for when the user would rather not speak. |
+
+Barge-in is `serverContent.interrupted` → `speakerFlush()`: queued audio is dropped immediately so the agent stops talking the moment the user does.
+
 Details that separate "demo" from "top-notch":
 
 - **Barge-in**: on `serverContent.interrupted` flush the `AudioTrack` immediately; otherwise the model keeps talking over the user for up to a second of buffered audio.
@@ -431,6 +496,10 @@ export async function speakLocal(text: string, language = 'en-US') {
 }
 ```
 
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `speakLocal(text, language?)` | `text: string` — what to say. `language?: string` — BCP-47 tag, default `'en-US'`; a neural voice for that language is preferred when one is installed. | `Promise<void>` — resolves when the engine finishes, is stopped, **or** errors, so a caller can always await it without a rejection path | For the hook version with voice listing, rate, pitch and length validation, use `useSpeech()`. |
+
 Pixel ships Google's on-device neural voices; the regex above prefers them when present. Call `Speech.stop()` when the user starts talking.
 
 ### 5.2 Gemini TTS (cloud, controllable)
@@ -444,6 +513,15 @@ const res = await ai.models.generateContent({
 const pcm24k = res.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 if (pcm24k) { PixelNano.speakerStart(24000); PixelNano.speakerWrite(pcm24k); }
 ```
+
+**Inputs and outputs of the cloud TTS call**
+
+| Piece | Type | Description |
+| :--- | :--- | :--- |
+| `contents` (input) | `Content[]` | The text to speak. Delivery instructions go in the prompt itself — "Say warmly: …" — because the model follows them. |
+| `speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName` (input) | `string` | A prebuilt voice such as `Kore`, `Puck`, `Charon` or `Aoede`. |
+| `responseModalities` (input) | `Modality[]` | Must be `[Modality.AUDIO]` for a spoken reply. |
+| `inlineData.data` (output) | `string` | Base64 24 kHz 16-bit mono PCM, ready for `PixelNano.speakerWrite`. Absent when the model returned text instead, so check before playing. |
 
 Voices such as `Kore`, `Puck`, `Charon`, `Aoede` are shared between TTS and Live so an agent sounds identical whether it is reading a notification or conversing.
 

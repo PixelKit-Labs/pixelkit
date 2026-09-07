@@ -4,6 +4,15 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.21] - 2026-09-06
+
+### Changed
+- Comprehensive API and documentation audit across the 32-hook suite.
+- Synchronized `README.md` Hook Matrix and Honesty Matrix with real native NDEF read/write capabilities in `useNFC()` and active hardware BLE peripheral discovery in `useBLE()`.
+- Added complete Function Calling registry contract and tool specifications to `docs/guides/function-calling.md`.
+- Expanded `useVisionAI()` and `geminiClient` references in `docs/HARDWARE_API.md` and `docs/api/neural-ai.md` with explicit parameter signatures and typed return structures.
+- Verified on-device execution on Google Pixel 11 Pro (Tensor G6, Android 17 API 37) with 0 TypeScript errors and Hermes Android export verified.
+
 ## [1.0.20] - 2026-09-06
 
 ### Changed

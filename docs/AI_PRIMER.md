@@ -68,42 +68,48 @@ When iterating on UI components:
 
 ---
 
-### 7. The Telemetry Provenance Rule (No Mocks)
-Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `src/core/observability.ts`). There is no `simulated` value. Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Radio adapter states (NFC antenna, Bluetooth controller, UWB chip) report `source: 'hardware'`; RF scan discoveries remain `simulated` until dedicated background scan services land. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and acts as an on-screen mirror when untethered (`source: 'simulated'`). Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
+### 7. The Telemetry Provenance Rule (Nothing Is Simulated)
+Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `src/core/observability.ts`). There is deliberately no `simulated` value: the type makes a fabricated reading unrepresentable. Never substitute a plausible default for a value that could not be read — render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Radio adapter state (NFC antenna, Bluetooth controller, UWB chip) and live scans both report `hardware`, because both are real reads. HiLight drives the physical LEDs when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`); without the daemon its `availability` is `'unavailable'` and the control functions refuse rather than pretending. Log lifecycle and errors with `logEvent(module, event, data)` and `logError(module, event, error)`; both surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
 
 ---
 
 ## 🧭 Master Silicon & Hook Mapping Table
 
-| Component | Hook | Return Values | Key Usage Example |
-| :--- | :--- | :--- | :--- |
-| **Tensor G6 CPU** | `useCPU()` | `coreTopology, coreCount (7), cpuLoadPercent, nodeProcess ("TSMC 2nm")` | Monitor 7-core thermal & compute loads |
-| **PowerVR GPU** | `useGPU()` | `frameRenderTimeMs, droppedFrameCount, isStuttering` | Monitor 8.33ms 120 FPS frame budget |
-| **Tensor TPU** | `useTPU()` | `activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec` | Benchmark local neural inference |
-| **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
-| **HiLight LED Ring**| `useHiLight()` | `availability, isDaemonConnected, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array (`hardware` with the ADB daemon, `unavailable` without it) |
-| **UWB Radar** | `useUWB()` | `isEnabled, chipId, activeTargets, isRanging, startRanging()` | [Pixel Pro] Hardware chip state (`hardware`), distance & AoA |
-| **Camera & capture** | `useCamera()` | `cameraRef, takePicture(), startRecording(), stopRecording(), zoomFactor (0..1), isTorchOn` | Photo and video capture. Zoom is a 0..1 fraction, not a multiplier. Looks are UI state only |
-| **Video playback** | `useVideo()` | `player, positionSeconds, durationSeconds, load(), play(), seekTo()` | Plays back what useCamera recorded; render `<VideoView player={player} />` |
-| **Media library** | `useMediaLibrary()` | `save(uri, album?), loadRecent(), recent, hasLimitedAccess` | Keeps a capture; without it cache files are reclaimed |
-| **Cellular modem** | `useCellular()` | `generation, is5G, carrierName, mobileCountryCode` | 5G vs LTE and which carrier; `useNetwork` cannot answer this |
-| **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
-| **Text to speech** | `useSpeech()` | `speak(text), voices, isSpeaking, setRate(), setPitch()` | Output half of voice; awaits the utterance so calls can be sequenced |
-| **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, interimTranscript, startListening(), stopListeningAndTranscribe()` | Dual-mode: on-device offline ASI and cloud STT |
-| **On-Device GenAI** | `useGenAITasks()` | `summarize(), proofread(), rewrite(), describeImage()` | ML Kit on-device GenAI task acceleration via AICore |
-| **On-Device NLP** | `useNaturalLanguageAI()` | `identifyLanguage(), translate(), suggestReplies(), extractEntities()` | ML Kit 58-language translation, entity extraction & smart reply |
-| **Vision & OCR** | `useVisionAI()` | `recognizeText(), scanBarcodes(), labelImage(), detectFaces(), detectFaceMesh(), detectObjects()` | On-device ML Kit Vision + cloud Gemini multimodal |
-| **Conversational** | `useGemini()` | `messages, isLoading, sendMessage(prompt)` | gemini-3.8-flash chat via ai.chats |
-| **On-device Nano** | `useGeminiNano()` | `status, info, messages, partial, sendMessage(prompt), download()` | Gemini Nano through AICore; latency and tok/s measured on device |
-| **Bluetooth LE** | `useBLE()` | `state, channelSounding, bondedDevices, peripherals, isScanning` | Physical BT adapter, Channel Sounding, bonded devices & scanner |
-| **NFC Radio** | `useNFC()` | `antennaState, observeModeSupported, lastScannedTag, isScanning` | Physical NFC antenna, Android 15+ Observe Mode & NDEF tag reader |
-| **Hardware Radios** | `useRadios()` | `nfc, bluetooth, uwb, wifiRtt, satellite, source, refresh()` | Unified hardware radio subsystem telemetry |
-| **Flashlight** | `useTorch()` | `isTorchOn, toggleTorch(), startStrobe()` | Dual-LED torch & SOS strobe |
-| **120Hz Display** | `useDisplay()` | `isKeepAwake, toggleKeepAwake(), brightness` | Display wake-lock & LTPO refresh |
-| **Titan M3 Auth** | `useBiometrics()` | `hasHardware, isEnrolled, authenticate(reason)` | Ultrasonic fingerprint & Face Unlock |
-| **Security Keys** | `useSecurity()` | `saveSecureItem(), getSecureItem(), isHardwareBacked` | SecureStore on the Android Keystore (StrongBox) |
-| **GNSS Location** | `useLocation()` | `latitude, longitude, altitude, heading, speed` | Dual-band L1/L5 GPS positioning |
-| **MediaTek M90** | `useNetwork()` | `ipAddress, networkType, isConnected, isAirplaneMode` | Wi-Fi 7 / 5G & Satellite modem |
+Every hook's full contract — each input with its default and units, each output field with its meaning, and each function with what it takes and returns — is in [`docs/HARDWARE_API.md`](HARDWARE_API.md) and the per-domain pages under [`docs/api/`](api/). This table is the index.
+
+| Component | Hook | Inputs | Key outputs | Functions |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tensor G6 CPU** | `useCPU()` | none | `coreTopology`, `coreCount` (7), `cpuLoadPercent` (frequency utilisation, not scheduler load), `appCpuPercent`, `cores[]`, `governorMode` | `benchmarkCPU() → Promise<number>` ms |
+| **PowerVR GPU** | `useGPU()` | none | `gpuRenderer`, `graphicsApi`, `frameRenderTimeMs`, `measuredFps`, `droppedFrameCount`, `isStuttering`, `gpuMemoryUsageMB` (always `null`) | none |
+| **Tensor TPU** | `useTPU()` | none | `aicoreInstalled`, `aicoreVersion`, `hasNpuFeature`, `activeDelegate`; inference metrics are `null` here — see `useGeminiNano` | `benchmarkTPU() → Promise<TPUAcceleration>` (CPU fallback, labelled) |
+| **LPDDR5X RAM** | `useMemory()` | none | `totalRAMMB`, `usedRAMMB`, `freeRAMMB`, `isLowMemory`, `appJavaHeapMB` | `purgeCaches() → void` |
+| **ADPF thermals** | `useADPF()` | none | `thermalHeadroom` (0 = cool, 1 = the phone is about to slow itself down), `thermalStatus`, `cpuHeadroom`, `gpuHeadroom`, `targetFps`, `currentFps` | `reportWorkDuration(actualMs, targetMs?) → 'WITHIN_BUDGET' \| 'BOOST_REQUESTED'` |
+| **HiLight LED ring** | `useHiLight()` | none | `availability` (`hardware` with the ADB daemon, `unavailable` without it), `isDaemonConnected`, `mode`, `currentColor`, `brightness` | `setColor(hex)`, `setMode(mode)`, `setBrightness(0..1)`, `triggerGeminiPulse(ms?)`, `triggerContactAlert(hex, ms?)`, `turnOff()`, `toggle()` |
+| **UWB radar** | `useUWB()` | none | `isSupported`, `isEnabled`, `chipId`, `isRanging`, `activeTargets[]`, `sessionInfo` | `startRanging(sessionId?) → Promise<boolean>`, `stopRanging() → void` |
+| **Camera & capture** | `useCamera()` | none (attach `cameraRef`) | `cameraRef`, `viewProps`, `zoomFactor` (0..1 fraction, not a multiplier), `lastPhoto`, `lastVideoUri`, `isRecording` | `takePicture({quality?, base64?, exif?}) → Promise<CapturedPhoto \| null>`, `startRecording({maxDurationSeconds?}) → Promise<string \| null>`, `stopRecording()`, `setZoom(0..1)` |
+| **Video playback** | `useVideo()` | `initialSource?: VideoSource` | `player`, `positionSeconds`, `durationSeconds`, `status` | `load(source, {autoplay?, loop?, muted?}) → Promise<boolean>`, `play()`, `seekTo(seconds)`, `generateThumbnails(times)` |
+| **Media library** | `useMediaLibrary()` | none | `recent[]`, `lastSaved`, `permissionGranted`, `hasLimitedAccess` | `save(localUri, albumName?) → Promise<SavedMedia \| null>`, `loadRecent(limit?)`, `remove(media)` |
+| **Cellular modem** | `useCellular()` | none | `generation`, `is5G`, `carrierName` (needs the phone-state permission), `mobileCountryCode`, `mobileNetworkCode` | `refresh()`, `requestPermission() → Promise<boolean>` |
+| **Sensors** | `useSensors(updateIntervalMs?)` | `updateIntervalMs` default `100` | `accelerometer` (g), `gyroscope` (rad/s), `magnetometer` (μT), `barometer` (hPa + relative metres), `lightLux`, `hasMotionSample` | none |
+| **Text to speech** | `useSpeech()` | none | `voices[]`, `isSpeaking`, `maxInputLength`, `rate`, `pitch` | `speak(text, {language?, voice?, rate?, pitch?, volume?}) → Promise<void>`, `stop()`, `voicesForLanguage(tag)` |
+| **Speech recognition** | `useSpeechAI()` | none | `isListening`, `voiceDecibels` (dBFS), `streamingPartial`, `lastTranscript`, `recognitionMode` | `setRecognitionMode('on-device' \| 'cloud')`, `startListening() → Promise<boolean>`, `stopListeningAndTranscribe() → Promise<SpeechTranscriptionResult \| null>` |
+| **On-device GenAI** | `useGenAITasks()` | none | `summaryResult`, `proofreadResult`, `rewriteResult`, `imageDescriptionResult`, `isRunning` | `summarize(text, options?)`, `proofread(text)`, `rewrite(text, tone?)`, `describeImage(input, style?)` — each `→ Promise<Result \| null>` |
+| **On-device NLP** | `useNaturalLanguageAI()` | none | `languageResult`, `translationResult`, `smartReplyResult`, `entityResult` | `identifyLanguage(text)`, `translate(text, from?, to?)`, `suggestReplies(history)`, `extractEntities(text)` |
+| **Vision & OCR** | `useVisionAI()` | none (every call takes a file URI or base64) | `ocrResult`, `barcodeResult`, `labelsResult`, `facesResult`, `objectsResult`, `analysis` | `recognizeText(input)`, `scanBarcodes(input)`, `labelImage(input)`, `detectFaces(input)`, `captureAndAnalyze(useCamera?)` |
+| **Conversational** | `useGemini()` | none (setters configure it) | `messages` (`system` role = local errors), `isLoading`, `hasApiKey`, `model`, `availableModels` | `sendMessage(prompt) → Promise<void>`, `clearMessages()`, `setApiKey(key)`, `setTemperature(n)` |
+| **On-device Nano** | `useGeminiNano()` | none (setters configure it) | `status`, `info` (token limit, feature flags), `messages`, `partial`, `lastLatencyMs`, `lastFirstTokenMs`, `lastDecodeTokensPerSec` | `sendMessage(prompt)`, `generate(prompt, options?)`, `download()`, `warmup()`, `countTokens(prompt)` |
+| **Bluetooth LE** | `useBLE()` | none | `state`, `channelSounding`, `bondedDevices[]`, `peripherals[]` (RSSI + estimated metres), `isScanning` | `startScan(timeoutMs?) → Promise<boolean>`, `stopScan()` |
+| **NFC radio** | `useNFC()` | none | `antennaState`, `observeModeSupported`, `lastScannedTag` (decoded NDEF records), `tagCount`, `lastWriteOk` | `startReader() → Promise<boolean>`, `stopReader()`, `writeText(text) → Promise<boolean>` (queues), `clearTag()` |
+| **Hardware radios** | `useRadios()` | none | `nfc`, `bluetooth`, `uwb`, `wifiRtt`, `satellite` blocks | `refresh() → void` |
+| **Flashlight** | `useTorch()` | none | `isAvailable`, `isTorchOn`, `isStrobing`, `maxStrengthLevel` (21 here) | `setTorch(on, strengthLevel?) → Promise<boolean>`, `toggleTorch()`, `startStrobe(intervalMs?)`, `stopStrobe()` |
+| **120 Hz display** | `useDisplay()` | none | `refreshRateHz`, `supportedRefreshRates`, `hdrTypes`, `brightness`, `isKeepAwake` | `setPreferredRefreshRate(hz) → Promise<boolean>`, `toggleKeepAwake()`, `setScreenBrightness(0..1)` |
+| **Biometrics** | `useBiometrics()` | none | `hasHardware`, `isEnrolled`, `supportedTypes`, `lastResult` | `authenticate(promptMessage?) → Promise<boolean>`, `refresh()` |
+| **Secret storage** | `useSecurity()` | none | `isHardwareBacked`, `securityModule`, `isPostQuantumProtected` (always `false`), `lastOperation` | `saveSecureItem(key, value) → Promise<boolean>`, `getSecureItem(key) → Promise<string \| null>`, `deleteSecureItem(key)` |
+| **GNSS location** | `useLocation()` | none | `latitude`, `longitude`, `altitude`, `accuracy` (metres), `hasFix` | `refreshLocation() → Promise<boolean>` |
+| **Network** | `useNetwork()` | none | `ipAddress`, `networkType`, `isConnected` (reachable, not merely attached), `isMetered`, `isAirplaneMode` | `refreshNetwork() → Promise<void>` |
+| **Capabilities** | `useCapabilities()` | none | `hasHiLight`, `hasUWB`, `hasStrongBox`, `supportsHapticEnvelopes`, `verification` (`device` or `model-table`) | none |
+| **Haptics** | `useHaptics()` | none | `envelopeSupported`, `resonantFrequencyHz` (134.4 Hz), `supportedPrimitives[]` | `triggerHaptic(type?)`, `playEnvelope(points, initialSharpness?) → boolean`, `playPrimitives(steps) → boolean`, `cancel()` |
+| **Microphone** | `useAudio()` | none | `meteringDecibels` (dBFS), `level` (0..1), `isSilent`, `durationSeconds`, `lastRecordingUri` | `startRecording({quality?, maxDurationSeconds?}) → Promise<boolean>`, `stopRecording() → Promise<string \| null>`, `playLastRecording(uri?)` |
 
 ---
 

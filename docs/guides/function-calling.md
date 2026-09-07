@@ -157,6 +157,32 @@ export function registerHardwareTools(h: { torch: Torch; haptics: Haptics; hilig
 }
 ```
 
+### Registry API
+
+Every exported function, with what it takes and what it gives back.
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `defineTool(def)` | `def.name: string` — snake_case, unique; the model calls it by this name. `def.description: string` — one imperative sentence, which is what the model reads to decide. `def.schema: ZodTypeAny` — input schema; `.describe()` on each field becomes the parameter description the model sees. `def.execute: (input) => Promise<unknown>` — the implementation, receiving validated input. `def.onDevice?: boolean` — `false` hides the tool from Nano, whose prompt budget is small. | The same `ToolDef`, so definitions can be exported | Registers a tool in the module-level map. |
+| `getTool(name)` | `name: string` — the registered tool name | `ToolDef \| undefined` — `undefined` when nothing is registered under that name | Looks a tool up. |
+| `listTools(opts?)` | `opts.onDevice?: boolean` — when `true`, exclude tools marked `onDevice: false` | `ToolDef[]` — every matching tool | The set you hand to a model. |
+| `zodToGeminiSchema(s)` | `s: ZodTypeAny` — a zod schema; strings, numbers, booleans, enums, arrays, objects, optionals and defaults are supported | `Schema` — the Gemini schema, with `description` carried across from `.describe()`; anything unsupported falls back to `Type.STRING` | Converts a zod schema into the declaration format the API expects. |
+| `toFunctionDeclarations(defs?)` | `defs?: ToolDef[]` — defaults to `listTools()` | `FunctionDeclaration[]` — `{ name, description, parameters }` per tool | What you pass as `config.tools`. |
+| `runTool(name, rawArgs)` | `name: string` — the name the model called. `rawArgs: unknown` — the arguments it produced, unvalidated. | `Promise<object>`, always JSON-serialisable: `{ ok: true, result }` on success, `{ error: 'unknown_tool:<name>' }`, `{ error: 'invalid_arguments', issues }`, or `{ error: <message> }` when `execute` threw | Validates against the schema, runs the tool, and never throws — the model always gets something it can read. |
+
+### Tool contracts
+
+The registered hardware tools, as the model sees them.
+
+| Tool | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `set_torch` | `on: boolean` — desired state. `strobe?: boolean` — emergency SOS strobe instead of a steady light. | `{ on: boolean, strobe: boolean }` — the state after the call | Reconciles the torch to the requested state, stopping a strobe first when needed. |
+| `haptic` | `pattern: 'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error'` — which tactile pattern to play | `{ played: string }` — the pattern played | An enum, not a free string, so the model cannot invent a pattern. |
+| `set_hilight` | `mode: 'off' \| 'glow' \| 'breathing' \| 'pulse' \| 'gemini_thinking' \| 'incoming_call' \| 'notification'` — the animation. `color?: string` — `#RRGGBB`, validated by regex. | `{ mode: string, color: string }` — the state after the call | Requires the ADB daemon; refuses otherwise, and the refusal is what the model gets back. |
+| `get_thermal_headroom` | none (`z.object({})`) | `{ cpuHeadroom, gpuHeadroom, thermalStatus, currentFps }` — any of which may be `null` when the device does not report it | Read-only, so it is safe to expose on-device (`onDevice: true`). |
+
+Return a `null` rather than a plausible number: the model will say "unknown" if you let it, and invent one if you do not.
+
 Naming rules the models respond to: verbs for actions (`set_`, `start_`, `stop_`), `get_` for reads, one sentence descriptions, enums instead of free strings, and **no tool that both reads and mutates**.
 
 ---
@@ -211,6 +237,12 @@ export async function runCloudAgent(ai: GoogleGenAI, system: string, history: Co
   return { text: 'Stopped: too many tool steps.', contents };
 }
 ```
+
+**Function contract**
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `runCloudAgent(ai, system, history, userText, onStep?)` | `ai: GoogleGenAI` — a configured client from `createGeminiClient`. `system: string` — the system instruction. `history: Content[]` — prior turns; pass `[]` for a fresh conversation. `userText: string` — the new user turn. `onStep?: (s: string) => void` — called once per executed tool call with a `name(args) → result` line, for a live trace. | `Promise<{ text: string; contents: Content[] }>` — the final text answer and the full turn list including every `functionCall` and `functionResponse` part, so you can persist it as history. After `MAX_STEPS` iterations it returns `'Stopped: too many tool steps.'` rather than looping. | Runs the tool loop the JavaScript SDK does not run for you. Never throws on a tool failure: `runTool` turns those into a result the model can read. |
 
 Key details:
 
@@ -301,6 +333,14 @@ export async function runNanoAgent(userText: string) {
   return { say: choice.say, tool: choice.tool, result };
 }
 ```
+
+**Function contracts**
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `toNanoToolPrompt(userText)` | `userText: string` — what the user asked | `string` — a prompt containing the on-device tool catalogue, the rules and the request | Only tools registered with `onDevice: true` are listed, because Nano's prompt budget is small. |
+| `runNanoAgent(userText)` | `userText: string` — what the user asked | `Promise<{ say: string; tool?: string; result: unknown }>` — `say` is the short spoken line, `tool` and `result` are absent/`null` when the model chose `'none'`; **throws** `nano_structured:<finishReason>` when generation did not finish cleanly | Asks Nano for a structured `ToolChoice`, then executes it through the same `runTool` as the cloud path. Malformed `argumentsJson` degrades to `{}` rather than throwing. |
+| `parseToolCode(text)` | `text: string` — raw model output that may contain a `tool_code` block | `{ name: string; args: Record<string, unknown> } \| null` — `null` when no call was found. `True`/`False` become booleans, numeric literals become numbers, quotes are stripped from strings. | Fallback for when structured output is unavailable. Validate the result through `runTool`; never execute it directly. |
 
 `zodToExample` builds a tiny example object from the schema (`{ on: true, sos: false }`), which Nano copies far more reliably than a JSON-schema dump.
 
@@ -393,6 +433,17 @@ abstract class BasePixelKitAppFunctionService : AppFunctionService() {
 }
 ```
 
+**Function contracts (AppFunctions)**
+
+These are the declarations the system agent sees, so their KDoc *is* the description the model reads (`isDescribedByKDoc = true`).
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `setTorch(params)` | `params: TorchParams` — `on: Boolean` (desired state), `sos: Boolean = false` (emergency strobe instead of a steady light) | `Boolean` — whether the hardware accepted the change | Runs without the React Native UI, so it must not depend on JS. |
+| `getHardwareStatus()` | none | `HardwareStatus` — `batteryPct: Int` (0–100), `thermalHeadroom: Double` (0.0 cool → 1.0 throttling), `torchOn: Boolean` | Read-only status for the agent. |
+
+Keep these names, parameters and descriptions identical to the JS registry entries, or the two catalogues will drift and the model will learn two different contracts for the same hardware.
+
 `HardwareBridge` is a plain Kotlin object that talks to `CameraManager.setTorchMode`, `BatteryManager` and `PowerManager.getThermalHeadroom` directly. AppFunctions run **without your React Native UI**, so they must not depend on JS. Mirror the JS registry's tool names and descriptions so the two catalogues stay identical.
 
 ### 5.3 Manifest
@@ -447,6 +498,10 @@ export async function handleUserIntent(text: string, ctx: { online: boolean; nan
   return { say: 'Offline and this request needs the cloud.', result: null };
 }
 ```
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `handleUserIntent(text, ctx)` | `text: string` — the user's request. `ctx.online: boolean` — whether a network route exists. `ctx.nanoReady: boolean` — whether `useGeminiNano().isAvailable` is true. `ctx.ai?: GoogleGenAI` — a client, required for the cloud path. | `Promise<{ say?: string; text?: string; tool?: string; result: unknown } \| { text, contents }>` — the Nano shape when it handled the request, the cloud shape when it did not, and a plain refusal when neither path is available | Tries on-device first for short requests, falls through to the cloud, and says so plainly when it cannot answer. |
 
 ---
 

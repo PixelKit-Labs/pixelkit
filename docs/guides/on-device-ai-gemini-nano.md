@@ -243,7 +243,28 @@ class PixelNanoModule : Module() {
 
 Add `import com.google.mlkit.genai.prompt.SystemInstruction` to the imports.
 
-### 3.1 Choosing the model track (AICore Developer Preview)
+### 3.1 Native function contracts
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `checkStatus()` | none | `Promise<NanoStatus>` — `'available' \| 'downloadable' \| 'downloading' \| 'unavailable'` | The `FeatureStatus` int from AICore, mapped to a string. Only `'available'` can generate. |
+| `download()` | none | `Promise<NanoStatus>` — the status after the attempt | Progress arrives as `onDownloadProgress` events carrying `{ phase, bytes? }`. |
+| `generate(prompt, options?)` | `prompt: String` — the full prompt. `options: Map<String, Any?>?` — the `NanoOptions` map below. | `Promise<NanoResult>` — `{ text, finishReason, thoughts }`; rejects as `E_NANO_<ErrorCode>` (`NOT_AVAILABLE`, `BUSY`, `REQUEST_TOO_LARGE`, `BACKGROUND_USE_BLOCKED`, …) | Single-shot generation on a module-owned dispatcher. |
+| `stream(requestId, prompt, options?)` | `requestId: String` — tags every event from this request, so concurrent calls do not interleave. `prompt: String`. `options: Map<String, Any?>?`. | `Promise<void>` — text arrives as `onToken`, thinking as `onThought`, completion as `onStreamEnd`, failure as `onStreamError` with `{ message }` | Streaming generation through the `StreamingCallback` overload. |
+| `setModelTrack(track, preference)` | `track: 'stable' \| 'preview'` — production or Developer Preview builds. `preference: 'full' \| 'fast'` — E4B-class quality or E2B-class latency. | `void` | Ship with `'stable'`; preview models are slower, less accurate and return `BUSY` more often. |
+
+**Events**
+
+| Event | Payload | Meaning |
+| :--- | :--- | :--- |
+| `onDownloadProgress` | `{ phase: 'started' \| 'progress' \| 'completed'; bytes?: number }` | Model download advancing. |
+| `onToken` | `{ requestId: string; text: string }` | One streamed text fragment. |
+| `onThought` | `{ requestId: string; text: string }` | One thinking fragment; only on Nano V4+ with `thinking: true`. |
+| `onStreamEnd` | `{ requestId: string }` | The stream finished cleanly. |
+| `onStreamError` | `{ requestId: string; message: string }` | The stream failed; no further events for that id. |
+
+
+### 3.2 Choosing the model track (AICore Developer Preview)
 
 Since beta2 the Prompt API lets the app pick which on-device model AICore serves. Testers enrolled in the [AICore Developer Preview](https://developers.google.com/ml-kit/genai/aicore-dev-preview) can target Gemma 4 preview builds, and Google states that code written against Gemma 4 runs unchanged on Gemini Nano 4 devices:
 
@@ -306,6 +327,21 @@ declare class PixelNanoModule extends NativeModule<Events> {
 
 export default requireNativeModule<PixelNanoModule>('PixelNano');
 ```
+
+**Option contract** — every field of `NanoOptions`, which is the input to `generate`, `stream` and `countTokens`:
+
+| Option | Type | Description |
+| :--- | :--- | :--- |
+| `systemInstruction` | `string` | Standing behaviour, Nano V3+. Keep it under ~150 words; it is not recommended together with prefix caching. |
+| `temperature` | `number` | 0..1; the model defines its own default. Lower is more deterministic. |
+| `topK` | `number` | Top-k sampling cutoff. |
+| `candidateCount` | `number` | How many candidates to generate; each one costs latency. |
+| `maxOutputTokens` | `number` | Reply ceiling, ≤ 4096 including the prompt on Nano V4. |
+| `thinking` | `boolean` | Nano V4+ only. On Pixel 9/10 the `thoughts` array comes back empty rather than erroring. |
+| `imageBase64` | `string` | One JPEG or PNG; keep it ≤ 1024 px on the long edge or the request is rejected as too large. |
+| `imagesBase64` | `string[]` | Multi-image, Prompt API beta3+. Every image counts against the ~4K-token input budget. |
+
+The result type is `NanoResult`: `text` (the reply), `finishReason` (`STOP` when complete, `MAX_TOKENS` when truncated) and `thoughts` (empty unless thinking was enabled and supported).
 
 ---
 
@@ -393,6 +429,21 @@ export function useGeminiNano() {
 }
 ```
 
+**Hook contract**
+
+| Member | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `detectNanoTier()` | none | `'nano-v4' \| 'nano-v3' \| 'unknown'` | Model tier inferred from the device name. It is a hint for feature gating; `checkStatus()` remains the runtime truth. |
+| `useGeminiNano()` | none | The object below | Mirrors the shape of `useGemini` so a screen can swap between them. |
+| `status` | — | `NanoStatus` | AICore feature status. |
+| `tier` | — | `NanoTier` | Which Nano generation this device is expected to run. |
+| `downloadedBytes` | — | `number` | Bytes fetched so far during a model download. |
+| `isGenerating` | — | `boolean` | Whether a generation is in flight. |
+| `thoughts` | — | `string[]` | Thinking output from the last call; empty below Nano V4. |
+| `ensureReady()` | none | `Promise<boolean>` — `true` when the model is available, downloading it first if it is downloadable | Call before offering a control. |
+| `generate(prompt, options?)` | `prompt: string`. `options?: NanoOptions`. | `Promise<NanoResult>` — `{ text, finishReason, thoughts }`; **throws** `E_NANO_*` on failure | Single-shot. |
+| `stream(prompt, onToken, options?)` | `prompt: string`. `onToken: (text: string) => void` — called per fragment. `options?: NanoOptions`. | `Promise<void>` — resolves at `onStreamEnd`, rejects at `onStreamError` | Generates a per-call `requestId` so concurrent streams do not interleave, and removes its listeners on completion. |
+
 ### 5.1 Multi-turn on a single-turn engine
 
 AICore does not keep history. Put **behaviour** in `systemInstruction` (a first-class request part since beta3) and re-send a compact **transcript** inside the prompt:
@@ -473,6 +524,22 @@ AsyncFunction("generateStructured") Coroutine { shape: String, prompt: String, o
 }
 ```
 
+**Function contract**
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `generateStructured(shape, prompt, options?)` | `shape: String` — the `@Generable` class to fill: `'ToolChoice'`, `'Classification'` or `'KeyFacts'`. Anything else rejects as `E_NANO_SHAPE`. `prompt: String` — the request. `options: Map<String, Any?>?` — the same `NanoOptions` map as `generate`. | `Promise<{ finishReason: string; json: string }>` — `json` is the serialised instance, or the literal `"null"` when the model produced no candidate | Fills a compile-time Kotlin shape, which is far more reliable than asking for JSON in prose. |
+
+**Shape contracts** — each `@Guide` description is what the model reads, so it is part of the interface:
+
+| Shape | Fields | Description |
+| :--- | :--- | :--- |
+| `ToolChoice` | `tool: String` — exact name of one registered tool, or `"none"`. `argumentsJson: String` — a JSON object string of the arguments, or `"{}"`. `say: String` — one sentence telling the user what is happening. | The on-device tool-selection contract used by `runNanoAgent`. |
+| `Classification` | `label: String` — the chosen label. `confidence: Double` — 0 to 100, bounded by `minimum`/`maximum`. | Single-label classification. |
+| `KeyFacts` | `facts: List<String>` — 3 to 6 short bullets, bounded by `minItems`/`maxItems`. | Extraction where the count matters. |
+
+`finishReason` is the output you must branch on, not just the payload: `STOP` (usable), `MAX_TOKENS`, `PARSE_CLASS_ERROR`, `STRUCTURE_NOT_ANNOTATED`, `STRUCTURE_VALUES_INVALID`, `OTHER`.
+
 Finish reasons you must handle: `STOP`, `MAX_TOKENS`, `PARSE_CLASS_ERROR`, `STRUCTURE_NOT_ANNOTATED`, `STRUCTURE_VALUES_INVALID`, `OTHER`. On anything but `STOP`, retry once with a lower `temperature` (0.1) and a tighter prompt, then fall back to cloud.
 
 On the JS side validate with `zod` before trusting the result; the alpha parser is strict but the model can still put nonsense inside a valid string.
@@ -548,7 +615,14 @@ export function useHybridGenerate(mode: InferenceMode = 'prefer_on_device') {
 }
 ```
 
-Always surface `source` in the UI ("On-device · Gemini Nano 4" vs "Cloud · Gemini 3.8 Flash"). Users on Pixel expect to know when data left the phone.
+**Function contract**
+
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `useHybridGenerate(mode?)` | `mode?: InferenceMode` — `'prefer_on_device'` (default), `'only_on_device'`, `'prefer_cloud'` or `'only_cloud'` | `generate(prompt, imageBase64?)` — the routed generator | One policy in one place, so every feature inherits it. |
+| ↳ `generate(prompt, imageBase64?)` | `prompt: string` — anything longer than `NANO_MAX_CHARS` (12,000) skips Nano automatically. `imageBase64?: string` — a JPEG for a multimodal turn. | `Promise<{ text: string; source: 'on-device' \| 'cloud'; thoughts?: string[] }>` — **throws** only when the selected mode leaves no fallback (`only_on_device` with Nano unavailable, `only_cloud` with no key) | On-device failures (`BUSY`, background use, unlocked bootloader) fall through to the cloud where the mode allows it. |
+
+Always surface `source` in the interface. Whether the prompt left the phone is the user's business, not an implementation detail.
 
 ---
 

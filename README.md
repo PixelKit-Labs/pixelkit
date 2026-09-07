@@ -1,45 +1,17 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 
-<!-- PROJECT SHIELDS -->
-<!--
-*** Using markdown "reference style" links for readability.
-*** See the bottom of this document for reference variables.
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![Expo SDK][expo-shield]][expo-url]
-[![React Native][rn-shield]][rn-url]
-[![Android][android-shield]][android-url]
-[![Gemini Cloud][gemini-shield]][gemini-url]
-[![Gemini Nano][nano-shield]][mlkit-url]
-[![TypeScript][ts-shield]][ts-url]
-[![Version][version-shield]][changelog-url]
-
-<!-- PROJECT LOGO -->
-<br />
 <div align="center">
-  <a href="https://github.com/Traves-Theberge/PixelKit">
-    <img src="./assets/icon.png" alt="PixelKit Logo" width="96" height="96">
-  </a>
-
   <h2 align="center">PixelKit SDK</h2>
 
   <p align="center">
     PixelKit turns the <strong>Google Pixel 11 Pro</strong>'s hardware into React hooks: CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
     <br />
     <br />
-    Every reading comes from the device. When something cannot be read, it says so instead of showing a number that looks right.
-    <br />
     <br />
     <a href="./docs/README.md"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="#interface--gallery">View Gallery</a>
-    &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=bug">Report Bug</a>
     &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=enhancement">Request Feature</a>
@@ -57,7 +29,6 @@
         <li><a href="#core-architectural-principles">Core Architectural Principles</a></li>
       </ul>
     </li>
-    <li><a href="#interface--gallery">Interface &amp; Gallery</a></li>
     <li><a href="#telemetry-provenance">Telemetry Provenance</a></li>
     <li>
       <a href="#api-reference--hook-matrix">API Reference &amp; Hook Matrix</a>
@@ -94,8 +65,6 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![PixelKit Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png)](https://github.com/Traves-Theberge/PixelKit)
-
 PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`modules/pixel-native` and `modules/pixel-nano`), eliminating fragmented native bridges.
 
 Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
@@ -106,13 +75,12 @@ This makes PixelKit usable as ground truth by autonomous coding agents (Claude, 
 
 ### Built With
 
-* [![Expo][expo-badge]][expo-url]
-* [![React Native][rn-badge]][rn-url]
-* [![Kotlin][kotlin-badge]][kotlin-url]
-* [![Android 17][android-badge]][android-url]
-* [![Google ML Kit][mlkit-badge]][mlkit-url]
-* [![Google GenAI][gemini-badge]][gemini-url]
-* [![TypeScript][ts-badge]][ts-url]
+* [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) — React Native 0.86, dev client, local modules
+* [Kotlin](https://kotlinlang.org/) — the two local Expo Modules, `pixel-native` and `pixel-nano`
+* [Android 17 (API 37)](https://developer.android.com/about/versions/17) — ADPF, AppFunctions, adaptive refresh rate
+* [Google ML Kit GenAI](https://developers.google.com/ml-kit) — Gemini Nano on AICore, vision and language models
+* [Google Gen AI SDK](https://ai.google.dev/) — `gemini-3.8-flash` in the cloud
+* [TypeScript](https://www.typescriptlang.org/) — strict mode, zero errors as a release gate
 
 ### Core Architectural Principles
 
@@ -121,43 +89,6 @@ This makes PixelKit usable as ground truth by autonomous coding agents (Claude, 
 * **Complete On-Device ML Kit Suite**: Local summarization, grammar proofreading, rewriting across 6 tones, 58-language offline neural translation, OCR v2, face mesh, and barcode analysis.
 * **Android 17 AppFunctions Actuator Registry**: Exposes PixelKit hardware actuators (HiLight LED array, variable-level torch, LRA haptic envelopes) to the OS `app_function` service for system assistants (Gemini, Ask Pixel).
 * **Single Barrel Import**: Application code imports all hooks, types, and UI primitives from a single entry point: `./src`.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-<!-- INTERFACE GALLERY -->
-## Interface & Gallery
-
-*All captures recorded live on the physical Google Pixel 11 Pro (`grizzly`) over ADB. Every telemetry metric displays an honest provenance badge (`HW`, `DERIVED`, `N/A`).*
-
-| Silicon Dashboard | On-Device Gemini Nano Chat |
-| :---: | :---: |
-| [![Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png)](./docs/assets/screenshots/01_silicon_dashboard.png) | [![On-Device Gemini Nano Chat](./docs/assets/screenshots/02_ailab_chat.png)](./docs/assets/screenshots/02_ailab_chat.png) |
-| *Tensor G6 CPU cluster frequencies, thermals, and 120Hz ARR display HUD* | *On-device Gemini Nano conversational inference (<600ms latency) via AICore* |
-
-| Hyperparameter Studio Drawer | On-Device Vision Subsystem |
-| :---: | :---: |
-| [![Hyperparameters](./docs/assets/screenshots/02_ailab_chat_params.png)](./docs/assets/screenshots/02_ailab_chat_params.png) | [![Vision Subsystem](./docs/assets/screenshots/04_ailab_vision.png)](./docs/assets/screenshots/04_ailab_vision.png) |
-| *Real-time temperature, topK, candidate count, and token budget tuning* | *Live camera scene analysis, OCR v2, barcode scanning, and 468-point face mesh* |
-
-| Offline 58-Language Translation | Android 17 AppFunctions Actuators |
-| :---: | :---: |
-| [![Language Translation](./docs/assets/screenshots/05_ailab_language.png)](./docs/assets/screenshots/05_ailab_language.png) | [![AppFunctions Actuators](./docs/assets/screenshots/06_ailab_agents.png)](./docs/assets/screenshots/06_ailab_agents.png) |
-| *Zero-network neural machine translation and BCP-47 language identification* | *AppFunctions registration for system agents, plus HiLight & Torch actuators* |
-
-| Hardware & Sensor Lab | Physical UWB & Rear Torch Actuators |
-| :---: | :---: |
-| [![Sensors Lab](./docs/assets/screenshots/07_sensors_lab.png)](./docs/assets/screenshots/07_sensors_lab.png) | [![UWB & Torch](./docs/assets/screenshots/07_sensors_radios.png)](./docs/assets/screenshots/07_sensors_radios.png) |
-| *6-axis IMU, magnetometer, barometer, ambient light, and studio audio metering* | *Physical UWB chip state, Bluetooth 5.4 Channel Sounding, and 21-level rear torch* |
-
-<div align="center">
-  <h3>Interactive In-App API Documentation</h3>
-  <a href="./docs/assets/screenshots/08_docs_screen.png">
-    <img src="./docs/assets/screenshots/08_docs_screen.png" alt="Interactive In-App API Docs" width="60%">
-  </a>
-  <p><em>Full in-app reference with structured inputs, outputs, runnable code snippets, and agent implementation rules.</em></p>
-</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -680,40 +611,3 @@ Project Link: [https://github.com/Traves-Theberge/PixelKit](https://github.com/T
 * [Google ML Kit Team](https://developers.google.com/ml-kit)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[contributors-url]: https://github.com/Traves-Theberge/PixelKit/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[forks-url]: https://github.com/Traves-Theberge/PixelKit/network/members
-[stars-shield]: https://img.shields.io/github/stars/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[stars-url]: https://github.com/Traves-Theberge/PixelKit/stargazers
-[issues-shield]: https://img.shields.io/github/issues/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[issues-url]: https://github.com/Traves-Theberge/PixelKit/issues
-[license-shield]: https://img.shields.io/github/license/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[license-url]: https://github.com/Traves-Theberge/PixelKit/blob/master/LICENSE
-[expo-shield]: https://img.shields.io/badge/Expo-SDK%2057-000020?style=for-the-badge&logo=expo&logoColor=white
-[expo-url]: https://docs.expo.dev/versions/v57.0.0/
-[rn-shield]: https://img.shields.io/badge/React%20Native-0.86.3-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[rn-url]: https://reactnative.dev/
-[android-shield]: https://img.shields.io/badge/Android-17%20(API%2037)-34A853?style=for-the-badge&logo=android&logoColor=white
-[android-url]: https://developer.android.com/about/versions/17
-[gemini-shield]: https://img.shields.io/badge/Cloud%20AI-gemini--3.8--flash-4285F4?style=for-the-badge&logo=google&logoColor=white
-[gemini-url]: https://ai.google.dev/
-[nano-shield]: https://img.shields.io/badge/On--Device%20AI-Gemini%20Nano%20%2B%20ML%20Kit-00E5FF?style=for-the-badge&logo=google&logoColor=black
-[mlkit-url]: https://developers.google.com/ml-kit
-[ts-shield]: https://img.shields.io/badge/TypeScript-Strict%200%20Errors-3178C6?style=for-the-badge&logo=typescript&logoColor=white
-[ts-url]: https://www.typescriptlang.org/
-[version-shield]: https://img.shields.io/badge/Version-1.0.16-6FDCF2?style=for-the-badge
-[changelog-url]: ./CHANGELOG.md
-
-<!-- Built with badges -->
-[expo-badge]: https://img.shields.io/badge/Expo_SDK_57-000020?style=for-the-badge&logo=expo&logoColor=white
-[rn-badge]: https://img.shields.io/badge/React_Native_0.86-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[kotlin-badge]: https://img.shields.io/badge/Kotlin_2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white
-[kotlin-url]: https://kotlinlang.org/
-[android-badge]: https://img.shields.io/badge/Android_17_API_37-34A853?style=for-the-badge&logo=android&logoColor=white
-[mlkit-badge]: https://img.shields.io/badge/Google_ML_Kit-EA4335?style=for-the-badge&logo=google&logoColor=white
-[gemini-badge]: https://img.shields.io/badge/Google_GenAI-4285F4?style=for-the-badge&logo=google&logoColor=white
-[ts-badge]: https://img.shields.io/badge/TypeScript_5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white
