@@ -94,7 +94,7 @@ pixel-delta/ (PixelKit Framework)
 │   │   ├── useHiLight.ts       # [Pixel Pro Exclusive] Rear camera bar notification LED ring
 │   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
 │   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
-│   │   ├── useDisplay.ts       # 3,600 nits 120Hz LTPO OLED display, screen wake lock & brightness
+│   │   ├── useDisplay.ts       # 1-120 Hz LTPO OLED: mode, HDR, ARR, brightness, screen wake lock & brightness
 │   │   ├── useBiometrics.ts    # Ultrasonic fingerprint & face unlock (expo-local-authentication)
 │   │   ├── useSecurity.ts      # SecureStore on the Android Keystore (StrongBox)
 │   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
@@ -140,6 +140,8 @@ pixel-delta/ (PixelKit Framework)
 ---
 
 ## 🔌 Core Hardware &amp; Silicon APIs
+
+The snippets below are the short form. Each hook's full contract — every argument with its default and units, every returned field with what it means, and for each function what it takes and what it resolves to — is in [docs/HARDWARE_API.md](./docs/HARDWARE_API.md) and the per-domain pages under [docs/api/](./docs/api/).
 
 Import any hardware or AI hook from `./src`:
 

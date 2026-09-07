@@ -1,7 +1,9 @@
 # PixelKit SDK Documentation ⚡
 > **The Official Developer & AI Agent Documentation Portal for Google Pixel 11 Pro**
 
-Welcome to the comprehensive documentation suite for the **PixelKit SDK**. This framework directly unlocks the bare silicon, sensory suite, and neural hardware of the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor fabricated on **TSMC 2nm (N2)**.
+Documentation for the **PixelKit SDK**: the silicon, sensors, radios and on-device models of the **Google Pixel 11 Pro** (Android 17, **Google Tensor G6**) exposed as React hooks.
+
+**Every function in this documentation states its inputs and its outputs.** Each hook page lists the arguments it takes with their defaults and units, every field it returns with what that field means, and for each callable what each parameter does and what the call resolves to — including what a failure looks like. Nothing that cannot be read is invented: it is `null`, it renders as "—", and `source` says `unavailable`.
 
 ---
 
@@ -9,15 +11,15 @@ Welcome to the comprehensive documentation suite for the **PixelKit SDK**. This 
 
 ### 🚀 [Getting Started](./getting-started/)
 * **[Quickstart Guide](./getting-started/quickstart.md)**: Workstation prerequisites (Node 20+, Google Android CLI), installing dependencies, running on Pixel 11 Pro via Expo Go or development builds.
-* **[Architecture & Silicon Overview](./getting-started/architecture.md)**: Deep dive into the Tensor G6 7-core cluster, PowerVR GPU, Titan M3 coprocessor, Pixelsnap Qi2.2 magnetic charging, and the React Native Hermes runtime.
+* **[Architecture & Silicon Overview](./getting-started/architecture.md)**: The Tensor G6 7-core cluster, the PowerVR GPU, the StrongBox-backed keystore, wireless charging and the Hermes runtime — with device-verified figures separated from Google's published specification.
 
 ### 📚 [API Reference](./api/)
 * **[Silicon & Compute](./api/silicon-compute.md)**: `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`.
 * **[Pixel Pro Exclusives](./api/pro-exclusives.md)**: `useHiLight` (camera bar notification ring), `useUWB` (spatial radar AoA).
-* **[Neural & AI](./api/neural-ai.md)**: `useGemini`, `useSpeechAI`, `useVisionAI`, `geminiClient`.
-* **[Sensors & Actuators](./api/sensors-actuators.md)**: `useSensors` (6-axis IMU + Barometer), `useCamera` (expo-camera zoom, flash, lens), `useTorch`, `useHaptics` (LRA tactile profiles).
-* **[Radios & Security](./api/radios-security.md)**: `useBiometrics`, `useSecurity` (Titan M3 Post-Quantum Cryptography), `useBLE`, `useNFC`, `useLocation` (dual-band GNSS).
-* **[System & Media](./api/system-media.md)**: `useAudio`, `useDisplay` (3,600 nits 120Hz LTPO), `useDevice`, `useNetwork` (MediaTek M90 modem, Satellite SOS).
+* **[Neural & AI](./api/neural-ai.md)**: `useGemini`, `useGeminiNano`, `useGenAITasks`, `useNaturalLanguageAI`, `useSpeechAI`, `useSpeech`, `useVisionAI`, `geminiClient`.
+* **[Sensors & Actuators](./api/sensors-actuators.md)**: `useSensors` (6-axis IMU, barometer, light), `useCamera` (capture, zoom, flash, torch), `useTorch`, `useHaptics` (LRA patterns, envelopes, primitives).
+* **[Radios & Security](./api/radios-security.md)**: `useBiometrics`, `useSecurity` (SecureStore on the Android Keystore; no post-quantum algorithms are used), `useBLE`, `useNFC`, `useRadios`, `useLocation` (dual-band GNSS).
+* **[System & Media](./api/system-media.md)**: `useAudio`, `useCapabilities`, `useDisplay` (1-120 Hz LTPO, HDR, ARR), `useDevice`, `useNetwork`, `useVideo`, `useMediaLibrary`, `useCellular`.
 
 ### 🤖 [AI Agent Guidance](./ai-guidance/)
 * **[Agent Operational Primer](./ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelKit, and copy-paste system prompt directives.
@@ -39,7 +41,7 @@ Welcome to the comprehensive documentation suite for the **PixelKit SDK**. This 
 * **[Pixel 11 Pro Deep Dive (Round 2)](./research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections to round 1, Android 16/17 APIs missed (RangingManager, real ADPF headroom, haptic envelopes, ARR, constrained satellite networks, Advanced Protection), 2026 ML Kit / AICore timeline, Play deadlines, Android CLI docs & skills, revised hook roadmap.
 
 ### 📑 Consolidated Single-File Manuals
-* **[HARDWARE_API.md](./HARDWARE_API.md)**: Complete 24-module API reference in a single document.
+* **[HARDWARE_API.md](./HARDWARE_API.md)**: All 32 hooks in one document, each with its inputs, outputs and function contracts.
 * **[AI_PRIMER.md](./AI_PRIMER.md)**: Complete AI agent operational manual in a single document.
 
 ---
@@ -58,9 +60,9 @@ Welcome to the comprehensive documentation suite for the **PixelKit SDK**. This 
 +-------------------------------------------------------------------------+
         |                  |                    |                  |
 +---------------+  +---------------+  +------------------+  +---------------+
-|  CPU / GPU    |  |  Tensor TPU   |  | Pro Exclusives   |  | Titan M3      |
+|  CPU / GPU    |  |  Tensor TPU   |  | Pro Exclusives   |  | Keystore      |
 |  Tensor G6    |  |  NNAPI/LiteRT |  | HiLight LED Ring |  | Quantum Vault |
-|  TSMC 2nm N2  |  |  Gemini 3.8   |  | UWB Radar AoA    |  | Biometrics    |
+|  Tensor G6    |  |  Gemini 3.8   |  | UWB Radar AoA    |  | Biometrics    |
 +---------------+  +---------------+  +------------------+  +---------------+
 ```
 

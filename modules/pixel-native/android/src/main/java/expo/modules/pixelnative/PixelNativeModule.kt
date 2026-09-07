@@ -7,7 +7,10 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.BatteryManager
 import java.util.Collections
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -294,6 +297,9 @@ class PixelNativeModule : Module() {
     }
 
     Function("cancelVibration") { vibrator().cancel(); true }
+
+    // ───────────────────────── Battery & Power Telemetry ─────────────────────────
+    Function("getBatteryTelemetry") { batteryTelemetry() }
 
     // ───────────────────────── Radios ─────────────────────────
     Function("getRadioInfo") { radioInfo() }
@@ -985,6 +991,115 @@ class PixelNativeModule : Module() {
       "memoryClassMB" to am.memoryClass,
       "largeMemoryClassMB" to am.largeMemoryClass,
     )
+  }
+
+  private fun batteryTelemetry(): Map<String, Any?> {
+    val ifilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+    val bIntent = context.registerReceiver(null, ifilter)
+    val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+
+    val tempRaw = bIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
+    val tempC = if (tempRaw > 0) tempRaw / 10.0 else null
+
+    val voltageRaw = bIntent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) ?: 0
+    val voltageMv = if (voltageRaw > 0) voltageRaw else null
+
+    val healthCode = bIntent?.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN) ?: BatteryManager.BATTERY_HEALTH_UNKNOWN
+    val healthStr = when (healthCode) {
+      BatteryManager.BATTERY_HEALTH_GOOD -> "GOOD"
+      BatteryManager.BATTERY_HEALTH_OVERHEAT -> "OVERHEAT"
+      BatteryManager.BATTERY_HEALTH_DEAD -> "DEAD"
+      BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "OVER_VOLTAGE"
+      BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "UNSPECIFIED_FAILURE"
+      BatteryManager.BATTERY_HEALTH_COLD -> "COLD"
+      else -> "UNKNOWN"
+    }
+
+    val pluggedCode = bIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+    val pluggedStr = when (pluggedCode) {
+      BatteryManager.BATTERY_PLUGGED_AC -> "AC"
+      BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+      BatteryManager.BATTERY_PLUGGED_WIRELESS -> "WIRELESS"
+      BatteryManager.BATTERY_PLUGGED_DOCK -> "DOCK"
+      else -> "NONE"
+    }
+
+    val statusCode = bIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN) ?: BatteryManager.BATTERY_STATUS_UNKNOWN
+    val statusStr = when (statusCode) {
+      BatteryManager.BATTERY_STATUS_CHARGING -> "CHARGING"
+      BatteryManager.BATTERY_STATUS_DISCHARGING -> "DISCHARGING"
+      BatteryManager.BATTERY_STATUS_FULL -> "FULL"
+      BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "NOT_CHARGING"
+      else -> "UNKNOWN"
+    }
+
+    val technology = bIntent?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY)
+
+    val cycleCount = if (Build.VERSION.SDK_INT >= 34 && bIntent != null) {
+      val cc = bIntent.getIntExtra(BatteryManager.EXTRA_CYCLE_COUNT, -1)
+      if (cc >= 0) cc else null
+    } else null
+
+    val currentNowMicro = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)?.let {
+      if (it != Long.MIN_VALUE && it != 0L) it else null
+    }
+    val currentNowMa = currentNowMicro?.let { it.toDouble() / 1000.0 }
+
+    val currentAvgMicro = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)?.let {
+      if (it != Long.MIN_VALUE && it != 0L) it else null
+    }
+    val currentAvgMa = currentAvgMicro?.let { it.toDouble() / 1000.0 }
+
+    val chargeCounterMicro = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)?.let {
+      if (it != Long.MIN_VALUE && it > 0) it else null
+    }
+    val chargeCounterMah = chargeCounterMicro?.let { it.toDouble() / 1000.0 }
+
+    val energyCounterNano = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)?.let {
+      if (it != Long.MIN_VALUE && it > 0) it else null
+    }
+    val energyCounterMwh = energyCounterNano?.let { it.toDouble() / 1_000_000.0 }
+
+    val powerWatts = if (voltageMv != null && currentNowMa != null) {
+      (voltageMv.toDouble() / 1000.0) * (kotlin.math.abs(currentNowMa) / 1000.0)
+    } else null
+
+    return mapOf(
+      "temperatureC" to tempC,
+      "voltageMv" to voltageMv,
+      "currentNowMa" to currentNowMa,
+      "currentAvgMa" to currentAvgMa,
+      "powerWatts" to powerWatts,
+      "health" to healthStr,
+      "plugged" to pluggedStr,
+      "status" to statusStr,
+      "technology" to technology,
+      "cycleCount" to cycleCount,
+      "chargeCounterMah" to chargeCounterMah,
+      "energyCounterMwh" to energyCounterMwh,
+      "thermalZones" to thermalZones()
+    )
+  }
+
+  private fun thermalZones(): List<Map<String, Any?>> {
+    val zones = mutableListOf<Map<String, Any?>>()
+    try {
+      val dir = File("/sys/class/thermal")
+      if (dir.exists() && dir.canRead()) {
+        val files = dir.listFiles { d -> d.name.startsWith("thermal_zone") } ?: emptyArray()
+        for (z in files.sortedBy { it.name }) {
+          val type = readSys("${z.absolutePath}/type")
+          val tempRaw = readSys("${z.absolutePath}/temp")?.toLongOrNull()
+          val tempC = if (tempRaw != null) {
+            if (tempRaw > 1000) tempRaw / 1000.0 else tempRaw.toDouble()
+          } else null
+          if (type != null) {
+            zones.add(mapOf("name" to z.name, "type" to type, "tempC" to tempC))
+          }
+        }
+      }
+    } catch (_: Throwable) {}
+    return zones
   }
 
   /** SystemHealthManager.get{Cpu,Gpu}Headroom (Android 16+) via reflection with proper Parameter builder. */

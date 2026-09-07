@@ -55,6 +55,32 @@ export type PrimitiveStep = { primitive: 'CLICK' | 'TICK' | 'THUD' | 'SPIN' | 'Q
 
 export type PackageVersion = { installed: boolean; versionName: string | null; versionCode: number | null };
 
+export type BatteryHealth = 'GOOD' | 'OVERHEAT' | 'DEAD' | 'OVER_VOLTAGE' | 'UNSPECIFIED_FAILURE' | 'COLD' | 'UNKNOWN';
+export type PluggedSource = 'AC' | 'USB' | 'WIRELESS' | 'DOCK' | 'NONE';
+export type BatteryStatus = 'CHARGING' | 'DISCHARGING' | 'FULL' | 'NOT_CHARGING' | 'UNKNOWN';
+
+export type ThermalZone = {
+  name: string;
+  type: string;
+  tempC: number | null;
+};
+
+export type BatteryTelemetry = {
+  temperatureC: number | null;
+  voltageMv: number | null;
+  currentNowMa: number | null;
+  currentAvgMa: number | null;
+  powerWatts: number | null;
+  health: BatteryHealth;
+  plugged: PluggedSource;
+  status: BatteryStatus;
+  technology: string | null;
+  cycleCount: number | null;
+  chargeCounterMah: number | null;
+  energyCounterMwh: number | null;
+  thermalZones: ThermalZone[];
+};
+
 export type BondedDevice = {
   name: string;
   address: string;
@@ -186,6 +212,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;
   cancelVibration(): boolean;
+  getBatteryTelemetry(): BatteryTelemetry;
   getRadioInfo(): RadioInfo;
   startBleScan(timeoutMs?: number): Promise<{ success: boolean; scanning: boolean; error?: string }>;
   stopBleScan(): boolean;

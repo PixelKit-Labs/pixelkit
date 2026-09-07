@@ -129,4 +129,4 @@ To use gemini-3.8-flash chat, vision and voice transcription:
    ```env
    EXPO_PUBLIC_GEMINI_API_KEY=your_actual_gemini_api_key_here
    ```
-3. Alternatively, enter your key inside the app in the **AI Lab** tab. It will be encrypted and saved directly into the **Titan M3** hardware security module.
+3. Alternatively, enter your key inside the app in the **AI Lab** tab. It is written through `useSecurity().saveSecureItem()`, which encrypts it with a key held in the StrongBox-backed Android Keystore, readable only while the device is unlocked and only on this phone.

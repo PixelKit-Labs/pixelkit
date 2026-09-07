@@ -54,7 +54,7 @@ The Pixel 11 Pro features an **8.33ms render budget** for its 120Hz display:
 Style dark backgrounds with `#0E1119` from `Colors.dark.background`. Self-emissive OLED pixels turn off completely, yielding infinite contrast and drastic battery savings.
 
 ### Law 5: The Secure Storage Rule
-Never store credentials or API keys in plaintext files or unencrypted storage. Always persist secrets via `useSecurity().saveSecureItem()` which routes into the **Titan M3** hardware enclave with **Post-Quantum Cryptography (PQC)**.
+Never store credentials or API keys in plaintext files or unencrypted storage. Always persist secrets via `useSecurity().saveSecureItem()`, which encrypts them with a key held in the StrongBox-backed Android Keystore, readable only while the device is unlocked and only on this device. No post-quantum algorithm is involved: `isPostQuantumProtected` is always `false`.
 
 ### Law 6: Visual Context via React Grab & Android Layout
 When inspecting or editing UI components:
@@ -68,7 +68,7 @@ When inspecting or editing UI components:
 When configuring an IDE or instructing another LLM, paste this prompt:
 
 ```markdown
-You are building an application using the PixelKit SDK on a Google Pixel 11 Pro (Tensor G6 2nm).
+You are building an application using the PixelKit SDK on a Google Pixel 11 Pro (Android 17, Google Tensor G6).
 Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useHiLight, useSensors, useGemini, useHaptics, useCamera).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.

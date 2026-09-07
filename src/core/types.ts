@@ -78,6 +78,28 @@ export interface DeviceTelemetry {
   isConnected: boolean;
   /** Total system LPDDR5X RAM in megabytes */
   totalMemoryMB?: number;
+  /** Real-time battery pack temperature from fuel gauge NTC thermistor in °C, null if unavailable */
+  batteryTemperatureC?: number | null;
+  /** Instantaneous battery cell voltage in millivolts (e.g. 4120 mV), null if unavailable */
+  batteryVoltageMv?: number | null;
+  /** Instantaneous current flow in milliamperes (mA; negative discharging, positive charging), null if unavailable */
+  batteryCurrentMa?: number | null;
+  /** Rolling average current flow in milliamperes (mA), null if unavailable */
+  batteryCurrentAvgMa?: number | null;
+  /** Instantaneous power draw or charging wattage in Watts, null if unavailable */
+  batteryPowerWatts?: number | null;
+  /** Battery health condition ('GOOD' | 'OVERHEAT' | 'DEAD' | 'OVER_VOLTAGE' | 'COLD' | 'UNKNOWN') */
+  batteryHealth?: string | null;
+  /** Remaining charge capacity in milliampere-hours (mAh), null if unavailable */
+  batteryChargeCounterMah?: number | null;
+  /** Remaining stored energy in milliwatt-hours (mWh), null if unavailable */
+  batteryEnergyCounterMwh?: number | null;
+  /** Battery technology chemistry string (e.g. "Li-ion"), null if unavailable */
+  batteryTechnology?: string | null;
+  /** Lifetime charge cycle count from the battery fuel gauge EEPROM (Android 14+), null if unavailable */
+  batteryCycleCount?: number | null;
+  /** Power source when plugged ('AC' | 'USB' | 'WIRELESS' | 'DOCK' | 'NONE') */
+  pluggedSource?: string | null;
 }
 
 /**

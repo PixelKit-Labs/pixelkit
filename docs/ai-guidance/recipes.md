@@ -1,7 +1,7 @@
 # AI Agent Production Recipes 🍳⚡
-> **Field-Tested Code Recipes for Autonomous Mobile Agents on Pixel 11 Pro**
+> **Field-tested code for autonomous agents on the Pixel 11 Pro**
 
-This document provides complete, production-grade code recipes for common agentic tasks.
+Complete, production-grade recipes for common agentic tasks. Each one states what it takes in and what it gives back, so an agent can wire it up without reading the hook source first. Every hook contract behind these recipes is documented field by field in [`docs/HARDWARE_API.md`](../HARDWARE_API.md).
 
 ---
 
@@ -9,7 +9,7 @@ This document provides complete, production-grade code recipes for common agenti
 
 1. [Voice-to-Action AI Loop with HiLight Visual Pulse](#recipe-1-voice-to-action-ai-loop-with-hilight-visual-pulse)
 2. [Adaptive Sensor Telemetry with ADPF Thermal Pacing](#recipe-2-adaptive-sensor-telemetry-with-adpf-thermal-pacing)
-3. [Camera Looks & Zoom Inspector](#recipe-3-camera-looks--zoom-inspector)
+3. [Camera Capture & Zoom Inspector](#recipe-3-camera-capture--zoom-inspector)
 4. [Encrypted Credential Vault](#recipe-4-encrypted-credential-vault)
 5. [UWB Spatial Target Tracker](#recipe-5-uwb-spatial-target-tracker)
 
@@ -17,7 +17,13 @@ This document provides complete, production-grade code recipes for common agenti
 
 ## Recipe 1: Voice-to-Action AI Loop with HiLight Visual Pulse
 
-Records from the microphone (VOICE_RECOGNITION source), transcribes with Gemini, mirrors the **HiLight** state on screen, and routes queries to gemini-3.8-flash:
+Records from the microphone, transcribes it, lights the camera-bar ring while the model thinks, and sends the transcript to `gemini-3.8-flash`.
+
+| | |
+| :--- | :--- |
+| **Takes** | The user's speech. Nothing is passed as an argument; `useSpeechAI` opens the microphone itself. |
+| **Gives back** | A transcript in `speech.lastTranscript` and a reply appended to `gemini.messages`. Both can fail: a failed transcription resolves `null` and sets `speech.error`; a missing API key appends a `system`-role message rather than throwing. |
+| **Needs** | Microphone permission. A Gemini API key for the cloud reply. The HiLight daemon for the light; without it `availability` is `unavailable` and the pulse is skipped. |
 
 ```tsx
 import React from 'react';
@@ -33,10 +39,10 @@ export function VoiceCommander() {
   const handleVoiceToggle = async () => {
     if (speech.isListening) {
       const result = await speech.stopListeningAndTranscribe();
-      if (result && result.transcript) {
+      if (result?.transcript) {
         await success();
-        // Pulse camera bar LED ring in cyan while Gemini reasons
-        hilight.triggerGeminiPulse(5000);
+        // Cyan ring while the model reasons — only when the daemon can drive the LEDs.
+        if (hilight.availability === 'hardware') hilight.triggerGeminiPulse(5000);
         await gemini.sendMessage(result.transcript);
       } else {
         await error();
@@ -50,13 +56,13 @@ export function VoiceCommander() {
   return (
     <View style={{ padding: 16 }}>
       <HapticButton
-        title={speech.isListening ? `Listening (${speech.voiceDecibels} dB)... Tap to Send` : "Speak to Assistant"}
+        title={speech.isListening ? `Listening (${speech.voiceDecibels} dB) — tap to send` : 'Speak to assistant'}
         onPress={handleVoiceToggle}
-        variant={speech.isListening ? "danger" : "primary"}
+        variant={speech.isListening ? 'danger' : 'primary'}
       />
-      {gemini.isLoading && (
-        <Text style={{ color: '#00E5FF', marginTop: 10 }}>Reasoning on Tensor TPU...</Text>
-      )}
+      {speech.streamingPartial ? <Text>{speech.streamingPartial}</Text> : null}
+      {gemini.isLoading && <Text style={{ color: '#00E5FF', marginTop: 10 }}>Waiting on the cloud model…</Text>}
+      {speech.error ? <Text style={{ color: '#F28B82' }}>{speech.error}</Text> : null}
     </View>
   );
 }
@@ -66,37 +72,43 @@ export function VoiceCommander() {
 
 ## Recipe 2: Adaptive Sensor Telemetry with ADPF Thermal Pacing
 
-Dynamically adjusts sensor sampling intervals based on Android kernel thermal headroom:
+Slows the sensor stream down as the phone warms up, instead of waiting for the system to throttle everything.
+
+| | |
+| :--- | :--- |
+| **Takes** | Nothing from you. `useSensors(intervalMs)` takes its sampling period as an argument, so pacing means re-rendering with a different number. |
+| **Gives back** | Live `barometer`, `accelerometer` and the thermal state driving the pacing. `barometer.pressure` and `relativeAltitude` are `null` until a sample arrives, and stay `null` on a device with no barometer — render "—", never 0. |
+| **Watch** | `thermalHeadroom` is `null` when the platform will not answer, so guard the arithmetic. It means "how close the phone is to throttling": 0 cold, 1 the point where clocks get cut. |
 
 ```tsx
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { useSensors, useADPF, MetricCard } from './src';
 
 export function AdaptiveTelemetryHUD() {
-  const { barometer, accelerometer, setUpdateInterval } = useSensors(100);
+  const [intervalMs, setIntervalMs] = useState(100);
+  const { barometer, barometerAvailable, source } = useSensors(intervalMs);
   const { thermalStatus, thermalHeadroom } = useADPF();
 
-  // Dynamically back off sensor sampling if the device warms up
+  // Back the sampling rate off as the device warms, rather than being throttled into it.
   useEffect(() => {
-    if (thermalStatus === 'severe' || thermalStatus === 'critical') {
-      setUpdateInterval(500); // 2 Hz (Powersave)
-    } else if (thermalStatus === 'moderate') {
-      setUpdateInterval(250); // 4 Hz (Balanced)
-    } else {
-      setUpdateInterval(100); // 10 Hz (Real-time)
-    }
-  }, [thermalStatus, setUpdateInterval]);
+    if (thermalStatus === 'severe' || thermalStatus === 'critical') setIntervalMs(500);   // 2 Hz
+    else if (thermalStatus === 'moderate') setIntervalMs(250);                            // 4 Hz
+    else setIntervalMs(100);                                                              // 10 Hz
+  }, [thermalStatus]);
+
+  const headroomLabel = thermalHeadroom == null ? '—' : `${Math.round(thermalHeadroom * 100)}%`;
 
   return (
     <View style={{ padding: 16 }}>
       <MetricCard
-        title="Barometric Altitude"
-        value={barometer.relativeAltitude ?? 0}
+        title="Barometric altitude"
+        value={barometerAvailable === false ? null : barometer.relativeAltitude}
         unit="m"
-        badge={`${barometer.pressure} hPa`}
+        badge={barometer.pressure == null ? '—' : `${barometer.pressure} hPa`}
         badgeColor="#8AB4F8"
-        subtitle={`Thermal: ${thermalStatus.toUpperCase()} (Headroom: ${(thermalHeadroom * 100).toFixed(0)}%)`}
+        subtitle={`Thermal ${thermalStatus} · headroom ${headroomLabel} · ${intervalMs} ms`}
+        source={source}
       />
     </View>
   );
@@ -105,47 +117,45 @@ export function AdaptiveTelemetryHUD() {
 
 ---
 
-## Recipe 3: Camera Looks & Zoom Inspector
+## Recipe 3: Camera Capture & Zoom Inspector
 
-Switches the Camera Look label (UI state; Looks belong to the Pixel Camera app) and drives expo-camera zoom up to `maxZoomFactor`:
+Drives the camera and takes a still. **Zoom is a 0 to 1 fraction of the lens range, not an optical multiplier** — a "5x" figure from the Pixel Camera app does not map onto it.
+
+| | |
+| :--- | :--- |
+| **Takes** | A mounted `<CameraView>` with `cameraRef` attached. `takePicture({ base64: true })` when the image is going to a model. |
+| **Gives back** | `{ uri, width, height, base64?, exif? }`, or `null` when the view is not mounted or the capture failed, with the reason in `camera.error`. The file lives in the app cache until `useMediaLibrary().save()` promotes it. |
+| **Note** | `selectedLook` is a label for your own interface. Camera Looks belong to the Pixel Camera app and are not applied to the capture. |
 
 ```tsx
 import React from 'react';
 import { View, Text } from 'react-native';
-import { useCamera, useHaptics, HapticButton } from './src';
+import { CameraView } from 'expo-camera';
+import { useCamera, useMediaLibrary, useHaptics, HapticButton } from './src';
 
 export function ProPhotoSuite() {
   const camera = useCamera();
-  const { selection } = useHaptics();
+  const library = useMediaLibrary();
+  const { selection, success, error } = useHaptics();
 
-  const looks = ['Original', 'Natural', 'Shadows', 'Editorial', 'Velvet', 'Classic'] as const;
+  const capture = async () => {
+    const photo = await camera.takePicture({ base64: false });
+    if (!photo) { await error(); return; }
+    await library.save(photo.uri, 'PixelKit');   // otherwise the system reclaims it
+    await success();
+  };
+
+  if (!camera.hasPermission) return <Text>Camera permission needed</Text>;
 
   return (
-    <View style={{ padding: 16 }}>
-      <Text style={{ color: '#E3E2E6', marginBottom: 8 }}>
-        Current Look: {camera.selectedLook} | Zoom: {camera.zoomFactor}x / {camera.maxZoomFactor}x
-      </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-        {looks.map(look => (
-          <HapticButton
-            key={look}
-            title={look}
-            onPress={() => {
-              selection();
-              camera.setLook(look);
-            }}
-            variant={camera.selectedLook === look ? 'primary' : 'outline'}
-          />
-        ))}
-      </View>
-      <HapticButton
-        title="Max zoom"
-        onPress={() => {
-          selection();
-          camera.setZoom(camera.maxZoomFactor);
-        }}
-        variant="secondary"
-      />
+    <View style={{ flex: 1, padding: 16 }}>
+      <CameraView ref={camera.cameraRef} onCameraReady={camera.handleCameraReady} {...camera.viewProps} style={{ flex: 1 }} />
+      <Text>Zoom {Math.round(camera.zoomFactor * 100)}% of the lens range · {camera.availableLenses.length} lenses</Text>
+      {[0, 0.25, 0.5, 0.75, 1].map(f => (
+        <HapticButton key={f} title={`${f * 100}%`} onPress={() => { selection(); camera.setZoom(f); }} variant={camera.zoomFactor === f ? 'primary' : 'outline'} />
+      ))}
+      <HapticButton title="Capture" onPress={capture} variant="primary" />
+      {camera.error ? <Text style={{ color: '#F28B82' }}>{camera.error}</Text> : null}
     </View>
   );
 }
@@ -155,7 +165,13 @@ export function ProPhotoSuite() {
 
 ## Recipe 4: Encrypted Credential Vault
 
-Persists secrets through SecureStore (Android Keystore, StrongBox on Pixel 11 Pro) behind a biometric check:
+Persists secrets through SecureStore (Android Keystore, StrongBox-backed on this device) behind a biometric check.
+
+| | |
+| :--- | :--- |
+| **Takes** | A key name and the secret string. The value never reaches the log — events record the key, the operation and whether it succeeded. |
+| **Gives back** | `saveSecureItem` resolves `true` or `false`; `getSecureItem` resolves the value or `null` when nothing is stored under that key. `authenticate` resolves `true` only on success — a cancel and a mismatch both resolve `false` without setting `error`. |
+| **Guard** | Check `biometrics.hasHardware` **and** `isEnrolled` before offering the control; with nothing enrolled the prompt can never succeed. |
 
 ```tsx
 import React, { useState } from 'react';
@@ -165,20 +181,25 @@ import { useSecurity, useBiometrics, HapticButton } from './src';
 export function CredentialVault() {
   const security = useSecurity();
   const biometrics = useBiometrics();
-  const [status, setStatus] = useState<string>('Locked');
+  const [status, setStatus] = useState('Locked');
 
   const handleUnlock = async () => {
     const verified = await biometrics.authenticate('Unlock credential vault');
-    if (verified) {
-      const secret = await security.getSecureItem('USER_AGENT_TOKEN');
-      setStatus(secret ? 'Unlocked (Token Retrieved)' : 'Unlocked (No Key Found)');
+    if (!verified) {
+      setStatus(biometrics.lastResult === 'cancelled' ? 'Cancelled' : 'Not recognised');
+      return;
     }
+    const secret = await security.getSecureItem('USER_AGENT_TOKEN');
+    setStatus(secret ? 'Unlocked · token retrieved' : 'Unlocked · nothing stored');
   };
+
+  const canPrompt = biometrics.hasHardware && biometrics.isEnrolled;
 
   return (
     <View style={{ padding: 16 }}>
-      <Text style={{ color: '#E3E2E6', marginBottom: 10 }}>Vault: {status}</Text>
-      <HapticButton title="Biometric Unlock" onPress={handleUnlock} variant="primary" />
+      <Text style={{ marginBottom: 10 }}>Vault: {status}</Text>
+      <HapticButton title="Biometric unlock" onPress={handleUnlock} variant="primary" disabled={!canPrompt} />
+      {!canPrompt && <Text>{biometrics.hasHardware ? 'No biometric enrolled' : 'No biometric hardware'}</Text>}
     </View>
   );
 }
@@ -188,7 +209,13 @@ export function CredentialVault() {
 
 ## Recipe 5: UWB Spatial Target Tracker
 
-Renders distance and angle to UWB targets. Ranging runs through the platform service; the radio itself is verified by `useCapabilities`:
+Opens a ranging session and renders distance and angle to each peer.
+
+| | |
+| :--- | :--- |
+| **Takes** | An optional `sessionId` (default `1001`). Note the arrow function on `onPress`: passing `startRanging` directly would hand it the press event as the session id. |
+| **Gives back** | `startRanging` resolves `true` when the session opened, `false` with the reason in `sessionError`. `activeTargets` fills only when paired responders report; it stays empty rather than showing placeholder anchors. |
+| **Guard** | `isSupported` and `isEnabled` come from `UwbManager`. Hide the control when there is no chip. |
 
 ```tsx
 import React from 'react';
@@ -196,23 +223,27 @@ import { View, Text } from 'react-native';
 import { useUWB, HapticButton } from './src';
 
 export function SpatialRadarView() {
-  const { activeTargets, isRanging, startRanging, stopRanging } = useUWB();
+  const { activeTargets, isRanging, isSupported, startRanging, stopRanging, sessionError } = useUWB();
+
+  if (!isSupported) return <Text>This device has no ultra-wideband radio.</Text>;
 
   return (
     <View style={{ padding: 16 }}>
       <HapticButton
-        title={isRanging ? "Stop Radar" : "Start UWB Ranging"}
-        onPress={isRanging ? stopRanging : startRanging}
-        variant={isRanging ? "danger" : "primary"}
+        title={isRanging ? 'Stop ranging' : 'Start UWB ranging'}
+        onPress={() => (isRanging ? stopRanging() : startRanging())}
+        variant={isRanging ? 'danger' : 'primary'}
       />
+      {sessionError ? <Text style={{ color: '#F28B82' }}>{sessionError}</Text> : null}
       {activeTargets.map(t => (
         <View key={t.deviceId} style={{ marginTop: 8 }}>
           <Text style={{ color: '#8AB4F8', fontWeight: '700' }}>{t.deviceId}</Text>
           <Text style={{ color: '#9398A8' }}>
-            Distance: {t.distanceMeters.toFixed(2)}m • Azimuth: {t.azimuthDegrees}° • Quality: {Math.round(t.signalQuality * 100)}%
+            {t.distanceMeters.toFixed(2)} m · azimuth {t.azimuthDegrees}° · quality {Math.round(t.signalQuality * 100)}%
           </Text>
         </View>
       ))}
+      {isRanging && activeTargets.length === 0 && <Text>Session open, no responders in range.</Text>}
     </View>
   );
 }

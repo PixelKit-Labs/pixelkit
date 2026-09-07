@@ -4,6 +4,23 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.23] - 2026-09-06
+
+### Added
+- Every documented function now states its inputs and its outputs. `docs/api/*.md` gained an **Inputs** table (each argument with its type, default and units), an **Outputs** table (every returned field with what it means and what `null` means there) and a **Functions** table (per-callable: what each parameter does, what the call resolves to, and what a failure looks like) for all 32 hooks plus `geminiClient`, the observability API, and the `PixelNative` and `PixelNano` native modules with their event payloads.
+- `docs/HARDWARE_API.md` rebuilt around the same three sections per hook, with the field-by-field tables linked rather than duplicated so the two cannot drift.
+- Guides now carry function contracts: the tool registry, tool declarations, cloud and on-device agent loops, AppFunctions and the routing helper in `docs/guides/function-calling.md`; microphone preparation, the PCM mic and speaker, on-device recognition, ephemeral tokens, the Live agent hook and both text-to-speech paths in `docs/guides/voice.md`; the native Prompt API surface, `NanoOptions`, the hook, structured-output shapes and the hybrid router in `docs/guides/on-device-ai-gemini-nano.md`.
+- In-app Docs tab renders the same contract: `DocField` gained optional `inputs` and `output`, `DocsScreen` renders them as nested **TAKES** and **GIVES BACK** blocks, and every callable in `docsData.ts` now carries them.
+- Plain-language explanation of thermal headroom in `docs/api/silicon-compute.md`, linked from `docs/HARDWARE_API.md`: it is a ratio of the current thermal state to the throttling threshold, not a temperature.
+- Troubleshooting entry for "a hook returns null and its source says unavailable", with the five real causes and how to check each.
+
+### Changed
+- `README.md` no longer carries images. The shield badges, the logo, the nine-screenshot gallery and the badge reference definitions are gone; **Built With** is a plain list with links, and the screenshot files have been deleted from the repository along with the gallery in `PIXELKIT.md`.
+- `docs/AI_PRIMER.md` hook table rebuilt with Inputs, Key outputs and Functions columns, replacing entries that listed fields the hooks do not return.
+- `docs/ai-guidance/recipes.md` rewritten: every recipe states what it takes and gives back. Fixed three broken examples — `useSensors` no longer returns `setUpdateInterval` (the interval is an argument), `thermalHeadroom` is nullable and was being multiplied, and `onPress={startRanging}` was passing the press event as a session id.
+- Corrected contracts that did not match the code: `reportWorkDuration` returns a verdict and does not call `PerformanceHintManager`; `playEnvelope` and `playPrimitives` return `boolean`; `setTorch` and `toggleTorch` resolve `boolean`; `startStrobe` takes an interval; `refreshLocation` resolves `boolean`; `pickImage` takes a camera flag and resolves a URI and base64; `setRecognitionMode` takes `'on-device'`, not `'offline'`; `useSensors` defaults to 100 ms.
+- Removed device claims that cannot be read from the device: the process node, peak-nits figures, and post-quantum protection, which `useSecurity` reports as `false`. `docs/getting-started/architecture.md` now separates verified readings from Google's published specification.
+
 ## [1.0.22] - 2026-09-06
 
 ### Added

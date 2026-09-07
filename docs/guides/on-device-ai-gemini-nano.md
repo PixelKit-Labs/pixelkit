@@ -579,7 +579,7 @@ export function useHybridGenerate(mode: InferenceMode = 'prefer_on_device') {
 
   async function cloud(prompt: string, imageBase64?: string) {
     const key = await getStoredApiKey();
-    if (!key) throw new Error('No Gemini API key in Titan M3 SecureStore');
+    if (!key) throw new Error('No Gemini API key in SecureStore');
     const ai = createGeminiClient(key);
     const parts: any[] = [];
     if (imageBase64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } });

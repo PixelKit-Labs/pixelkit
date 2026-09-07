@@ -1,6 +1,6 @@
 {
   "name": "pixelkit",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",

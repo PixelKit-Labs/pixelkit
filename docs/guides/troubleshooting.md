@@ -12,7 +12,8 @@ This guide outlines common errors, hardware lifecycle caveats, and resolution st
 3. [Camera Permission & Simulator Fallback](#3-camera-permission--simulator-fallback)
 4. [ADPF Thermal Throttling Mitigation](#4-adpf-thermal-throttling-mitigation)
 5. [Hermes Bytecode Metro Bundling Verification](#5-hermes-bytecode-metro-bundling-verification)
-6. [Titan M3 Keystore SecureStore Access Modes](#6-titan-m3-keystore-securestore-access-modes)
+6. [Keystore and SecureStore access modes](#6-keystore-and-securestore-access-modes)
+7. [A hook returns null and its source says unavailable](#7-a-hook-returns-null-and-its-source-says-unavailable)
 
 ---
 
@@ -117,8 +118,31 @@ npx expo start -c
 
 ---
 
-## 6. Titan M3 Keystore SecureStore Access Modes
+## 6. Keystore and SecureStore access modes
 
-On Android, `expo-secure-store` encrypts values directly in the Titan M3 hardware-backed keystore:
-* Always use `SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY`.
-* In Web / Simulator fallback, `useSecurity()` gracefully persists into local memory.
+On Android, `expo-secure-store` encrypts values with a key held in the Android Keystore, StrongBox-backed on this device.
+
+* `useSecurity().saveSecureItem(key, value)` uses `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so a value is readable only while the device is unlocked and never leaves this phone.
+* On web there is no Keystore: the hook falls back to `localStorage`, which is **not** encrypted. `isHardwareBacked` is `false` there, so gate anything sensitive on it.
+* `isPostQuantumProtected` is always `false`. Android 17 defines post-quantum key types; SecureStore does not use them.
+
+---
+
+## 7. A hook returns null and its source says unavailable
+
+### Symptom
+A metric renders as "—" and `source` is `'unavailable'`.
+
+### Cause
+This is the SDK working as designed, not a bug. There is no `simulated` provenance value: when a reading cannot be taken, the value is `null` rather than a plausible substitute. Common reasons:
+
+| Cause | Check | Fix |
+| :--- | :--- | :--- |
+| Running in Expo Go or on web | `PixelNative` and `PixelNano` resolve to `null` there | Use a development build on the device |
+| Permission not granted | `hasPermission`, `permissionGranted`, `hasHardware` on the hook | Request it, then re-read |
+| The device lacks the hardware | `useCapabilities()` — `hasUWB`, `hasHiLight`, `hasStrongBox`, `hasNFC` | Hide the control rather than showing one that fails |
+| The daemon is not running (HiLight only) | `availability === 'unavailable'` | `npm run hilight:daemon` |
+| First sample has not arrived | `hasMotionSample`, `hasFix`, `hasRead`, `isReady` | Wait; render "—" meanwhile |
+
+### Resolution
+Render `null` as "—", pass `source` to `MetricCard` so the tag is visible, and read the hook's `error` field for the reason. Never substitute a default.

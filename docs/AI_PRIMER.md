@@ -51,7 +51,7 @@ Every touchable element or significant state change **MUST** provide physical fe
 * Validation error $\rightarrow$ `haptics.error()` (triple pulse)
 
 ### 3. The Thermal & Frame Budget Rule (ADPF)
-The Pixel 11 Pro features a 3,600 nits 120Hz LTPO display with an **8.33ms frame render budget**:
+The Pixel 11 Pro runs a 1-120 Hz LTPO display; at 120 Hz that is an **8.33 ms frame budget**:
 * If rendering animations or complex graphics, inspect `useGPU().isStuttering` and `useADPF().thermalStatus`.
 * When `thermalStatus === 'severe'` or `'critical'`, dynamically downscale background AI batch sizes and reduce sensor update intervals to 200ms or higher.
 
@@ -59,7 +59,7 @@ The Pixel 11 Pro features a 3,600 nits 120Hz LTPO display with an **8.33ms frame
 Pixels utilize self-emissive Super Actua OLED panels. Always style dark backgrounds with the signature OLED true-black `#0E1119` from `Colors.dark.background`. True black turns individual OLED pixels completely off, saving battery.
 
 ### 5. The Secure Storage Rule
-Never write sensitive user data or API keys into plaintext AsyncStorage or unencrypted files. Always persist credentials through `useSecurity().saveSecureItem()` or `useGemini().setApiKey()`, which securely encrypt keys into the **Titan M3** hardware security coprocessor with **Post-Quantum Cryptography (PQC)**.
+Never write sensitive user data or API keys into plaintext AsyncStorage or unencrypted files. Always persist credentials through `useSecurity().saveSecureItem()` or `saveApiKey()`, which encrypt with a key held in the StrongBox-backed Android Keystore. `useGemini().setApiKey()` only swaps the key in memory; it does not persist it. No post-quantum algorithm is used: `isPostQuantumProtected` is always `false`.
 
 ### 6. The Visual Context Rule (React Grab & Android Layout)
 When iterating on UI components:
@@ -118,7 +118,7 @@ Every hook's full contract — each input with its default and units, each outpu
 When instructing another AI model or configuring an IDE prompt, copy and paste this system prompt:
 
 ```markdown
-You are building an application using the PixelKit SDK on a Google Pixel 11 Pro (Tensor G6 2nm).
+You are building an application using the PixelKit SDK on a Google Pixel 11 Pro (Android 17, Google Tensor G6).
 Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useHiLight, useSensors, useGemini, useHaptics, useCamera).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
@@ -134,7 +134,12 @@ Always adhere to these requirements:
 
 ## 📋 Production Code Recipes
 
-### Recipe 1: AI Reasoning with HiLight Visual Feedback
+Both recipes state what they take and what they give back. Full contracts are in [`HARDWARE_API.md`](HARDWARE_API.md); more recipes are in [`ai-guidance/recipes.md`](ai-guidance/recipes.md).
+
+### Recipe 1: cloud reasoning with HiLight feedback
+
+**Takes** a prompt string. **Gives back** a reply appended to `gemini.messages` with `latencyMs` and `tokenCount`; a missing API key appends a `system`-role message instead of throwing. The ring only lights when the HiLight daemon is running.
+
 ```tsx
 import React from 'react';
 import { View } from 'react-native';
@@ -147,52 +152,50 @@ export function SmartAssistant() {
 
   const handleAskAI = async () => {
     await light();
-    // Pulse rear camera bar LED ring in signature cyan while AI thinks
-    hilight.triggerGeminiPulse(5000);
-    await gemini.sendMessage("Analyze current environmental telemetry.");
+    if (hilight.availability === 'hardware') hilight.triggerGeminiPulse(5000);
+    await gemini.sendMessage('Summarise the current thermal state.');
     await success();
   };
 
   return (
     <View style={{ padding: 16 }}>
       <HapticButton
-        title={gemini.isLoading ? "Reasoning on TPU..." : "Ask Assistant"}
+        title={gemini.isLoading ? 'Waiting on the cloud model…' : 'Ask assistant'}
         onPress={handleAskAI}
         variant="primary"
+        disabled={gemini.isLoading}
       />
     </View>
   );
 }
 ```
 
-### Recipe 2: Camera Looks & Zoom
+### Recipe 2: capture and zoom
+
+**Takes** capture options (`{ base64: true }` when the image is going to a model) and a zoom **fraction between 0 and 1** — not an optical multiplier. **Gives back** `{ uri, width, height, base64?, exif? }`, or `null` with the reason in `camera.error`.
+
 ```tsx
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
+import { CameraView } from 'expo-camera';
 import { useCamera, useHaptics, HapticButton } from './src';
 
 export function ProPhotoView() {
   const camera = useCamera();
-  const { selection } = useHaptics();
+  const { selection, error } = useHaptics();
+
+  const capture = async () => {
+    const photo = await camera.takePicture({ base64: true });
+    if (!photo) await error();          // camera.error says why
+  };
 
   return (
-    <View style={{ padding: 16 }}>
-      <HapticButton
-        title={`Look: ${camera.selectedLook}`}
-        onPress={() => {
-          selection();
-          camera.setLook('Editorial');
-        }}
-        variant="outline"
-      />
-      <HapticButton
-        title="Max zoom"
-        onPress={() => {
-          selection();
-          camera.setZoom(camera.maxZoomFactor);
-        }}
-        variant="primary"
-      />
+    <View style={{ flex: 1, padding: 16 }}>
+      <CameraView ref={camera.cameraRef} onCameraReady={camera.handleCameraReady} {...camera.viewProps} style={{ flex: 1 }} />
+      <Text>Zoom {Math.round(camera.zoomFactor * 100)}% of the lens range</Text>
+      <HapticButton title="Widest" onPress={() => { selection(); camera.setZoom(0); }} variant="outline" />
+      <HapticButton title="Longest" onPress={() => { selection(); camera.setZoom(1); }} variant="outline" />
+      <HapticButton title="Capture" onPress={capture} variant="primary" />
     </View>
   );
 }
@@ -202,8 +205,9 @@ export function ProPhotoView() {
 
 ## ⚠️ Anti-Patterns to Avoid
 
-1. **Do not use `Alert.alert` for routine errors**: Use in-app banners or haptic pulses (`haptics.error()`).
-2. **Do not block the JavaScript thread with large sync loops**: For heavy factorization or tensor benchmarks, rely on the `useCPU` and `useTPU` background hooks.
-3. **Do not poll sensors at 1ms intervals**: Standard UI monitors should use 100ms (10 Hz) or 50ms (20 Hz) to avoid thermal throttling.
-4. **Never store API keys in plaintext files**: Always persist through `useSecurity().saveSecureItem()` which encrypts into the Titan M3 hardware keystore.
-5. **Never omit KeepAwake tags**: In Expo SDK 57, `activateKeepAwakeAsync(tag)` requires passing a string tag to avoid unhandled promise rejections.
+1. **Do not use `Alert.alert` for routine errors.** Use an in-app banner and a haptic (`haptics.error()`); every hook already exposes an `error` field to render.
+2. **Do not block the JS thread with long synchronous loops.** `benchmarkCPU()` and `benchmarkTPU()` do exactly that on purpose, and say so; nothing else should.
+3. **Do not poll sensors faster than you can use.** 100 ms (10 Hz) suits a UI readout; 16-33 ms is for animation. Faster costs battery and heat without adding resolution.
+4. **Never store API keys in plaintext.** Always persist through `useSecurity().saveSecureItem()`, which encrypts with a key held in the Android Keystore.
+5. **Never omit the KeepAwake tag.** In Expo SDK 57, `activateKeepAwakeAsync(tag)` needs a string tag or you get an unhandled rejection.
+6. **Never substitute a plausible default for a value you could not read.** Render `null` as "—" and show the `source` tag; a fabricated number is worse than a blank.

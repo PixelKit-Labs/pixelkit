@@ -4,6 +4,8 @@
  *
  * Every entry documents one exported hook: what it is for in plain language, how it works
  * underneath, the arguments it takes, the values it returns, and the functions it gives you.
+ * Each function carries its own contract too: `inputs` describes every argument with its default
+ * and units, and `output` says what the call resolves to and what a failure looks like.
  * Field names and types are copied from the hook's actual return object, so this file is the
  * documentation contract. If a hook's surface changes, this file changes with it.
  */
@@ -90,7 +92,12 @@ export const DOC_MODULES: DocModule[] = [
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'benchmarkCPU()', type: '() => Promise<number>', desc: 'Runs a real single-threaded prime sieve on the JS thread and resolves with its duration in milliseconds. Blocks the UI while it runs.' },
+      {
+        name: 'benchmarkCPU()',
+        type: '() => Promise<number>',
+        desc: 'Runs a real single-threaded prime sieve on the JS thread. It measures Hermes single-thread throughput, not the system, and blocks the UI while it runs.',
+        output: 'Resolves with the run duration in milliseconds, which is also written to lastBenchmarkDurationMs. Lower is faster.',
+      },
     ],
     example: `import { useCPU } from './src';
 
@@ -174,7 +181,12 @@ function GPUHUD() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'benchmarkTPU()', type: '() => Promise<TPUAcceleration>', desc: 'Runs a 256x256 float matrix multiply in JavaScript and reports it explicitly as a CPU-fallback measurement.' },
+      {
+        name: 'benchmarkTPU()',
+        type: '() => Promise<TPUAcceleration>',
+        desc: 'Runs a 256x256 float matrix multiply in JavaScript and reports it explicitly as a CPU fallback. No part of it touches the TPU.',
+        output: 'Resolves with { activeDelegate: "CPU Fallback", isHardwareAccelerated: false, lastInferenceLatencyMs, throughputTokensPerSec: null, memoryFootprintMB: null }. Label it as a CPU number wherever you show it.',
+      },
     ],
     example: `import { useTPU } from './src';
 
@@ -216,7 +228,12 @@ function AIStack() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'purgeCaches()', type: '() => void', desc: 'Requests a garbage collection and re-reads the numbers. Advisory only; the runtime decides when to actually collect.' },
+      {
+        name: 'purgeCaches()',
+        type: '() => void',
+        desc: 'Requests a garbage collection and re-reads the numbers. Advisory only; the runtime decides when to collect, and it can never free system RAM.',
+        output: 'Returns nothing. The refreshed reading lands in the hook fields, and the amount reclaimed is logged as freedMB.',
+      },
     ],
     example: `import { useMemory } from './src';
 
@@ -257,7 +274,16 @@ function MemoryHUD() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'reportWorkDuration()', type: '(ms: number) => void', desc: 'Tells the platform performance hint system how long a frame of work took, so it can scale clocks appropriately.' },
+      {
+        name: 'reportWorkDuration(actualMs, targetMs?)',
+        type: "(actualWorkDurationMs: number, targetDurationMs?: number) => 'WITHIN_BUDGET' | 'BOOST_REQUESTED'",
+        desc: 'Pure helper that judges a measured piece of work against the frame budget. It computes a verdict for your own scheduling; it does not call the platform performance hint system.',
+        inputs: [
+          { name: 'actualWorkDurationMs', type: 'number', desc: 'How long the work you just did actually took, in milliseconds.' },
+          { name: 'targetDurationMs', type: 'number | undefined', desc: 'Budget to judge it against. Defaults to 1000 / targetFps, or 8.33 ms before the refresh rate has been read.' },
+        ],
+        output: "'WITHIN_BUDGET' when the work fits the frame, 'BOOST_REQUESTED' when it overran and you should shed work.",
+      },
     ],
     example: `import { useADPF } from './src';
 
@@ -295,14 +321,62 @@ async function runHeavyTask(adpf) {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'refreshDaemonStatus()', type: '() => Promise<boolean>', desc: 'Re-checks the daemon immediately instead of waiting for the next poll.' },
-      { name: 'setColor(hex)', type: '(hexColor: string) => void', desc: 'Sets a solid colour and turns the ring on.' },
-      { name: 'setMode(mode)', type: '(mode: HiLightMode) => void', desc: 'Switches pattern; passing off extinguishes the ring.' },
-      { name: 'setBrightness(level)', type: '(level: number) => void', desc: 'Scales output between 0 and 1.' },
-      { name: 'triggerGeminiPulse(ms?)', type: '(durationMs?: number) => void', desc: 'Cyan hold for the duration, then clears itself. Pair with a model call.' },
-      { name: 'triggerContactAlert(hex, ms?)', type: '(hexColor: string, durationMs?: number) => void', desc: 'Coloured hold for a caller or event, then clears itself.' },
-      { name: 'turnOff()', type: '() => void', desc: 'Clears the ring and cancels any pending timer.' },
-      { name: 'toggle()', type: '() => void', desc: 'Switches between off and a default colour.' },
+      {
+        name: 'refreshDaemonStatus()',
+        type: '() => Promise<boolean>',
+        desc: 'Re-checks the daemon immediately instead of waiting for the next five-second poll.',
+        output: 'Resolves true when the daemon answered, false otherwise. The same value lands in isDaemonConnected.',
+      },
+      {
+        name: 'setColor(hex)',
+        type: '(hexColor: string) => void',
+        desc: 'Sets a solid colour and turns the ring on, switching the mode from off to glow when needed.',
+        inputs: [{ name: 'hexColor', type: 'string', desc: 'RGB hex string such as "#81C995". Sent to the daemon as-is, scaled by brightness.' }],
+        output: 'Returns nothing. Nothing lights unless availability is hardware.',
+      },
+      {
+        name: 'setMode(mode)',
+        type: '(mode: HiLightMode) => void',
+        desc: 'Switches the animation pattern.',
+        inputs: [{ name: 'mode', type: 'HiLightMode', desc: "One of off, glow, breathing, pulse, gemini_thinking, incoming_call, notification. Passing 'off' extinguishes the ring." }],
+        output: 'Returns nothing; mode and isActive update immediately.',
+      },
+      {
+        name: 'setBrightness(level)',
+        type: '(level: number) => void',
+        desc: 'Scales the RGB values sent to the LEDs. The hardware has no separate brightness channel.',
+        inputs: [{ name: 'level', type: 'number', desc: '0.0 to 1.0; values outside are clamped.' }],
+        output: 'Returns nothing. Applied immediately when the ring is lit, stored otherwise.',
+      },
+      {
+        name: 'triggerGeminiPulse(ms?)',
+        type: '(durationMs?: number) => void',
+        desc: 'Cyan gemini_thinking hold that clears itself. Pair it with a model call.',
+        inputs: [{ name: 'durationMs', type: 'number | undefined', desc: 'How long to hold before clearing, in milliseconds. Defaults to 4000.' }],
+        output: 'Returns nothing. A pending timer from an earlier call is cancelled first.',
+      },
+      {
+        name: 'triggerContactAlert(hex, ms?)',
+        type: '(hexColor: string, durationMs?: number) => void',
+        desc: 'Coloured incoming_call hold for a caller or event, then clears itself.',
+        inputs: [
+          { name: 'hexColor', type: 'string', desc: 'RGB hex for the alert colour.' },
+          { name: 'durationMs', type: 'number | undefined', desc: 'Hold time in milliseconds. Defaults to 5000.' },
+        ],
+        output: 'Returns nothing. Replaces any hold already running.',
+      },
+      {
+        name: 'turnOff()',
+        type: '() => void',
+        desc: 'Clears the ring and cancels any pending auto-off timer.',
+        output: 'Returns nothing; mode becomes off and isActive false.',
+      },
+      {
+        name: 'toggle()',
+        type: '() => void',
+        desc: 'Switches between off and a default blue glow.',
+        output: 'Returns nothing; isActive flips.',
+      },
     ],
     example: `import { useHiLight } from './src';
 
@@ -344,8 +418,19 @@ function StatusRing() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startRanging(sessionId?)', type: '(sessionId?: number) => Promise<boolean>', desc: 'Initiates a hardware UWB ranging session through UwbManager.' },
-      { name: 'stopRanging()', type: '() => void', desc: 'Ends the active UWB ranging session.' },
+      {
+        name: 'startRanging(sessionId?)',
+        type: '(sessionId?: number) => Promise<boolean>',
+        desc: 'Initiates a hardware UWB ranging session through UwbManager and RangingManager.',
+        inputs: [{ name: 'sessionId', type: 'number | undefined', desc: 'Identifier for the session, default 1001. Use distinct ids for concurrent sessions.' }],
+        output: 'Resolves true when the session opened; false with the reason in sessionError when the service is missing or the hardware refused. Diagnostics land in sessionInfo either way.',
+      },
+      {
+        name: 'stopRanging()',
+        type: '() => void',
+        desc: 'Ends the active UWB ranging session. Safe to call when nothing is running.',
+        output: 'Returns nothing; isRanging becomes false.',
+      },
     ],
     example: `import { useUWB } from './src';
 
@@ -399,14 +484,67 @@ function Radar() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'download()', type: '() => Promise<NanoStatus>', desc: 'Asks the system to fetch the model weights; progress arrives in downloadedBytes.' },
-      { name: 'warmup()', type: '() => Promise<number | null>', desc: 'Loads the model ahead of the first prompt so the first reply is not slow.' },
-      { name: 'sendMessage(text)', type: '(prompt: string) => Promise<void>', desc: 'Sends a chat turn with streaming, appending both the question and the reply to messages.' },
-      { name: 'generate(prompt, options?)', type: '(prompt, options?) => Promise<NanoResult>', desc: 'One-shot generation outside the conversation, with optional image and sampling controls.' },
-      { name: 'countTokens(prompt)', type: '(prompt, options?) => Promise<number | null>', desc: 'Measures a prompt against the token limit before sending it.' },
-      { name: 'clearMessages()', type: '() => void', desc: 'Empties the conversation.' },
-      { name: 'setModelConfig(stage, pref)', type: "(stage: 'stable' | 'preview', preference: 'full' | 'fast') => Promise<void>", desc: 'Chooses the model track and whether to favour quality or latency.' },
-      { name: 'refresh()', type: '() => Promise<void>', desc: 'Re-reads status and model facts from the system.' },
+      {
+        name: 'download()',
+        type: '() => Promise<NanoStatus>',
+        desc: 'Asks AICore to fetch the model weights.',
+        output: 'Resolves with the status after the attempt, or "unavailable" when it failed. Progress arrives in downloadedBytes while it runs.',
+      },
+      {
+        name: 'warmup()',
+        type: '() => Promise<number | null>',
+        desc: 'Loads the model into AICore ahead of the first prompt so the first reply is not slow.',
+        output: 'Resolves with the wall time in milliseconds, or null when the warm-up failed. The same value lands in warmupMs.',
+      },
+      {
+        name: 'sendMessage(text)',
+        type: '(prompt: string) => Promise<void>',
+        desc: 'Sends a chat turn with streaming, appending both the question and the reply to messages.',
+        inputs: [{ name: 'prompt', type: 'string', desc: "The user's turn. Blank or whitespace-only input is ignored." }],
+        output: 'Resolves when the reply is complete. Tokens accumulate in partial while it streams; failures arrive as a system-role entry in messages, never as a rejection.',
+      },
+      {
+        name: 'generate(prompt, options?)',
+        type: '(prompt: string, options?: NanoOptions) => Promise<NanoResult>',
+        desc: 'One-shot generation outside the conversation, with optional per-call parameters.',
+        inputs: [
+          { name: 'prompt', type: 'string', desc: 'The complete prompt; no history is added.' },
+          { name: 'options', type: 'NanoOptions | undefined', desc: 'Per-call overrides: systemInstruction, temperature, topK, candidateCount, maxOutputTokens, seed, thinking, imageBase64 for a multimodal turn.' },
+        ],
+        output: 'Resolves with { text, finishReason, thoughts, latencyMs, firstTokenMs }. Throws E_NANO_* on failure; there is no fallback.',
+      },
+      {
+        name: 'countTokens(prompt, options?)',
+        type: '(prompt: string, options?: NanoOptions) => Promise<number | null>',
+        desc: 'Measures a prompt with the on-device tokenizer before sending it.',
+        inputs: [
+          { name: 'prompt', type: 'string', desc: 'Text exactly as it would be sent.' },
+          { name: 'options', type: 'NanoOptions | undefined', desc: 'The same options the real call would use, since they affect the count.' },
+        ],
+        output: 'Resolves with the token count, or null when the tokenizer is unavailable. Compare it against info.tokenLimit.',
+      },
+      {
+        name: 'clearMessages()',
+        type: '() => void',
+        desc: 'Empties the conversation and the thinking output.',
+        output: 'Returns nothing. AICore keeps no history of its own, so this is the whole reset.',
+      },
+      {
+        name: 'setModelConfig(stage, preference)',
+        type: "(stage: 'stable' | 'preview', preference: 'full' | 'fast') => Promise<void>",
+        desc: 'Chooses the model track AICore serves. The next call creates a new client.',
+        inputs: [
+          { name: 'stage', type: "'stable' | 'preview'", desc: 'Production build or the Developer Preview track. Preview models are slower and refuse more often.' },
+          { name: 'preference', type: "'full' | 'fast'", desc: 'Full favours quality, fast favours latency.' },
+        ],
+        output: 'Resolves once the config is applied and status and info have been re-read.',
+      },
+      {
+        name: 'refresh()',
+        type: '() => Promise<void>',
+        desc: 'Re-reads status and model facts from AICore.',
+        output: 'Resolves once status and info have been updated. On failure status becomes unavailable and error is set.',
+      },
     ],
     example: `import { useGeminiNano } from './src';
 
@@ -444,9 +582,26 @@ function OnDeviceChat() {
       { name: 'model', type: 'string', desc: 'Model id in use, gemini-3.8-flash.' },
     ],
     actions: [
-      { name: 'sendMessage(prompt)', type: '(prompt: string) => Promise<void>', desc: 'Sends a turn and appends the reply with its latency and token count.' },
-      { name: 'clearMessages()', type: '() => void', desc: 'Clears history and starts a fresh chat session.' },
-      { name: 'setApiKey(key)', type: '(key: string | null) => void', desc: 'Swaps the key and resets the session.' },
+      {
+        name: 'sendMessage(prompt)',
+        type: '(prompt: string) => Promise<void>',
+        desc: 'Sends a turn and appends the reply with its latency and token count.',
+        inputs: [{ name: 'prompt', type: 'string', desc: "The user's turn. Blank input is ignored." }],
+        output: 'Resolves when the reply arrives. Without an API key it appends a system-role message explaining that instead; API errors arrive the same way rather than as a rejection.',
+      },
+      {
+        name: 'clearMessages()',
+        type: '() => void',
+        desc: 'Clears the history and resets the chat session, so the next turn starts with no context.',
+        output: 'Returns nothing.',
+      },
+      {
+        name: 'setApiKey(key)',
+        type: '(key: string | null) => void',
+        desc: 'Swaps the key in memory and resets the chat session.',
+        inputs: [{ name: 'key', type: 'string | null', desc: "The Gemini API key, or null to clear it. Persisting it is the job of saveApiKey()." }],
+        output: 'Returns nothing. hasApiKey updates immediately and availableModels is refreshed in the background.',
+      },
     ],
     example: `import { useGemini } from './src';
 
@@ -484,9 +639,25 @@ function Assistant() {
       { name: 'model', type: 'string', desc: 'Engine used for the last cloud transcription.' },
     ],
     actions: [
-      { name: 'startListening()', type: '() => Promise<boolean>', desc: 'Requests permission if needed and opens the microphone.' },
-      { name: 'stopListeningAndTranscribe()', type: '() => Promise<SpeechTranscriptionResult | null>', desc: 'Closes the microphone and resolves with the transcript.' },
-      { name: 'setRecognitionMode(mode)', type: "(mode: 'offline' | 'cloud') => void", desc: 'Chooses the engine for the next run.' },
+      {
+        name: 'startListening()',
+        type: '() => Promise<boolean>',
+        desc: 'Opens the microphone using the current recognitionMode: the on-device recognizer, or a recording for cloud transcription.',
+        output: 'Resolves true when the microphone opened, false with the reason in error when permission was denied or the recognizer refused.',
+      },
+      {
+        name: 'stopListeningAndTranscribe()',
+        type: '() => Promise<SpeechTranscriptionResult | null>',
+        desc: 'Closes the microphone and returns what was heard.',
+        output: 'Resolves with { transcript, confidence, durationSeconds, latencyMs, language } — confidence is null for cloud transcripts — or null when nothing was captured or transcription failed. In cloud mode the audio file is kept in lastRecordingUri either way.',
+      },
+      {
+        name: 'setRecognitionMode(mode)',
+        type: "(mode: 'on-device' | 'cloud') => void",
+        desc: 'Chooses the engine for the next run.',
+        inputs: [{ name: 'mode', type: "'on-device' | 'cloud'", desc: 'On-device keeps audio on the phone and streams partials; cloud records first and needs an API key.' }],
+        output: 'Returns nothing. model updates to name the engine that will be used.',
+      },
     ],
     example: `import { useSpeechAI } from './src';
 
@@ -528,10 +699,43 @@ function VoiceButton() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'summarize(text, options?)', type: "(text, { inputType, outputType }?) => Promise<SummarizeResult>", desc: 'Condenses an article or a conversation into one, two or three bullets.' },
-      { name: 'proofread(text)', type: '(text: string) => Promise<ProofreadResult>', desc: 'Fixes grammar, punctuation and wording. Good for cleaning up dictated text.' },
-      { name: 'rewrite(text, tone)', type: "(text, tone: 'elaborate' | 'emojify' | 'shorten' | 'friendly' | 'professional' | 'rephrase') => Promise<RewriteResult>", desc: 'Restates the same content in a different register.' },
-      { name: 'describeImage(input, style?)', type: "(imageInput, style?) => Promise<ImageDescriptionResult>", desc: 'Describes an image locally. Useful for alt text without a network call.' },
+      {
+        name: 'summarize(text, options?)',
+        type: '(text: string, options?: SummarizeOptions) => Promise<SummarizeResult | null>',
+        desc: 'Condenses an article or a conversation on-device. Nothing leaves the phone.',
+        inputs: [
+          { name: 'text', type: 'string', desc: 'The article or transcript to condense.' },
+          { name: 'options', type: 'SummarizeOptions | undefined', desc: "inputType: 'article' or 'conversation' tells the model how to read it; outputType: 'one_bullet', 'two_bullets' or 'three_bullets' sets the length." },
+        ],
+        output: 'Resolves with { summary, latencyMs, engine, source }, or null on failure with the reason in error.',
+      },
+      {
+        name: 'proofread(text)',
+        type: '(text: string) => Promise<ProofreadResult | null>',
+        desc: 'Fixes grammar, punctuation and wording. Good for cleaning up dictated text.',
+        inputs: [{ name: 'text', type: 'string', desc: 'The text to correct.' }],
+        output: 'Resolves with { correctedText, suggestions, latencyMs, engine, source } — suggestions lists the individual changes — or null on failure.',
+      },
+      {
+        name: 'rewrite(text, tone?)',
+        type: "(text: string, tone?: TaskTone) => Promise<RewriteResult | null>",
+        desc: 'Rewrites text in a different tone or length while keeping the meaning.',
+        inputs: [
+          { name: 'text', type: 'string', desc: 'The text to transform.' },
+          { name: 'tone', type: 'TaskTone | undefined', desc: "One of elaborate, emojify, shorten, friendly, professional, rephrase. Defaults to professional." },
+        ],
+        output: 'Resolves with { rewrittenText, suggestions, latencyMs, engine, source }, or null on failure.',
+      },
+      {
+        name: 'describeImage(input, style?)',
+        type: "(imageInput: string, style?: 'detailed' | 'caption' | 'labels' | 'concise') => Promise<ImageDescriptionResult | null>",
+        desc: 'Describes an image locally. Useful for alt text without a network round-trip.',
+        inputs: [
+          { name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' },
+          { name: 'style', type: 'string | undefined', desc: 'detailed, caption, labels or concise. Defaults to concise.' },
+        ],
+        output: 'Resolves with { description, finishReason, latencyMs, engine, source }, or null on failure.',
+      },
     ],
     example: `import { useGenAITasks } from './src';
 
@@ -566,10 +770,38 @@ async function tidy(dictated: string, tasks) {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'identifyLanguage(text)', type: '(text: string) => Promise<LanguageIdResult>', desc: 'Detects the language, with confidence. Run this before translating unknown input.' },
-      { name: 'translate(text, from, to)', type: '(text, sourceLang, targetLang) => Promise<TranslationResult>', desc: 'Translates offline. The first call for a pair downloads its model.' },
-      { name: 'suggestReplies(history)', type: '(history: { text, isLocalUser?, timestamp? }[]) => Promise<SmartReplyResult>', desc: 'Proposes short replies from recent messages.' },
-      { name: 'extractEntities(text)', type: '(text: string) => Promise<EntityExtractionResult>', desc: 'Finds dates, addresses, money, phone numbers, flight and tracking numbers.' },
+      {
+        name: 'identifyLanguage(text)',
+        type: '(text: string) => Promise<LanguageIdResult | null>',
+        desc: 'Detects the language of a sample. Run it before translating when the source is unknown.',
+        inputs: [{ name: 'text', type: 'string', desc: 'A sample; a few words is usually enough.' }],
+        output: 'Resolves with { languageCode, possibleLanguages, latencyMs, source } — languageCode is null when nothing was confident enough — or null on failure.',
+      },
+      {
+        name: 'translate(text, from?, to?)',
+        type: '(text: string, sourceLang?: string, targetLang?: string) => Promise<TranslationResult | null>',
+        desc: 'Translates offline. The first call for a language pair downloads that model, so it is slower than the ones after it.',
+        inputs: [
+          { name: 'text', type: 'string', desc: 'The text to translate.' },
+          { name: 'sourceLang', type: 'string | undefined', desc: "BCP-47 language code of the input. Defaults to 'en'." },
+          { name: 'targetLang', type: 'string | undefined', desc: "BCP-47 language code to translate into. Defaults to 'es'." },
+        ],
+        output: 'Resolves with { translatedText, sourceLanguage, targetLanguage, latencyMs, source }, or null on failure.',
+      },
+      {
+        name: 'suggestReplies(history)',
+        type: '(history: { text: string; timestamp?: number; isLocalUser?: boolean; sender?: string }[]) => Promise<SmartReplyResult | null>',
+        desc: 'Proposes short replies for the end of a conversation.',
+        inputs: [{ name: 'history', type: 'Array<{ text, timestamp?, isLocalUser?, sender? }>', desc: "Messages in order. isLocalUser marks this user's own messages, so the model replies to the other party." }],
+        output: 'Resolves with { suggestions, status, latencyMs, source }. suggestions is empty when the model has nothing confident to offer; null on failure.',
+      },
+      {
+        name: 'extractEntities(text)',
+        type: '(text: string) => Promise<EntityExtractionResult | null>',
+        desc: 'Finds dates, addresses, money, phone numbers, flight numbers and tracking codes.',
+        inputs: [{ name: 'text', type: 'string', desc: 'The text to scan.' }],
+        output: 'Resolves with { entities, latencyMs, source }; each entity carries type, text and the start and end offsets into your input. Null on failure.',
+      },
     ],
     example: `import { useNaturalLanguageAI } from './src';
 
@@ -615,14 +847,62 @@ async function localise(text: string, nlp) {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'captureAndAnalyze(useCamera)', type: '(fromCamera: boolean) => Promise<void>', desc: 'Takes or picks a photo and sends it to Gemini for description and labels.' },
-      { name: 'pickImage()', type: '() => Promise<string | null>', desc: 'Opens the picker and loads an image without analysing it.' },
-      { name: 'recognizeText(image)', type: '(imageInput: string) => Promise<TextRecognitionResult>', desc: 'Reads text from an image, on the device.' },
-      { name: 'scanBarcodes(image)', type: '(imageInput: string) => Promise<BarcodeScanResult>', desc: 'Finds and decodes 1D and 2D codes.' },
-      { name: 'detectFaces(image)', type: '(imageInput: string) => Promise<FaceDetectionResult>', desc: 'Locates faces and their attributes.' },
-      { name: 'detectObjects(image)', type: '(imageInput: string) => Promise<ObjectDetectionResult>', desc: 'Detects and tracks objects with labels.' },
-      { name: 'detectPose(image)', type: '(imageInput: string) => Promise<PoseDetectionResult>', desc: 'Estimates body pose landmarks.' },
-      { name: 'segmentSubject(image)', type: '(imageInput: string) => Promise<SubjectSegmentationResult>', desc: 'Separates the main subject from the background.' },
+      {
+        name: 'captureAndAnalyze(useCamera?)',
+        type: '(useCamera?: boolean) => Promise<VisionAnalysisResult | null>',
+        desc: 'Takes or picks a photo and sends it to Gemini for a description and labels.',
+        inputs: [{ name: 'useCamera', type: 'boolean | undefined', desc: 'True opens the camera and asks for permission, false opens the library. Defaults to true.' }],
+        output: 'Resolves with { description, labels, latencyMs, timestamp }, or null when the user cancelled, no API key is configured, or the call failed.',
+      },
+      {
+        name: 'pickImage(useCamera?)',
+        type: '(useCamera?: boolean) => Promise<{ uri: string; base64?: string } | null>',
+        desc: 'Opens the camera or the library and loads an image without analysing it.',
+        inputs: [{ name: 'useCamera', type: 'boolean | undefined', desc: 'True for the camera, false for the library. Defaults to true.' }],
+        output: 'Resolves with the file URI and base64 copy, also stored in selectedImageUri and selectedImageBase64. Null when cancelled or permission was refused.',
+      },
+      {
+        name: 'recognizeText(image)',
+        type: '(imageInput: string) => Promise<TextRecognitionResult | null>',
+        desc: 'Reads text from an image, on the device.',
+        inputs: [{ name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' }],
+        output: 'Resolves with { text, blocks, latencyMs, source }; blocks keep the line and bounding-box structure. Null on failure.',
+      },
+      {
+        name: 'scanBarcodes(image)',
+        type: '(imageInput: string) => Promise<BarcodeScanResult | null>',
+        desc: 'Finds and decodes 1D and 2D codes, including QR.',
+        inputs: [{ name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' }],
+        output: 'Resolves with { barcodes, latencyMs, source }; each barcode carries rawValue, displayValue, format, valueType and a bounding box. Null on failure.',
+      },
+      {
+        name: 'detectFaces(image)',
+        type: '(imageInput: string) => Promise<FaceDetectionResult | null>',
+        desc: 'Locates faces and their attributes.',
+        inputs: [{ name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' }],
+        output: 'Resolves with { faces, latencyMs, source }; each face carries a tracking id, head Euler angles, a bounding box, and smile and eye-open probabilities that are null when classification is off. Null on failure.',
+      },
+      {
+        name: 'detectObjects(image)',
+        type: '(imageInput: string) => Promise<ObjectDetectionResult | null>',
+        desc: 'Detects and tracks objects with labels.',
+        inputs: [{ name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' }],
+        output: 'Resolves with { objects, latencyMs, source }; each object carries a tracking id, a bounding box and labels with confidences. Null on failure.',
+      },
+      {
+        name: 'detectPose(image)',
+        type: '(imageInput: string) => Promise<PoseDetectionResult | null>',
+        desc: 'Estimates body pose landmarks.',
+        inputs: [{ name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' }],
+        output: 'Resolves with { landmarks, latencyMs, source } — 33 landmarks, each with a type, x, y and an in-frame likelihood. Null on failure.',
+      },
+      {
+        name: 'segmentSubject(image)',
+        type: '(imageInput: string) => Promise<SubjectSegmentationResult | null>',
+        desc: 'Separates the main subject from the background.',
+        inputs: [{ name: 'imageInput', type: 'string', desc: 'A file URI or a base64 image.' }],
+        output: 'Resolves with { subjectsCount, foregroundConfidence, latencyMs, source }. Null on failure.',
+      },
     ],
     example: `import { useVisionAI } from './src';
 
@@ -648,7 +928,7 @@ async function readLabel(uri: string, vision) {
       'Streams from expo-sensors: accelerometer and gyroscope for the six-axis IMU, magnetometer for heading, barometer for pressure, and the ambient light sensor. Relative altitude is computed from pressure with the international hypsometric formula, so it is a derived value and drifts with weather. The sampling interval applies to all streams; shorter intervals cost battery and wake the sensor hub more often.',
     signature: 'useSensors(intervalMs?: number): SensorTelemetry',
     params: [
-      { name: 'intervalMs', type: 'number', desc: 'Sampling period in milliseconds, defaulting to 200. Use 16 to 33 for animation, 500 or more for background monitoring.' },
+      { name: 'updateIntervalMs', type: 'number', desc: 'Sampling period in milliseconds for the IMU, magnetometer and barometer, defaulting to 100; the light sensor samples at twice this. Use 16 to 33 for animation, 500 or more for background monitoring. Changing it re-subscribes every sensor.' },
     ],
     returns: [
       { name: 'accelerometer', type: '{ x, y, z }', desc: 'Acceleration in g, including gravity. This is how you detect tilt and shake.' },
@@ -689,12 +969,47 @@ function Level() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'selection()', type: '() => Promise<void>', desc: 'Faint tick for moving between options.' },
-      { name: 'light() / medium() / heavy()', type: '() => Promise<void>', desc: 'Impact taps of increasing weight for presses and confirmations.' },
-      { name: 'success() / warning() / error()', type: '() => Promise<void>', desc: 'Notification patterns that carry meaning; use them consistently.' },
-      { name: 'playEnvelope(points, sharpness?)', type: '(points, initialSharpness?) => Promise<void>', desc: 'Plays a custom waveform from intensity and time control points. Must end at zero.' },
-      { name: 'playPrimitives(steps)', type: '(steps) => Promise<void>', desc: 'Chains hardware primitives with scale and delay into a composition.' },
-      { name: 'cancel()', type: '() => Promise<void>', desc: 'Stops any vibration immediately.' },
+      {
+        name: 'selection()',
+        type: '() => Promise<void>',
+        desc: 'Faint tick for moving between options: sliders, wheel pickers, tab changes.',
+        output: 'Resolves once dispatched. No-op on web; failures are logged rather than thrown.',
+      },
+      {
+        name: 'light() / medium() / heavy()',
+        type: '() => Promise<void>',
+        desc: 'Impact taps of increasing weight, for presses, reveals and destructive confirmations.',
+        output: 'Resolves once dispatched. No-op on web.',
+      },
+      {
+        name: 'success() / warning() / error()',
+        type: '() => Promise<void>',
+        desc: 'Notification patterns that carry meaning: a double pulse, a buzz, a triple pulse. Use them consistently.',
+        output: 'Resolves once dispatched. No-op on web.',
+      },
+      {
+        name: 'playEnvelope(points, sharpness?)',
+        type: '(points: EnvelopePoint[], initialSharpness?: number) => boolean',
+        desc: 'Plays a custom waveform on Android 16 and later. Check envelopeSupported first.',
+        inputs: [
+          { name: 'points', type: '{ intensity: number; sharpness: number; durationMs: number }[]', desc: 'Steps of the curve; intensity and sharpness are 0 to 1. The envelope must end at intensity 0, which the module appends for you.' },
+          { name: 'initialSharpness', type: 'number | undefined', desc: 'Sharpness to start from, 0 to 1.' },
+        ],
+        output: 'Returns true when the effect was dispatched, false when envelopes are unsupported or the call failed. It never throws.',
+      },
+      {
+        name: 'playPrimitives(steps)',
+        type: '(steps: PrimitiveStep[]) => boolean',
+        desc: 'Chains hardware primitives into a composition, Android 11 and later.',
+        inputs: [{ name: 'steps', type: '{ primitive: string; scale?: number; delayMs?: number }[]', desc: 'primitive is one of supportedPrimitives; scale sets strength 0 to 1; delayMs is the gap before that step.' }],
+        output: 'Returns true when the composition was dispatched, false when the native module is absent or the call failed.',
+      },
+      {
+        name: 'cancel()',
+        type: '() => void',
+        desc: 'Stops any vibration immediately, including an envelope or composition in progress.',
+        output: 'Returns nothing.',
+      },
     ],
     example: `import { useHaptics, HapticEnvelopes } from './src';
 
@@ -741,17 +1056,90 @@ function Confirm() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'handleCameraReady()', type: '() => Promise<void>', desc: 'Pass to the view\'s onCameraReady so lens and size lists can be read.' },
-      { name: 'takePicture(options?)', type: '({ quality?, base64?, exif?, shutterSound? }?) => Promise<CapturedPhoto | null>', desc: 'Takes a still and resolves with the file. Pass base64 when feeding it to a model.' },
-      { name: 'startRecording(options?)', type: '({ maxDurationSeconds?, maxFileSizeBytes?, mirror? }?) => Promise<string | null>', desc: 'Records video; resolves with the file when recording ends. Switches the view to video mode.' },
-      { name: 'stopRecording()', type: '() => void', desc: 'Ends the recording, which resolves the promise from startRecording.' },
-      { name: 'toggleFacing()', type: '() => void', desc: 'Switches between the front and rear camera.' },
-      { name: 'setZoom(fraction)', type: '(fraction: number) => void', desc: 'Sets zoom as a 0 to 1 fraction of the lens range.' },
-      { name: 'setZoomStep(step, total?)', type: '(step: number, totalSteps?: number) => void', desc: 'Evenly spaced zoom stops, for a control with discrete steps.' },
-      { name: 'setFlash(mode)', type: "(mode: 'auto' | 'on' | 'off') => void", desc: 'Chooses flash behaviour for the next capture.' },
-      { name: 'toggleTorch()', type: '() => void', desc: 'Turns the continuous light on or off.' },
-      { name: 'setMode(mode)', type: "(mode: 'picture' | 'video') => void", desc: 'Switches the view between stills and video.' },
-      { name: 'pausePreview() / resumePreview()', type: '() => Promise<void>', desc: 'Freezes or restarts the preview without tearing the camera down.' },
+      {
+        name: 'handleCameraReady()',
+        type: '() => Promise<void>',
+        desc: "Pass to the view's onCameraReady. Lens and picture-size lists only resolve once the preview is running, so they are read here.",
+        output: 'Resolves once isReady is set and availableLenses and availablePictureSizes have been filled.',
+      },
+      {
+        name: 'takePicture(options?)',
+        type: '(options?: TakePictureOptions) => Promise<CapturedPhoto | null>',
+        desc: 'Takes a still into the app cache. Use useMediaLibrary().save() to keep it.',
+        inputs: [
+          { name: 'options.quality', type: 'number | undefined', desc: 'JPEG quality 0 to 1. Defaults to 0.85.' },
+          { name: 'options.base64', type: 'boolean | undefined', desc: 'Also return the image as base64, which is what the AI hooks consume. Defaults to false.' },
+          { name: 'options.exif', type: 'boolean | undefined', desc: 'Include EXIF metadata. Defaults to false.' },
+          { name: 'options.shutterSound', type: 'boolean | undefined', desc: 'Play the shutter sound where the platform allows suppressing it. Defaults to true.' },
+        ],
+        output: 'Resolves with { uri, width, height, base64?, exif? }, or null when the view is not mounted or the capture failed, with the reason in error.',
+      },
+      {
+        name: 'startRecording(options?)',
+        type: '(options?: StartRecordingOptions) => Promise<string | null>',
+        desc: 'Records video, switching the view to video mode first.',
+        inputs: [
+          { name: 'options.maxDurationSeconds', type: 'number | undefined', desc: 'Stop automatically after this many seconds.' },
+          { name: 'options.maxFileSizeBytes', type: 'number | undefined', desc: 'Stop automatically at this file size.' },
+          { name: 'options.mirror', type: 'boolean | undefined', desc: 'Mirror the recording, matching what the user saw on a front-facing preview.' },
+        ],
+        output: 'Resolves with the video file URI when recording ends — through stopRecording() or a limit — or null on failure. recordingSeconds ticks while it runs.',
+      },
+      {
+        name: 'stopRecording()',
+        type: '() => void',
+        desc: 'Ends the recording. No-op when nothing is recording.',
+        output: 'Returns nothing; the promise from startRecording resolves with the video file.',
+      },
+      {
+        name: 'toggleFacing()',
+        type: '() => void',
+        desc: 'Switches between the front and rear camera.',
+        output: 'Returns nothing; facing flips and viewProps carries it to the view.',
+      },
+      {
+        name: 'setZoom(fraction)',
+        type: '(fraction: number) => void',
+        desc: 'Sets zoom as a fraction of the lens range, not an optical multiplier.',
+        inputs: [{ name: 'fraction', type: 'number', desc: '0 to 1; values outside are clamped. Do not pass 5 for "5x".' }],
+        output: 'Returns nothing; zoomFactor updates and viewProps carries it to the view.',
+      },
+      {
+        name: 'setZoomStep(step, total?)',
+        type: '(step: number, totalSteps?: number) => void',
+        desc: 'Evenly spaced zoom stops, for a control with discrete positions.',
+        inputs: [
+          { name: 'step', type: 'number', desc: 'Which stop to select, clamped to 0..totalSteps.' },
+          { name: 'totalSteps', type: 'number | undefined', desc: 'How many stops there are. Defaults to 4.' },
+        ],
+        output: 'Returns nothing; sets zoomFactor to step / totalSteps.',
+      },
+      {
+        name: 'setFlash(mode)',
+        type: "(mode: 'auto' | 'on' | 'off') => void",
+        desc: 'Chooses flash behaviour for the next capture, as distinct from the continuous torch.',
+        inputs: [{ name: 'mode', type: "'auto' | 'on' | 'off'", desc: 'auto lets the camera decide by scene brightness.' }],
+        output: 'Returns nothing; flashMode updates.',
+      },
+      {
+        name: 'toggleTorch()',
+        type: '() => void',
+        desc: 'Turns the continuous light on or off through the preview. For torch without a preview, use useTorch.',
+        output: 'Returns nothing; isTorchOn flips.',
+      },
+      {
+        name: 'setMode(mode)',
+        type: "(mode: 'picture' | 'video') => void",
+        desc: 'Switches the view between stills and video.',
+        inputs: [{ name: 'mode', type: "'picture' | 'video'", desc: 'Recording requires video; startRecording switches it for you.' }],
+        output: 'Returns nothing; mode and viewProps update.',
+      },
+      {
+        name: 'pausePreview() / resumePreview()',
+        type: '() => Promise<void>',
+        desc: 'Freezes or restarts the preview without tearing the camera down.',
+        output: 'Resolves once applied. Silently no-ops when the view has been unmounted.',
+      },
     ],
     example: `import { CameraView } from 'expo-camera';
 import { useCamera } from './src';
@@ -795,10 +1183,35 @@ function Capture() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'setTorch(on, level?)', type: '(on: boolean, strengthLevel?: number) => Promise<void>', desc: 'Switches the light, optionally at a specific brightness step.' },
-      { name: 'toggleTorch()', type: '() => Promise<void>', desc: 'Flips the current state.' },
-      { name: 'startStrobe()', type: '() => Promise<void>', desc: 'Begins an SOS pattern.' },
-      { name: 'stopStrobe()', type: '() => Promise<void>', desc: 'Stops the pattern and turns the light off.' },
+      {
+        name: 'setTorch(on, level?)',
+        type: '(on: boolean, strengthLevel?: number) => Promise<boolean>',
+        desc: 'Switches the rear LED, optionally at a specific brightness.',
+        inputs: [
+          { name: 'on', type: 'boolean', desc: 'Desired state.' },
+          { name: 'strengthLevel', type: 'number | undefined', desc: '1 to maxStrengthLevel, honoured on Android 13 and later and ignored below it. Omit for the device default.' },
+        ],
+        output: 'Resolves true when the call was accepted, false when the hardware is unavailable or the call threw, with the reason in error.',
+      },
+      {
+        name: 'toggleTorch()',
+        type: '() => Promise<boolean>',
+        desc: 'Flips the current state, stopping any strobe first.',
+        output: 'Resolves with the state the torch is in afterwards.',
+      },
+      {
+        name: 'startStrobe(intervalMs?)',
+        type: '(intervalMs?: number) => void',
+        desc: 'Toggles the hardware torch on a timer.',
+        inputs: [{ name: 'intervalMs', type: 'number | undefined', desc: 'Half-period in milliseconds. Defaults to 150 and is clamped to at least 120, because the camera HAL needs roughly 50 to 100 ms per switch.' }],
+        output: 'Returns nothing; isStrobing becomes true. Replaces any strobe already running.',
+      },
+      {
+        name: 'stopStrobe()',
+        type: '() => void',
+        desc: 'Cancels the strobe timer and switches the LED off.',
+        output: 'Returns nothing; isStrobing becomes false.',
+      },
     ],
     example: `import { useTorch } from './src';
 
@@ -835,7 +1248,13 @@ function Flashlight() {
       { name: 'supportedTypes', type: 'string[]', desc: 'Which modalities are available, such as fingerprint or face.' },
     ],
     actions: [
-      { name: 'authenticate(reason)', type: '(promptMessage: string) => Promise<boolean>', desc: 'Shows the system prompt and resolves true only on success. The reason string is displayed to the user.' },
+      {
+        name: 'authenticate(promptMessage?)',
+        type: '(promptMessage?: string) => Promise<boolean>',
+        desc: 'Shows the system biometric prompt with a device-passcode fallback.',
+        inputs: [{ name: 'promptMessage', type: 'string | undefined', desc: 'The line shown in the system sheet. Defaults to "Verify identity with Pixel Biometrics".' }],
+        output: 'Resolves true only on success. A cancel or a mismatch resolves false without setting error; missing hardware or no enrolment resolves false and sets error. lastResult tells the three apart.',
+      },
     ],
     example: `import { useBiometrics } from './src';
 
@@ -866,9 +1285,30 @@ function Unlock() {
       { name: 'isPostQuantumProtected', type: 'boolean', desc: 'Always false. SecureStore uses classical AES; do not claim otherwise.' },
     ],
     actions: [
-      { name: 'saveSecureItem(key, value)', type: '(key: string, value: string) => Promise<boolean>', desc: 'Encrypts and stores a value. This is the only sanctioned place for secrets.' },
-      { name: 'getSecureItem(key)', type: '(key: string) => Promise<string | null>', desc: 'Decrypts and returns a stored value, or null.' },
-      { name: 'deleteSecureItem(key)', type: '(key: string) => Promise<boolean>', desc: 'Removes a stored value.' },
+      {
+        name: 'saveSecureItem(key, value)',
+        type: '(key: string, value: string) => Promise<boolean>',
+        desc: 'Encrypts and stores a value. This is the only sanctioned place for a secret.',
+        inputs: [
+          { name: 'key', type: 'string', desc: 'Storage key: alphanumerics, dot, dash and underscore.' },
+          { name: 'value', type: 'string', desc: 'The secret itself. It is never written to the log.' },
+        ],
+        output: 'Resolves true on success, false with the reason in error on failure.',
+      },
+      {
+        name: 'getSecureItem(key)',
+        type: '(key: string) => Promise<string | null>',
+        desc: 'Decrypts and returns a stored value.',
+        inputs: [{ name: 'key', type: 'string', desc: 'The key used when saving.' }],
+        output: 'Resolves with the value, or null when nothing is stored under that key or the read failed.',
+      },
+      {
+        name: 'deleteSecureItem(key)',
+        type: '(key: string) => Promise<boolean>',
+        desc: 'Removes a stored value.',
+        inputs: [{ name: 'key', type: 'string', desc: 'The key to delete.' }],
+        output: 'Resolves true when the delete completed, false with the reason in error otherwise.',
+      },
     ],
     example: `import { useSecurity } from './src';
 
@@ -903,8 +1343,19 @@ async function storeKey(value: string, security) {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startScan(timeoutMs?)', type: '(timeoutMs?: number) => Promise<boolean>', desc: 'Begins physical Bluetooth Low Energy discovery via BluetoothLeScanner.' },
-      { name: 'stopScan()', type: '() => void', desc: 'Stops active BLE discovery.' },
+      {
+        name: 'startScan(timeoutMs?)',
+        type: '(timeoutMs?: number) => Promise<boolean>',
+        desc: 'Begins physical Bluetooth Low Energy discovery through BluetoothLeScanner.',
+        inputs: [{ name: 'timeoutMs', type: 'number | undefined', desc: 'How long to scan before stopping automatically, in milliseconds. Defaults to 10000.' }],
+        output: 'Resolves true when the scan started; false with the reason in scanError otherwise. Results appear in peripherals, polled every 500 ms.',
+      },
+      {
+        name: 'stopScan()',
+        type: '() => void',
+        desc: 'Stops active BLE discovery and clears the auto-stop timer.',
+        output: 'Returns nothing; a final results sync runs first, so nothing already discovered is lost.',
+      },
     ],
     example: `import { useBLE } from './src';
 
@@ -950,10 +1401,31 @@ function Bluetooth() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startReader()', type: '() => Promise<boolean>', desc: 'Enables reader mode. Refuses with a reason when the radio is missing or switched off.' },
-      { name: 'stopReader()', type: '() => Promise<void>', desc: 'Disables reader mode and releases the Activity binding.' },
-      { name: 'writeText(text)', type: '(text: string) => Promise<boolean>', desc: 'Queues a text record for the next tag presented. Formats an unformatted tag where possible.' },
-      { name: 'clearTag()', type: '() => void', desc: 'Clears the last read from state.' },
+      {
+        name: 'startReader()',
+        type: '() => Promise<boolean>',
+        desc: 'Enables NFC reader mode on the foreground Activity.',
+        output: 'Resolves true when reader mode started; false with the reason in error when the device has no radio, NFC is switched off, or the build has no reader. Tags then arrive in lastScannedTag.',
+      },
+      {
+        name: 'stopReader()',
+        type: '() => Promise<void>',
+        desc: 'Disables reader mode and releases the Activity binding.',
+        output: 'Resolves once released; isReading becomes false and any pending write is dropped.',
+      },
+      {
+        name: 'writeText(text)',
+        type: '(text: string) => Promise<boolean>',
+        desc: 'Queues a text record for the next tag presented. The reader must already be running.',
+        inputs: [{ name: 'text', type: 'string', desc: 'The NDEF text record to write.' }],
+        output: 'Resolves true when the write was queued, not when it completed; the outcome arrives later in lastWriteOk. False with the reason in error when it could not be queued.',
+      },
+      {
+        name: 'clearTag()',
+        type: '() => void',
+        desc: 'Clears the last read from state, for a "scan another" control.',
+        output: 'Returns nothing; lastScannedTag and lastWriteOk become null.',
+      },
     ],
     example: `import { useNFC } from './src';
 
@@ -1001,7 +1473,12 @@ function TagReader() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'refresh()', type: '() => void', desc: 'Forces an immediate re-read instead of waiting for the next poll.' },
+      {
+        name: 'refresh()',
+        type: '() => void',
+        desc: 'Forces an immediate re-read instead of waiting for the next five-second poll.',
+        output: 'Returns nothing; the nfc, bluetooth, uwb, wifiRtt and satellite blocks update. Call it after sending the user to Settings.',
+      },
     ],
     example: `import { useRadios } from './src';
 
@@ -1035,7 +1512,12 @@ function RadioPanel() {
       { name: 'hasPermission', type: 'boolean', desc: 'Whether fine location permission was granted.' },
     ],
     actions: [
-      { name: 'refreshLocation()', type: '() => Promise<void>', desc: 'Forces a fresh high-accuracy fix instead of waiting for the next update.' },
+      {
+        name: 'refreshLocation()',
+        type: '() => Promise<boolean>',
+        desc: 'Requests permission if needed and takes a fresh highest-accuracy fix.',
+        output: 'Resolves true when a fix arrived, false when permission was denied or the fix failed, with the reason in error. Coordinates never reach the log.',
+      },
     ],
     example: `import { useLocation } from './src';
 
@@ -1129,18 +1611,87 @@ function ProFeatures() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startRecording(options?)', type: '({ maxDurationSeconds?, quality? }?) => Promise<boolean>', desc: 'Requests permission if needed and starts a take, optionally stopping itself after a set number of seconds.' },
-      { name: 'pauseRecording()', type: '() => boolean', desc: 'Pauses without finalising the file.' },
-      { name: 'resumeRecording()', type: '() => boolean', desc: 'Continues the same take after a pause.' },
-      { name: 'stopRecording()', type: '() => Promise<string | null>', desc: 'Finalises the take and resolves with the file URI.' },
-      { name: 'setQuality(q)', type: "(quality: 'speech' | 'studio') => void", desc: 'Chooses the capture profile for the next take.' },
-      { name: 'refreshInputs()', type: '() => RecordingInput[]', desc: 'Re-reads the available microphones. Only valid after the recorder is prepared.' },
-      { name: 'selectInput(uid)', type: '(uid: string) => boolean', desc: 'Switches to a specific microphone, such as an attached USB one.' },
-      { name: 'setRoute(route)', type: "(route: 'speaker' | 'earpiece') => Promise<void>", desc: 'Sends playback to the loudspeaker or the call earpiece.' },
-      { name: 'playLastRecording(uri?)', type: '(uri?: string) => Promise<boolean>', desc: 'Plays the most recent recording, or a specific file.' },
-      { name: 'pausePlayback()', type: '() => void', desc: 'Pauses playback in place.' },
-      { name: 'stopPlayback()', type: '() => Promise<void>', desc: 'Stops playback and rewinds to the start.' },
-      { name: 'seekPlayback(seconds)', type: '(seconds: number) => Promise<void>', desc: 'Jumps to a position.' },
+      {
+        name: 'startRecording(options?)',
+        type: '(options?: { maxDurationSeconds?: number; quality?: AudioQuality }) => Promise<boolean>',
+        desc: 'Requests permission if needed, prepares the profile and opens the microphone with metering at 10 Hz.',
+        inputs: [
+          { name: 'options.maxDurationSeconds', type: 'number | undefined', desc: 'Stop automatically after this many seconds; the recorder finalises the file itself.' },
+          { name: 'options.quality', type: "'speech' | 'studio' | undefined", desc: 'Profile for this take, which also becomes the active profile. speech is 16 kHz mono noise-suppressed, studio is 48 kHz stereo unprocessed.' },
+        ],
+        output: 'Resolves true when recording started, false with the reason in error when permission was denied or the recorder refused.',
+      },
+      {
+        name: 'pauseRecording()',
+        type: '() => boolean',
+        desc: 'Pauses without finalising the file, so resumeRecording continues the same take.',
+        output: 'Returns true when the take was paused, false when nothing was recording or it was already paused.',
+      },
+      {
+        name: 'resumeRecording()',
+        type: '() => boolean',
+        desc: 'Continues the same take after a pause.',
+        output: 'Returns true when recording resumed, false when there was nothing paused.',
+      },
+      {
+        name: 'stopRecording()',
+        type: '() => Promise<string | null>',
+        desc: 'Finalises the take and stops metering.',
+        output: 'Resolves with the recorded file URI, also stored in lastRecordingUri, or null when nothing was recording or the stop failed.',
+      },
+      {
+        name: 'setQuality(quality)',
+        type: "(quality: 'speech' | 'studio') => void",
+        desc: 'Chooses the capture profile for the next recording, not the current one.',
+        inputs: [{ name: 'quality', type: "'speech' | 'studio'", desc: 'speech records 16 kHz mono through the noise-suppressed voice path; studio records 48 kHz stereo unprocessed.' }],
+        output: 'Returns nothing; quality updates immediately.',
+      },
+      {
+        name: 'refreshInputs()',
+        type: '() => RecordingInput[]',
+        desc: 'Re-reads the available microphones. Only valid once a recording has been prepared.',
+        output: 'Returns the list, also written to inputs. Empty when the platform cannot answer.',
+      },
+      {
+        name: 'selectInput(uid)',
+        type: '(uid: string) => boolean',
+        desc: 'Switches to a specific microphone, such as an attached USB or Bluetooth one.',
+        inputs: [{ name: 'uid', type: 'string', desc: 'A uid from the inputs list.' }],
+        output: 'Returns true when the platform accepted it, false with the reason in error otherwise.',
+      },
+      {
+        name: 'setRoute(route)',
+        type: "(route: 'speaker' | 'earpiece') => Promise<void>",
+        desc: 'Sends playback to the loudspeaker or the call earpiece, at the audio-mode level.',
+        inputs: [{ name: 'route', type: "'speaker' | 'earpiece'", desc: 'earpiece is the quiet, held-to-the-ear path.' }],
+        output: 'Resolves once the audio mode is applied; on failure route is unchanged and error is set.',
+      },
+      {
+        name: 'playLastRecording(uri?)',
+        type: '(uri?: string) => Promise<boolean>',
+        desc: 'Plays a recording and starts position polling five times a second.',
+        inputs: [{ name: 'uri', type: 'string | undefined', desc: 'A specific file to play. Defaults to lastRecordingUri.' }],
+        output: 'Resolves true when playback started, false when there is nothing to play or the player refused.',
+      },
+      {
+        name: 'pausePlayback()',
+        type: '() => void',
+        desc: 'Pauses playback where it is.',
+        output: 'Returns nothing; isPlaying becomes false and position polling stops.',
+      },
+      {
+        name: 'stopPlayback()',
+        type: '() => Promise<void>',
+        desc: 'Stops playback and rewinds to the start.',
+        output: 'Resolves once rewound; playbackPositionSeconds returns to 0.',
+      },
+      {
+        name: 'seekPlayback(seconds)',
+        type: '(seconds: number) => Promise<void>',
+        desc: 'Jumps to a position in the file being played.',
+        inputs: [{ name: 'seconds', type: 'number', desc: 'Absolute position; negatives are clamped to 0.' }],
+        output: 'Resolves once the seek completes; playbackPositionSeconds updates.',
+      },
     ],
     example: `import { useAudio } from './src';
 
@@ -1187,9 +1738,26 @@ function Recorder() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'setPreferredRefreshRate(hz)', type: '(hz: number) => Promise<void>', desc: 'Requests a refresh rate. Advisory; read refreshRateHz back to see what happened.' },
-      { name: 'setScreenBrightness(v)', type: '(value: number) => Promise<void>', desc: 'Sets brightness from 0 to 1 for this app.' },
-      { name: 'toggleKeepAwake()', type: '() => void', desc: 'Holds the screen on or releases it. Release it when you no longer need it.' },
+      {
+        name: 'setPreferredRefreshRate(hz)',
+        type: '(rateHz: number) => Promise<boolean>',
+        desc: 'Asks the system for a refresh rate for this window, for example 120 during an animation and 60 otherwise.',
+        inputs: [{ name: 'rateHz', type: 'number', desc: 'A rate from supportedRefreshRates.' }],
+        output: 'Resolves true when the request was applied. It is a request, not a guarantee: the system may pick another mode.',
+      },
+      {
+        name: 'setScreenBrightness(value)',
+        type: '(value: number) => Promise<void>',
+        desc: 'Sets the brightness of this app window.',
+        inputs: [{ name: 'value', type: 'number', desc: '0 to 1; values outside are clamped.' }],
+        output: 'Resolves once applied. No-op on web; on failure brightness is left unchanged.',
+      },
+      {
+        name: 'toggleKeepAwake()',
+        type: '() => Promise<void>',
+        desc: 'Acquires or releases a tagged screen wake lock, so the display does not dim during a long read or capture.',
+        output: 'Resolves once the lock state has flipped; isKeepAwake reflects it. Release it when you no longer need it.',
+      },
     ],
     example: `import { useDisplay } from './src';
 
@@ -1260,7 +1828,12 @@ function Battery() {
       { name: 'isAirplaneMode', type: 'boolean', desc: 'Whether airplane mode is on.' },
     ],
     actions: [
-      { name: 'refreshNetwork()', type: '() => Promise<void>', desc: 'Re-runs the connectivity check immediately.' },
+      {
+        name: 'refreshNetwork()',
+        type: '() => Promise<void>',
+        desc: 'Re-runs the connectivity check immediately, for example when the app returns to the foreground.',
+        output: 'Resolves once the read completes. Each sub-read fails independently, so one missing value does not blank the rest.',
+      },
     ],
     example: `import { useNetwork } from './src';
 
@@ -1303,16 +1876,79 @@ async function upload(net) {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'load(source, options?)', type: '(source, { autoplay?, loop?, muted? }?) => Promise<boolean>', desc: 'Swaps the source, for example the clip the camera just recorded.' },
-      { name: 'play() / pause() / togglePlay()', type: '() => void', desc: 'Transport controls.' },
-      { name: 'seekTo(seconds)', type: '(seconds: number) => void', desc: 'Jumps to an absolute position, clamped to the duration.' },
-      { name: 'seekBy(seconds)', type: '(seconds: number) => void', desc: 'Moves relative to now; negative rewinds.' },
-      { name: 'replay()', type: '() => void', desc: 'Restarts from the beginning.' },
-      { name: 'setMuted(b) / setLoop(b)', type: '(value: boolean) => void', desc: 'Toggles mute and looping.' },
-      { name: 'setPlaybackRate(rate)', type: '(rate: number) => void', desc: 'Sets speed between 0.25 and 4.' },
-      { name: 'setVolume(v)', type: '(value: number) => void', desc: 'Sets volume from 0 to 1.' },
-      { name: 'setKeepScreenOn(b)', type: '(keep: boolean) => void', desc: 'Stops the screen dimming mid-clip. Release it when playback ends.' },
-      { name: 'generateThumbnails(times)', type: '(times: number | number[]) => Promise<VideoThumbnail[]>', desc: 'Extracts frames as images for a poster or filmstrip.' },
+      {
+        name: 'load(source, options?)',
+        type: '(next: VideoSource, options?: { autoplay?: boolean; loop?: boolean; muted?: boolean }) => Promise<boolean>',
+        desc: 'Swaps the player source, for example the clip useCamera just recorded.',
+        inputs: [
+          { name: 'next', type: 'VideoSource', desc: 'A file URI, a remote URL, a required asset, or null to clear.' },
+          { name: 'options.autoplay', type: 'boolean | undefined', desc: 'Start playing as soon as the source is ready.' },
+          { name: 'options.loop', type: 'boolean | undefined', desc: 'Restart from the beginning at the end.' },
+          { name: 'options.muted', type: 'boolean | undefined', desc: 'Start muted.' },
+        ],
+        output: 'Resolves true when the source was replaced, false with the reason in error otherwise.',
+      },
+      {
+        name: 'play() / pause() / togglePlay()',
+        type: '() => void',
+        desc: 'Transport controls for the player this hook owns.',
+        output: 'Returns nothing; isPlaying updates on the next poll or immediately, and error is set when the player refused.',
+      },
+      {
+        name: 'seekTo(seconds)',
+        type: '(seconds: number) => void',
+        desc: 'Jumps to an absolute position.',
+        inputs: [{ name: 'seconds', type: 'number', desc: 'Position in seconds, clamped to 0 and the clip duration.' }],
+        output: 'Returns nothing; positionSeconds updates immediately.',
+      },
+      {
+        name: 'seekBy(seconds)',
+        type: '(seconds: number) => void',
+        desc: 'Moves relative to the current position.',
+        inputs: [{ name: 'seconds', type: 'number', desc: 'Offset in seconds; negative rewinds.' }],
+        output: 'Returns nothing; on failure error is set.',
+      },
+      {
+        name: 'replay()',
+        type: '() => void',
+        desc: 'Restarts from the beginning and plays.',
+        output: 'Returns nothing; positionSeconds returns to 0.',
+      },
+      {
+        name: 'setMuted(muted) / setLoop(loop)',
+        type: '(value: boolean) => void',
+        desc: 'Toggles mute and looping.',
+        inputs: [{ name: 'value', type: 'boolean', desc: 'True mutes, or makes the clip restart at the end.' }],
+        output: 'Returns nothing; isMuted and isLooping reflect it. Muting does not change volume.',
+      },
+      {
+        name: 'setPlaybackRate(rate)',
+        type: '(rate: number) => void',
+        desc: 'Sets playback speed with pitch preserved.',
+        inputs: [{ name: 'rate', type: 'number', desc: 'Clamped between 0.25 and 4; 1 is normal speed.' }],
+        output: 'Returns nothing; playbackRate reflects the clamped value.',
+      },
+      {
+        name: 'setVolume(value)',
+        type: '(value: number) => void',
+        desc: 'Sets player volume, independently of mute.',
+        inputs: [{ name: 'value', type: 'number', desc: '0 to 1; values outside are clamped.' }],
+        output: 'Returns nothing; volume updates.',
+      },
+      {
+        name: 'setKeepScreenOn(keep)',
+        type: '(keep: boolean) => void',
+        desc: 'Stops the screen dimming mid-clip.',
+        inputs: [{ name: 'keep', type: 'boolean', desc: 'True while a video is playing; release it afterwards.' }],
+        output: 'Returns nothing.',
+      },
+      {
+        name: 'generateThumbnails(times)',
+        type: '(times: number | number[]) => Promise<VideoThumbnail[]>',
+        desc: 'Extracts frames as images, for a filmstrip or a poster.',
+        inputs: [{ name: 'times', type: 'number | number[]', desc: 'One position in seconds, or several.' }],
+        output: 'Resolves with the extracted frames, or an empty array on failure with the reason in error.',
+      },
     ],
     example: `import { VideoView } from 'expo-video';
 import { useCamera, useVideo } from './src';
@@ -1362,13 +1998,58 @@ function Playback() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'speak(text, options?)', type: '(text, { language?, voice?, rate?, pitch?, volume? }?) => Promise<void>', desc: 'Speaks the text and resolves when the engine finishes. Rejects if the text is too long.' },
-      { name: 'stop()', type: '() => Promise<void>', desc: 'Stops immediately and discards the queue.' },
-      { name: 'pause() / resume()', type: '() => Promise<void>', desc: 'Suspends and continues. Not supported on every engine.' },
-      { name: 'checkSpeaking()', type: '() => Promise<boolean>', desc: 'Asks the engine directly rather than trusting the local flag.' },
-      { name: 'refreshVoices()', type: '() => Promise<Voice[]>', desc: 'Re-reads installed voices, which changes when the user downloads one.' },
-      { name: 'voicesForLanguage(tag)', type: '(languageTag: string) => Voice[]', desc: 'Filters the list to one language, for example every English voice.' },
-      { name: 'setVoice / setRate / setPitch', type: '(value) => void', desc: 'Defaults applied to later calls to speak.' },
+      {
+        name: 'speak(text, options?)',
+        type: '(text: string, options?: SpeakOptions) => Promise<void>',
+        desc: 'Speaks the text on the platform engine. Await it to sequence utterances instead of overlapping them.',
+        inputs: [
+          { name: 'text', type: 'string', desc: 'What to say. Trimmed first; blank resolves immediately. Longer than maxInputLength is rejected, not truncated.' },
+          { name: 'options.language', type: 'string | undefined', desc: 'BCP-47 tag such as en-GB. Defaults to the system language.' },
+          { name: 'options.voice', type: 'string | undefined', desc: 'Identifier from voices; overrides language when both are given.' },
+          { name: 'options.rate', type: 'number | undefined', desc: 'Speaking speed; 1 is normal. Falls back to the hook rate.' },
+          { name: 'options.pitch', type: 'number | undefined', desc: 'Voice pitch; 1 is normal. Falls back to the hook pitch.' },
+          { name: 'options.volume', type: 'number | undefined', desc: '0 to 1 for this utterance.' },
+        ],
+        output: 'Resolves when the engine finishes or is stopped. Rejects when the text is too long or the engine errors, with the message also in error.',
+      },
+      {
+        name: 'stop()',
+        type: '() => Promise<void>',
+        desc: 'Stops speaking immediately and discards the queue.',
+        output: 'Resolves once stopped; isSpeaking and isPaused become false. Any pending speak promise resolves rather than rejecting.',
+      },
+      {
+        name: 'pause() / resume()',
+        type: '() => Promise<void>',
+        desc: 'Suspends and continues an utterance. Not supported by every engine.',
+        output: 'Resolves once applied; where the engine does not support it, error explains that and isPaused is unchanged.',
+      },
+      {
+        name: 'checkSpeaking()',
+        type: '() => Promise<boolean>',
+        desc: 'Asks the engine directly rather than trusting the local flag.',
+        output: 'Resolves with the engine answer, which is also written to isSpeaking. False when the engine cannot be reached.',
+      },
+      {
+        name: 'refreshVoices()',
+        type: '() => Promise<Voice[]>',
+        desc: 'Re-reads installed voices, which changes when the user downloads one in system settings.',
+        output: 'Resolves with the list, also written to voices. Empty array on failure, with the reason in error.',
+      },
+      {
+        name: 'voicesForLanguage(languageTag)',
+        type: '(languageTag: string) => Voice[]',
+        desc: 'Filters the installed voices to one language, so you can offer a real choice.',
+        inputs: [{ name: 'languageTag', type: 'string', desc: "A prefix such as 'en' or a full tag such as 'en-GB'. Matched case-insensitively." }],
+        output: 'Returns the matching voices; empty when none are installed for that language.',
+      },
+      {
+        name: 'setVoice(id) / setRate(n) / setPitch(n)',
+        type: '(value: string | null | number) => void',
+        desc: 'Defaults applied to later calls to speak, unless that call overrides them.',
+        inputs: [{ name: 'value', type: 'string | null | number', desc: 'A voice identifier from voices, or null for the system default; for rate and pitch, 1 is normal.' }],
+        output: 'Returns nothing; voice, rate and pitch update.',
+      },
     ],
     example: `import { useSpeech, useGeminiNano } from './src';
 
@@ -1409,10 +2090,37 @@ function TalkBack() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'requestPermission(writeOnly?)', type: '(writeOnly?: boolean) => Promise<boolean>', desc: 'Asks for access. Pass true when the app only needs to save, which is a smaller ask.' },
-      { name: 'save(localUri, album?)', type: '(localUri: string, albumName?: string) => Promise<SavedMedia | null>', desc: 'Copies a capture into the gallery, creating the album if it does not exist.' },
-      { name: 'loadRecent(limit?)', type: '(limit?: number) => Promise<SavedMedia[]>', desc: 'Reads the newest items, 20 by default.' },
-      { name: 'remove(media)', type: '(media: SavedMedia) => Promise<boolean>', desc: 'Deletes an item. The system may show its own confirmation.' },
+      {
+        name: 'requestPermission(writeOnly?)',
+        type: '(writeOnly?: boolean) => Promise<boolean>',
+        desc: 'Asks for media library access.',
+        inputs: [{ name: 'writeOnly', type: 'boolean | undefined', desc: 'True asks only for write access, for an app that saves but never browses. Defaults to false.' }],
+        output: 'Resolves true when granted. hasLimitedAccess becomes true when the user shared only selected items, so a grant is not full access.',
+      },
+      {
+        name: 'save(localUri, albumName?)',
+        type: '(localUri: string, albumName?: string) => Promise<SavedMedia | null>',
+        desc: 'Copies a capture out of the app cache into the user media store, where it survives.',
+        inputs: [
+          { name: 'localUri', type: 'string', desc: 'The file useCamera or useAudio returned.' },
+          { name: 'albumName', type: 'string | undefined', desc: 'Album to file it under. Created when it does not exist.' },
+        ],
+        output: 'Resolves with { id, uri, filename, width, height, durationSeconds, creationTime }, or null when permission was denied or the write failed.',
+      },
+      {
+        name: 'loadRecent(limit?)',
+        type: '(limit?: number) => Promise<SavedMedia[]>',
+        desc: 'Reads the newest items in the library, newest first.',
+        inputs: [{ name: 'limit', type: 'number | undefined', desc: 'How many items to read. Defaults to 20.' }],
+        output: 'Resolves with the items, also written to recent. Empty array when permission was denied.',
+      },
+      {
+        name: 'remove(media)',
+        type: '(media: SavedMedia) => Promise<boolean>',
+        desc: 'Deletes an item from the device. The system may show its own confirmation.',
+        inputs: [{ name: 'media', type: 'SavedMedia', desc: 'An item from recent or lastSaved.' }],
+        output: 'Resolves true when the item was deleted, and it is dropped from recent.',
+      },
     ],
     example: `import { useCamera, useMediaLibrary } from './src';
 
@@ -1455,8 +2163,18 @@ function Keep() {
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'refresh()', type: '() => Promise<void>', desc: 'Re-reads everything the platform answers without prompting.' },
-      { name: 'requestPermission()', type: '() => Promise<boolean>', desc: 'Asks for phone state, which unlocks carrier and network codes.' },
+      {
+        name: 'refresh()',
+        type: '() => Promise<void>',
+        desc: 'Re-reads everything the platform answers without prompting.',
+        output: 'Resolves once generation, carrier and network codes have been updated. Values that need the phone-state permission stay null without it.',
+      },
+      {
+        name: 'requestPermission()',
+        type: '() => Promise<boolean>',
+        desc: 'Asks for the phone-state permission, which unlocks carrier name and network codes on Android.',
+        output: 'Resolves true when granted, and refreshes automatically. Generation is readable without it.',
+      },
     ],
     example: `import { useCellular, useNetwork } from './src';
 

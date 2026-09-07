@@ -1,7 +1,7 @@
 # Pixel 11 Pro Silicon & System Architecture ⚡
-> **Hardware Specifications, TSMC 2nm Process, Tensor G6 Malibu, and Titan M3**
+> **What this device is, separated into what was read from it and what Google states**
 
-This document outlines the silicon engineering and hardware subsystem design of the **Google Pixel 11 Pro** and how PixelKit interfaces with each layer.
+This document outlines the hardware of the **Google Pixel 11 Pro** and how PixelKit reaches each layer. Figures marked **verified** were read from the device itself (see `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`); the rest are Google's published specification and are labelled as such, because a marketing figure is not a reading.
 
 ---
 
@@ -9,14 +9,14 @@ This document outlines the silicon engineering and hardware subsystem design of 
 
 | Component | Chipset / Hardware | Key Specifications |
 | :--- | :--- | :--- |
-| **SoC** | Google Tensor G6 ("Malibu") | Fabricated on TSMC 2nm (N2) node |
+| **SoC** | Google Tensor G6 | `Build.SOC_MODEL` reports the part; the process node is not exposed by the device and is not claimed here |
 | **CPU** | Custom 7-Core Cluster | 1x ARM C1-Ultra @ 4.11 GHz, 4x C-1 Pro @ 3.38 GHz, 2x C-1 Pro @ 2.65 GHz |
-| **GPU** | PowerVR / IMG CXTP | Vulkan 1.3 / OpenGL ES 3.2, 8.33ms 120 FPS frame budget |
-| **TPU / NPU**| Google Tensor TPU | +50% neural compute power, LiteRT / NNAPI delegates |
+| **GPU** | PowerVR C-Series CXTP-48-1536 MC1 (verified via EGL) | OpenGL ES 3.2, Vulkan 1.4.317; 8.33 ms frame budget at 120 Hz |
+| **TPU / NPU**| Google Tensor TPU | Reachable only through AICore (ML Kit GenAI) or LiteRT; there is no direct TPU handle for apps |
 | **RAM** | LPDDR5X Unified | 12 GB (256GB models) or 16 GB (512GB / 1TB models) |
-| **Security**| Google Titan M3 + Android Keystore | StrongBox keystore (verified); Google states PQC secure boot; SecureStore uses classical AES |
+| **Security**| Android Keystore, StrongBox-backed (verified) | `useSecurity` stores secrets with classical AES; no post-quantum algorithm is used, and `isPostQuantumProtected` is always `false` |
 | **Modem** | MediaTek M90 | Wi-Fi 7 (802.11be), 5G Sub-6/mmWave, Direct-to-Cell Satellite SOS |
-| **Display** | Super Actua LTPO OLED | 3,600 nits peak, 1-120Hz variable refresh, anti-scratch glass |
+| **Display** | LTPO OLED | Verified: 120 Hz active mode, rates 120/60/40/30/24/20/15/10/5/2/1 Hz, HDR10 · HLG · HDR10+, 1080x2410 render mode at 420 dpi. Peak luminance is whatever `useDisplay().maxLuminance` reports, which may be `null` |
 | **Actuators**| Linear Resonant Actuator (LRA) | Precision mechanical tactile click profiles |
 | **Visual Bar**| HiLight LED Ring | Rear camera bar multi-color notification & Gemini AI status ring |
 | **Camera** | Triple Optical System | 50MP Wide, 48MP Ultrawide, 48MP 5x Periscope |
@@ -35,20 +35,21 @@ Unlike typical 8-core chips, the G6 drops one power-hungry core in favor of an o
 * **4x ARM C-1 Pro Performance Cores** (up to 3.38 GHz): Executes heavy sustained multi-threading, image signal processing (ISP), and physics engines.
 * **2x ARM C-1 Pro Efficiency Cores** (up to 2.65 GHz): Handles sensor telemetry loops, background timers, audio decibel polling, and idle standby.
 
-### 2. TSMC 2nm (N2) Node
-Fabricated on TSMC's 2nm process node, delivering approximately 20% higher power efficiency and 25% faster web/app responsiveness over 3nm silicon.
+### 2. Process node
+The fabrication node is not readable from the device, so PixelKit does not report one. Treat any figure you see quoted for it as marketing, not telemetry.
 
 ### 3. MediaTek M90 Modem
 Replaces previous Samsung Exynos modems, eliminating thermal buildup and drain during cellular standby. Adds Direct-to-Cell Satellite SOS support.
 
 ---
 
-## 🛡️ Titan M3 Security Coprocessor & Keystore
+## 🛡️ Hardware-backed keystore and biometrics
 
-The **Titan M3** coprocessor introduces quantum-resistant algorithms to mobile hardware:
-* **Quantum-Resistant Secure Boot**: Protects OS kernel verification against quantum computing attack vectors.
-* **Hardware KeyStore**: StrongBox-backed isolated enclave with encrypted cryptographic storage via `useSecurity().saveSecureItem()`.
-* **Biometric Vault**: Protects under-display ultrasonic fingerprint and Class 3 3D Face Unlock vectors.
+What is verifiable from the device: `android.hardware.strongbox_keystore` is present, which is what `useCapabilities().hasStrongBox` reports and what makes `useSecurity` hardware-backed.
+
+* **Hardware keystore**: StrongBox-backed key storage behind `useSecurity().saveSecureItem()`. The key never leaves the secure element; the app only ever handles ciphertext.
+* **Biometric prompt**: the under-display fingerprint sensor and face unlock are reached through the platform `BiometricPrompt` in `useBiometrics`; the templates themselves are never exposed to apps.
+* **Post-quantum**: Android 17 defines post-quantum key types, but SecureStore does not use them. PixelKit reports `isPostQuantumProtected: false` rather than claiming otherwise.
 
 ---
 
@@ -80,6 +81,6 @@ Integrated into the camera flash visor, **HiLight** replaces the legacy infrared
                      │
   ┌──────────────┬───┴──────────┬──────────────┬──────────────┐
   ▼              ▼              ▼              ▼              ▼
-Tensor G6      PowerVR        Titan M3       CameraX        Sensors
+Tensor G6      PowerVR        Keystore       CameraX        Sensors
 CPU / TPU      GPU            Keystore       Zoom           IMU / UWB
 ```

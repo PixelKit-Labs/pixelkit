@@ -75,6 +75,7 @@ export const DashboardScreen: React.FC = () => {
           <TelemetryRow label="android" value={Platform.OS === 'android' ? `${device.osVersion} · API ${caps.androidApiLevel ?? '?'}` : '—'} />
           <TelemetryRow label="display" value={display.refreshRateHz ? `${display.refreshRateHz} Hz${display.hasArrSupport ? ' · ARR' : ''}` : '—'} />
           <TelemetryRow label="thermal" value={adpf.thermalHeadroom != null ? `${adpf.thermalStatus} · ${adpf.thermalHeadroom.toFixed(2)}` : adpf.thermalStatus} tone={adpf.thermalStatusCode === 0 ? 'on' : 'warn'} />
+          <TelemetryRow label="battery temp" value={device.batteryTemperatureC != null ? `${device.batteryTemperatureC.toFixed(1)} °C` : '—'} tone={device.batteryTemperatureC != null && device.batteryTemperatureC > 42 ? 'warn' : 'on'} />
           <TelemetryRow label="nano tier" value={caps.geminiNanoTier} tone="muted" />
           <TelemetryRow label="capabilities" value={caps.verification === 'device' ? 'device-verified' : 'model table'} tone={caps.verification === 'device' ? 'on' : 'muted'} />
           <TelemetryRow label="network" value={device.networkType.toLowerCase()} tone={device.isConnected ? 'on' : 'off'} />
@@ -126,6 +127,21 @@ export const DashboardScreen: React.FC = () => {
         badgeColor={adpf.thermalStatusCode === 0 ? Colors.dark.success : adpf.thermalStatusCode < 3 ? Colors.dark.warning : Colors.dark.error}
         subtitle="0 cool → 1 throttling (10 s poll)"
         source={adpf.thermalHeadroom == null ? 'unavailable' : 'hardware'}
+      />
+      <MetricCard
+        title="Battery temperature"
+        value={device.batteryTemperatureC != null ? Number(device.batteryTemperatureC.toFixed(1)) : null}
+        unit="°C"
+        badge={device.batteryHealth ?? 'BATTERY'}
+        badgeColor={
+          device.batteryHealth === 'OVERHEAT'
+            ? Colors.dark.error
+            : device.batteryTemperatureC != null && device.batteryTemperatureC > 42
+            ? Colors.dark.warning
+            : Colors.dark.success
+        }
+        subtitle="Fuel gauge NTC thermistor • cell temp"
+        source={device.batteryTemperatureC != null ? 'hardware' : 'unavailable'}
       />
       <MetricCard
         title="CPU / GPU headroom"
@@ -278,16 +294,44 @@ export const DashboardScreen: React.FC = () => {
       )}
 
       {/* Power & atmosphere */}
-      <SectionHeader title="Power & atmosphere" />
+      <SectionHeader title="Power & electrical telemetry" />
       <MetricCard
         title="Battery"
-        value={device.batteryLevel}
+        value={device.batteryPercent ?? device.batteryLevel}
         unit="%"
-        badge={device.isCharging ? 'CHARGING' : 'DISCHARGING'}
+        badge={device.isCharging ? (device.pluggedSource && device.pluggedSource !== 'NONE' ? device.pluggedSource : 'CHARGING') : 'DISCHARGING'}
         badgeColor={device.isCharging ? Colors.dark.success : Colors.dark.warning}
-        subtitle={device.lowPowerMode ? 'Battery Saver on' : 'Normal power profile'}
-        source="hardware"
+        subtitle={
+          device.batteryVoltageMv != null
+            ? `${device.batteryVoltageMv} mV • ${device.lowPowerMode ? 'Battery Saver on' : 'Normal power profile'}`
+            : (device.lowPowerMode ? 'Battery Saver on' : 'Normal power profile')
+        }
+        source={device.batteryPercent != null ? 'hardware' : 'unavailable'}
       />
+      <MetricCard
+        title="Power draw / rate"
+        value={device.batteryPowerWatts != null ? fmt(device.batteryPowerWatts, 2) : (device.batteryCurrentMa != null ? Math.round(device.batteryCurrentMa) : null)}
+        unit={device.batteryPowerWatts != null ? 'W' : 'mA'}
+        badge={device.batteryCurrentMa != null ? (device.batteryCurrentMa >= 0 ? `+${Math.round(device.batteryCurrentMa)} mA` : `${Math.round(device.batteryCurrentMa)} mA`) : 'POWER'}
+        badgeColor={device.batteryCurrentMa != null && device.batteryCurrentMa >= 0 ? Colors.dark.success : Colors.dark.primary}
+        subtitle={
+          device.batteryCycleCount != null
+            ? `${device.batteryCycleCount} lifetime cycles • ${device.batteryTechnology ?? 'Li-ion'}`
+            : `${device.batteryTechnology ?? 'Li-ion'} chemistry`
+        }
+        source={device.batteryPowerWatts != null || device.batteryCurrentMa != null ? 'hardware' : 'unavailable'}
+      />
+      {device.batteryChargeCounterMah != null && (
+        <MetricCard
+          title="Remaining charge"
+          value={Math.round(device.batteryChargeCounterMah)}
+          unit="mAh"
+          badge={device.batteryHealth ?? 'GOOD'}
+          badgeColor={Colors.dark.tertiary}
+          subtitle={device.batteryEnergyCounterMwh != null ? `${Math.round(device.batteryEnergyCounterMwh)} mWh stored` : 'Fuel gauge charge counter'}
+          source="hardware"
+        />
+      )}
       <MetricCard
         title="Barometer"
         value={sensors.barometer.pressure}

@@ -114,7 +114,9 @@ All provenance events are logged with a `[PixelKit]` tag, inspectable via `adb l
 <!-- API REFERENCE -->
 ## API Reference & Hook Matrix
 
-PixelKit exposes **32 strongly-typed React hooks** across two distinct categories:
+PixelKit exposes **32 strongly-typed React hooks** across two distinct categories.
+
+Every hook is documented with its **inputs** (arguments, defaults and units), its **outputs** (every returned field and what it means) and a contract for each function it exposes — what each parameter does, what the call resolves to, and what a failure looks like. Start at [docs/HARDWARE_API.md](./docs/HARDWARE_API.md) for all 32 in one place, or the per-domain pages under [docs/api/](./docs/api/).
 
 ### Hardware & Silicon Hooks (24)
 

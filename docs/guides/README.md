@@ -61,7 +61,7 @@ Every AI feature in PixelKit should be routed through **one decision**, made onc
 - **Android 17**: apps that touch the NPU directly must declare `android.hardware.neural_processing_unit`. ML Kit does not need it, but declare it `required="false"` if you also ship LiteRT models.
 - **HiLight** (rear LED array) is what Google's own Gemini uses to show listening / thinking / responding when the phone is face down. There is **no third-party API**; PixelKit drives the same LEDs through the ADB daemon via `useHiLight`, and reports `unavailable` when the daemon is not running.
 - **Mics**: multi-mic array with `VOICE_RECOGNITION` audio source giving hardware noise suppression. Use it, not `MIC`, for speech.
-- **Titan M3**: store the Gemini API key and ephemeral token secrets only through `useSecurity().saveSecureItem()`.
+- **Keystore**: store the Gemini API key and ephemeral token secrets only through `useSecurity().saveSecureItem()`.
 
 ---
 
