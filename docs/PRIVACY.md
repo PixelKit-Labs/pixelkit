@@ -103,4 +103,4 @@ them.
 
 ## Contact
 
-Questions: open an issue at <https://github.com/Traves-Theberge/PixelKit/issues>.
+Questions: open an issue at <https://github.com/PixelKit-Labs/pixelkit/issues>.

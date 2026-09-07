@@ -1,0 +1,21 @@
+name: Feature request
+description: A capability PixelKit could expose
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        PixelKit only ships readings it can actually take. If a value cannot be read for real, it is
+        reported `unavailable` rather than estimated — so "show an approximate X" is not something
+        this project will do.
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it expose?
+      description: Which Android API or native path would provide it, if you know.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you build with it?

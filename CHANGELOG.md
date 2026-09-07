@@ -4,6 +4,39 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.13] - 2026-09-07
+
+Preparing the repository to be public.
+
+### Added
+- `.github/workflows/verify.yml`: CI on push and pull request running `npm run verify`, then
+  `npm run build`, then `npm pack --dry-run` on all three packages, then `expo export -p android`.
+  The pack step is there because a packaging mistake is invisible until somebody installs it, which
+  is how `android/build` ended up in a tarball earlier today.
+- `CONTRIBUTING.md`, leading with the two rules that fail a build rather than a review: nothing is
+  simulated, and a function is not finished until it is documented in four places.
+- `SECURITY.md`: private vulnerability reporting, and a plain statement of what PixelKit touches -
+  secrets in the hardware-backed Keystore, the Gemini key going to one endpoint and nowhere else,
+  permissions requested at point of use, on-device AI staying on the device, and no analytics.
+- Issue templates for bugs and features. The bug template asks for the device and the `source` value
+  up front, because `unavailable` on non-Pixel hardware is usually correct behaviour rather than a
+  fault, and asking first saves a round trip.
+- `.editorconfig`.
+
+### Changed
+- The README leads with **Use it in your own app** - the two install commands and the Expo Go
+  warning - before the clone instructions, since most readers will want the package, not the repo.
+- Seven repository URLs across `README.md` and `docs/PRIVACY.md` moved from `Traves-Theberge/PixelKit`
+  to `PixelKit-Labs/pixelkit`, and the clone target is the renamed lowercase directory.
+- The wireless adb example in the three agent files says `<device-ip>` instead of a home LAN address.
+
+### Verified
+- No credentials anywhere in the git history: scanned every commit for Google API keys, OpenAI keys,
+  GitHub tokens, Slack tokens and PEM private-key headers. Nothing.
+- Nothing under `android/` is tracked, and no build artifact, keystore, archive or jar is tracked.
+- `.env.example` holds placeholders, and `.mcp.json` holds one public URL.
+- `npm ci` resolves against the committed lockfile, so CI will not fail on its first run.
+
 ## [1.1.12] - 2026-09-07
 
 The package split did not do the thing it was split for. This fixes that.

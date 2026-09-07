@@ -38,7 +38,7 @@ Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do
 - **Android CLI** (`%USERPROFILE%\AppData\AndroidCLI\android.exe`): `android docs search "<query>"` / `android docs fetch kb://…` (offline official docs, use before web search), `android describe --project_dir=.`, `android layout`, `android screen capture`, `android sdk`, `android emulator`, `android skills add <id>`.
 - **Agent skills** in `.agents/skills/`: `android-cli` plus the official Expo skills (`skills-lock.json`, `npx skills add expo/skills`). Read a skill's `SKILL.md` before the related task.
 - **Claude Code Expo plugin:** `.claude/settings.json` enables `expo@claude-plugins-official`; enabling it in the repo does not install it, so each workstation runs `claude plugin install expo@claude-plugins-official` once. It installs at user scope.
-- **Device:** the Pixel is paired over wireless adb (`adb pair` / `adb connect 10.0.0.47:<port>`); use `adb reverse tcp:8081 tcp:8081` so the dev client loads Metro from `localhost`.
+- **Device:** the Pixel is paired over wireless adb (`adb pair` / `adb connect <device-ip>:<port>`); use `adb reverse tcp:8081 tcp:8081` so the dev client loads Metro from `localhost`.
 
 ## Map
 

@@ -17,9 +17,9 @@
     <a href="./docs/getting-started/using-this-template.md"><strong>Use this template »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=bug">Report Bug</a>
+    <a href="https://github.com/PixelKit-Labs/pixelkit/issues/new?labels=bug">Report Bug</a>
     &middot;
-    <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=enhancement">Request Feature</a>
+    <a href="https://github.com/PixelKit-Labs/pixelkit/issues/new?labels=enhancement">Request Feature</a>
   </p>
 
 <!-- TABLE OF CONTENTS -->
@@ -294,20 +294,43 @@ curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | ba
 curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash
 ```
 
-### Installation & Quick Start
+### Use it in your own app
+
+Telemetry, sensors, radios, security and cloud Gemini:
+
+```bash
+npx expo install pixelkit @pixelkit/native
+```
+
+On-device ML (Gemini Nano, vision, natural language) is opt-in, because it adds 19 ML Kit
+artifacts to your APK:
+
+```bash
+npx expo install @pixelkit/mlkit
+```
+
+```tsx
+import { useCPU } from 'pixelkit';
+import { useGeminiNano } from 'pixelkit/mlkit';
+```
+
+> PixelKit cannot run in Expo Go. The hooks talk to Kotlin Expo Modules that must be compiled in,
+> so you need a development build (`npx expo run:android`).
+
+### Run this repository
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Traves-Theberge/PixelKit.git
-   cd PixelKit
+   git clone https://github.com/PixelKit-Labs/pixelkit.git
+   cd pixelkit
    ```
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Verify TypeScript contracts:
+3. Check the contracts hold:
    ```bash
-   npm run typecheck       # Must exit with 0 errors
+   npm run verify        # typecheck + five parity checks, must exit 0
    ```
 4. Build and install the development client:
    ```bash
@@ -598,7 +621,7 @@ cd android && ./gradlew assembleRelease
 - [ ] Native NDEF read/write tag controller
 - [ ] Standalone release signed APK pipeline with EAS Build
 
-See the [open issues](https://github.com/Traves-Theberge/PixelKit/issues) for a full list of proposed features and known issues.
+See the [open issues](https://github.com/PixelKit-Labs/pixelkit/issues) for a full list of proposed features and known issues.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -640,7 +663,7 @@ Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more informati
 
 Traves Theberge - [Traves_theberge@gmail.com](mailto:Traves_theberge@gmail.com)
 
-Project Link: [https://github.com/Traves-Theberge/PixelKit](https://github.com/Traves-Theberge/PixelKit)
+Project Link: [https://github.com/PixelKit-Labs/pixelkit](https://github.com/PixelKit-Labs/pixelkit)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

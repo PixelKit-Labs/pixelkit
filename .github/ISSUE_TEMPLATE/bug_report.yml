@@ -1,0 +1,44 @@
+name: Bug report
+description: Something behaves differently from what the docs say
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: a hook returning `source: 'unavailable'` and rendering an em dash is usually
+        **correct behaviour** on hardware that cannot provide the reading, not a fault. Say which
+        device you are on and it will be obvious which case this is.
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: Pixel 11 Pro, Android 17
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: How are you running it?
+      options:
+        - Development build (expo run:android)
+        - EAS build
+        - Expo Go (note: PixelKit cannot work here)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: pixelkit version
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Include the hook, the `source` value it returned, and its `error` field if set.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce

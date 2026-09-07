@@ -1,0 +1,34 @@
+name: verify
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # typecheck, then parity: every exported hook has a screen that demonstrates it, every
+      # documented action is reachable, every returned setter is documented, and no hook is
+      # exported from neither entry point.
+      - run: npm run verify
+
+      # The three packages must compile to build/ with declarations before they can be published.
+      - run: npm run build
+
+      # A packaging mistake is invisible until someone installs it, so pack all three and check
+      # the tarball contents rather than trusting the files field.
+      - run: npm pack --dry-run -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit
+
+      # The demo app must still bundle for Android with the workspace resolution in place.
+      - run: npx expo export -p android
