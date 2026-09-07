@@ -25,6 +25,11 @@ jobs:
 
       # A packaging mistake is invisible until someone installs it, so pack all three and let npm
       # report the contents rather than trusting the files field.
+      # The documentation is the contract: every exported hook has a page, every documented
+      # hook still exists, and every documented return field is on the declared type. Clones
+      # pixelkit-docs, so a rename here that makes a page wrong fails this build.
+      - run: npm run check-docs
+
       - run: npm pack --dry-run -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit
 
       # The subpath entry only pays off if it resolves. Install the packed tarball into a scratch

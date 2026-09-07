@@ -4,6 +4,39 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.3.0] - 2026-09-07
+
+The documentation is now the contract, and the code is checked against it.
+
+Moving `docs/` out left nothing stopping a rename from silently making a page wrong. Rather than
+move the docs back, this inverts the relationship: the documentation repository holds a structured
+definition per hook, and this repository proves it still tells the truth.
+
+### Added
+- **`scripts/check-docs-contract.js`**, run by `npm run verify` and by CI. It clones
+  `pixelkit-docs`, reads `data/hooks/*.json`, and fails on three things:
+  1. A hook exported here with no documentation entry.
+  2. A documented hook this SDK no longer exports - worse than no page, because it sends a reader
+     looking for something that was deleted.
+  3. A documented `returns` field that does not exist on the hook's declared type, read from the
+     built `.d.ts`. This is the failure nobody notices, because the docs still look complete.
+
+  All three verified by mutation: inventing a `turboBoostGHz` field on `useCPU`, deleting
+  `useTorch.json`, and adding a page for a `useQuantumRadio` that does not exist each fail the build
+  naming the problem.
+
+- The 32 hook definitions themselves, extracted from the template's in-app documentation data rather
+  than rewritten - 460 documented fields, functions and parameters, already structured, already
+  reviewed. They live in `pixelkit-docs/data/hooks/`.
+
+### Notes
+- Resolving inherited members took two attempts worth recording. `CapabilitiesState extends
+  DeviceCapabilities` from another module, so the first version reported ten inherited fields on
+  `useCapabilities` as undocumented - the check crying wolf on its first run. It now follows
+  `extends` across files. The parser is line-based rather than a multiline regex, because three
+  separate escaping mistakes while patching this file produced regexes that silently matched
+  nothing and made the check pass for the wrong reason.
+
 ## [1.2.2] - 2026-09-07
 
 ### Added
