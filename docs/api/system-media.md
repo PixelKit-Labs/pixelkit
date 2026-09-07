@@ -1,91 +1,98 @@
 # System & Media API Reference 📱
-> **Microphone Metering, 3,600 nits Super Actua Display, Pixelsnap Qi2.2 Battery, and MediaTek M90 Modem**
+> **Microphone capture and metering, display, power, media library, and the modem**
 
-This document covers system telemetry, media capture, power, and wireless modem subsystems.
+This document covers system telemetry, media capture and playback, power and the wireless modem. Each entry documents its **Inputs** (arguments, with defaults and units), its **Outputs** (every returned field) and its **Functions** (what each callable takes and returns).
 
 ---
 
 ## 📑 Module Index
 
-* [`useAudio`](#useaudio) - expo-audio recording (VOICE_RECOGNITION source) & dBFS metering
-* [`useDisplay`](#usedisplay) - 3,600 nits Super Actua Display & Wake-Lock
-* [`useDevice`](#usedevice) - Pixelsnap Qi2.2 25W Charging, Thermals & Battery Telemetry
-* [`useNetwork`](#usenetwork) - MediaTek M90 Modem, Wi-Fi 7 & Satellite SOS
-* [`useVideo`](#usevideo) - expo-video playback, seeking & frame thumbnails
+* [`useAudio`](#useaudio) - Microphone capture, dBFS metering, input selection, playback
+* [`useCapabilities`](#usecapabilities) - What this device actually has
+* [`useDisplay`](#usedisplay) - Refresh rate, ARR, HDR, brightness and wake lock
+* [`useDevice`](#usedevice) - Model, battery and charging telemetry
+* [`useNetwork`](#usenetwork) - Connectivity, address and metering
+* [`useVideo`](#usevideo) - expo-video playback, seeking and frame thumbnails
 * [`useMediaLibrary`](#usemedialibrary) - Saving captures to the device gallery
-* [`useCellular`](#usecellular) - Carrier, radio generation & network codes
+* [`useCellular`](#usecellular) - Carrier, radio generation and network codes
 
 ---
 
 ## `useAudio`
 
-Microphone capture, level metering and playback, backed by **`expo-audio`** (the legacy `expo-av` package was removed in this project).
+Microphone capture, level metering and playback on `expo-audio`. Two capture profiles: `speech` (16 kHz mono through the Pixel `voice_recognition` path, which applies the platform's noise suppression) and `studio` (48 kHz stereo through `unprocessed`, the raw microphone signal). Nothing is simulated: before the first sample `meteringDecibels` sits at the silence floor and `source` is `'unavailable'`.
 
-**Capture profiles.** `speech` records 16 kHz mono through the `voice_recognition` source, which is the path that applies the platform noise suppression and the format Google's speech APIs expect. `studio` records 48 kHz stereo through `unprocessed`, the raw microphone signal with no platform processing.
-
-**Levels.** The recorder is polled every 100 ms. `meteringDecibels` is dBFS (-160 digital silence to 0 clipping) and `peakDecibels` holds the loudest value of the take. `level` maps the reading onto 0..1 with a floor at -60 dBFS, which is what a meter should be driven from; the dBFS scale is logarithmic and reads wrong on a bar. `isSilent` compares against `silenceThresholdDbfs` (-45 dBFS by default).
-
-**Inputs.** `getAvailableInputs` is only valid once the recorder has been prepared, so `inputs` populates after recording starts. Selecting an input is how you switch to an attached USB or Bluetooth microphone on Android.
-
-**Routing.** `setRoute` changes the audio mode, so it applies to the whole app rather than to one player.
+Verified on Pixel 11 Pro: `dumpsys audio` shows `src:VOICE_RECOGNITION pack:com.pixelkit.sdk` while the speech profile is recording.
 
 ### Signature
 ```typescript
-type AudioQuality = 'speech' | 'studio';
-type AudioRoute = 'speaker' | 'earpiece';
-
 function useAudio(): {
-  // capture state
-  isRecording: boolean;            // true while paused as well
-  isPaused: boolean;
-  canRecord: boolean;              // RecorderState.canRecord
-  permissionGranted: boolean;
-  durationSeconds: number;
-  quality: AudioQuality;
-
-  // level
-  meteringDecibels: number;        // dBFS -160..0
-  currentDecibels: number;         // alias kept for older call sites
-  peakDecibels: number;
-  level: number;                   // 0..1, floored at -60 dBFS
-  isSilent: boolean;
-  silenceThresholdDbfs: number;
-  setSilenceThresholdDbfs: (dbfs: number) => void;
-
-  // inputs and routing
-  inputs: RecordingInput[];        // { name, type, uid }
-  currentInputUid: string | null;
-  route: AudioRoute;
-
-  // playback
-  lastRecordingUri: string | null;
-  isPlaying: boolean;
-  playbackPositionSeconds: number;
-  playbackDurationSeconds: number;
-
-  source: TelemetrySource;         // 'hardware' once a real sample arrives
-  error: string | null;
-
-  // actions
-  startRecording: (o?: { maxDurationSeconds?: number; quality?: AudioQuality }) => Promise<boolean>;
-  pauseRecording: () => boolean;
-  resumeRecording: () => boolean;
-  stopRecording: () => Promise<string | null>;   // file URI
-  setQuality: (q: AudioQuality) => void;
-  refreshInputs: () => RecordingInput[];
-  selectInput: (uid: string) => boolean;
-  setRoute: (r: AudioRoute) => Promise<void>;
+  isRecording: boolean; isPaused: boolean; canRecord: boolean; permissionGranted: boolean;
+  durationSeconds: number; quality: 'speech' | 'studio';
+  meteringDecibels: number; currentDecibels: number; peakDecibels: number; level: number;
+  isSilent: boolean; silenceThresholdDbfs: number; setSilenceThresholdDbfs: (dbfs: number) => void;
+  inputs: RecordingInput[]; currentInputUid: string | null; route: 'speaker' | 'earpiece';
+  lastRecordingUri: string | null; isPlaying: boolean;
+  playbackPositionSeconds: number; playbackDurationSeconds: number;
+  source: TelemetrySource; error: string | null;
+  startRecording: (options?: { maxDurationSeconds?: number; quality?: 'speech' | 'studio' }) => Promise<boolean>;
+  pauseRecording: () => boolean; resumeRecording: () => boolean;
+  stopRecording: () => Promise<string | null>;
+  setQuality: (quality: 'speech' | 'studio') => void;
+  refreshInputs: () => RecordingInput[]; selectInput: (uid: string) => boolean;
+  setRoute: (route: 'speaker' | 'earpiece') => Promise<void>;
   playLastRecording: (uri?: string) => Promise<boolean>;
-  pausePlayback: () => void;
-  stopPlayback: () => Promise<void>;
-  seekPlayback: (seconds: number) => Promise<void>;
+  pausePlayback: () => void; stopPlayback: () => Promise<void>; seekPlayback: (seconds: number) => Promise<void>;
 };
 ```
+
+### Inputs
+`useAudio()` takes no arguments. It requests microphone permission on mount and clears every timer on unmount. Per-take options go to `startRecording`.
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `isRecording` | `boolean` | Whether the microphone is open. Stays `true` while paused. |
+| `isPaused` | `boolean` | Whether the open take is paused rather than stopped. |
+| `canRecord` | `boolean` | The recorder's own readiness flag, from `RecorderState.canRecord`. |
+| `permissionGranted` | `boolean` | Whether microphone permission has been granted. |
+| `durationSeconds` | `number` | Elapsed seconds of the current take, one decimal, updated every 100 ms. |
+| `quality` | `'speech' \| 'studio'` | Active capture profile. `speech` = 16 kHz mono, noise-suppressed; `studio` = 48 kHz stereo, unprocessed. |
+| `meteringDecibels` | `number` | Live level in dBFS: −160 is digital silence, 0 is clipping. |
+| `currentDecibels` | `number` | Alias of `meteringDecibels`, kept for older call sites. |
+| `peakDecibels` | `number` | Loudest dBFS seen during this take, reset at each start. |
+| `level` | `number` | The level mapped to 0–1 for a meter, floored at −60 dBFS. |
+| `isSilent` | `boolean` | `true` until the level rises above `silenceThresholdDbfs`, and always `true` before the first sample. |
+| `silenceThresholdDbfs` | `number` | Speech/silence boundary in dBFS, default `-45`. Quiet rooms sit near −50. |
+| `inputs` | `RecordingInput[]` | Microphones the platform offers, each with a `uid`, `name` and `type`. Only populated once a recording has been prepared. |
+| `currentInputUid` | `string \| null` | Which microphone is selected, or `null` when the platform is choosing. |
+| `route` | `'speaker' \| 'earpiece'` | Where playback is routed. |
+| `lastRecordingUri` | `string \| null` | File URI of the last completed recording. Feed it to `useSpeechAI`, `useVideo` or `useMediaLibrary().save()`. |
+| `isPlaying` | `boolean` | Whether playback is running. |
+| `playbackPositionSeconds` | `number` | Position in the playing file, polled 5× a second. |
+| `playbackDurationSeconds` | `number` | Length of the playing file, `0` until it loads. |
+| `source` | `TelemetrySource` | `'hardware'` once a real level sample has arrived, `'unavailable'` before that. |
+| `error` | `string \| null` | Why the last capture, routing or playback call failed. |
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `startRecording(options?)` | `options.maxDurationSeconds?: number` — stop automatically after this long; the native recorder stops itself and the hook finalises the file. `options.quality?: 'speech' \| 'studio'` — profile for this take, which also becomes the active profile. | `Promise<boolean>` — `true` when recording started, `false` when permission was denied or the recorder refused (see `error`) | Requests permission if needed, prepares the profile, starts metering at 10 Hz and reads the input list. |
+| `pauseRecording()` | none | `boolean` — `true` when the take was paused | Pauses without finalising the file. |
+| `resumeRecording()` | none | `boolean` — `true` when the take resumed | Continues the same take. |
+| `stopRecording()` | none | `Promise<string \| null>` — the recorded file URI, or `null` when nothing was recording or the stop failed | Finalises the file, stops metering and sets `lastRecordingUri`. |
+| `setQuality(quality)` | `quality: 'speech' \| 'studio'` | `void` | Switches the capture profile. Takes effect on the next recording, not the current one. |
+| `refreshInputs()` | none | `RecordingInput[]` — the list, also written to `inputs` | Re-reads available microphones. Only valid once the recorder has been prepared. |
+| `selectInput(uid)` | `uid: string` — a `uid` from `inputs` | `boolean` — `true` when the platform accepted it | Chooses between the built-in array and an attached USB or Bluetooth microphone. |
+| `setRoute(route)` | `route: 'speaker' \| 'earpiece'` | `Promise<void>` | Routes playback to the loudspeaker or the call earpiece, at the audio-mode level. |
+| `playLastRecording(uri?)` | `uri?: string` — a specific file; defaults to `lastRecordingUri` | `Promise<boolean>` — `true` when playback started, `false` when there is nothing to play | Plays a recording and starts position polling. |
+| `pausePlayback()` | none | `void` | Pauses where it is. |
+| `stopPlayback()` | none | `Promise<void>` | Pauses and seeks back to the start. |
+| `seekPlayback(seconds)` | `seconds: number` — absolute position, negatives clamped to 0 | `Promise<void>` | Jumps within the playing file. |
 
 ### Example
 ```tsx
 const audio = useAudio();
-
 await audio.startRecording({ quality: 'speech', maxDurationSeconds: 30 });
 // audio.level drives a meter; audio.isSilent gates a "say something" hint
 const uri = await audio.stopRecording();
@@ -96,243 +103,132 @@ await audio.playLastRecording();
 
 ## `useCapabilities`
 
-Single source of truth for what the current Pixel physically has and which Android platform APIs exist. Pure resolver lives in `src/core/capabilities.ts` (`resolveCapabilities(modelName, apiLevel, isDevice)`) so it can be unit tested; the hook memoises it for the app lifetime. Read it before rendering any Pro-exclusive feature.
+The first hook to call: it answers "does this device have that?" so an interface can hide what the phone cannot do instead of showing a control that will fail. Capabilities resolve from the model table, then upgrade to device-verified `PackageManager` feature flags when the PixelNative module is present. Memoised for the app lifetime.
 
 ### Signature
 ```typescript
 function useCapabilities(): DeviceCapabilities;
-
-interface DeviceCapabilities {
-  modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
-  pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
-  androidApiLevel: number | null;
-  hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold (driven via the ADB daemon)
-  hasUWB: boolean;                  // Pro models since Pixel 6 Pro, all Folds
-  hasTitanM3: boolean;              // Pixel 11 family
-  geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';
-  supportsRangingApi: boolean;      // Android 16+ RangingManager
-  supportsHapticEnvelopes: boolean; // Android 16+ envelope vibrations
-  supportsAppFunctions: boolean;    // Android 16+
-  supportsAndroid17Apis: boolean;   // Android 17+
-}
 ```
 
+### Inputs
+`useCapabilities()` takes no arguments. It reads `expo-device` and, when available, the native module; the result is computed once and reused.
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `modelName` | `string` | Marketing model name, e.g. `"Pixel 11 Pro"`. |
+| `isPhysicalDevice` | `boolean` | `false` on an emulator or on web, where hardware claims cannot be trusted. |
+| `isPixel` | `boolean` | Whether this is any Google Pixel. |
+| `pixelGeneration` | `number \| null` | Generation number, `11` for the Pixel 11 Pro. `null` when unknown. |
+| `isProModel` | `boolean` | Pro, Pro XL or Pro Fold — the models with the Pro-exclusive hardware. |
+| `isFoldable` | `boolean` | Any foldable Pixel. |
+| `androidApiLevel` | `number \| null` | API level: 36 = Android 16, 37 = Android 17. `null` on web. |
+| `hasHiLight` | `boolean` | Whether the HiLight LED array exists (Pixel 11 Pro family). |
+| `hasUWB` | `boolean` | Whether a UWB radio exists. |
+| `hasTitanM3` | `boolean` | Whether the Titan M3 security chip is expected, per Google's specification. It is not readable from the device. |
+| `geminiNanoTier` | `GeminiNanoTier` | Which Nano tier AICore is expected to serve. `useGeminiNano().status` remains the runtime truth. |
+| `supportsRangingApi` | `boolean` | Android 16+ unified `RangingManager` (UWB, BLE Channel Sounding, Wi-Fi RTT). |
+| `supportsHapticEnvelopes` | `boolean` | Android 16+ `VibrationEffect.BasicEnvelopeBuilder`. |
+| `supportsAppFunctions` | `boolean` | Android 16+ App Functions, which expose app capabilities to agents. |
+| `supportsAndroid17Apis` | `boolean` | Android 17+ `AdvancedProtectionManager`, ML-DSA keys, Handoff, contacts picker. |
+| `verification` | `'device' \| 'model-table'` | Whether the flags below were confirmed with `PackageManager.hasSystemFeature`, or inferred from the model name alone. Treat `'model-table'` as a hint. |
+| `hasNFC` | `boolean \| null` | Device-verified NFC feature flag. `null` when not verified. |
+| `hasBleChannelSounding` | `boolean \| null` | Device-verified BLE Channel Sounding support. |
+| `hasWifiRtt` | `boolean \| null` | Device-verified Wi-Fi RTT (802.11mc) support. |
+| `hasSatelliteTelephony` | `boolean \| null` | Device-verified satellite messaging support. |
+| `hasStrongBox` | `boolean \| null` | Device-verified StrongBox Keymaster, which is what makes `useSecurity` hardware-backed. |
+| `hasNpuFeature` | `boolean \| null` | Device-verified `android.hardware.neural_processing_unit` flag. |
+| `aicoreVersion` | `string \| null` | AICore version name when installed. |
+
+### Functions
+`useCapabilities()` returns no callables; it is a resolved fact set.
+
 ### Example
-```typescript
+```tsx
 const caps = useCapabilities();
-if (!caps.hasHiLight) hideHiLightCard();
-if (caps.geminiNanoTier === 'nano-v4') enableThinkingMode();
+if (!caps.hasHiLight) return null;                       // do not offer the control at all
+if (caps.verification === 'device' && caps.hasUWB) enableRanging();
 ```
 
 ---
 
 ## `useDisplay`
 
-Real display telemetry from Android `Display` (active mode refresh rate, supported refresh rates, resolution, HDR types, ARR support) polled every 2 s because adaptive refresh rate changes it live, plus brightness (expo-brightness) and the wake lock (expo-keep-awake). `setPreferredRefreshRate()` sets the window's preferred rate; verified on Pixel 11 Pro via `dumpsys display` (`frameRateOverride {uid=… frameRateHz=60}` after preferring 60 Hz). Supported rates on Pixel 11 Pro: 120 / 60 / 40 / 30 / 24 / 20 / 15 / 10 / 5 / 2 / 1 Hz, HDR10 · HLG · HDR10+, `hasArrSupport = true`.
+Display telemetry and control: the live refresh-rate mode, adaptive refresh rate (ARR) support, HDR capabilities and resolution from Android `Display`, plus brightness (`expo-brightness`) and the screen wake lock (`expo-keep-awake`). Refresh rate is re-read every 2 s because ARR changes it while you watch.
 
 ### Signature
 ```typescript
 function useDisplay(): {
   isKeepAwake: boolean;
-  toggleKeepAwake: () => Promise<void>;
-  brightness: number;                          // 0..1
-  setScreenBrightness: (val: number) => Promise<void>;
-  setBrightness: (val: number) => Promise<void>;   // alias
-  refreshRateHz: number;                       // active mode, 0 until read
-  hasArrSupport: boolean | null;               // Android 16+
+  brightness: number;
+  refreshRateHz: number;
+  hasArrSupport: boolean | null;
   supportedRefreshRates: number[];
-  resolution: { width: number; height: number; densityDpi: number } | null;  // active mode
-  hdrTypes: number[];                          // 1 Dolby Vision, 2 HDR10, 3 HLG, 4 HDR10+
+  resolution: { width: number; height: number; densityDpi: number } | null;
+  hdrTypes: number[];
   isHdr: boolean;
   maxLuminance: number | null;
-  setPreferredRefreshRate: (hz: number) => Promise<boolean>;
   source: TelemetrySource;
+  toggleKeepAwake: () => Promise<void>;
+  setScreenBrightness: (value: number) => Promise<void>;
+  setBrightness: (value: number) => Promise<void>;
+  setPreferredRefreshRate: (rateHz: number) => Promise<boolean>;
 };
 ```
 
-> **Expo SDK 57 Note**: In Expo SDK 57, `activateKeepAwakeAsync(tag)` requires passing a string tag to prevent unhandled promise rejections.
+### Inputs
+`useDisplay()` takes no arguments. It reads brightness once on mount and display information every 2,000 ms.
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `isKeepAwake` | `boolean` | Whether this hook currently holds the wake lock. |
+| `brightness` | `number` | Screen brightness 0–1, two decimals. `0` until read or when the permission has not been granted. |
+| `refreshRateHz` | `number` | Refresh rate of the active mode, rounded. Changes live with ARR. `0` before the first read. |
+| `hasArrSupport` | `boolean \| null` | Android 16+ adaptive refresh rate support. `null` when unknown. |
+| `supportedRefreshRates` | `number[]` | Every rate the panel can drive, e.g. `[120, 60, 40, 30, 24, 20, 15, 10, 5, 2, 1]`. Empty before the read. |
+| `resolution` | `{ width, height, densityDpi } \| null` | Physical resolution of the active mode and its density. `null` before the read. |
+| `hdrTypes` | `number[]` | HDR types the panel reports: 1 Dolby Vision, 2 HDR10, 3 HLG, 4 HDR10+. |
+| `isHdr` | `boolean` | Whether the display is in an HDR mode. |
+| `maxLuminance` | `number \| null` | Peak luminance the platform reports, in nits. `null` when not reported — do not substitute a spec-sheet figure. |
+| `source` | `TelemetrySource` | `'hardware'` with the native module present, `'unavailable'` otherwise. |
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `toggleKeepAwake()` | none | `Promise<void>` — the new state lands in `isKeepAwake` | Acquires or releases a tagged screen wake lock, so the display does not dim during a long read or a capture. |
+| `setScreenBrightness(value)` | `value: number` — 0 to 1, clamped | `Promise<void>` | Sets app-window brightness. No-op on web. Failures are logged and leave `brightness` unchanged. |
+| `setBrightness(value)` | Same as above | `Promise<void>` | Alias kept for docs compatibility. |
+| `setPreferredRefreshRate(rateHz)` | `rateHz: number` — the rate to request for this window, e.g. 120 during an animation and 60 otherwise | `Promise<boolean>` — `true` when the request was applied | A request, not a guarantee: the system may pick a different mode. |
 
 ---
 
 ## `useDevice`
 
-Monitors battery health, charging status, PMIC telemetry, and Pixelsnap Qi2.2 25W magnetic wireless charging.
+Model identity, battery and connectivity in one object, with live listeners for battery level and charging state.
 
 ### Signature
 ```typescript
 function useDevice(): DeviceTelemetry;
 ```
 
-### Properties
-| Property | Type | Description |
+### Inputs
+`useDevice()` takes no arguments. It reads once on mount and then keeps `batteryLevel` and `isCharging` current through `expo-battery` listeners.
+
+### Outputs
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| `modelName` | `string` | Device model string (`"Pixel 11 Pro"`) |
-| `brand` | `string` | Device brand (`"Google"`) |
-| `osVersion` | `string` | Android version (`"Android 16"`) |
-| `batteryLevel` | `number` | Remaining battery percentage (0–100) |
-| `isCharging` | `boolean` | True if connected to AC or Pixelsnap wireless charger |
-| `lowPowerMode` | `boolean` | True if Android Battery Saver is engaged |
-| `networkType` | `string` | Primary network link (`"WIFI"`, `"CELLULAR"`) |
-| `isConnected` | `boolean` | Internet route reachability |
+| `modelName` | `string` | Marketing model name from `expo-device`. |
+| `brand` | `string` | Manufacturer brand, e.g. `"Google"`. |
+| `osVersion` | `string` | Android version string. |
+| `batteryLevel` | `number` | Charge as a percentage, 0–100, updated live. |
+| `isCharging` | `boolean` | `true` while charging or full, on AC, USB or Qi. |
+| `lowPowerMode` | `boolean` | Whether Android Battery Saver is active. Back off from heavy work when it is. |
+| `networkType` | `string` | Active interface type: `'WIFI'`, `'CELLULAR'`, `'UNKNOWN'`. For carrier detail use `useCellular`. |
+| `isConnected` | `boolean` | Whether the device has an active network route. |
+| `totalMemoryMB` | `number \| undefined` | Total system RAM in MB from `expo-device`. For live memory use `useMemory`. |
+
+### Functions
+`useDevice()` returns no callables; it is live telemetry.
 
 ---
-
-## `useNetwork`
-
-Interfaces with the MediaTek M90 modem for Wi-Fi 7 (802.11be), 5G Sub-6/mmWave, and Satellite SOS.
-
-### Signature
-```typescript
-function useNetwork(): NetworkTelemetry & {
-  refreshNetworkStatus: () => Promise<void>;
-};
-```
-
-### Properties
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `ipAddress` | `string \| null` | Device IP address string |
-| `networkType` | `string` | Connection technology |
-| `isConnected` | `boolean` | Online status |
-| `isMetered` | `boolean` | True if carrier data billing is metered |
-| `isAirplaneMode` | `boolean` | True if all radios are disabled |
-
----
-
-## `useVideo`
-
-Video playback on **`expo-video`**, the SDK 57 replacement for the removed `expo-av`. The natural partner to `useCamera().startRecording()`: record a clip, hand `lastVideoUri` to `load()`, play it back.
-
-The hook owns the player and a screen renders the view with it. Position, duration, buffered position and status are polled four times a second, which is enough to drive a scrubber without waking the JS thread every frame. Values are read from the player rather than tracked locally, so a seek made elsewhere still shows up.
-
-### Signature
-```typescript
-function useVideo(initialSource?: VideoSource): {
-  player: VideoPlayer;                 // pass to <VideoView player={player} />
-  hasSource: boolean;
-  isPlaying: boolean;
-  positionSeconds: number;
-  durationSeconds: number;             // 0 until the source reports it
-  bufferedSeconds: number;
-  status: string;                      // loading | readyToPlay | error
-  isMuted: boolean; isLooping: boolean;
-  playbackRate: number;                // 0.25..4, pitch preserved
-  volume: number;
-  error: string | null;
-  source: TelemetrySource;
-  load: (source: VideoSource, options?: { autoplay?: boolean; loop?: boolean; muted?: boolean }) => Promise<boolean>;
-  play: () => void; pause: () => void; togglePlay: () => void; replay: () => void;
-  seekTo: (seconds: number) => void; seekBy: (seconds: number) => void;
-  setMuted: (b: boolean) => void; setLoop: (b: boolean) => void;
-  setPlaybackRate: (rate: number) => void; setVolume: (v: number) => void;
-  setKeepScreenOn: (keep: boolean) => void;
-  generateThumbnails: (times: number | number[]) => Promise<VideoThumbnail[]>;
-};
-```
-
-### Example
-```tsx
-import { VideoView } from 'expo-video';
-import { useCamera, useVideo } from './src';
-
-export function Playback() {
-  const cam = useCamera();
-  const video = useVideo();
-  return (
-    <View>
-      <VideoView player={video.player} style={{ height: 220 }} />
-      <HapticButton
-        title="Play last recording"
-        onPress={() => cam.lastVideoUri && video.load(cam.lastVideoUri, { autoplay: true })}
-      />
-      <Text>{video.positionSeconds} / {video.durationSeconds} s</Text>
-    </View>
-  );
-}
-```
-
-> The view needs the `player` object. Passing a URI to `VideoView` renders nothing. Turn `setKeepScreenOn(false)` when playback ends, or the screen stays lit.
-
----
-
-## `useMediaLibrary`
-
-Saving captures into the user's gallery, on **`expo-media-library`**. Without this, a photo from `useCamera().takePicture()` or a clip from `startRecording()` sits in the app's cache directory and disappears when the system reclaims it.
-
-SDK 57 uses the class API (`Asset.create`, `Album.create`, `Query`); the deprecated `createAssetAsync` helpers throw at runtime. `Asset` exposes async accessors, so the hook flattens each into a plain `SavedMedia` a list can render directly.
-
-Permission is more than a yes or no on modern Android: access is granted per media type and the user may share only selected items, which is what `hasLimitedAccess` reports.
-
-### Signature
-```typescript
-interface SavedMedia {
-  id: string; uri: string; filename: string;
-  width: number; height: number;
-  durationSeconds: number | null;      // null for stills
-  creationTime: number | null;
-}
-
-function useMediaLibrary(): {
-  permissionGranted: boolean;
-  hasLimitedAccess: boolean;           // Android 13+ partial share
-  isSaving: boolean; isLoading: boolean;
-  recent: SavedMedia[];                // newest first
-  lastSaved: SavedMedia | null;
-  error: string | null;
-  source: TelemetrySource;
-  requestPermission: (writeOnly?: boolean) => Promise<boolean>;
-  save: (localUri: string, albumName?: string) => Promise<SavedMedia | null>;
-  loadRecent: (limit?: number) => Promise<SavedMedia[]>;
-  remove: (media: SavedMedia) => Promise<boolean>;
-};
-```
-
-### Example
-```tsx
-const cam = useCamera();
-const library = useMediaLibrary();
-
-const shoot = async () => {
-  const photo = await cam.takePicture();
-  if (photo) await library.save(photo.uri, 'PixelKit');   // creates the album if needed
-};
-```
-
-> Ask with `requestPermission(true)` when the app only needs to save; it is a smaller request than full library access.
-
----
-
-## `useCellular`
-
-Modem telemetry on **`expo-cellular`**. `useNetwork` can say the connection is cellular; this says whether it is 5G or 2G and which carrier is serving it, which is what you need before deciding to stream.
-
-`generation` reflects the live data connection, so it changes as the device moves and reads `unknown` when no cellular data is attached, including on Wi-Fi. Carrier name and the network codes need `READ_PHONE_STATE` (declared in `app.json`); without it they stay `null` rather than being guessed at. The MCC/MNC pair identifies a carrier globally and is more reliable than matching the display name.
-
-### Signature
-```typescript
-function useCellular(): {
-  generation: 'unknown' | '2G' | '3G' | '4G' | '5G';
-  is5G: boolean;
-  carrierName: string | null;          // null without READ_PHONE_STATE
-  isoCountryCode: string | null;
-  mobileCountryCode: string | null;
-  mobileNetworkCode: string | null;
-  allowsVoip: boolean | null;
-  permissionGranted: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  refresh: () => Promise<void>;
-  requestPermission: () => Promise<boolean>;
-};
-```
-
-### Example
-```tsx
-const net = useNetwork();
-const cell = useCellular();
-
-if (!net.isConnected) return 'offline';
-if (net.isMetered && !cell.is5G) return `on ${cell.generation}, ask before streaming`;
-```
-
-> Pair with `useNetwork().isMetered`: generation tells you how fast, metered tells you who pays.
