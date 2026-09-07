@@ -106,6 +106,7 @@ Every hook's full contract — each input with its default and units, each outpu
 | **Biometrics** | `useBiometrics()` | none | `hasHardware`, `isEnrolled`, `supportedTypes`, `lastResult` | `authenticate(promptMessage?) → Promise<boolean>`, `refresh()` |
 | **Secret storage** | `useSecurity()` | none | `isHardwareBacked`, `securityModule`, `isPostQuantumProtected` (always `false`), `lastOperation` | `saveSecureItem(key, value) → Promise<boolean>`, `getSecureItem(key) → Promise<string \| null>`, `deleteSecureItem(key)` |
 | **GNSS location** | `useLocation()` | none | `latitude`, `longitude`, `altitude`, `accuracy` (metres), `hasFix` | `refreshLocation() → Promise<boolean>` |
+| **Device & power** | `useDevice()` | none | `batteryPercent`, `batteryTemperatureC` (pack thermistor °C), `batteryVoltageMv`, `batteryCurrentMa`, `batteryPowerWatts`, `batteryCycleCount`, `isCharging`, `lowPowerMode` | `refresh() → Promise<void>` |
 | **Network** | `useNetwork()` | none | `ipAddress`, `networkType`, `isConnected` (reachable, not merely attached), `isMetered`, `isAirplaneMode` | `refreshNetwork() → Promise<void>` |
 | **Capabilities** | `useCapabilities()` | none | `hasHiLight`, `hasUWB`, `hasStrongBox`, `supportsHapticEnvelopes`, `verification` (`device` or `model-table`) | none |
 | **Haptics** | `useHaptics()` | none | `envelopeSupported`, `resonantFrequencyHz` (134.4 Hz), `supportedPrimitives[]` | `triggerHaptic(type?)`, `playEnvelope(points, initialSharpness?) → boolean`, `playPrimitives(steps) → boolean`, `cancel()` |

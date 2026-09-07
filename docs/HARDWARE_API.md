@@ -843,19 +843,29 @@ isKeepAwake: boolean; brightness: number; source: TelemetrySource;
 
 ### `useDevice`
 * **File Path**: `src/hardware/useDevice.ts`
-* **Target Hardware**: Android HAL, PMIC, and Qi2 magnetic wireless charging.
-* **Description**: Model identity, battery level and charging state (kept live by `expo-battery` listeners), Battery Saver, and the active network interface type.
+* **Target Hardware**: Android HAL, PMIC, fuel gauge NTC thermistor, and Qi2 magnetic wireless charging.
+* **Description**: Model identity, battery percentage, real-time NTC thermistor pack temperature (°C), cell terminal voltage (mV), current flow (mA), wattage rate (W), Battery Saver, battery health, and lifetime charge cycles.
 * **Inputs**: none as arguments.
 * **Outputs**: [field table →](api/system-media.md#usedevice)
 
 ```typescript
 modelName: string; brand: string; osVersion: string;
-batteryLevel: number;            // 0..100, live
+batteryLevel: number; batteryPercent: number | null;
 isCharging: boolean; lowPowerMode: boolean;
 networkType: string; isConnected: boolean; totalMemoryMB?: number;
+batteryTemperatureC: number | null;   // Real NTC thermistor °C
+batteryVoltageMv: number | null;      // Cell terminal voltage (mV)
+batteryCurrentMa: number | null;      // Instantaneous mA (- discharging, + charging)
+batteryPowerWatts: number | null;     // Real-time power draw / charge speed (W)
+batteryHealth: string | null;         // GOOD, OVERHEAT, DEAD, etc.
+batteryCycleCount: number | null;     // Lifetime EEPROM charge cycles
+batteryChargeCounterMah: number | null; // Remaining mAh
+pluggedSource: string | null;         // AC, USB, WIRELESS, DOCK, NONE
 ```
 
-**Functions**: none — live telemetry.
+| Function | Inputs | Output | Description |
+| :--- | :--- | :--- | :--- |
+| `refresh()` | None | `Promise<void>` | Re-reads power, PMIC fuel gauge, and connectivity state. |
 
 ---
 

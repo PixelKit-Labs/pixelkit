@@ -145,7 +145,7 @@ Every hook is documented with its **inputs** (arguments, defaults and units), it
 | **Hardware Keystore** | `useSecurity()` | StrongBox-backed `SecureStore` encrypted by Android Keystore | `hardware` |
 | **Multi-Band GNSS** | `useLocation()` | Fine location, altitude, bearing, horizontal/vertical accuracy | `hardware` |
 | **Network Telemetry** | `useNetwork()` | Active interface type, IP address, cellular metered state, airplane mode | `hardware` |
-| **Device & Power** | `useDevice()` | Battery level, charging status, power save mode, system RAM | `hardware` |
+| **Device & Power** | `useDevice()` | Fuel gauge pack temp (°C), cell voltage (mV), current (mA), wattage (W), cycle count, battery level, charging status, Battery Saver | `hardware` / `derived` |
 | **Capabilities** | `useCapabilities()` | Unified source of truth with PackageManager capability verification | `hardware` |
 
 ### AI & Neural Hooks (8)

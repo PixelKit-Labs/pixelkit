@@ -4,6 +4,26 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.24] - 2026-09-06
+
+### Added
+- Real physical battery temperature and electrical telemetry engine in `PixelNative` (`PixelNativeModule.kt`) and `useDevice` (`src/hardware/useDevice.ts`):
+  - `batteryTemperatureC`: Real-time temperature of the lithium battery pack from its NTC thermistor via `BatteryManager.EXTRA_TEMPERATURE` in 0.1 °C units.
+  - `batteryVoltageMv`: Instantaneous cell terminal voltage from the PMIC ADC via `BatteryManager.EXTRA_VOLTAGE`.
+  - `batteryCurrentMa`: Instantaneous current flow in mA via `BatteryManager.BATTERY_PROPERTY_CURRENT_NOW` (negative discharging, positive charging).
+  - `batteryCurrentAvgMa`: Rolling average current draw in mA via `BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE`.
+  - `batteryPowerWatts`: Real-time power draw or fast-charging rate in Watts (derived from V × |I|).
+  - `batteryHealth`: Hardware health enum (`GOOD`, `OVERHEAT`, `DEAD`, `OVER_VOLTAGE`, `COLD`, `UNKNOWN`) via `BatteryManager.EXTRA_HEALTH`.
+  - `batteryCycleCount`: Lifetime charge cycle count from the battery EEPROM via `BatteryManager.EXTRA_CYCLE_COUNT` (Android 14+).
+  - `batteryChargeCounterMah`: Remaining charge capacity in mAh via `BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER`.
+  - `batteryEnergyCounterMwh`: Remaining stored energy in mWh via `BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER`.
+  - `pluggedSource`: Charging source (`AC`, `USB`, `WIRELESS`, `DOCK`, `NONE`) via `BatteryManager.EXTRA_PLUGGED`.
+  - `thermalZones`: Opportunistic probe of kernel `/sys/class/thermal/thermal_zone*` when readable.
+- Silicon HUD (`DashboardScreen.tsx`) updated:
+  - Hero telemetry bar now displays live `battery temp` (°C) with warning tinting when above 42°C.
+  - "Thermal & ADPF headroom" section gained a dedicated "Battery temperature" card (`Fuel gauge NTC thermistor • cell temp`).
+  - "Power & atmosphere" section expanded into "Power & electrical telemetry", with live cards for Battery percentage, Power draw / rate (Watts and mA), Remaining charge (mAh), and cell voltage (mV).
+
 ## [1.0.23] - 2026-09-06
 
 ### Added
