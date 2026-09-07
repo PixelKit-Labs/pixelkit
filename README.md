@@ -12,20 +12,13 @@
 
 </div>
 
-<!-- PROJECT LOGO -->
+<!-- PROJECT HEADER -->
 <br />
 <div align="center">
-  <a href="https://github.com/Traves-Theberge/PixelKit">
-    <img src="assets/icon.png" alt="PixelKit Logo" width="96" height="96">
-  </a>
-
   <h1 align="center">PixelKit SDK</h1>
 
   <p align="center">
     A template for building on the <strong>Google Pixel 11 Pro</strong>: its hardware as React hooks — CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
-    <br />
-    <br />
-    Nothing is simulated. A value that cannot be read is <code>null</code>, renders as "—", and says so.
     <br />
     <br />
     <a href="./docs/README.md"><strong>Explore the docs »</strong></a>
@@ -33,8 +26,6 @@
     <a href="./docs/getting-started/using-this-template.md"><strong>Use this template »</strong></a>
     <br />
     <br />
-    <a href="#live-hardware-showcase">View Screenshots</a>
-    &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=bug">Report Bug</a>
     &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=enhancement">Request Feature</a>
@@ -48,7 +39,6 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
-        <li><a href="#live-hardware-showcase">Live Hardware Showcase</a></li>
         <li><a href="#using-this-as-a-template">Using this as a template</a></li>
         <li><a href="#built-with">Built With</a></li>
         <li><a href="#core-architectural-principles">Core Architectural Principles</a></li>
@@ -98,54 +88,6 @@ Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallback
 > **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'`. A value that cannot be read is `null` and renders as `—`. Nothing is ever substituted with a plausible default.
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
-
-### Live Hardware Showcase
-
-Captured directly from the physical **Google Pixel 11 Pro** (`grizzly`) testbed running Android 17 over wireless ADB:
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center" width="33%">
-        <a href="./docs/assets/screenshots/01_silicon_dashboard.png">
-          <img src="./docs/assets/screenshots/01_silicon_dashboard.png" alt="Silicon Dashboard" width="260" />
-        </a>
-        <br />
-        <sub><b>Silicon Dashboard</b><br />Live Tensor G6, fuel gauge 37.2°C, 120Hz LTPO</sub>
-      </td>
-      <td align="center" width="33%">
-        <a href="./docs/assets/screenshots/02_sensors_haptics.png">
-          <img src="./docs/assets/screenshots/02_sensors_haptics.png" alt="Actuators & Haptics" width="260" />
-        </a>
-        <br />
-        <sub><b>Actuators & Haptics</b><br />134.4Hz resonant LRA, PWLE v2 envelopes</sub>
-      </td>
-      <td align="center" width="33%">
-        <a href="./docs/assets/screenshots/03_sensors_radios.png">
-          <img src="./docs/assets/screenshots/03_sensors_radios.png" alt="Sensors & Radios" width="260" />
-        </a>
-        <br />
-        <sub><b>Sensors & Radios</b><br />Barometer ISA, 5GHz Wi-Fi, BLE 5.4, UWB</sub>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" width="50%">
-        <a href="./docs/assets/screenshots/04_docs_architecture.png">
-          <img src="./docs/assets/screenshots/04_docs_architecture.png" alt="Documentation & Agent Guide" width="260" />
-        </a>
-        <br />
-        <sub><b>Agent Guide & Architecture</b><br />5 SDK rules, prompt contracts, zero simulation</sub>
-      </td>
-      <td align="center" width="50%">
-        <a href="./docs/assets/screenshots/05_docs_contracts.png">
-          <img src="./docs/assets/screenshots/05_docs_contracts.png" alt="Live Code Contracts" width="260" />
-        </a>
-        <br />
-        <sub><b>In-App Interactive Docs</b><br />32 typed hooks, copyable code, HAL details</sub>
-      </td>
-    </tr>
-  </table>
-</div>
 
 ### Using this as a template
 

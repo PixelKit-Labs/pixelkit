@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.5] - 2026-09-07
+
+### Removed
+- The screenshot gallery is out of `README.md` and the five PNGs are deleted from the repository,
+  along with the now-empty `docs/assets/`. This was asked for once already at 1.1.1 and reintroduced
+  at 1.1.3; it stays out. A template is read as source, and 1.3 MB of device captures went stale the
+  moment a screen changed.
+- The hero logo image and the "View Screenshots" link, which pointed at the gallery.
+- The hero tagline "Nothing is simulated. A value that cannot be read is `null`, renders as '—', and
+  says so." The rule itself is stated properly under **About The Project**, with the `source` union
+  that enforces it; saying it twice in the first screen was decoration.
+
 ## [1.1.4] - 2026-09-07
 
 Four capabilities the Gemini API has always offered and `useGemini` did not use: streaming,
