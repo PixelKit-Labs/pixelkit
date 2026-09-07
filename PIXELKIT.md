@@ -13,36 +13,6 @@ This document serves as the **canonical API Reference and Blueprint for AI agent
 
 ---
 
-## 📱 Production Interface Gallery
-
-
-| Silicon Dashboard                                                        | On-Device Gemini Nano Chat                                                 |
-| :------------------------------------------------------------------------: | :--------------------------------------------------------------------------: |
-| ![Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png) | ![On-Device Gemini Nano Chat](./docs/assets/screenshots/02_ailab_chat.png) |
-
-
-
-| On-Device Vision Subsystem                                                   | Offline 58-Language Translation                                                     |
-| :----------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------: |
-| ![On-Device Vision Subsystem](./docs/assets/screenshots/04_ailab_vision.png) | ![Offline 58-Language Translation](./docs/assets/screenshots/05_ailab_language.png) |
-
-
-
-| Android 17 AppFunctions Actuators                                         | Hardware &amp; Sensor Lab                                              |
-| :-------------------------------------------------------------------------: | :----------------------------------------------------------------------: |
-| ![Android 17 AppFunctions](./docs/assets/screenshots/06_ailab_agents.png) | ![Hardware & Sensor Lab](./docs/assets/screenshots/07_sensors_lab.png) |
-
-
-
-| Physical UWB &amp; Torch Actuators                                       | Interactive In-App API Docs                                                  |
-| :------------------------------------------------------------------------: | :----------------------------------------------------------------------------: |
-| ![Physical UWB & Torch](./docs/assets/screenshots/07_sensors_radios.png) | ![Interactive In-App API Docs](./docs/assets/screenshots/08_docs_screen.png) |
-
-
-*All views captured from the live Google Pixel 11 Pro testbed. Strict provenance tagging (`HW`, `DERIVED`, `N/A`) is enforced on every card.*
-
----
-
 ## 🛠️ Android CLI &amp; Tooling Integration
 
 PixelKit integrates with Google's official **Android CLI** (`android.exe`).
