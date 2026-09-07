@@ -1,0 +1,72 @@
+{
+  "name": "pixelkit",
+  "version": "1.1.9",
+  "description": "The Google Pixel 11 Pro as React hooks: silicon telemetry, sensors, radios, security and Gemini on-device. Android only. Nothing is simulated.",
+  "keywords": [
+    "expo",
+    "react-native",
+    "android",
+    "pixel",
+    "gemini-nano",
+    "on-device-ai",
+    "hardware",
+    "sensors",
+    "telemetry",
+    "uwb",
+    "nfc",
+    "ble"
+  ],
+  "license": "MIT",
+  "author": "Traves Theberge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PixelKit-Labs/pixelkit.git",
+    "directory": "packages/pixelkit"
+  },
+  "homepage": "https://github.com/PixelKit-Labs/pixelkit#readme",
+  "bugs": {
+    "url": "https://github.com/PixelKit-Labs/pixelkit/issues"
+  },
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "files": [
+    "build",
+    "src",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"fs.rmSync(process.argv[1],{recursive:true,force:true})\" build",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "pixel-native": "1.1.9",
+    "pixel-nano": "1.1.9"
+  },
+  "peerDependencies": {
+    "@google/genai": "^2.21.0",
+    "expo": "~57.0.20",
+    "expo-audio": "~57.0.4",
+    "expo-battery": "~57.0.2",
+    "expo-brightness": "~57.0.1",
+    "expo-camera": "~57.0.4",
+    "expo-cellular": "~57.0.1",
+    "expo-device": "~57.0.1",
+    "expo-file-system": "~57.0.6",
+    "expo-haptics": "~57.0.2",
+    "expo-image-picker": "~57.0.16",
+    "expo-keep-awake": "~57.0.1",
+    "expo-linear-gradient": "~57.0.1",
+    "expo-local-authentication": "~57.0.2",
+    "expo-location": "~57.0.16",
+    "expo-media-library": "~57.0.4",
+    "expo-network": "~57.0.1",
+    "expo-secure-store": "~57.0.3",
+    "expo-sensors": "~57.0.2",
+    "expo-speech": "~57.0.2",
+    "expo-video": "~57.0.3",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
+  }
+}

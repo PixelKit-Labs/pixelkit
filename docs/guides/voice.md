@@ -72,7 +72,7 @@ export function useDictationRecorder() {
 `expo-audio` records to files; the Live API needs a PCM stream. Add an `AudioRecord` loop to the same Expo Module. Use `VOICE_RECOGNITION` so the Pixel's multi-mic noise suppression is applied.
 
 ```kotlin
-// modules/pixel-nano/android/src/main/java/expo/modules/pixelnano/PcmMic.kt
+// packages/pixel-nano/android/src/main/java/expo/modules/pixelnano/PcmMic.kt
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -235,9 +235,9 @@ Confirm the exact option/response property names against the current [Speech Rec
 ### 3.2 `useSpeechToText` hook
 
 ```ts
-// src/ai/useSpeechToText.ts
+// packages/pixelkit/src/ai/useSpeechToText.ts
 import { useCallback, useEffect, useState } from 'react';
-import PixelNano from '../../modules/pixel-nano/src';
+import PixelNano from '../../packages/pixel-nano/src';
 
 export function useSpeechToText(locale = 'en-US') {
   const [partial, setPartial] = useState('');
@@ -359,10 +359,10 @@ Store the token only in memory; if you must persist across a cold start, use `us
 ### 4.2 The `useLiveVoiceAgent` hook
 
 ```ts
-// src/ai/useLiveVoiceAgent.ts
+// packages/pixelkit/src/ai/useLiveVoiceAgent.ts
 import { useCallback, useRef, useState } from 'react';
 import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity, type LiveServerMessage, type Session } from '@google/genai';
-import PixelNano from '../../modules/pixel-nano/src';
+import PixelNano from '../../packages/pixel-nano/src';
 import { toFunctionDeclarations, runTool } from './tools/registry';
 
 export type LiveState = 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error';

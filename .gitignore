@@ -39,9 +39,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
-modules/**/build/
+packages/**/build/
 .gradle/
 
 # HiLight daemon build output (run.ps1 rebuilds the jar when it is missing)
 scripts/hilight-daemon/build/
 scripts/hilight-daemon/*.jar
+
+# Workspace package build output
+packages/*/build/
+*.tgz

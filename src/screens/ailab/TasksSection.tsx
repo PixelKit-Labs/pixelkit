@@ -8,14 +8,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { useGenAITasks, type TaskTone } from '../../ai/useGenAITasks';
-import { useGeminiNano } from '../../ai/useGeminiNano';
-import { useVisionAI } from '../../ai/useVisionAI';
-import { useHaptics } from '../../hardware/useHaptics';
-import { MetricCard } from '../../components/MetricCard';
-import { HapticButton } from '../../components/HapticButton';
-import { SectionHeader, StatChip } from '../../components/Decor';
-import { Colors } from '../../theme/colors';
+import { Colors, HapticButton, MetricCard, SectionHeader, StatChip, useGeminiNano, useGenAITasks, useHaptics, useVisionAI, type TaskTone } from 'pixelkit';
 import { styles } from './styles';
 
 type GenAITaskKind = 'summarize' | 'proofread' | 'rewrite' | 'describe';

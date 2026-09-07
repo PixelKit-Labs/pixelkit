@@ -4,7 +4,7 @@ This file is the single source of truth for any coding agent (Claude, Gemini, An
 
 ## Project
 
-PixelKit is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and two local Kotlin Expo Modules: `modules/pixel-native` (telemetry and actuators) and `modules/pixel-nano` (Gemini Nano via ML Kit GenAI on AICore). Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four tabs — Silicon, AI Lab, Sensors, Docs — each divided into the sections declared in `src/core/surface.ts`, which is also where every hook declares the one screen that demonstrates it.
+PixelKit is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and two local Kotlin Expo Modules: `packages/pixel-native` (telemetry and actuators) and `packages/pixel-nano` (Gemini Nano via ML Kit GenAI on AICore). Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four tabs — Silicon, AI Lab, Sensors, Docs — each divided into the sections declared in `src/core/surface.ts`, which is also where every hook declares the one screen that demonstrates it.
 
 Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
 
@@ -12,14 +12,14 @@ Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do
 
 1. **Changelog on every change.** Every change to the codebase bumps the patch version by 0.0.1 and adds an entry to `CHANGELOG.md` in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together and increment `expo.android.versionCode` by 1. Minor and major bumps are the maintainer's call.
 2. **Docs in sync.** Any change to a hook, type, screen, config, or dependency updates: `docs/api/*` and `docs/HARDWARE_API.md` (API), `docs/ai-guidance/*` and `docs/AI_PRIMER.md` (agent rules), `docs/getting-started/*` (setup), `README.md` and `PIXELKIT.md` (feature matrix, tree, examples), and `src/screens/DocsScreen.tsx` (in-app entries with a working example).
-3. **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (`src/core/observability.ts`). There is deliberately no `simulated` member: the type makes fabricated readings unrepresentable. A value that cannot be read is `null`, renders as "—", and its capability reports `unavailable` so the control refuses rather than pretending. Never substitute a plausible default. If a feature cannot be driven for real, either write the real path (native module, daemon, platform API) or report it as unavailable; do not ship a placeholder.
+3. **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (`packages/pixelkit/src/core/observability.ts`). There is deliberately no `simulated` member: the type makes fabricated readings unrepresentable. A value that cannot be read is `null`, renders as "—", and its capability reports `unavailable` so the control refuses rather than pretending. Never substitute a plausible default. If a feature cannot be driven for real, either write the real path (native module, daemon, platform API) or report it as unavailable; do not ship a placeholder.
 4. **Comments state facts.** JSDoc and comments describe what the code does and which Android API it uses. No marketing language.
-5. **Design system.** Use tokens from `src/theme/colors.ts` and primitives from `src/components/Decor.tsx`. One accent (cyan) for interaction; green = well, red = wrong, amber = a human or tool must act, violet = the model or external streams. Geist for language, Geist Mono for numbers and labels. Panels use wash + hairline + specular, no shadows or gradient fills. Buttons are solid (one per group) or outlined. Only the reactor glows.
-6. **Single import.** App code imports hooks and components from `./src`.
+5. **Design system.** Use tokens from `packages/pixelkit/src/theme/colors.ts` and primitives from `packages/pixelkit/src/components/Decor.tsx`. One accent (cyan) for interaction; green = well, red = wrong, amber = a human or tool must act, violet = the model or external streams. Geist for language, Geist Mono for numbers and labels. Panels use wash + hairline + specular, no shadows or gradient fills. Buttons are solid (one per group) or outlined. Only the reactor glows.
+6. **Single import.** Demo code imports hooks and components from `pixelkit`, never by relative path into `packages/pixelkit`. A symbol the demo needs is a symbol the SDK exports: add it to `packages/pixelkit/src/index.ts` rather than reaching past the barrel.
 7. **Haptics on every touchable** via `HapticButton` or `useHaptics`.
 8. **Secrets** go through `useSecurity().saveSecureItem()` or `saveApiKey()` (SecureStore, hardware-backed Android Keystore). Never in plaintext storage.
 9. **Coordinate with other agents.** Run `git status` and `git log --oneline -5` before editing; another agent may have committed. Prefer targeted edits over whole-file rewrites on files touched recently by others.
-10. **Observability on every function.** Any function that touches hardware, the network, a native module or the file system must: wrap the call in `traced(MODULE, 'op', fn, data)` from `src/core/observability.ts` so it is timed and correlated; surface failure through `logError` and an `error` field on the hook's return, never an empty `catch`; and expose `source` so callers can tell where a value came from. A caught error is never discarded silently. Use `tracedSafe` where a failure is survivable; it still logs and counts.
+10. **Observability on every function.** Any function that touches hardware, the network, a native module or the file system must: wrap the call in `traced(MODULE, 'op', fn, data)` from `packages/pixelkit/src/core/observability.ts` so it is timed and correlated; surface failure through `logError` and an `error` field on the hook's return, never an empty `catch`; and expose `source` so callers can tell where a value came from. A caught error is never discarded silently. Use `tracedSafe` where a failure is survivable; it still logs and counts.
 11. **Documented before it is done.** A function is not finished until it is documented in all four places: JSDoc on the export saying what it does and which platform API it uses; a structured entry in `src/screens/docsData.ts` with `plain`, `description`, `params`, `returns` and `actions` where every field carries a name, a real type and a sentence; the matching `docs/api/*` and `docs/HARDWARE_API.md` sections; and the feature row in `README.md`. Before committing, re-read the hook's return object and confirm every field appears in the docs entry with the type it actually has.
 
 12. **One home per hook.** Every exported hook is declared in `src/core/surface.ts` with the tab and section that demonstrates it, and that screen must actually call it. A hook may appear elsewhere as a supporting effect — AI Lab pulses HiLight — but it is *demonstrated* in exactly one place, and the Docs entry points the reader there. Adding a hook without a home fails `npm run parity`, as does a documented function with no control anywhere unless it is waived with a reason in `scripts/parity-waivers.json`.
@@ -42,15 +42,26 @@ Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do
 
 ## Map
 
+This is an npm workspace. `packages/` is what gets published; the root is the demo app that
+proves it works.
+
 ```
-App.tsx                      shell: fonts, scrims, wordmark, tabs
-modules/pixel-native/        Kotlin Expo Module + TS bridge (index.ts): telemetry, actuators
-modules/pixel-nano/          Kotlin Expo Module + TS bridge: Gemini Nano (ML Kit GenAI Prompt API)
-src/core/                    types, capabilities, observability, surface (one home per hook)
-src/hardware/                device hooks
-src/ai/                      Gemini cloud hooks, useGeminiNano, TPU/AICore detection, client
-src/theme/                   colors (tokens), mode (state → colour)
-src/components/              ScreenScaffold, HapticButton, MetricCard, SensorVisualizer, Decor
-src/screens/                 Silicon, AI Lab, Sensors, Docs — sections come from src/core/surface.ts
+packages/pixelkit/           the published SDK (npm: pixelkit)
+  src/core/                  types, capabilities, observability, surface types
+  src/hardware/              device hooks
+  src/ai/                    Gemini cloud hooks, useGeminiNano, TPU/AICore detection, client
+  src/theme/                 colors (tokens), mode (state -> colour)
+  src/components/            ScreenScaffold, HapticButton, MetricCard, SensorVisualizer, Decor
+  src/index.ts               the public API; nothing is reachable unless exported here
+packages/pixel-native/       Kotlin Expo Module + TS bridge: telemetry, actuators
+packages/pixel-nano/         Kotlin Expo Module + TS bridge: Gemini Nano (ML Kit GenAI Prompt API)
+
+App.tsx                      demo shell: fonts, scrims, wordmark, tabs
+src/core/surface.ts          the demo's map of tabs, sections and hook homes
+src/screens/                 Silicon, AI Lab, Sensors, Docs
 docs/                        api, guides, research, primers
 ```
+
+Demo code imports from `pixelkit`, never by relative path into the package. Metro resolves the
+three package names to source (`metro.config.js`) so a library edit needs no rebuild;
+`tsconfig.json` `paths` does the same for the type checker.

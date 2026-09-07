@@ -71,7 +71,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`modules/pixel-native` and `modules/pixel-nano`), eliminating fragmented native bridges.
+PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`packages/pixel-native` and `packages/pixel-nano`), eliminating fragmented native bridges.
 
 Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
 
@@ -108,7 +108,7 @@ so the parity check passes.
 <!-- TELEMETRY PROVENANCE -->
 ## Telemetry Provenance
 
-PixelKit strictly avoids inventing data. The four provenance values defined in `TelemetrySource` (`src/core/observability.ts`) enforce clear guarantees:
+PixelKit strictly avoids inventing data. The four provenance values defined in `TelemetrySource` (`packages/pixelkit/src/core/observability.ts`) enforce clear guarantees:
 
 | Source | Meaning | Concrete Example |
 | :--- | :--- | :--- |
@@ -449,7 +449,7 @@ Import directly from `./src`:
 ```tsx
 import React from 'react';
 import { View } from 'react-native';
-import { useGPU, useADPF, useHiLight, useHaptics, MetricCard } from './src';
+import { useGPU, useADPF, useHiLight, useHaptics, MetricCard } from 'pixelkit';
 
 export default function ThermalMonitor() {
   const gpu = useGPU();
@@ -485,7 +485,7 @@ export default function ThermalMonitor() {
 Run local conversational inference without cloud dependencies:
 
 ```tsx
-import { useGeminiNano } from './src';
+import { useGeminiNano } from 'pixelkit';
 
 export function OnDeviceAssistant() {
   const nano = useGeminiNano();
@@ -508,7 +508,7 @@ export function OnDeviceAssistant() {
 ### 3. On-Device ML Kit Summarization & Rewriting
 
 ```tsx
-import { useGenAITasks } from './src';
+import { useGenAITasks } from 'pixelkit';
 
 export function DocumentProcessor() {
   const tasks = useGenAITasks();

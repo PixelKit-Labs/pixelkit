@@ -11,22 +11,15 @@
  * `home` is where it is demonstrated and where the Docs tab points the reader.
  */
 
+import type { SurfaceSection } from 'pixelkit';
+export type { SurfaceSection };
+
 /** Top-level tabs, matching `App.tsx`. */
 export type SurfaceTab = 'silicon' | 'ai' | 'sensors' | 'docs';
 
-/** Section within a tab. Each is a sub-tab in the tab's own navigation. */
-export interface SurfaceSection {
-  id: string;
-  /** Sub-tab label, uppercased by the control. */
-  title: string;
-  /** One line under the header saying what this section is for. */
-  blurb: string;
-}
-
+/** Where a hook is demonstrated: the tab, and the section id within it. */
 export interface HookHome {
-  /** Tab that demonstrates the hook. */
   tab: SurfaceTab;
-  /** Section id within that tab. */
   section: string;
 }
 

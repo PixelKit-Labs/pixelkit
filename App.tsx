@@ -15,9 +15,9 @@ import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AILabScreen } from './src/screens/AILabScreen';
 import { SensorsLabScreen } from './src/screens/SensorsLabScreen';
 import { DocsScreen } from './src/screens/DocsScreen';
-import { Scrims, Wordmark } from './src/components/Decor';
-import { useHaptics } from './src/hardware/useHaptics';
-import { Colors, Fonts } from './src/theme/colors';
+import { Scrims, Wordmark } from 'pixelkit';
+import { useHaptics } from 'pixelkit';
+import { Colors, Fonts } from 'pixelkit';
 
 type Tab = 'dashboard' | 'ai' | 'sensors' | 'docs';
 

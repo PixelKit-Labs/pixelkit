@@ -149,7 +149,7 @@ export const AI_MODULES: DocModule[] = [
         output: 'Resolves once status and info have been updated. On failure status becomes unavailable and error is set.',
       },
     ],
-    example: `import { useGeminiNano } from './src';
+    example: `import { useGeminiNano } from 'pixelkit';
 
 function OnDeviceChat() {
   const nano = useGeminiNano();
@@ -233,7 +233,7 @@ function OnDeviceChat() {
         output: 'Returns nothing. hasApiKey updates immediately and availableModels is refreshed in the background.',
       },
     ],
-    example: `import { useGemini } from './src';
+    example: `import { useGemini } from 'pixelkit';
 
 function Assistant() {
   const { messages, sendMessage, isLoading, hasApiKey } = useGemini();
@@ -289,7 +289,7 @@ function Assistant() {
         output: 'Returns nothing. model updates to name the engine that will be used.',
       },
     ],
-    example: `import { useSpeechAI } from './src';
+    example: `import { useSpeechAI } from 'pixelkit';
 
 function VoiceButton() {
   const speech = useSpeechAI();
@@ -367,7 +367,7 @@ function VoiceButton() {
         output: 'Resolves with { description, finishReason, latencyMs, engine, source }, or null on failure.',
       },
     ],
-    example: `import { useGenAITasks } from './src';
+    example: `import { useGenAITasks } from 'pixelkit';
 
 async function tidy(dictated: string, tasks) {
   const fixed = await tasks.proofread(dictated);
@@ -433,7 +433,7 @@ async function tidy(dictated: string, tasks) {
         output: 'Resolves with { entities, latencyMs, source }; each entity carries type, text and the start and end offsets into your input. Null on failure.',
       },
     ],
-    example: `import { useNaturalLanguageAI } from './src';
+    example: `import { useNaturalLanguageAI } from 'pixelkit';
 
 async function localise(text: string, nlp) {
   const { languageCode } = await nlp.identifyLanguage(text);
@@ -534,7 +534,7 @@ async function localise(text: string, nlp) {
         output: 'Resolves with { subjectsCount, foregroundConfidence, latencyMs, source }. Null on failure.',
       },
     ],
-    example: `import { useVisionAI } from './src';
+    example: `import { useVisionAI } from 'pixelkit';
 
 async function readLabel(uri: string, vision) {
   const ocr = await vision.recognizeText(uri);   // stays on the device

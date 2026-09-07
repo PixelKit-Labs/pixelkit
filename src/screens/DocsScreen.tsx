@@ -18,13 +18,9 @@ import {
   Pressable,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { useHaptics } from '../hardware/useHaptics';
-import { HapticButton } from '../components/HapticButton';
-import { SectionHeader } from '../components/Decor';
-import { Colors, Fonts, Radius, Type } from '../theme/colors';
+import { Colors, Fonts, HapticButton, Radius, ScreenHeader, SectionHeader, Type, useHaptics } from 'pixelkit';
 import { DOC_MODULES, type DocField, type DocModule } from './docsData';
 import { whereToTry } from '../core/surface';
-import { ScreenHeader } from '../components/ScreenScaffold';
 
 type CategoryFilter = 'all' | 'primer' | DocModule['category'];
 
@@ -43,7 +39,7 @@ const CATEGORIES: { key: CategoryFilter; label: string; count: number | null }[]
 ];
 
 const GOLDEN_RULES: { title: string; text: string }[] = [
-  { title: 'Single import', text: "Import every hook and component from './src'. Never re-implement a raw listener." },
+  { title: 'Single import', text: "Import every hook and component from 'pixelkit'. Never re-implement a raw listener." },
   { title: 'Provenance, not guesses', text: 'Read source on every hook. Render null as an em dash and never substitute a plausible default.' },
   { title: 'Tactile feedback', text: 'Attach useHaptics to every touchable, through HapticButton where possible.' },
   { title: 'Thermal and frame budget', text: 'Check useADPF() before heavy work and respect the 8.33 ms budget at 120 Hz.' },
@@ -52,7 +48,7 @@ const GOLDEN_RULES: { title: string; text: string }[] = [
 
 const SYSTEM_PROMPT_DIRECTIVE = `You are building an application with the PixelKit SDK on a Google Pixel 11 Pro.
 
-1. Import every hardware and AI hook from './src'.
+1. Import every hardware and AI hook from 'pixelkit'.
 2. Call useCapabilities() before offering any Pro-exclusive feature; never hardcode a device assumption.
 3. Read each hook's source field. Render an unreadable value as "—" and never substitute a default.
 4. Attach haptic feedback to every touchable, preferably via HapticButton.

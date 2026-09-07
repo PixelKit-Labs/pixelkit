@@ -2,7 +2,7 @@
 
 > The `pixel-nano` local Expo Module bridges the **ML Kit GenAI Prompt API** to React Native and `useGeminiNano` wraps it. Target: Pixel 11 / 11 Pro / 11 Pro XL / 11 Pro Fold (Gemini Nano tier `nano-v4`). Works on Pixel 9 and 10 with `nano-v3`.
 
-**Status (1.0.2):** implemented in `modules/pixel-nano` and `src/ai/useGeminiNano.ts`, wired into the AI Lab as a second conversation engine. The shipped code differs from the sketches below where the beta4 AAR disagrees with the docs:
+**Status (1.0.2):** implemented in `packages/pixel-nano` and `packages/pixelkit/src/ai/useGeminiNano.ts`, wired into the AI Lab as a second conversation engine. The shipped code differs from the sketches below where the beta4 AAR disagrees with the docs:
 
 | Guide sketch | What genai-prompt 1.0.0-beta4 actually exposes (from the AAR) |
 | :--- | :--- |
@@ -21,7 +21,7 @@ Structured output (`@Generable`, KSP) and the feature APIs (summarization, proof
 
 ```text
 React Native (Hermes)
-  useGeminiNano()  ───►  modules/pixel-nano/src/index.ts   (requireNativeModule('PixelNano'))
+  useGeminiNano()  ───►  packages/pixel-nano/packages/pixelkit/src/index.ts   (requireNativeModule('PixelNano'))
                               │ JSI
                          PixelNanoModule.kt  (Expo Modules API, Kotlin coroutines)
                               │
@@ -59,7 +59,7 @@ npx create-expo-module@latest --local     # prompt: name "pixel-nano", Android p
 
 ### 2.2 Gradle dependencies for the module
 
-`modules/pixel-nano/android/build.gradle`:
+`packages/pixel-nano/android/build.gradle`:
 
 ```groovy
 plugins { id "com.google.devtools.ksp" }   // needed for the structured-output schema compiler
@@ -79,7 +79,7 @@ Version history that matters (from the [ML Kit release notes](https://developers
 
 ### 2.3 Manifest
 
-`modules/pixel-nano/android/src/main/AndroidManifest.xml`:
+`packages/pixel-nano/android/src/main/AndroidManifest.xml`:
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -90,7 +90,7 @@ Version history that matters (from the [ML Kit release notes](https://developers
 
 ### 2.4 ProGuard / R8 keep rules (required for structured output)
 
-`modules/pixel-nano/android/proguard-rules.pro` and reference it from the module's `build.gradle` via `consumerProguardFiles`:
+`packages/pixel-nano/android/proguard-rules.pro` and reference it from the module's `build.gradle` via `consumerProguardFiles`:
 
 ```proguard
 # Keep every class annotated for structured output and its members. The annotation package
@@ -103,7 +103,7 @@ Version history that matters (from the [ML Kit release notes](https://developers
 
 ## 3. The Kotlin module
 
-`modules/pixel-nano/android/src/main/java/expo/modules/pixelnano/PixelNanoModule.kt`
+`packages/pixel-nano/android/src/main/java/expo/modules/pixelnano/PixelNanoModule.kt`
 
 ```kotlin
 package expo.modules.pixelnano
@@ -290,7 +290,7 @@ Notes:
 
 ## 4. The TypeScript bridge
 
-`modules/pixel-nano/src/index.ts`
+`packages/pixel-nano/packages/pixelkit/src/index.ts`
 
 ```ts
 import { NativeModule, requireNativeModule } from 'expo';
@@ -347,13 +347,13 @@ The result type is `NanoResult`: `text` (the reply), `finishReason` (`STOP` when
 
 ## 5. The `useGeminiNano` hook
 
-`src/ai/useGeminiNano.ts` — mirrors the shape of `useGemini` so screens can swap between them.
+`packages/pixelkit/src/ai/useGeminiNano.ts` — mirrors the shape of `useGemini` so screens can swap between them.
 
 ```ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
-import PixelNano, { type NanoOptions, type NanoStatus } from '../../modules/pixel-nano/src';
+import PixelNano, { type NanoOptions, type NanoStatus } from '../../packages/pixel-nano/src';
 
 export type NanoTier = 'nano-v4' | 'nano-v3' | 'unknown';
 
@@ -476,7 +476,7 @@ Google's guidance: keep system instructions under ~150 words, and do not combine
 Structured output is Kotlin-only and compile-time. Declare a **small library of reusable shapes** in the module and select one by name from JS.
 
 ```kotlin
-// modules/pixel-nano/android/src/main/java/expo/modules/pixelnano/Shapes.kt
+// packages/pixel-nano/android/src/main/java/expo/modules/pixelnano/Shapes.kt
 import com.google.mlkit.genai.prompt.Generable
 import com.google.mlkit.genai.prompt.Guide
 
@@ -563,7 +563,7 @@ Set `thinking: true` in options. The module already forwards `enableThinking` an
 
 Firebase AI Logic offers `InferenceMode.PREFER_ON_DEVICE` natively for Kotlin apps. In React Native, implement the same policy in one place so every feature gets it for free.
 
-`src/ai/router.ts`
+`packages/pixelkit/src/ai/router.ts`
 
 ```ts
 import { useGeminiNano } from './useGeminiNano';

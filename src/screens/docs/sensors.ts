@@ -31,7 +31,7 @@ export const SENSORS_MODULES: DocModule[] = [
       { name: 'isAvailable', type: 'boolean', desc: 'Whether the sensors are present and streaming.' },
     ],
     actions: [],
-    example: `import { useSensors } from './src';
+    example: `import { useSensors } from 'pixelkit';
 
 function Level() {
   const { accelerometer, lightLux } = useSensors(100);
@@ -103,7 +103,7 @@ function Level() {
         output: 'Returns nothing.',
       },
     ],
-    example: `import { useHaptics, HapticEnvelopes } from './src';
+    example: `import { useHaptics, HapticEnvelopes } from 'pixelkit';
 
 function Confirm() {
   const { success, playEnvelope, envelopeSupported } = useHaptics();
@@ -241,7 +241,7 @@ function Confirm() {
       },
     ],
     example: `import { CameraView } from 'expo-camera';
-import { useCamera } from './src';
+import { useCamera } from 'pixelkit';
 
 function Capture() {
   const cam = useCamera();
@@ -312,7 +312,7 @@ function Capture() {
         output: 'Returns nothing; isStrobing becomes false.',
       },
     ],
-    example: `import { useTorch } from './src';
+    example: `import { useTorch } from 'pixelkit';
 
 function Flashlight() {
   const { isTorchOn, maxStrengthLevel, setTorch, toggleTorch } = useTorch();

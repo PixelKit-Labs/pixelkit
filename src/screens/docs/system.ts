@@ -36,7 +36,7 @@ export const SYSTEM_MODULES: DocModule[] = [
       { name: 'supportsRangingApi / supportsHapticEnvelopes / supportsAppFunctions / supportsAndroid17Apis', type: 'boolean', desc: 'Platform API availability gates.' },
     ],
     actions: [],
-    example: `import { useCapabilities } from './src';
+    example: `import { useCapabilities } from 'pixelkit';
 
 function ProFeatures() {
   const caps = useCapabilities();
@@ -176,7 +176,7 @@ function ProFeatures() {
         output: 'Resolves once the seek completes; playbackPositionSeconds updates.',
       },
     ],
-    example: `import { useAudio } from './src';
+    example: `import { useAudio } from 'pixelkit';
 
 function Recorder() {
   const audio = useAudio();
@@ -242,7 +242,7 @@ function Recorder() {
         output: 'Resolves once the lock state has flipped; isKeepAwake reflects it. Release it when you no longer need it.',
       },
     ],
-    example: `import { useDisplay } from './src';
+    example: `import { useDisplay } from 'pixelkit';
 
 function DisplayPanel() {
   const display = useDisplay();
@@ -305,7 +305,7 @@ function DisplayPanel() {
         output: 'Promise<void> — Resolves once all battery, electrical, and network states are refreshed.',
       },
     ],
-    example: `import { useDevice } from './src';
+    example: `import { useDevice } from 'pixelkit';
 
 function PowerHUD() {
   const { batteryPercent, batteryTemperatureC, batteryVoltageMv, batteryPowerWatts, isCharging, refresh } = useDevice();
@@ -349,7 +349,7 @@ function PowerHUD() {
         output: 'Resolves once the read completes. Each sub-read fails independently, so one missing value does not blank the rest.',
       },
     ],
-    example: `import { useNetwork } from './src';
+    example: `import { useNetwork } from 'pixelkit';
 
 async function upload(net) {
   if (!net.isConnected) return 'offline';
@@ -465,7 +465,7 @@ async function upload(net) {
       },
     ],
     example: `import { VideoView } from 'expo-video';
-import { useCamera, useVideo } from './src';
+import { useCamera, useVideo } from 'pixelkit';
 
 function Playback() {
   const cam = useCamera();
@@ -565,7 +565,7 @@ function Playback() {
         output: 'Returns nothing; voice, rate and pitch update.',
       },
     ],
-    example: `import { useSpeech, useGeminiNano } from './src';
+    example: `import { useSpeech, useGeminiNano } from 'pixelkit';
 
 function TalkBack() {
   const speech = useSpeech();
@@ -636,7 +636,7 @@ function TalkBack() {
         output: 'Resolves true when the item was deleted, and it is dropped from recent.',
       },
     ],
-    example: `import { useCamera, useMediaLibrary } from './src';
+    example: `import { useCamera, useMediaLibrary } from 'pixelkit';
 
 function Keep() {
   const cam = useCamera();
@@ -690,7 +690,7 @@ function Keep() {
         output: 'Resolves true when granted, and refreshes automatically. Generation is readable without it.',
       },
     ],
-    example: `import { useCellular, useNetwork } from './src';
+    example: `import { useCellular, useNetwork } from 'pixelkit';
 
 function ShouldStream() {
   const net = useNetwork();

@@ -89,7 +89,7 @@ export const PRO_MODULES: DocModule[] = [
         output: 'Returns nothing; isActive flips.',
       },
     ],
-    example: `import { useHiLight } from './src';
+    example: `import { useHiLight } from 'pixelkit';
 
 function StatusRing() {
   const hilight = useHiLight();
@@ -142,7 +142,7 @@ function StatusRing() {
         output: 'Returns nothing; isRanging becomes false.',
       },
     ],
-    example: `import { useUWB } from './src';
+    example: `import { useUWB } from 'pixelkit';
 
 function Radar() {
   const { isSupported, isRanging, sessionInfo, startRanging, stopRanging } = useUWB();

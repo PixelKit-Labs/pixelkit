@@ -7,7 +7,7 @@
  */
 
 import { StyleSheet } from 'react-native';
-import { Colors, Fonts, Radius, Type } from '../../theme/colors';
+import { Colors, Fonts, Radius, Type } from 'pixelkit';
 
 export const styles = StyleSheet.create({
   agentCardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

@@ -34,7 +34,7 @@ export const RADIOS_MODULES: DocModule[] = [
         output: 'Resolves true only on success. A cancel or a mismatch resolves false without setting error; missing hardware or no enrolment resolves false and sets error. lastResult tells the three apart.',
       },
     ],
-    example: `import { useBiometrics } from './src';
+    example: `import { useBiometrics } from 'pixelkit';
 
 function Unlock() {
   const { hasHardware, isEnrolled, authenticate } = useBiometrics();
@@ -88,7 +88,7 @@ function Unlock() {
         output: 'Resolves true when the delete completed, false with the reason in error otherwise.',
       },
     ],
-    example: `import { useSecurity } from './src';
+    example: `import { useSecurity } from 'pixelkit';
 
 async function storeKey(value: string, security) {
   await security.saveSecureItem('MY_API_KEY', value);
@@ -135,7 +135,7 @@ async function storeKey(value: string, security) {
         output: 'Returns nothing; a final results sync runs first, so nothing already discovered is lost.',
       },
     ],
-    example: `import { useBLE } from './src';
+    example: `import { useBLE } from 'pixelkit';
 
 function Bluetooth() {
   const { isEnabled, bondedDevices, peripherals, isScanning, startScan, stopScan } = useBLE();
@@ -205,7 +205,7 @@ function Bluetooth() {
         output: 'Returns nothing; lastScannedTag and lastWriteOk become null.',
       },
     ],
-    example: `import { useNFC } from './src';
+    example: `import { useNFC } from 'pixelkit';
 
 function TagReader() {
   const nfc = useNFC();
@@ -258,7 +258,7 @@ function TagReader() {
         output: 'Returns nothing; the nfc, bluetooth, uwb, wifiRtt and satellite blocks update. Call it after sending the user to Settings.',
       },
     ],
-    example: `import { useRadios } from './src';
+    example: `import { useRadios } from 'pixelkit';
 
 function RadioPanel() {
   const radios = useRadios();
@@ -297,7 +297,7 @@ function RadioPanel() {
         output: 'Resolves true when a fix arrived, false when permission was denied or the fix failed, with the reason in error. Coordinates never reach the log.',
       },
     ],
-    example: `import { useLocation } from './src';
+    example: `import { useLocation } from 'pixelkit';
 
 function Position() {
   const { latitude, longitude, accuracy, hasPermission } = useLocation();

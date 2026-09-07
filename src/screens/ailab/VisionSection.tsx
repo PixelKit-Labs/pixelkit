@@ -8,12 +8,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useVisionAI } from '../../ai/useVisionAI';
-import { useHaptics } from '../../hardware/useHaptics';
-import { MetricCard } from '../../components/MetricCard';
-import { HapticButton } from '../../components/HapticButton';
-import { SectionHeader, StatChip } from '../../components/Decor';
-import { Colors } from '../../theme/colors';
+import { Colors, HapticButton, MetricCard, SectionHeader, StatChip, useHaptics, useVisionAI } from 'pixelkit';
 import { styles } from './styles';
 
 type VisionDemoKind = 'ocr' | 'barcode' | 'label' | 'faces' | 'objects' | 'pose' | 'subject' | 'cloud';

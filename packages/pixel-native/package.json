@@ -1,0 +1,45 @@
+{
+  "name": "pixel-native",
+  "version": "1.1.9",
+  "description": "Expo module for Google Pixel telemetry and actuators: SoC identity, CPU clusters, memory, thermal and ADPF headroom, display modes, GPU, torch, haptic envelopes. Android only.",
+  "keywords": [
+    "expo",
+    "expo-module",
+    "react-native",
+    "android",
+    "pixel"
+  ],
+  "license": "MIT",
+  "author": "Traves Theberge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PixelKit-Labs/pixelkit.git",
+    "directory": "packages/pixel-native"
+  },
+  "homepage": "https://github.com/PixelKit-Labs/pixelkit#readme",
+  "bugs": {
+    "url": "https://github.com/PixelKit-Labs/pixelkit/issues"
+  },
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "files": [
+    "build",
+    "index.ts",
+    "android",
+    "!android/build",
+    "!android/.gradle",
+    "!android/.cxx",
+    "expo-module.config.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"fs.rmSync(process.argv[1],{recursive:true,force:true})\" build",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "expo": "~57.0.20",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
+  }
+}

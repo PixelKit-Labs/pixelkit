@@ -40,7 +40,7 @@ export const SILICON_MODULES: DocModule[] = [
         output: 'Resolves with the run duration in milliseconds, which is also written to lastBenchmarkDurationMs. Lower is faster.',
       },
     ],
-    example: `import { useCPU } from './src';
+    example: `import { useCPU } from 'pixelkit';
 
 function CPUWidget() {
   const { coreTopology, cpuLoadPercent, cores, benchmarkCPU } = useCPU();
@@ -83,7 +83,7 @@ function CPUWidget() {
       SOURCE_FIELD,
     ],
     actions: [],
-    example: `import { useGPU } from './src';
+    example: `import { useGPU } from 'pixelkit';
 
 function GPUHUD() {
   const { measuredFps, frameRenderTimeMs, targetBudgetMs, isStuttering } = useGPU();
@@ -129,7 +129,7 @@ function GPUHUD() {
         output: 'Resolves with { activeDelegate: "CPU Fallback", isHardwareAccelerated: false, lastInferenceLatencyMs, throughputTokensPerSec: null, memoryFootprintMB: null }. Label it as a CPU number wherever you show it.',
       },
     ],
-    example: `import { useTPU } from './src';
+    example: `import { useTPU } from 'pixelkit';
 
 function AIStack() {
   const { aicoreInstalled, aicoreVersion, cpuFallbackLatencyMs, benchmarkTPU } = useTPU();
@@ -176,7 +176,7 @@ function AIStack() {
         output: 'Returns nothing. The refreshed reading lands in the hook fields, and the amount reclaimed is logged as freedMB.',
       },
     ],
-    example: `import { useMemory } from './src';
+    example: `import { useMemory } from 'pixelkit';
 
 function MemoryHUD() {
   const { freeRAMMB, isLowMemory, purgeCaches } = useMemory();
@@ -226,7 +226,7 @@ function MemoryHUD() {
         output: "'WITHIN_BUDGET' when the work fits the frame, 'BOOST_REQUESTED' when it overran and you should shed work.",
       },
     ],
-    example: `import { useADPF } from './src';
+    example: `import { useADPF } from 'pixelkit';
 
 async function runHeavyTask(adpf) {
   if ((adpf.thermalHeadroom ?? 0) > 0.8) return 'deferred: device is hot';

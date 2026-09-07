@@ -150,12 +150,12 @@ import {
   useSpeech,
   HapticButton, 
   MetricCard 
-} from './src';
+} from 'pixelkit';
 ```
 
 ---
 
-> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`modules/pixel-native`, telemetry &amp; actuators), or the `PixelNano` module (`modules/pixel-nano`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), and live scan sessions run through the platform scanners. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and reports `source: 'unavailable'` without it; the controls refuse rather than pretending.
+> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`packages/pixel-native`, telemetry &amp; actuators), or the `PixelNano` module (`packages/pixel-nano`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `packages/pixelkit/src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), and live scan sessions run through the platform scanners. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and reports `source: 'unavailable'` without it; the controls refuse rather than pretending.
 
 ### 1. `useCPU()` — Real CPU topology and load
 
@@ -318,5 +318,5 @@ When an AI agent builds an application on top of PixelKit:
 1. **Import from `./src`**: Never re-implement hardware wrappers or sensors.
 2. **Prioritize Tactile Haptics**: Always call `useHaptics()` on user interactions.
 3. **Respect Thermal &amp; Memory Headroom**: Query `useADPF()` and `useMemory()` before intensive workloads.
-4. **Use Material 3 Colors**: Always style with `Colors.dark` from `./src/theme/colors` for OLED battery savings and true black contrast.
+4. **Use Material 3 Colors**: Always style with `Colors.dark` from `./packages/pixelkit/src/theme/colors` for OLED battery savings and true black contrast.
 

@@ -62,7 +62,7 @@ Documentation for the **PixelKit SDK**: the silicon, sensors, radios and on-devi
                                      |
 +-------------------------------------------------------------------------+
 |                            PIXELKIT SDK                                 |
-|                        (src/index.ts Re-exports)                        |
+|                        (packages/pixelkit/src/index.ts Re-exports)                        |
 +-------------------------------------------------------------------------+
         |                  |                    |                  |
 +---------------+  +---------------+  +------------------+  +---------------+
@@ -91,5 +91,5 @@ import {
   useHaptics, 
   HapticButton, 
   MetricCard 
-} from './src';
+} from 'pixelkit';
 ```

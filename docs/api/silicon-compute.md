@@ -1,7 +1,7 @@
 # Silicon & Compute API Reference 💻
 > **Tensor G6 CPU, PowerVR GPU, on-device AI stack, memory, and ADPF thermals, all read from the device**
 
-Every hook in this document reads real Android platform state through the local **PixelNative** Expo Module (`modules/pixel-native`). Nothing is fabricated: when a value cannot be read it is `null` and the hook's `source` reports `'unavailable'`. See [Observability](#observability--provenance) for the provenance model.
+Every hook in this document reads real Android platform state through the local **PixelNative** Expo Module (`packages/pixel-native`). Nothing is fabricated: when a value cannot be read it is `null` and the hook's `source` reports `'unavailable'`. See [Observability](#observability--provenance) for the provenance model.
 
 Each entry documents its **Inputs** (what you pass in, with defaults and units), its **Outputs** (every field it returns, with type and meaning) and its **Functions** (what each callable takes and what it resolves to).
 
@@ -282,7 +282,7 @@ Practical use: read it before starting something expensive, not during. Above ro
 
 ## Observability & provenance
 
-`src/core/observability.ts` gives every reading a **source**:
+`packages/pixelkit/src/core/observability.ts` gives every reading a **source**:
 
 | `TelemetrySource` | Meaning |
 | :--- | :--- |
@@ -316,7 +316,7 @@ There is deliberately no `simulated` member: the type makes a fabricated reading
 
 ## PixelNative module
 
-`modules/pixel-native` (Kotlin, Expo Modules API, autolinked from `./modules`). Requires a development build; on web and in Expo Go the TS bridge resolves to `null` and hooks report `unavailable`.
+`packages/pixel-native` (Kotlin, Expo Modules API, autolinked from `./modules`). Requires a development build; on web and in Expo Go the TS bridge resolves to `null` and hooks report `unavailable`.
 
 ### Functions
 | Function | Inputs | Returns | Android API |

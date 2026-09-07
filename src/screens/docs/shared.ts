@@ -6,7 +6,7 @@
  * per category, matching the categories the Docs tab filters by.
  */
 
-import { Colors } from '../../theme/colors';
+import { Colors } from 'pixelkit';
 /** One documented value: a return field, a hook argument, or a callable. */
 export interface DocField {
   name: string;

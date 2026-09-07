@@ -99,7 +99,7 @@ function useSecurity(): {
 
 ### Example
 ```tsx
-import { useSecurity, HapticButton } from './src';
+import { useSecurity, HapticButton } from 'pixelkit';
 
 export function VaultManager() {
   const { saveSecureItem, getSecureItem, error } = useSecurity();

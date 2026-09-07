@@ -26,6 +26,9 @@ const TAB_SOURCES = {
   docs: ['DocsScreen.tsx'],
 };
 
+/** The published library lives in its own workspace package; the demo app stays at the root. */
+const LIB = path.join('packages', 'pixelkit');
+
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 /** Every source file behind one tab: the screen, plus each component in its section directory. */
@@ -66,7 +69,7 @@ for (const m of surface.matchAll(/^ {2}(use\w+): \{ tab: '(\w+)', section: '(\w+
   homes[m[1]] = { tab: m[2], section: m[3] };
 }
 
-const indexSrc = read(path.join('src', 'index.ts'));
+const indexSrc = read(path.join(LIB, 'src', 'index.ts'));
 const exportedHooks = [...new Set([...indexSrc.matchAll(/\buse[A-Z]\w+/g)].map((m) => m[0]))];
 const screenSources = Object.fromEntries(Object.keys(TAB_SOURCES).map((tab) => [tab, tabSource(tab)]));
 const allScreens = Object.values(screenSources).join('\n');
@@ -75,7 +78,7 @@ const allScreens = Object.values(screenSources).join('\n');
 for (const hook of exportedHooks) {
   const home = homes[hook];
   if (!home) {
-    failures.push(hook + ' is exported from src/index.ts but has no entry in src/core/surface.ts');
+    failures.push(hook + ' is exported from ' + LIB + '/src/index.ts but has no entry in src/core/surface.ts');
     continue;
   }
   if (!TAB_SOURCES[home.tab]) {
@@ -149,7 +152,7 @@ for (const line of docsData.split(String.fromCharCode(10))) {
 // parameters — this is the check that would have said so.
 const HOOK_DIRS = ['hardware', 'ai'];
 for (const dir of HOOK_DIRS) {
-  const full = path.join(ROOT, 'src', dir);
+  const full = path.join(ROOT, LIB, 'src', dir);
   for (const file of fs.readdirSync(full).filter((f) => f.startsWith('use') && f.endsWith('.ts'))) {
     const src = fs.readFileSync(path.join(full, file), 'utf8');
     const start = src.lastIndexOf(String.fromCharCode(10) + '  return {');

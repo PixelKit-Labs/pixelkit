@@ -4,6 +4,55 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.9] - 2026-09-07
+
+PixelKit becomes an npm workspace. `packages/` is what gets published; the root stays the demo app
+that proves it works. The SDK and the template were always two products sharing a repo, and this is
+the line between them made structural.
+
+### Added
+- **`packages/pixelkit`** (npm: `pixelkit`): 45 modules, the 32 hooks, the design system and the
+  observability layer. Builds with `tsc` to `build/` with declaration files; packs to 162 kB.
+  Its 23 peer dependencies are exactly what the source imports, no more: `expo-build-properties`,
+  `expo-dev-client`, `expo-status-bar`, `expo-font`, `expo-asset`, `expo-clipboard`,
+  `@expo/vector-icons` and `react-native-safe-area-context` are used by the demo, not the library,
+  and are not imposed on consumers.
+- **`packages/pixel-native`** and **`packages/pixel-nano`**: the two Kotlin Expo Modules, now
+  publishable in their own right, each with `android/` untouched. Publishing them separately avoids
+  merging two Gradle projects into one, which is the only way a single npm package could carry both.
+- `scripts/sync-versions.js` and `npm run sync-versions`: puts every workspace manifest and the
+  Android `versionCode` on the root version. `pixelkit` pins its two native modules by exact
+  version, so a mismatch would publish a package that cannot resolve its own dependencies.
+- `metro.config.js`: resolves the three package names to TypeScript source, so editing the library
+  needs no rebuild. `tsconfig.json` `paths` does the same for the type checker. The published
+  packages still point `main` at `build/`.
+- README for each package, since npm renders it as the landing page. `pixelkit`'s says the four
+  things a reader has to know before installing: Android only, no Expo Go, nothing is simulated,
+  and most of it is Pixel-specific so on other hardware it reports `unavailable` by design.
+
+### Changed
+- Demo code imports from `pixelkit` rather than by relative path: 134 import specifiers rewritten
+  across 18 files, then merged so each file has one import from the package. This surfaced that the
+  barrel was incomplete — `Decor`, `ScreenScaffold`, the theme and the observability helpers were
+  only ever reachable by relative path, and are now public API.
+- Rule 6 in `CLAUDE.md`, `AGENTS.md` and `GEMINI.md` (kept byte-identical) now reads: a symbol the
+  demo needs is a symbol the SDK exports. The Map section describes the workspace.
+- `src/core/surface.ts` stays with the demo, because "one home per hook" is a discipline about
+  screens and a consuming app has its own tabs. Only `SurfaceSection`, the type `ScreenScaffold`
+  needs, moved into the package.
+- `scripts/check-parity.js` reads the barrel and the hook directories from `packages/pixelkit`.
+  All four checks still pass: 32 hooks homed, every documented action reachable.
+- 151 path references across 18 markdown files updated, and doc examples now import from
+  `pixelkit` instead of `./src`.
+
+### Fixed
+- The two native tarballs shipped their Gradle output: `android/build` put `pixel-native` at 1.7 MB and
+  `pixel-nano` at 828 kB, almost all of it `.dex` and Kotlin class files. Excluded, they are 22.2 kB
+  and 14.8 kB, carrying the Kotlin source, the manifest, the Gradle file and the compiled bridge.
+- The packages build with plain `tsc` rather than `expo-module-scripts`, whose bin scripts are bash
+  with a `set -eo pipefail` shebang that Windows `cmd` feeds to node, failing `npm install` with
+  `SyntaxError: Unexpected identifier 'pipefail'`.
+
 ## [1.1.8] - 2026-09-07
 
 ### Fixed

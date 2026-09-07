@@ -11,24 +11,8 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { useDevice } from '../hardware/useDevice';
-import { useADPF } from '../hardware/useADPF';
-import { useCPU } from '../hardware/useCPU';
-import { useGPU } from '../hardware/useGPU';
-import { useMemory } from '../hardware/useMemory';
-import { useTPU } from '../ai/useTPU';
-import { useDisplay } from '../hardware/useDisplay';
-import { useNetwork } from '../hardware/useNetwork';
-import { useCellular } from '../hardware/useCellular';
-import { useCapabilities } from '../hardware/useCapabilities';
-import { useObservability, resetObservability } from '../core/observability';
-import { MetricCard } from '../components/MetricCard';
-import { HapticButton } from '../components/HapticButton';
-import { ScreenScaffold } from '../components/ScreenScaffold';
-import { Colors, Type } from '../theme/colors';
-import { resolveMode } from '../theme/mode';
-import { isPixelNativeAvailable } from '../../modules/pixel-native';
-import { SectionHeader, Reactor, TelemetryRow, Chip } from '../components/Decor';
+import { Chip, Colors, HapticButton, MetricCard, Reactor, ScreenScaffold, SectionHeader, TelemetryRow, Type, resetObservability, resolveMode, useADPF, useCPU, useCapabilities, useCellular, useDevice, useDisplay, useGPU, useMemory, useNetwork, useObservability, useTPU } from 'pixelkit';
+import { isPixelNativeAvailable } from 'pixel-native';
 import { sectionsFor } from '../core/surface';
 
 const fmt = (v: number | null | undefined, digits = 0) => (v == null ? null : Number(v.toFixed(digits)));

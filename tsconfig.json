@@ -1,6 +1,24 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    "strict": true,
+    "paths": {
+      "pixelkit": [
+        "./packages/pixelkit/src/index.ts"
+      ],
+      "pixel-native": [
+        "./packages/pixel-native/index.ts"
+      ],
+      "pixel-nano": [
+        "./packages/pixel-nano/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "App.tsx",
+    "index.ts",
+    "src/**/*",
+    "packages/*/src/**/*",
+    "packages/*/index.ts"
+  ]
 }

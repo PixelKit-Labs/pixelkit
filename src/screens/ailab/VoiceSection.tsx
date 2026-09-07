@@ -9,13 +9,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useSpeechAI } from '../../ai/useSpeechAI';
-import { useSpeech } from '../../ai/useSpeech';
-import { useHaptics } from '../../hardware/useHaptics';
-import { MetricCard } from '../../components/MetricCard';
-import { HapticButton } from '../../components/HapticButton';
-import { SectionHeader, StatChip } from '../../components/Decor';
-import { Colors } from '../../theme/colors';
+import { Colors, HapticButton, MetricCard, SectionHeader, StatChip, useHaptics, useSpeech, useSpeechAI } from 'pixelkit';
 import { styles } from './styles';
 
 export const VoiceSection: React.FC<{
