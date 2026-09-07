@@ -4,6 +4,42 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.2.0] - 2026-09-07
+
+This repository is now only the SDK. The demo app, the design system and the template-specific
+documentation moved to [pixelkit-template](https://github.com/PixelKit-Labs/pixelkit-template).
+
+A minor bump rather than a patch: `pixelkit` no longer exports the UI layer, which would be a
+breaking change if anything had been published. Nothing has, so this is the shape the first release
+takes.
+
+### Removed
+- **The UI layer is out of the SDK.** `MetricCard`, `HapticButton`, `SensorVisualizer`,
+  `ScreenScaffold` and the `Decor` primitives, plus the whole `theme/` module - `Colors`,
+  `Gradients`, `Radius`, `Spacing`, `Fonts`, `Type`, `MODE`, `resolveMode`. 11 exports left the
+  barrel. The hooks never imported any of it, so the cut was clean in one direction: components
+  depended on hooks, never the reverse.
+
+  The trade is real and worth naming. `MetricCard` was what rendered `source: 'unavailable'` as an
+  em dash without the caller thinking about it. Consumers now render provenance themselves, and some
+  of them will get it wrong. The template shows how it is meant to look.
+- The demo app: `App.tsx`, `src/screens`, `src/core/surface.ts`, the assets, `app.json`, `eas.json`,
+  `metro.config.js`, the HiLight daemon, and `scripts/check-parity.js` with its waivers. Parity is a
+  statement about screens demonstrating hooks, and the screens live in the template now - where the
+  check reads the *installed* `pixelkit`, so it verifies the published package rather than local
+  source.
+- `docs/getting-started/using-this-template.md`, `docs/PRIVACY.md` and `docs/store-listing.md`.
+  Those describe starting a project and shipping an app, not what a hook returns.
+- **101 emoji across 17 documentation files.** The 667 box-drawing characters in the architecture
+  diagrams are untouched: those are content, not decoration.
+
+### Changed
+- The root manifest is a workspace root, not an Expo app. `sync-versions.js` no longer manages an
+  Android `versionCode`, because there is no longer an Android app here.
+- CI drops the Expo export and gains a real packaging test: it installs the packed tarball into a
+  scratch project and asserts that both `pixelkit` and `pixelkit/mlkit` resolve from it. The subpath
+  split is only worth anything if it survives being published, and nothing else checks that.
+
 ## [1.1.17] - 2026-09-07
 
 ### Changed

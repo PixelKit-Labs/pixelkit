@@ -1,9 +1,9 @@
-# PixelKit AI Primer & Agent Guidance Manual 🤖⚡
+# PixelKit AI Primer & Agent Guidance Manual
 > **The Official Operating Manual for AI Coding Assistants Building on PixelKit (Google Pixel 11 Pro)**
 
 ---
 
-## 🎯 Purpose of this Primer
+## Purpose of this Primer
 
 This document is the **canonical system prompt extension and operational primer** for any AI agent (Antigravity, Claude, ChatGPT, Cursor, Gemini) tasked with writing, refactoring, or expanding applications on top of the **PixelKit SDK** for the **Google Pixel 11 Pro** powered by the **Google Tensor G6 ("Malibu")** processor.
 
@@ -11,32 +11,32 @@ When generating code or architecting features, AI models must adhere strictly to
 
 ---
 
-## 📋 The 5 Golden Rules for AI Agents
+## The 5 Golden Rules for AI Agents
 
 ### 1. The Single Import Rule
 **NEVER** re-implement hardware wrappers, camera pickers, or sensor listeners from raw third-party packages. Always import directly from `./src`:
 
 ```typescript
-// ✅ CORRECT (Centralized, typed, hardware-accelerated)
-import { 
-  useCPU, 
-  useGPU, 
-  useTPU, 
-  useMemory, 
-  useSensors, 
-  useHaptics, 
-  useCamera,
-  useHiLight,
-  useSpeechAI, 
-  useGemini, 
-  useVisionAI, 
-  useUWB, 
-  useSecurity,
-  HapticButton, 
-  MetricCard 
+// CORRECT (Centralized, typed, hardware-accelerated)
+import {
+ useCPU,
+ useGPU,
+ useTPU,
+ useMemory,
+ useSensors,
+ useHaptics,
+ useCamera,
+ useHiLight,
+ useSpeechAI,
+ useGemini,
+ useVisionAI,
+ useUWB,
+ useSecurity,
+ HapticButton,
+ MetricCard
 } from 'pixelkit';
 
-// ❌ WRONG (Never import raw unmanaged sensor listeners)
+// WRONG (Never import raw unmanaged sensor listeners)
 import * as Accelerometer from 'expo-sensors';
 ```
 
@@ -73,7 +73,7 @@ Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `packag
 
 ---
 
-## 🧭 Master Silicon & Hook Mapping Table
+## Master Silicon & Hook Mapping Table
 
 Every hook's full contract — each input with its default and units, each output field with its meaning, and each function with what it takes and returns — is in [`docs/HARDWARE_API.md`](HARDWARE_API.md) and the per-domain pages under [`docs/api/`](api/). This table is the index.
 
@@ -114,7 +114,7 @@ Every hook's full contract — each input with its default and units, each outpu
 
 ---
 
-## 🛠️ System Prompt Directive for AI Agents
+## System Prompt Directive for AI Agents
 
 When instructing another AI model or configuring an IDE prompt, copy and paste this system prompt:
 
@@ -133,7 +133,7 @@ Always adhere to these requirements:
 
 ---
 
-## 📋 Production Code Recipes
+## Production Code Recipes
 
 Both recipes state what they take and what they give back. Full contracts are in [`HARDWARE_API.md`](HARDWARE_API.md); more recipes are in [`ai-guidance/recipes.md`](ai-guidance/recipes.md).
 
@@ -147,27 +147,27 @@ import { View } from 'react-native';
 import { useGemini, useHiLight, useHaptics, HapticButton } from 'pixelkit';
 
 export function SmartAssistant() {
-  const gemini = useGemini();
-  const hilight = useHiLight();
-  const { light, success } = useHaptics();
+ const gemini = useGemini();
+ const hilight = useHiLight();
+ const { light, success } = useHaptics();
 
-  const handleAskAI = async () => {
-    await light();
-    if (hilight.availability === 'hardware') hilight.triggerGeminiPulse(5000);
-    await gemini.sendMessage('Summarise the current thermal state.');
-    await success();
-  };
+ const handleAskAI = async () => {
+ await light();
+ if (hilight.availability === 'hardware') hilight.triggerGeminiPulse(5000);
+ await gemini.sendMessage('Summarise the current thermal state.');
+ await success();
+ };
 
-  return (
-    <View style={{ padding: 16 }}>
-      <HapticButton
-        title={gemini.isLoading ? 'Waiting on the cloud model…' : 'Ask assistant'}
-        onPress={handleAskAI}
-        variant="primary"
-        disabled={gemini.isLoading}
-      />
-    </View>
-  );
+ return (
+ <View style={{ padding: 16 }}>
+ <HapticButton
+ title={gemini.isLoading ? 'Waiting on the cloud model…' : 'Ask assistant'}
+ onPress={handleAskAI}
+ variant="primary"
+ disabled={gemini.isLoading}
+ />
+ </View>
+ );
 }
 ```
 
@@ -182,29 +182,29 @@ import { CameraView } from 'expo-camera';
 import { useCamera, useHaptics, HapticButton } from 'pixelkit';
 
 export function ProPhotoView() {
-  const camera = useCamera();
-  const { selection, error } = useHaptics();
+ const camera = useCamera();
+ const { selection, error } = useHaptics();
 
-  const capture = async () => {
-    const photo = await camera.takePicture({ base64: true });
-    if (!photo) await error();          // camera.error says why
-  };
+ const capture = async () => {
+ const photo = await camera.takePicture({ base64: true });
+ if (!photo) await error(); // camera.error says why
+ };
 
-  return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <CameraView ref={camera.cameraRef} onCameraReady={camera.handleCameraReady} {...camera.viewProps} style={{ flex: 1 }} />
-      <Text>Zoom {Math.round(camera.zoomFactor * 100)}% of the lens range</Text>
-      <HapticButton title="Widest" onPress={() => { selection(); camera.setZoom(0); }} variant="outline" />
-      <HapticButton title="Longest" onPress={() => { selection(); camera.setZoom(1); }} variant="outline" />
-      <HapticButton title="Capture" onPress={capture} variant="primary" />
-    </View>
-  );
+ return (
+ <View style={{ flex: 1, padding: 16 }}>
+ <CameraView ref={camera.cameraRef} onCameraReady={camera.handleCameraReady} {...camera.viewProps} style={{ flex: 1 }} />
+ <Text>Zoom {Math.round(camera.zoomFactor * 100)}% of the lens range</Text>
+ <HapticButton title="Widest" onPress={() => { selection(); camera.setZoom(0); }} variant="outline" />
+ <HapticButton title="Longest" onPress={() => { selection(); camera.setZoom(1); }} variant="outline" />
+ <HapticButton title="Capture" onPress={capture} variant="primary" />
+ </View>
+ );
 }
 ```
 
 ---
 
-## ⚠️ Anti-Patterns to Avoid
+## Anti-Patterns to Avoid
 
 1. **Do not use `Alert.alert` for routine errors.** Use an in-app banner and a haptic (`haptics.error()`); every hook already exposes an `error` field to render.
 2. **Do not block the JS thread with long synchronous loops.** `benchmarkCPU()` and `benchmarkTPU()` do exactly that on purpose, and say so; nothing else should.

@@ -1,4 +1,4 @@
-# PixelKit Guides: Built-in AI, Function Calling & Voice 🧠🎙️
+# PixelKit Guides: Built-in AI, Function Calling & Voice
 
 > Production guides for building on the Pixel 11 Pro's on-device intelligence (Gemini Nano 4 via AICore), Gemini cloud models, and the phone's voice pipeline. Written for Expo SDK 57 / React Native 0.86 / Android 17 (API 37).
 
@@ -15,40 +15,40 @@
 Every AI feature in PixelKit should be routed through **one decision**, made once per request:
 
 ```text
-                     ┌───────────────────────────────┐
-  request ─────────► │  Is the payload ≤ ~4K tokens,  │
-                     │  text + ≤1 image, single turn, │
-                     │  app in foreground?            │
-                     └──────────────┬────────────────┘
-                          yes       │        no
-                    ┌───────────────┴────────────┐
-                    ▼                            ▼
-        ┌──────────────────────┐      ┌─────────────────────────┐
-        │ Gemini Nano 4 (AICore)│      │ Gemini cloud            │
-        │ ML Kit GenAI Prompt   │      │ gemini-3.8-flash        │
-        │ FeatureStatus.AVAILABLE│     │ (function calling, chat,│
-        └──────────┬───────────┘      │  audio, video, PDF)     │
-                   │ UNAVAILABLE /     └─────────────────────────┘
-                   │ BUSY / error               ▲
-                   └────────────────────────────┘  fallback
+ ┌───────────────────────────────┐
+ request ─────────► │ Is the payload ≤ ~4K tokens, │
+ │ text + ≤1 image, single turn, │
+ │ app in foreground? │
+ └──────────────┬────────────────┘
+ yes │ no
+ ┌───────────────┴────────────┐
+ ▼ ▼
+ ┌──────────────────────┐ ┌─────────────────────────┐
+ │ Gemini Nano 4 (AICore)│ │ Gemini cloud │
+ │ ML Kit GenAI Prompt │ │ gemini-3.8-flash │
+ │ FeatureStatus.AVAILABLE│ │ (function calling, chat,│
+ └──────────┬───────────┘ │ audio, video, PDF) │
+ │ UNAVAILABLE / └─────────────────────────┘
+ │ BUSY / error ▲
+ └────────────────────────────┘ fallback
 ```
 
 | Capability | Gemini Nano 4 on device (ML Kit Prompt API) | Gemini cloud (`@google/genai` 2.21) |
 | :--- | :--- | :--- |
-| Text generation, streaming | ✅ | ✅ |
-| Image input | ✅ multiple images since Prompt API beta3 (Jul 2026) | ✅ many |
-| Audio / video / PDF input | ❌ | ✅ |
-| System instructions | ✅ Beta, `SystemInstruction` part, Nano V3+ | ✅ `systemInstruction` |
-| Multi-turn chat with server-side history | ❌ (AICore is single-turn; you re-send context) | ✅ `ai.chats` |
-| Structured output | ✅ Alpha, Kotlin `@Generable` classes | ✅ `responseJsonSchema` |
-| Thinking mode | ✅ Beta, Nano V4+ | ✅ `thinkingConfig` |
-| Native function calling | ❌ (emulate with structured output, see guide) | ✅ `functionDeclarations` |
-| Realtime voice (Live API) | ❌ | ✅ `gemini-3.1-flash-live-preview` |
-| Speech-to-text | ✅ GenAI Speech Recognition (Advanced on Pixel 10/11) | ✅ `gemini-3.5-transcribe` |
+| Text generation, streaming | | |
+| Image input | multiple images since Prompt API beta3 (Jul 2026) | many |
+| Audio / video / PDF input | | |
+| System instructions | Beta, `SystemInstruction` part, Nano V3+ | `systemInstruction` |
+| Multi-turn chat with server-side history | (AICore is single-turn; you re-send context) | `ai.chats` |
+| Structured output | Alpha, Kotlin `@Generable` classes | `responseJsonSchema` |
+| Thinking mode | Beta, Nano V4+ | `thinkingConfig` |
+| Native function calling | (emulate with structured output, see guide) | `functionDeclarations` |
+| Realtime voice (Live API) | | `gemini-3.1-flash-live-preview` |
+| Speech-to-text | GenAI Speech Recognition (Advanced on Pixel 10/11) | `gemini-3.5-transcribe` |
 | Context limit | ~4,000 tokens total per request | 1M+ |
-| Runs offline / zero cost / private | ✅ | ❌ |
-| Foreground only | ✅ (AICore refuses background inference) | ❌ |
-| Emulator support | ❌ physical device with AICore only | ✅ |
+| Runs offline / zero cost / private | | |
+| Foreground only | (AICore refuses background inference) | |
+| Emulator support | physical device with AICore only | |
 
 **Rule of thumb:** classification, extraction, summarisation, rewriting, short Q&A, image description, on-device tool selection → **Nano**. Anything conversational with memory, anything with tools that need cloud data, anything with audio in or out → **cloud**.
 
@@ -72,30 +72,30 @@ Native AI modules cannot run in Expo Go. You need a **development build**.
 ```jsonc
 // app.json
 {
-  "expo": {
-    "plugins": [
-      "expo-secure-store",
-      "expo-audio",
-      ["expo-build-properties", {
-        "android": {
-          "compileSdkVersion": 36,
-          "targetSdkVersion": 36,
-          "minSdkVersion": 26
-        }
-      }]
-    ],
-    "android": {
-      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.INTERNET"]
-    }
-  }
+ "expo": {
+ "plugins": [
+ "expo-secure-store",
+ "expo-audio",
+ ["expo-build-properties", {
+ "android": {
+ "compileSdkVersion": 36,
+ "targetSdkVersion": 36,
+ "minSdkVersion": 26
+ }
+ }]
+ ],
+ "android": {
+ "permissions": ["android.permission.RECORD_AUDIO", "android.permission.INTERNET"]
+ }
+ }
 }
 ```
 
 ```bash
 npm i expo-audio expo-speech expo-build-properties expo-dev-client
-npx create-expo-module@latest --local        # name it: mlkit
+npx create-expo-module@latest --local # name it: mlkit
 npx expo prebuild --platform android --clean
-npx expo run:android                          # physical Pixel over USB
+npx expo run:android # physical Pixel over USB
 ```
 
 Validation gates remain `npm run typecheck` and `npx expo export -p android`. Add `adb logcat -s AICore:* MLKit:*` while testing on-device inference.

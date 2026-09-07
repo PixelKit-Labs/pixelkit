@@ -1,4 +1,4 @@
-# Function Calling & Hardware Tools 🛠️
+# Function Calling & Hardware Tools
 
 > One tool registry, three execution paths. PixelKit hooks (torch, haptics, HiLight, camera, sensors, location…) register as tools once. Cloud Gemini calls them with native function calling, Gemini Nano calls them on device via structured output, and the system Gemini assistant calls them through Android **AppFunctions**.
 
@@ -7,20 +7,20 @@
 ## 1. Architecture
 
 ```text
-                 ┌─────────────────────────────────────────────┐
-                 │  packages/pixelkit/src/ai/tools/registry.ts                   │
-                 │  defineTool({ name, description, schema,    │
-                 │               execute })  ← wraps a hook    │
-                 └───────┬───────────────┬───────────────┬─────┘
-                         │               │               │
-        toFunctionDeclarations()  toNanoToolPrompt()  (mirrored in Kotlin)
-                         │               │               │
-                         ▼               ▼               ▼
-              ┌────────────────┐ ┌───────────────┐ ┌─────────────────────────┐
-              │ Cloud Gemini   │ │ Gemini Nano 4 │ │ Android AppFunctions    │
-              │ gemini-3.8-flash│ │ ToolChoice    │ │ @AppFunction service    │
-              │ functionCalls[]│ │ structured out│ │ called by Gemini app    │
-              └────────────────┘ └───────────────┘ └─────────────────────────┘
+ ┌─────────────────────────────────────────────┐
+ │ packages/pixelkit/src/ai/tools/registry.ts │
+ │ defineTool({ name, description, schema, │
+ │ execute }) ← wraps a hook │
+ └───────┬───────────────┬───────────────┬─────┘
+ │ │ │
+ toFunctionDeclarations() toNanoToolPrompt() (mirrored in Kotlin)
+ │ │ │
+ ▼ ▼ ▼
+ ┌────────────────┐ ┌───────────────┐ ┌─────────────────────────┐
+ │ Cloud Gemini │ │ Gemini Nano 4 │ │ Android AppFunctions │
+ │ gemini-3.8-flash│ │ ToolChoice │ │ @AppFunction service │
+ │ functionCalls[]│ │ structured out│ │ called by Gemini app │
+ └────────────────┘ └───────────────┘ └─────────────────────────┘
 ```
 
 | Path | When | Latency | Needs network | Multi-step |
@@ -40,58 +40,58 @@ import { z } from 'zod';
 import { Type, type FunctionDeclaration, type Schema } from '@google/genai';
 
 export type ToolDef<I extends z.ZodTypeAny = z.ZodTypeAny> = {
-  name: string;                       // snake_case, unique
-  description: string;                // one sentence, imperative; the model reads this
-  schema: I;                          // zod input schema
-  execute: (input: z.infer<I>) => Promise<unknown>;
-  /** false = hide from Nano (too complex for a 4K-token prompt) */
-  onDevice?: boolean;
+ name: string; // snake_case, unique
+ description: string; // one sentence, imperative; the model reads this
+ schema: I; // zod input schema
+ execute: (input: z.infer<I>) => Promise<unknown>;
+ /** false = hide from Nano (too complex for a 4K-token prompt) */
+ onDevice?: boolean;
 };
 
 const tools = new Map<string, ToolDef>();
 
 export function defineTool<I extends z.ZodTypeAny>(def: ToolDef<I>) {
-  tools.set(def.name, def as ToolDef);
-  return def;
+ tools.set(def.name, def as ToolDef);
+ return def;
 }
 export function getTool(name: string) { return tools.get(name); }
 export function listTools(opts?: { onDevice?: boolean }) {
-  return [...tools.values()].filter(t => opts?.onDevice ? t.onDevice !== false : true);
+ return [...tools.values()].filter(t => opts?.onDevice ? t.onDevice !== false : true);
 }
 
 /** zod → Gemini Schema (subset used by hardware tools). */
 export function zodToGeminiSchema(s: z.ZodTypeAny): Schema {
-  if (s instanceof z.ZodString)  return { type: Type.STRING, description: s.description };
-  if (s instanceof z.ZodNumber)  return { type: Type.NUMBER, description: s.description };
-  if (s instanceof z.ZodBoolean) return { type: Type.BOOLEAN, description: s.description };
-  if (s instanceof z.ZodEnum)    return { type: Type.STRING, enum: s.options as string[], description: s.description };
-  if (s instanceof z.ZodArray)   return { type: Type.ARRAY, items: zodToGeminiSchema(s.element), description: s.description };
-  if (s instanceof z.ZodOptional || s instanceof z.ZodDefault) return zodToGeminiSchema(s._def.innerType);
-  if (s instanceof z.ZodObject) {
-    const shape = s.shape as Record<string, z.ZodTypeAny>;
-    const required = Object.entries(shape).filter(([, v]) => !(v instanceof z.ZodOptional) && !(v instanceof z.ZodDefault)).map(([k]) => k);
-    return {
-      type: Type.OBJECT,
-      description: s.description,
-      properties: Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, zodToGeminiSchema(v)])),
-      required,
-    };
-  }
-  return { type: Type.STRING };
+ if (s instanceof z.ZodString) return { type: Type.STRING, description: s.description };
+ if (s instanceof z.ZodNumber) return { type: Type.NUMBER, description: s.description };
+ if (s instanceof z.ZodBoolean) return { type: Type.BOOLEAN, description: s.description };
+ if (s instanceof z.ZodEnum) return { type: Type.STRING, enum: s.options as string[], description: s.description };
+ if (s instanceof z.ZodArray) return { type: Type.ARRAY, items: zodToGeminiSchema(s.element), description: s.description };
+ if (s instanceof z.ZodOptional || s instanceof z.ZodDefault) return zodToGeminiSchema(s._def.innerType);
+ if (s instanceof z.ZodObject) {
+ const shape = s.shape as Record<string, z.ZodTypeAny>;
+ const required = Object.entries(shape).filter(([, v]) => !(v instanceof z.ZodOptional) && !(v instanceof z.ZodDefault)).map(([k]) => k);
+ return {
+ type: Type.OBJECT,
+ description: s.description,
+ properties: Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, zodToGeminiSchema(v)])),
+ required,
+ };
+ }
+ return { type: Type.STRING };
 }
 
 export function toFunctionDeclarations(defs = listTools()): FunctionDeclaration[] {
-  return defs.map(t => ({ name: t.name, description: t.description, parameters: zodToGeminiSchema(t.schema) }));
+ return defs.map(t => ({ name: t.name, description: t.description, parameters: zodToGeminiSchema(t.schema) }));
 }
 
 /** Validates + runs; always returns a JSON-serialisable object for the model. */
 export async function runTool(name: string, rawArgs: unknown) {
-  const t = getTool(name);
-  if (!t) return { error: `unknown_tool:${name}` };
-  const parsed = t.schema.safeParse(rawArgs ?? {});
-  if (!parsed.success) return { error: 'invalid_arguments', issues: parsed.error.issues };
-  try { return { ok: true, result: await t.execute(parsed.data) }; }
-  catch (e: any) { return { error: e?.message ?? 'tool_failed' }; }
+ const t = getTool(name);
+ if (!t) return { error: `unknown_tool:${name}` };
+ const parsed = t.schema.safeParse(rawArgs ?? {});
+ if (!parsed.success) return { error: 'invalid_arguments', issues: parsed.error.issues };
+ try { return { ok: true, result: await t.execute(parsed.data) }; }
+ catch (e: any) { return { error: e?.message ?? 'tool_failed' }; }
 }
 ```
 
@@ -108,52 +108,52 @@ import type { useHaptics } from '../../hardware/useHaptics';
 import type { HiLightState } from '../../hardware/useHiLight';
 import type { useADPF } from '../../hardware/useADPF';
 
-type Torch = ReturnType<typeof useTorch>;     // { isTorchOn, isStrobing, toggleTorch, startStrobe, stopStrobe }
+type Torch = ReturnType<typeof useTorch>; // { isTorchOn, isStrobing, toggleTorch, startStrobe, stopStrobe }
 type Haptics = ReturnType<typeof useHaptics>; // { triggerHaptic(type), selection(), light(), ... }
-type ADPF = ReturnType<typeof useADPF>;       // { cpuHeadroom, gpuHeadroom, thermalStatus, targetFps, currentFps, reportWorkDuration }
+type ADPF = ReturnType<typeof useADPF>; // { cpuHeadroom, gpuHeadroom, thermalStatus, targetFps, currentFps, reportWorkDuration }
 
 export function registerHardwareTools(h: { torch: Torch; haptics: Haptics; hilight: HiLightState; adpf: ADPF }) {
-  defineTool({
-    name: 'set_torch',
-    description: 'Turn the rear LED flashlight on or off, optionally as an emergency strobe.',
-    schema: z.object({ on: z.boolean(), strobe: z.boolean().optional().describe('Emergency SOS strobe pattern') }),
-    execute: async ({ on, strobe }) => {
-      if (strobe) { await h.torch.startStrobe(); return { on: true, strobe: true }; }
-      if (h.torch.isStrobing) await h.torch.stopStrobe();
-      if (on !== h.torch.isTorchOn) await h.torch.toggleTorch();   // hook exposes a toggle, so reconcile to the requested state
-      return { on, strobe: false };
-    },
-  });
+ defineTool({
+ name: 'set_torch',
+ description: 'Turn the rear LED flashlight on or off, optionally as an emergency strobe.',
+ schema: z.object({ on: z.boolean(), strobe: z.boolean().optional().describe('Emergency SOS strobe pattern') }),
+ execute: async ({ on, strobe }) => {
+ if (strobe) { await h.torch.startStrobe(); return { on: true, strobe: true }; }
+ if (h.torch.isStrobing) await h.torch.stopStrobe();
+ if (on !== h.torch.isTorchOn) await h.torch.toggleTorch(); // hook exposes a toggle, so reconcile to the requested state
+ return { on, strobe: false };
+ },
+ });
 
-  defineTool({
-    name: 'haptic',
-    description: 'Play a tactile haptic pattern on the linear resonant actuator.',
-    schema: z.object({ pattern: z.enum(['selection', 'light', 'medium', 'heavy', 'success', 'warning', 'error']) }),
-    execute: async ({ pattern }) => { await h.haptics.triggerHaptic(pattern); return { played: pattern }; },
-  });
+ defineTool({
+ name: 'haptic',
+ description: 'Play a tactile haptic pattern on the linear resonant actuator.',
+ schema: z.object({ pattern: z.enum(['selection', 'light', 'medium', 'heavy', 'success', 'warning', 'error']) }),
+ execute: async ({ pattern }) => { await h.haptics.triggerHaptic(pattern); return { played: pattern }; },
+ });
 
-  defineTool({
-    name: 'set_hilight',
-    description: 'Set the rear camera-bar HiLight LED ring colour and animation. Requires the ADB daemon; refuses otherwise.',
-    schema: z.object({
-      mode: z.enum(['off', 'glow', 'breathing', 'pulse', 'gemini_thinking', 'incoming_call', 'notification']),
-      color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-    }),
-    execute: async ({ mode, color }) => { if (color) h.hilight.setColor(color); h.hilight.setMode(mode); return { mode, color: color ?? h.hilight.currentColor }; },
-  });
+ defineTool({
+ name: 'set_hilight',
+ description: 'Set the rear camera-bar HiLight LED ring colour and animation. Requires the ADB daemon; refuses otherwise.',
+ schema: z.object({
+ mode: z.enum(['off', 'glow', 'breathing', 'pulse', 'gemini_thinking', 'incoming_call', 'notification']),
+ color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+ }),
+ execute: async ({ mode, color }) => { if (color) h.hilight.setColor(color); h.hilight.setMode(mode); return { mode, color: color ?? h.hilight.currentColor }; },
+ });
 
-  defineTool({
-    name: 'get_thermal_headroom',
-    description: 'Read Android Dynamic Performance Framework CPU/GPU headroom, thermal status and current FPS.',
-    schema: z.object({}),
-    onDevice: true,
-    execute: async () => ({
-      cpuHeadroom: h.adpf.cpuHeadroom,
-      gpuHeadroom: h.adpf.gpuHeadroom,
-      thermalStatus: h.adpf.thermalStatus,
-      currentFps: h.adpf.currentFps,
-    }),
-  });
+ defineTool({
+ name: 'get_thermal_headroom',
+ description: 'Read Android Dynamic Performance Framework CPU/GPU headroom, thermal status and current FPS.',
+ schema: z.object({}),
+ onDevice: true,
+ execute: async () => ({
+ cpuHeadroom: h.adpf.cpuHeadroom,
+ gpuHeadroom: h.adpf.gpuHeadroom,
+ thermalStatus: h.adpf.thermalStatus,
+ currentFps: h.adpf.currentFps,
+ }),
+ });
 }
 ```
 
@@ -202,39 +202,39 @@ const MODEL = 'gemini-3.8-flash';
 const MAX_STEPS = 6;
 
 export async function runCloudAgent(ai: GoogleGenAI, system: string, history: Content[], userText: string, onStep?: (s: string) => void) {
-  const contents: Content[] = [...history, { role: 'user', parts: [{ text: userText }] }];
-  const tools = [{ functionDeclarations: toFunctionDeclarations() }];
+ const contents: Content[] = [...history, { role: 'user', parts: [{ text: userText }] }];
+ const tools = [{ functionDeclarations: toFunctionDeclarations() }];
 
-  for (let step = 0; step < MAX_STEPS; step++) {
-    const res = await ai.models.generateContent({
-      model: MODEL,
-      contents,
-      config: {
-        systemInstruction: system,
-        tools,
-        toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
-        temperature: 0.2,
-      },
-    });
+ for (let step = 0; step < MAX_STEPS; step++) {
+ const res = await ai.models.generateContent({
+ model: MODEL,
+ contents,
+ config: {
+ systemInstruction: system,
+ tools,
+ toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
+ temperature: 0.2,
+ },
+ });
 
-    const calls = res.functionCalls ?? [];
-    const modelContent = res.candidates?.[0]?.content;
-    if (modelContent) contents.push(modelContent);          // keep the model's own turn (incl. functionCall parts)
+ const calls = res.functionCalls ?? [];
+ const modelContent = res.candidates?.[0]?.content;
+ if (modelContent) contents.push(modelContent); // keep the model's own turn (incl. functionCall parts)
 
-    if (calls.length === 0) return { text: res.text ?? '', contents };
+ if (calls.length === 0) return { text: res.text ?? '', contents };
 
-    // Parallel calls arrive together; execute concurrently, answer in the same order.
-    const results = await Promise.all(calls.map(c => runTool(c.name!, c.args)));
-    calls.forEach((c, i) => onStep?.(`${c.name}(${JSON.stringify(c.args)}) → ${JSON.stringify(results[i])}`));
+ // Parallel calls arrive together; execute concurrently, answer in the same order.
+ const results = await Promise.all(calls.map(c => runTool(c.name!, c.args)));
+ calls.forEach((c, i) => onStep?.(`${c.name}(${JSON.stringify(c.args)}) → ${JSON.stringify(results[i])}`));
 
-    contents.push({
-      role: 'user',
-      parts: calls.map((c, i) => ({
-        functionResponse: { id: c.id, name: c.name!, response: results[i] as Record<string, unknown> },
-      })),
-    });
-  }
-  return { text: 'Stopped: too many tool steps.', contents };
+ contents.push({
+ role: 'user',
+ parts: calls.map((c, i) => ({
+ functionResponse: { id: c.id, name: c.name!, response: results[i] as Record<string, unknown> },
+ })),
+ });
+ }
+ return { text: 'Stopped: too many tool steps.', contents };
 }
 ```
 
@@ -255,10 +255,10 @@ Key details:
 
 ```ts
 toolConfig: {
-  functionCallingConfig: {
-    mode: FunctionCallingConfigMode.ANY,           // must call a tool
-    allowedFunctionNames: ['set_torch', 'haptic'], // from this subset only
-  },
+ functionCallingConfig: {
+ mode: FunctionCallingConfigMode.ANY, // must call a tool
+ allowedFunctionNames: ['set_torch', 'haptic'], // from this subset only
+ },
 }
 ```
 
@@ -270,8 +270,8 @@ Use `ANY` for "quick action" buttons where a text answer is a failure, `NONE` to
 const stream = await ai.models.generateContentStream({ model: MODEL, contents, config: { tools } });
 let calls: any[] = [];
 for await (const chunk of stream) {
-  if (chunk.text) onToken(chunk.text);
-  if (chunk.functionCalls?.length) calls = calls.concat(chunk.functionCalls);
+ if (chunk.text) onToken(chunk.text);
+ if (chunk.functionCalls?.length) calls = calls.concat(chunk.functionCalls);
 }
 // then execute `calls` exactly as in 3.1
 ```
@@ -286,9 +286,9 @@ For extraction rather than action, prefer `responseJsonSchema`:
 
 ```ts
 const res = await ai.models.generateContent({
-  model: MODEL,
-  contents: prompt,
-  config: { responseMimeType: 'application/json', responseJsonSchema: zodToJsonSchema(MySchema) },
+ model: MODEL,
+ contents: prompt,
+ config: { responseMimeType: 'application/json', responseJsonSchema: zodToJsonSchema(MySchema) },
 });
 const data = MySchema.parse(JSON.parse(res.text!));
 ```
@@ -311,26 +311,26 @@ import PixelNano from '../../../packages/mlkit/src';
 import { listTools, runTool } from '../tools/registry';
 
 export function toNanoToolPrompt(userText: string) {
-  const catalog = listTools({ onDevice: true })
-    .map(t => `- ${t.name}: ${t.description} args=${JSON.stringify(zodToExample(t.schema))}`)
-    .join('\n');
-  return [
-    'You control phone hardware. Pick at most one tool for the request, or "none".',
-    'Tools:', catalog,
-    'Rules: use only listed tool names; argumentsJson must be valid JSON matching args; keep "say" under 12 words.',
-    `Request: ${userText}`,
-  ].join('\n');
+ const catalog = listTools({ onDevice: true })
+ .map(t => `- ${t.name}: ${t.description} args=${JSON.stringify(zodToExample(t.schema))}`)
+ .join('\n');
+ return [
+ 'You control phone hardware. Pick at most one tool for the request, or "none".',
+ 'Tools:', catalog,
+ 'Rules: use only listed tool names; argumentsJson must be valid JSON matching args; keep "say" under 12 words.',
+ `Request: ${userText}`,
+ ].join('\n');
 }
 
 export async function runNanoAgent(userText: string) {
-  const { json, finishReason } = await PixelNano.generateStructured('ToolChoice', toNanoToolPrompt(userText), { temperature: 0.2 });
-  if (finishReason !== 'STOP') throw new Error(`nano_structured:${finishReason}`);
-  const choice = JSON.parse(json) as { tool: string; argumentsJson: string; say: string };
-  if (choice.tool === 'none') return { say: choice.say, result: null };
-  let args: unknown = {};
-  try { args = JSON.parse(choice.argumentsJson || '{}'); } catch { /* fall through with {} */ }
-  const result = await runTool(choice.tool, args);
-  return { say: choice.say, tool: choice.tool, result };
+ const { json, finishReason } = await PixelNano.generateStructured('ToolChoice', toNanoToolPrompt(userText), { temperature: 0.2 });
+ if (finishReason !== 'STOP') throw new Error(`nano_structured:${finishReason}`);
+ const choice = JSON.parse(json) as { tool: string; argumentsJson: string; say: string };
+ if (choice.tool === 'none') return { say: choice.say, result: null };
+ let args: unknown = {};
+ try { args = JSON.parse(choice.argumentsJson || '{}'); } catch { /* fall through with {} */ }
+ const result = await runTool(choice.tool, args);
+ return { say: choice.say, tool: choice.tool, result };
 }
 ```
 
@@ -358,15 +358,15 @@ Handle it defensively:
 ```ts
 const TOOL_CODE = /tool_code\s*\n?\s*([a-z_][a-z0-9_]*)\((.*?)\)/is;
 export function parseToolCode(text: string) {
-  const m = TOOL_CODE.exec(text);
-  if (!m) return null;
-  const name = m[1];
-  const args: Record<string, unknown> = {};
-  for (const kv of m[2].split(',').map(s => s.trim()).filter(Boolean)) {
-    const [k, v] = kv.split('=').map(s => s.trim());
-    args[k] = v === 'True' ? true : v === 'False' ? false : /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v.replace(/^['"]|['"]$/g, '');
-  }
-  return { name, args };
+ const m = TOOL_CODE.exec(text);
+ if (!m) return null;
+ const name = m[1];
+ const args: Record<string, unknown> = {};
+ for (const kv of m[2].split(',').map(s => s.trim()).filter(Boolean)) {
+ const [k, v] = kv.split('=').map(s => s.trim());
+ args[k] = v === 'True' ? true : v === 'False' ? false : /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v.replace(/^['"]|['"]$/g, '');
+ }
+ return { name, args };
 }
 ```
 
@@ -388,8 +388,8 @@ AppFunctions (Android 16+, Jetpack `androidx.appfunctions` 1.0.0-alpha10) let **
 ```groovy
 plugins { id "com.google.devtools.ksp" }
 dependencies {
-  implementation "androidx.appfunctions:appfunctions:1.0.0-alpha10"
-  ksp "androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10"
+ implementation "androidx.appfunctions:appfunctions:1.0.0-alpha10"
+ ksp "androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10"
 }
 ```
 
@@ -414,22 +414,22 @@ data class HardwareStatus(val batteryPct: Int, val thermalHeadroom: Double, val 
 
 @RequiresApi(36)
 @AppFunctionServiceEntryPoint(
-  serviceName = "PixelKitAppFunctionService",
-  appFunctionXmlFileName = "pixelkit_app_functions",
+ serviceName = "PixelKitAppFunctionService",
+ appFunctionXmlFileName = "pixelkit_app_functions",
 )
 abstract class BasePixelKitAppFunctionService : AppFunctionService() {
 
-  /**
-   * Turn the phone's rear flashlight on or off. Use sos=true for an emergency strobe.
-   */
-  @AppFunction(isDescribedByKDoc = true)
-  suspend fun setTorch(params: TorchParams): Boolean = HardwareBridge.setTorch(params.on, params.sos)
+ /**
+ * Turn the phone's rear flashlight on or off. Use sos=true for an emergency strobe.
+ */
+ @AppFunction(isDescribedByKDoc = true)
+ suspend fun setTorch(params: TorchParams): Boolean = HardwareBridge.setTorch(params.on, params.sos)
 
-  /**
-   * Read battery percentage, thermal headroom (0-1) and flashlight state.
-   */
-  @AppFunction(isDescribedByKDoc = true)
-  suspend fun getHardwareStatus(): HardwareStatus = HardwareBridge.status()
+ /**
+ * Read battery percentage, thermal headroom (0-1) and flashlight state.
+ */
+ @AppFunction(isDescribedByKDoc = true)
+ suspend fun getHardwareStatus(): HardwareStatus = HardwareBridge.status()
 }
 ```
 
@@ -450,15 +450,15 @@ Keep these names, parameters and descriptions identical to the JS registry entri
 
 ```xml
 <service
-  android:name=".appfunctions.PixelKitAppFunctionService"
-  android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"
-  android:exported="true"
-  tools:targetApi="36">
-  <property android:name="android.app.appfunctions.schema" android:value="app_functions_schema.xsd" />
-  <property android:name="android.app.appfunctions.v2" android:value="pixelkit_app_functions.xml" />
-  <intent-filter>
-    <action android:name="android.app.appfunctions.AppFunctionService" />
-  </intent-filter>
+ android:name=".appfunctions.PixelKitAppFunctionService"
+ android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"
+ android:exported="true"
+ tools:targetApi="36">
+ <property android:name="android.app.appfunctions.schema" android:value="app_functions_schema.xsd" />
+ <property android:name="android.app.appfunctions.v2" android:value="pixelkit_app_functions.xml" />
+ <intent-filter>
+ <action android:name="android.app.appfunctions.AppFunctionService" />
+ </intent-filter>
 </service>
 <property android:name="android.app.appfunctions.app_metadata" android:resource="@xml/app_metadata" />
 ```
@@ -469,17 +469,17 @@ Add this through an Expo config plugin (`withAndroidManifest`) so `expo prebuild
 
 ```kotlin
 AppFunctionManager.getInstance(context)?.setAppFunctionEnabled(
-  BasePixelKitAppFunctionServiceIds.SET_TORCH_ID,
-  AppFunctionManager.APP_FUNCTION_STATE_ENABLED,
+ BasePixelKitAppFunctionServiceIds.SET_TORCH_ID,
+ AppFunctionManager.APP_FUNCTION_STATE_ENABLED,
 )
 ```
 
 ```bash
 adb shell cmd app_function list-app-functions | grep --after-context 10 com.pixelkit.sdk
 adb shell "cmd app_function execute-app-function \
-  --package com.pixelkit.sdk \
-  --function 'expo.modules.pixelnano.appfunctions.BasePixelKitAppFunctionService#setTorch' \
-  --parameters '{\"params\": {\"on\": true, \"sos\": false}}'"
+ --package com.pixelkit.sdk \
+ --function 'expo.modules.pixelnano.appfunctions.BasePixelKitAppFunctionService#setTorch' \
+ --parameters '{\"params\": {\"on\": true, \"sos\": false}}'"
 ```
 
 If your app is also an **agent** (PixelKit's Delta Bot calling other apps), request `android.permission.EXECUTE_APP_FUNCTIONS` and use `AppFunctionManager` to enumerate and execute other apps' functions, then feed them into the registry as cloud tools.
@@ -490,12 +490,12 @@ If your app is also an **agent** (PixelKit's Delta Bot calling other apps), requ
 
 ```ts
 export async function handleUserIntent(text: string, ctx: { online: boolean; nanoReady: boolean; ai?: GoogleGenAI }) {
-  const short = text.length < 240;
-  if (ctx.nanoReady && short) {
-    try { return await runNanoAgent(text); } catch { /* fall through */ }
-  }
-  if (ctx.online && ctx.ai) return runCloudAgent(ctx.ai, SYSTEM_PROMPT, [], text);
-  return { say: 'Offline and this request needs the cloud.', result: null };
+ const short = text.length < 240;
+ if (ctx.nanoReady && short) {
+ try { return await runNanoAgent(text); } catch { /* fall through */ }
+ }
+ if (ctx.online && ctx.ai) return runCloudAgent(ctx.ai, SYSTEM_PROMPT, [], text);
+ return { say: 'Offline and this request needs the cloud.', result: null };
 }
 ```
 

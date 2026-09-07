@@ -1,4 +1,4 @@
-# Voice: Speech In, Speech Out, and Live Voice Agents 🎙️
+# Voice: Speech In, Speech Out, and Live Voice Agents
 
 > Three voice tiers for the Pixel 11 Pro: (1) **on-device streaming speech-to-text** with ML Kit GenAI Speech Recognition (Advanced mode is Pixel 10/11 exclusive), (2) **realtime bidirectional voice agents** with the Gemini Live API over WebSockets using ephemeral tokens, and (3) **text-to-speech** on device (`expo-speech`) or with Gemini TTS. Plus the HiLight / haptic status language Google's own Gemini uses.
 
@@ -29,9 +29,9 @@ Audio formats you will meet: **16 kHz, mono, 16-bit little-endian PCM** into eve
 import { requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 
 export async function prepareMic() {
-  const { granted } = await requestRecordingPermissionsAsync();
-  if (!granted) throw new Error('RECORD_AUDIO denied');
-  await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+ const { granted } = await requestRecordingPermissionsAsync();
+ if (!granted) throw new Error('RECORD_AUDIO denied');
+ await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
 }
 ```
 
@@ -45,17 +45,17 @@ export async function prepareMic() {
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
 
 const SPEECH_16K = {
-  ...RecordingPresets.LOW_QUALITY,
-  android: { extension: '.m4a', outputFormat: 'mpeg4', audioEncoder: 'aac', sampleRate: 16000, numberOfChannels: 1, bitRate: 48000 },
-  isMeteringEnabled: true,
+ ...RecordingPresets.LOW_QUALITY,
+ android: { extension: '.m4a', outputFormat: 'mpeg4', audioEncoder: 'aac', sampleRate: 16000, numberOfChannels: 1, bitRate: 48000 },
+ isMeteringEnabled: true,
 } as const;
 
 export function useDictationRecorder() {
-  const recorder = useAudioRecorder(SPEECH_16K);
-  const state = useAudioRecorderState(recorder);          // isRecording, durationMillis, metering (dBFS)
-  const start = async () => { await recorder.prepareToRecordAsync(); recorder.record(); };
-  const stop = async () => { await recorder.stop(); return recorder.uri; };
-  return { start, stop, state };
+ const recorder = useAudioRecorder(SPEECH_16K);
+ const state = useAudioRecorderState(recorder); // isRecording, durationMillis, metering (dBFS)
+ const start = async () => { await recorder.prepareToRecordAsync(); recorder.record(); };
+ const stop = async () => { await recorder.stop(); return recorder.uri; };
+ return { start, stop, state };
 }
 ```
 
@@ -80,25 +80,25 @@ import android.util.Base64
 import kotlin.concurrent.thread
 
 class PcmMic(private val emit: (ByteArray) -> Unit) {
-  private var record: AudioRecord? = null
-  @Volatile private var running = false
+ private var record: AudioRecord? = null
+ @Volatile private var running = false
 
-  fun start(sampleRate: Int = 16000) {
-    val minBuf = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
-    val buf = maxOf(minBuf, sampleRate / 10 * 2) // 100 ms chunks → ~3,200 bytes at 16 kHz
-    record = AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, sampleRate,
-      AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buf * 2).also { it.startRecording() }
-    running = true
-    thread(name = "PcmMic") {
-      val chunk = ByteArray(buf)
-      while (running) {
-        val n = record?.read(chunk, 0, chunk.size) ?: -1
-        if (n > 0) emit(chunk.copyOf(n))
-      }
-    }
-  }
+ fun start(sampleRate: Int = 16000) {
+ val minBuf = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+ val buf = maxOf(minBuf, sampleRate / 10 * 2) // 100 ms chunks → ~3,200 bytes at 16 kHz
+ record = AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, sampleRate,
+ AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buf * 2).also { it.startRecording() }
+ running = true
+ thread(name = "PcmMic") {
+ val chunk = ByteArray(buf)
+ while (running) {
+ val n = record?.read(chunk, 0, chunk.size) ?: -1
+ if (n > 0) emit(chunk.copyOf(n))
+ }
+ }
+ }
 
-  fun stop() { running = false; record?.run { stop(); release() }; record = null }
+ fun stop() { running = false; record?.run { stop(); release() }; record = null }
 }
 ```
 
@@ -109,9 +109,9 @@ private var mic: PcmMic? = null
 
 Events("onPcmChunk")
 Function("startPcmMic") { sampleRate: Int ->
-  mic?.stop()
-  mic = PcmMic { bytes -> sendEvent("onPcmChunk", bundleOf("base64" to Base64.encodeToString(bytes, Base64.NO_WRAP))) }
-  mic!!.start(sampleRate)
+ mic?.stop()
+ mic = PcmMic { bytes -> sendEvent("onPcmChunk", bundleOf("base64" to Base64.encodeToString(bytes, Base64.NO_WRAP))) }
+ mic!!.start(sampleRate)
 }
 Function("stopPcmMic") { mic?.stop(); mic = null }
 ```
@@ -123,14 +123,14 @@ import android.media.AudioAttributes
 import android.media.AudioTrack
 
 class PcmSpeaker(sampleRate: Int = 24000) {
-  private val track = AudioTrack.Builder()
-    .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-    .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(sampleRate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
-    .setBufferSizeInBytes(sampleRate * 2) // 1 s
-    .setTransferMode(AudioTrack.MODE_STREAM).build().also { it.play() }
-  fun write(pcm: ByteArray) = track.write(pcm, 0, pcm.size)
-  fun flush() { track.pause(); track.flush(); track.play() }   // barge-in: drop queued audio instantly
-  fun release() = track.release()
+ private val track = AudioTrack.Builder()
+ .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+ .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(sampleRate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+ .setBufferSizeInBytes(sampleRate * 2) // 1 s
+ .setTransferMode(AudioTrack.MODE_STREAM).build().also { it.play() }
+ fun write(pcm: ByteArray) = track.write(pcm, 0, pcm.size)
+ fun flush() { track.pause(); track.flush(); track.play() } // barge-in: drop queued audio instantly
+ fun release() = track.release()
 }
 ```
 
@@ -185,27 +185,27 @@ private val scope = CoroutineScope(Dispatchers.Default)
 Events("onTranscript", "onSttError", "onSttDownload")
 
 AsyncFunction("sttStatus") Coroutine { locale: String, preferAdvanced: Boolean ->
-  val r = sttClient(locale, preferAdvanced)
-  statusName(r.checkStatus())
+ val r = sttClient(locale, preferAdvanced)
+ statusName(r.checkStatus())
 }
 
 AsyncFunction("sttDownload") Coroutine { locale: String, preferAdvanced: Boolean ->
-  sttClient(locale, preferAdvanced).download().collect { sendEvent("onSttDownload", bundleOf("state" to it.toString())) }
-  statusName(sttClient(locale, preferAdvanced).checkStatus())
+ sttClient(locale, preferAdvanced).download().collect { sendEvent("onSttDownload", bundleOf("state" to it.toString())) }
+ statusName(sttClient(locale, preferAdvanced).checkStatus())
 }
 
 Function("sttStart") { locale: String, preferAdvanced: Boolean ->
-  val r = sttClient(locale, preferAdvanced)
-  sttJob?.cancel()
-  sttJob = scope.launch {
-    try {
-      r.startRecognition(SpeechRecognizerRequest(audioSource = AudioSource.fromMic())).collect { res ->
-        sendEvent("onTranscript", bundleOf("text" to res.text, "isFinal" to res.isFinal))
-      }
-    } catch (e: Exception) {
-      sendEvent("onSttError", bundleOf("message" to (e.message ?: "stt failed")))
-    }
-  }
+ val r = sttClient(locale, preferAdvanced)
+ sttJob?.cancel()
+ sttJob = scope.launch {
+ try {
+ r.startRecognition(SpeechRecognizerRequest(audioSource = AudioSource.fromMic())).collect { res ->
+ sendEvent("onTranscript", bundleOf("text" to res.text, "isFinal" to res.isFinal))
+ }
+ } catch (e: Exception) {
+ sendEvent("onSttError", bundleOf("message" to (e.message ?: "stt failed")))
+ }
+ }
 }
 
 Function("sttStop") { sttJob?.cancel(); stt?.stopRecognition() }
@@ -213,12 +213,12 @@ Function("sttStop") { sttJob?.cancel(); stt?.stopRecognition() }
 OnDestroy { sttJob?.cancel(); stt?.close(); stt = null }
 
 private fun sttClient(locale: String, preferAdvanced: Boolean): SpeechRecognizer =
-  stt ?: SpeechRecognition.getClient(
-    SpeechRecognizerOptions.builder()
-      .setLocale(java.util.Locale.forLanguageTag(locale))
-      .setPreferredMode(if (preferAdvanced) SpeechRecognizerOptions.Mode.ADVANCED else SpeechRecognizerOptions.Mode.BASIC)
-      .build()
-  ).also { stt = it }
+ stt ?: SpeechRecognition.getClient(
+ SpeechRecognizerOptions.builder()
+ .setLocale(java.util.Locale.forLanguageTag(locale))
+ .setPreferredMode(if (preferAdvanced) SpeechRecognizerOptions.Mode.ADVANCED else SpeechRecognizerOptions.Mode.BASIC)
+ .build()
+ ).also { stt = it }
 ```
 
 Confirm the exact option/response property names against the current [Speech Recognition API reference](https://developers.google.com/ml-kit/genai/speech-recognition/android) when you compile; the API is alpha. For file input use `AudioSource.fromPfd(parcelFileDescriptor)` with raw headerless 16 kHz mono PCM16 fed at real-time rate (~32 KB/s).
@@ -240,35 +240,35 @@ import { useCallback, useEffect, useState } from 'react';
 import PixelNano from '../../packages/mlkit/src';
 
 export function useSpeechToText(locale = 'en-US') {
-  const [partial, setPartial] = useState('');
-  const [finals, setFinals] = useState<string[]>([]);
-  const [isListening, setListening] = useState(false);
-  const [status, setStatus] = useState<'unknown' | 'available' | 'downloadable' | 'downloading' | 'unavailable'>('unknown');
+ const [partial, setPartial] = useState('');
+ const [finals, setFinals] = useState<string[]>([]);
+ const [isListening, setListening] = useState(false);
+ const [status, setStatus] = useState<'unknown' | 'available' | 'downloadable' | 'downloading' | 'unavailable'>('unknown');
 
-  useEffect(() => {
-    const a = PixelNano.addListener('onTranscript', e => {
-      if (e.isFinal) { setFinals(f => [...f, e.text]); setPartial(''); } else setPartial(e.text);
-    });
-    const b = PixelNano.addListener('onSttError', () => setListening(false));
-    return () => { a.remove(); b.remove(); };
-  }, []);
+ useEffect(() => {
+ const a = PixelNano.addListener('onTranscript', e => {
+ if (e.isFinal) { setFinals(f => [...f, e.text]); setPartial(''); } else setPartial(e.text);
+ });
+ const b = PixelNano.addListener('onSttError', () => setListening(false));
+ return () => { a.remove(); b.remove(); };
+ }, []);
 
-  const ensureReady = useCallback(async () => {
-    let s = await PixelNano.sttStatus(locale, true);
-    if (s === 'downloadable') { setStatus('downloading'); s = await PixelNano.sttDownload(locale, true); }
-    setStatus(s);
-    return s === 'available';
-  }, [locale]);
+ const ensureReady = useCallback(async () => {
+ let s = await PixelNano.sttStatus(locale, true);
+ if (s === 'downloadable') { setStatus('downloading'); s = await PixelNano.sttDownload(locale, true); }
+ setStatus(s);
+ return s === 'available';
+ }, [locale]);
 
-  const start = useCallback(async () => {
-    if (!(await ensureReady())) throw new Error(`stt:${status}`);
-    setFinals([]); setPartial(''); setListening(true);
-    PixelNano.sttStart(locale, true);
-  }, [ensureReady, locale, status]);
+ const start = useCallback(async () => {
+ if (!(await ensureReady())) throw new Error(`stt:${status}`);
+ setFinals([]); setPartial(''); setListening(true);
+ PixelNano.sttStart(locale, true);
+ }, [ensureReady, locale, status]);
 
-  const stop = useCallback(() => { PixelNano.sttStop(); setListening(false); return [...finals, partial].filter(Boolean).join(' ').trim(); }, [finals, partial]);
+ const stop = useCallback(() => { PixelNano.sttStop(); setListening(false); return [...finals, partial].filter(Boolean).join(' ').trim(); }, [finals, partial]);
 
-  return { partial, finals, transcript: [...finals, partial].join(' ').trim(), isListening, status, start, stop };
+ return { partial, finals, transcript: [...finals, partial].join(' ').trim(), isListening, status, start, stop };
 }
 ```
 
@@ -293,13 +293,13 @@ For non-Pixel or Basic-mode-unavailable devices:
 
 ```kotlin
 if (android.speech.SpeechRecognizer.isOnDeviceRecognitionAvailable(ctx)) {
-  val sr = android.speech.SpeechRecognizer.createOnDeviceSpeechRecognizer(ctx)
-  val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-    putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-    putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-    putExtra(android.speech.RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-  }
-  sr.setRecognitionListener(listener); sr.startListening(intent)
+ val sr = android.speech.SpeechRecognizer.createOnDeviceSpeechRecognizer(ctx)
+ val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+ putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+ putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+ putExtra(android.speech.RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+ }
+ sr.setRecognitionListener(listener); sr.startListening(intent)
 }
 ```
 
@@ -309,8 +309,8 @@ Same `onTranscript` event shape, so the hook does not change.
 
 ```ts
 const res = await ai.models.generateContent({
-  model: 'gemini-3.5-transcribe',
-  contents: [{ role: 'user', parts: [{ inlineData: { mimeType: 'audio/mp4', data: base64 } }, { text: 'Transcribe with speaker labels.' }] }],
+ model: 'gemini-3.5-transcribe',
+ contents: [{ role: 'user', parts: [{ inlineData: { mimeType: 'audio/mp4', data: base64 } }, { text: 'Transcribe with speaker labels.' }] }],
 });
 ```
 
@@ -329,18 +329,18 @@ import { GoogleGenAI, Modality } from '@google/genai';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { apiVersion: 'v1alpha' } });
 
 export async function mintLiveToken() {
-  const token = await ai.authTokens.create({
-    config: {
-      uses: 1,
-      expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString(),          // session may last 30 min
-      newSessionExpireTime: new Date(Date.now() + 60 * 1000).toISOString(),      // must connect within 60 s
-      liveConnectConstraints: {
-        model: 'gemini-3.1-flash-live-preview',
-        config: { responseModalities: [Modality.AUDIO] },                        // token cannot be reused for text/other models
-      },
-    },
-  });
-  return token.name;
+ const token = await ai.authTokens.create({
+ config: {
+ uses: 1,
+ expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // session may last 30 min
+ newSessionExpireTime: new Date(Date.now() + 60 * 1000).toISOString(), // must connect within 60 s
+ liveConnectConstraints: {
+ model: 'gemini-3.1-flash-live-preview',
+ config: { responseModalities: [Modality.AUDIO] }, // token cannot be reused for text/other models
+ },
+ },
+ });
+ return token.name;
 }
 ```
 
@@ -368,84 +368,84 @@ import { toFunctionDeclarations, runTool } from './tools/registry';
 export type LiveState = 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error';
 
 export function useLiveVoiceAgent(opts: { systemInstruction: string; voiceName?: string }) {
-  const [state, setState] = useState<LiveState>('idle');
-  const [userText, setUserText] = useState('');
-  const [modelText, setModelText] = useState('');
-  const session = useRef<Session | null>(null);
-  const micSub = useRef<{ remove(): void } | null>(null);
+ const [state, setState] = useState<LiveState>('idle');
+ const [userText, setUserText] = useState('');
+ const [modelText, setModelText] = useState('');
+ const session = useRef<Session | null>(null);
+ const micSub = useRef<{ remove(): void } | null>(null);
 
-  const connect = useCallback(async (tokenName: string) => {
-    setState('connecting');
-    const ai = new GoogleGenAI({ apiKey: tokenName, httpOptions: { apiVersion: 'v1alpha' } });
+ const connect = useCallback(async (tokenName: string) => {
+ setState('connecting');
+ const ai = new GoogleGenAI({ apiKey: tokenName, httpOptions: { apiVersion: 'v1alpha' } });
 
-    session.current = await ai.live.connect({
-      model: 'gemini-3.1-flash-live-preview',
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: opts.voiceName ?? 'Kore' } } },
-        systemInstruction: opts.systemInstruction,
-        tools: [{ functionDeclarations: toFunctionDeclarations() }],
-        inputAudioTranscription: {},
-        outputAudioTranscription: {},
-        realtimeInputConfig: {
-          automaticActivityDetection: {
-            disabled: false,
-            startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_HIGH,
-            endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
-            prefixPaddingMs: 40,
-            silenceDurationMs: 500,
-          },
-        },
-        contextWindowCompression: { slidingWindow: {} },
-        sessionResumption: {},                    // server sends sessionResumptionUpdate handles
-      },
-      callbacks: {
-        onopen: () => {
-          PixelNano.speakerStart(24000);
-          PixelNano.startPcmMic(16000);
-          micSub.current = PixelNano.addListener('onPcmChunk', e =>
-            session.current?.sendRealtimeInput({ audio: { data: e.base64, mimeType: 'audio/pcm;rate=16000' } }),
-          );
-          setState('listening');
-        },
-        onmessage: (m: LiveServerMessage) => void handle(m),
-        onerror: () => setState('error'),
-        onclose: () => { teardown(); setState('idle'); },
-      },
-    });
-  }, [opts.systemInstruction, opts.voiceName]);
+ session.current = await ai.live.connect({
+ model: 'gemini-3.1-flash-live-preview',
+ config: {
+ responseModalities: [Modality.AUDIO],
+ speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: opts.voiceName ?? 'Kore' } } },
+ systemInstruction: opts.systemInstruction,
+ tools: [{ functionDeclarations: toFunctionDeclarations() }],
+ inputAudioTranscription: {},
+ outputAudioTranscription: {},
+ realtimeInputConfig: {
+ automaticActivityDetection: {
+ disabled: false,
+ startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_HIGH,
+ endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
+ prefixPaddingMs: 40,
+ silenceDurationMs: 500,
+ },
+ },
+ contextWindowCompression: { slidingWindow: {} },
+ sessionResumption: {}, // server sends sessionResumptionUpdate handles
+ },
+ callbacks: {
+ onopen: () => {
+ PixelNano.speakerStart(24000);
+ PixelNano.startPcmMic(16000);
+ micSub.current = PixelNano.addListener('onPcmChunk', e =>
+ session.current?.sendRealtimeInput({ audio: { data: e.base64, mimeType: 'audio/pcm;rate=16000' } }),
+ );
+ setState('listening');
+ },
+ onmessage: (m: LiveServerMessage) => void handle(m),
+ onerror: () => setState('error'),
+ onclose: () => { teardown(); setState('idle'); },
+ },
+ });
+ }, [opts.systemInstruction, opts.voiceName]);
 
-  async function handle(m: LiveServerMessage) {
-    const sc = m.serverContent;
-    if (sc?.interrupted) { PixelNano.speakerFlush(); setState('listening'); return; }   // barge-in
-    if (sc?.inputTranscription?.text) setUserText(t => t + sc.inputTranscription!.text);
-    if (sc?.outputTranscription?.text) setModelText(t => t + sc.outputTranscription!.text);
-    for (const part of sc?.modelTurn?.parts ?? []) {
-      if (part.inlineData?.data) { setState('speaking'); PixelNano.speakerWrite(part.inlineData.data); }
-    }
-    if (sc?.turnComplete) { setState('listening'); setModelText(''); setUserText(''); }
+ async function handle(m: LiveServerMessage) {
+ const sc = m.serverContent;
+ if (sc?.interrupted) { PixelNano.speakerFlush(); setState('listening'); return; } // barge-in
+ if (sc?.inputTranscription?.text) setUserText(t => t + sc.inputTranscription!.text);
+ if (sc?.outputTranscription?.text) setModelText(t => t + sc.outputTranscription!.text);
+ for (const part of sc?.modelTurn?.parts ?? []) {
+ if (part.inlineData?.data) { setState('speaking'); PixelNano.speakerWrite(part.inlineData.data); }
+ }
+ if (sc?.turnComplete) { setState('listening'); setModelText(''); setUserText(''); }
 
-    if (m.toolCall?.functionCalls?.length) {
-      setState('thinking');
-      const calls = m.toolCall.functionCalls;
-      const results = await Promise.all(calls.map(c => runTool(c.name!, c.args)));
-      session.current?.sendToolResponse({
-        functionResponses: calls.map((c, i) => ({ id: c.id, name: c.name!, response: results[i] as Record<string, unknown> })),
-      });
-    }
-    if (m.goAway) { /* server will close soon; reconnect with the last sessionResumptionUpdate.newHandle */ }
-  }
+ if (m.toolCall?.functionCalls?.length) {
+ setState('thinking');
+ const calls = m.toolCall.functionCalls;
+ const results = await Promise.all(calls.map(c => runTool(c.name!, c.args)));
+ session.current?.sendToolResponse({
+ functionResponses: calls.map((c, i) => ({ id: c.id, name: c.name!, response: results[i] as Record<string, unknown> })),
+ });
+ }
+ if (m.goAway) { /* server will close soon; reconnect with the last sessionResumptionUpdate.newHandle */ }
+ }
 
-  function teardown() {
-    micSub.current?.remove(); micSub.current = null;
-    PixelNano.stopPcmMic(); PixelNano.speakerStop();
-  }
+ function teardown() {
+ micSub.current?.remove(); micSub.current = null;
+ PixelNano.stopPcmMic(); PixelNano.speakerStop();
+ }
 
-  const disconnect = useCallback(() => { session.current?.close(); session.current = null; teardown(); setState('idle'); }, []);
-  const sendText = useCallback((text: string) =>
-    session.current?.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true }), []);
+ const disconnect = useCallback(() => { session.current?.close(); session.current = null; teardown(); setState('idle'); }, []);
+ const sendText = useCallback((text: string) =>
+ session.current?.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true }), []);
 
-  return { state, userText, modelText, connect, disconnect, sendText };
+ return { state, userText, modelText, connect, disconnect, sendText };
 }
 ```
 
@@ -488,11 +488,11 @@ There is no public hotword API. Use a **push-to-talk** `HapticButton`, or the ML
 import * as Speech from 'expo-speech';
 
 export async function speakLocal(text: string, language = 'en-US') {
-  const voices = await Speech.getAvailableVoicesAsync();
-  const voice = voices.find(v => v.language === language && /network|enhanced|neural/i.test(v.identifier))?.identifier;
-  return new Promise<void>(resolve =>
-    Speech.speak(text, { language, voice, rate: 1.0, pitch: 1.0, onDone: resolve, onStopped: resolve, onError: () => resolve() }),
-  );
+ const voices = await Speech.getAvailableVoicesAsync();
+ const voice = voices.find(v => v.language === language && /network|enhanced|neural/i.test(v.identifier))?.identifier;
+ return new Promise<void>(resolve =>
+ Speech.speak(text, { language, voice, rate: 1.0, pitch: 1.0, onDone: resolve, onStopped: resolve, onError: () => resolve() }),
+ );
 }
 ```
 
@@ -506,9 +506,9 @@ Pixel ships Google's on-device neural voices; the regex above prefers them when 
 
 ```ts
 const res = await ai.models.generateContent({
-  model: 'gemini-3.1-flash-tts-preview',
-  contents: [{ role: 'user', parts: [{ text: 'Say warmly: Thermal headroom is nominal.' }] }],
-  config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } },
+ model: 'gemini-3.1-flash-tts-preview',
+ contents: [{ role: 'user', parts: [{ text: 'Say warmly: Thermal headroom is nominal.' }] }],
+ config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } },
 });
 const pcm24k = res.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 if (pcm24k) { PixelNano.speakerStart(24000); PixelNano.speakerWrite(pcm24k); }

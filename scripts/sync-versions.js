@@ -1,10 +1,10 @@
 /**
  * @file sync-versions.js
- * @description Puts every workspace package and the Android versionCode on the root version.
+ * @description Puts every workspace package on the root version.
  *
- * Rule 1 bumps `package.json`, `app.json` and `expo.android.versionCode` together. Once the SDK
- * ships from `packages/`, three more manifests have to move with them, and `pixelkit` pins its two
- * native modules by exact version: a mismatch there publishes a package that cannot resolve its own
+ * pixelkit pins its native modules by exact version, in dependencies and peerDependencies both:
+ * a mismatch publishes a package that cannot resolve its own dependencies. This makes that
+ * impossible to forget.
  * dependencies. This makes that impossible to forget.
  *
  * Usage: `node scripts/sync-versions.js` (after editing the root version), or
@@ -59,14 +59,4 @@ for (const name of NAMES) {
   writeJson(p, pkg);
 }
 
-const appPath = path.join(ROOT, 'app.json');
-const app = readJson(appPath);
-const previous = app.expo.version;
-app.expo.version = version;
-if (previous !== version) app.expo.android.versionCode += 1;
-writeJson(appPath, app);
-
-console.log(
-  `version ${version} across root + ${NAMES.length} packages; ` +
-    `app.json versionCode ${app.expo.android.versionCode}`
-);
+console.log(`version ${version} across the root and ${NAMES.length} packages`);

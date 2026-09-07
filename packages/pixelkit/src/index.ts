@@ -27,8 +27,6 @@
  *   useSpeech,
  *   useSecurity,
  *   useADPF,
- *   MetricCard,
- *   HapticButton
  * } from './src';
  * ```
  */
@@ -37,7 +35,6 @@
 export * from './core/types';
 export * from './core/surface-types';
 export * from './core/capabilities';
-export * from './theme/colors';
 
 // Device Capability Resolution (read this before any Pro-exclusive hook)
 export { useCapabilities } from './hardware/useCapabilities';
@@ -82,13 +79,5 @@ export { useSpeechAI } from './ai/useSpeechAI';
 export { useSpeech } from './ai/useSpeech';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';
 
-// Reusable UI Primitives
-export { HapticButton, type HapticButtonProps } from './components/HapticButton';
-export { MetricCard, type MetricCardProps } from './components/MetricCard';
-export { SensorVisualizer, type SensorVisualizerProps } from './components/SensorVisualizer';
-export { ScreenScaffold, ScreenHeader, SectionTabs } from './components/ScreenScaffold';
 
-// Design system, decorative primitives and observability, as used by the demo app
 export * from './core/observability';
-export * from './theme/mode';
-export * from './components/Decor';

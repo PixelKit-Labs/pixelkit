@@ -7,7 +7,7 @@ This document is the consolidated reference for every hook in the PixelKit SDK (
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Architectural Overview](#-architectural-overview)
 2. [Silicon & Compute Hooks](#-silicon--compute-hooks) — [useCPU](#usecpu) · [useGPU](#usegpu) · [useTPU](#usetpu) · [useMemory](#usememory) · [useADPF](#useadpf)
@@ -19,43 +19,43 @@ This document is the consolidated reference for every hook in the PixelKit SDK (
 
 ---
 
-## 🏛️ Architectural Overview
+## Architectural Overview
 
 PixelKit exposes Pixel 11 Pro hardware to React Native through Expo modules and two local Kotlin Expo Modules.
 
 ```
 +-------------------------------------------------------------------------+
-|                           REACT NATIVE / EXPO                           |
-|                      (Hermes Bytecode Execution)                        |
+| REACT NATIVE / EXPO |
+| (Hermes Bytecode Execution) |
 +-------------------------------------------------------------------------+
-                                     |
+ |
 +-------------------------------------------------------------------------+
-|                            PIXELKIT SDK                                 |
-|                        (packages/pixelkit/src/index.ts Re-exports)                        |
+| PIXELKIT SDK |
+| (packages/pixelkit/src/index.ts Re-exports) |
 +-------------------------------------------------------------------------+
-        |                  |                    |                  |
-+---------------+  +---------------+  +------------------+  +---------------+
-|  CPU / GPU    |  |  Tensor TPU   |  | Pro Exclusives   |  | Keystore      |
-|  Tensor G6    |  |  AICore/Nano  |  | HiLight LED ring |  | StrongBox     |
-|  real cpufreq |  |  ML Kit GenAI |  | UWB ranging      |  | Biometrics    |
-+---------------+  +---------------+  +------------------+  +---------------+
+ | | | |
++---------------+ +---------------+ +------------------+ +---------------+
+| CPU / GPU | | Tensor TPU | | Pro Exclusives | | Keystore |
+| Tensor G6 | | AICore/Nano | | HiLight LED ring | | StrongBox |
+| real cpufreq | | ML Kit GenAI | | UWB ranging | | Biometrics |
++---------------+ +---------------+ +------------------+ +---------------+
 ```
 
 Every hook is exported from `./src`:
 ```typescript
 import {
-  useCPU, useGPU, useTPU, useMemory, useADPF,
-  useHiLight, useUWB,
-  useGemini, useGeminiNano, useGenAITasks, useNaturalLanguageAI, useSpeechAI, useSpeech, useVisionAI,
-  useSensors, useCamera, useTorch, useHaptics,
-  useBiometrics, useSecurity, useBLE, useNFC, useRadios, useLocation,
-  useAudio, useVideo, useMediaLibrary, useCellular, useCapabilities, useDisplay, useDevice, useNetwork,
+ useCPU, useGPU, useTPU, useMemory, useADPF,
+ useHiLight, useUWB,
+ useGemini, useGeminiNano, useGenAITasks, useNaturalLanguageAI, useSpeechAI, useSpeech, useVisionAI,
+ useSensors, useCamera, useTorch, useHaptics,
+ useBiometrics, useSecurity, useBLE, useNFC, useRadios, useLocation,
+ useAudio, useVideo, useMediaLibrary, useCellular, useCapabilities, useDisplay, useDevice, useNetwork,
 } from 'pixelkit';
 ```
 
 ---
 
-## 💻 Silicon & Compute Hooks
+## Silicon & Compute Hooks
 
 > All silicon hooks read real device state through `PixelNative` (`packages/native`). Full field-by-field output tables live in [`docs/api/silicon-compute.md`](api/silicon-compute.md).
 
@@ -68,11 +68,11 @@ import {
 
 ```typescript
 coreTopology: string; coreCount: number;
-cpuLoadPercent: number | null;     // cluster frequency utilisation, %
-appCpuPercent: number | null;      // this process's share of all cores, %
+cpuLoadPercent: number | null; // cluster frequency utilisation, %
+appCpuPercent: number | null; // this process's share of all cores, %
 cores: { index; part; name; curMHz; maxMHz; minMHz }[];
 clusters: { part; name; maxMHz; count }[];
-governorMode: string;              // read-only without root
+governorMode: string; // read-only without root
 lastBenchmarkDurationMs: number | null; isBenchmarking: boolean;
 source: TelemetrySource;
 ```
@@ -94,7 +94,7 @@ source: TelemetrySource;
 gpuRenderer: string | null; gpuVendor: string | null; graphicsApi: string | null;
 frameRenderTimeMs: number | null; maxFrameMs: number | null; measuredFps: number | null;
 droppedFrameCount: number; jankFramesLastSecond: number;
-targetBudgetMs: number;            // 8.33 @120 Hz
+targetBudgetMs: number; // 8.33 @120 Hz
 isStuttering: boolean; gpuMemoryUsageMB: null; source: TelemetrySource;
 ```
 
@@ -164,7 +164,7 @@ targetFps: number | null; currentFps: number | null; source: TelemetrySource;
 
 ---
 
-## 🎯 Pixel Pro Exclusive Silicon
+## Pixel Pro Exclusive Silicon
 
 > Full field tables: [`docs/api/pro-exclusives.md`](api/pro-exclusives.md).
 
@@ -179,9 +179,9 @@ targetFps: number | null; currentFps: number | null; source: TelemetrySource;
 availability: 'hardware' | 'unavailable' | 'unsupported';
 isHardwareSupported: boolean; isDaemonConnected: boolean;
 isActive: boolean; currentColor: string; mode: HiLightMode;
-brightness: number;                // 0.0 to 1.0, scales RGB
+brightness: number; // 0.0 to 1.0, scales RGB
 isFaceDownMode: boolean; error: string | null; source: TelemetrySource;
-partial: string;                   // text streamed so far for the in-flight reply
+partial: string; // text streamed so far for the in-flight reply
 lastFirstChunkMs: number | null; lastPromptTokens: number | null;
 lastGrounding: { queries: string[]; sources: string[] } | null;
 safetyThreshold: 'default' | HarmBlockThreshold; searchGrounding: boolean;
@@ -218,7 +218,7 @@ const hilight = useHiLight();
 ```typescript
 isSupported: boolean; isEnabled: boolean; chipId: string | null;
 rangingApiSupported: boolean; isRanging: boolean;
-activeTargets: UWBSpatialTarget[];       // { deviceId, distanceMeters, azimuthDegrees, elevationDegrees, signalQuality }
+activeTargets: UWBSpatialTarget[]; // { deviceId, distanceMeters, azimuthDegrees, elevationDegrees, signalQuality }
 sessionInfo: UwbRangingResult | null; sessionError: string | null;
 error: string | null; source: TelemetrySource;
 ```
@@ -230,7 +230,7 @@ error: string | null; source: TelemetrySource;
 
 ---
 
-## 🧠 Neural & Intelligence Hooks
+## Neural & Intelligence Hooks
 
 > Full field tables: [`docs/api/neural-ai.md`](api/neural-ai.md).
 
@@ -242,7 +242,7 @@ error: string | null; source: TelemetrySource;
 * **Outputs**: [field table →](api/neural-ai.md#usegemini)
 
 ```typescript
-messages: AIMessage[];             // 'system' entries are local errors, not model output
+messages: AIMessage[]; // 'system' entries are local errors, not model output
 isLoading: boolean; hasApiKey: boolean;
 model: string; availableModels: string[];
 temperature: number; topP: number; topK: number; maxOutputTokens: number;
@@ -275,7 +275,7 @@ error: string | null; source: TelemetrySource;
 
 ```typescript
 status: 'available' | 'downloadable' | 'downloading' | 'unavailable'; isAvailable: boolean;
-info: NanoModelInfo | null;        // baseModelName, tokenLimit, feature flags
+info: NanoModelInfo | null; // baseModelName, tokenLimit, feature flags
 messages: AIMessage[]; partial: string; thoughts: string[];
 lastLatencyMs: number | null; lastFirstTokenMs: number | null;
 lastOutputTokens: number | null; lastDecodeTokensPerSec: number | null;
@@ -334,10 +334,10 @@ rewriteResult: RewriteResult | null; imageDescriptionResult: ImageDescriptionRes
 
 ```typescript
 isProcessing: boolean; error: string | null; source: TelemetrySource;
-languageResult: LanguageIdResult | null;       // { languageCode, possibleLanguages, latencyMs }
-translationResult: TranslationResult | null;   // { translatedText, sourceLanguage, targetLanguage, latencyMs }
-smartReplyResult: SmartReplyResult | null;     // { suggestions, status, latencyMs }
-entityResult: EntityExtractionResult | null;   // { entities: [{ type, text, start, end }], latencyMs }
+languageResult: LanguageIdResult | null; // { languageCode, possibleLanguages, latencyMs }
+translationResult: TranslationResult | null; // { translatedText, sourceLanguage, targetLanguage, latencyMs }
+smartReplyResult: SmartReplyResult | null; // { suggestions, status, latencyMs }
+entityResult: EntityExtractionResult | null; // { entities: [{ type, text, start, end }], latencyMs }
 ```
 
 | Function | Inputs | Returns | Description |
@@ -359,8 +359,8 @@ entityResult: EntityExtractionResult | null;   // { entities: [{ type, text, sta
 ```typescript
 isListening: boolean; isTranscribing: boolean;
 recognitionMode: 'on-device' | 'cloud'; isOfflineAvailable: boolean;
-streamingPartial: string; voiceDecibels: number;      // dBFS
-lastTranscript: SpeechTranscriptionResult | null;     // confidence is null for cloud
+streamingPartial: string; voiceDecibels: number; // dBFS
+lastTranscript: SpeechTranscriptionResult | null; // confidence is null for cloud
 lastRecordingUri: string | null; error: string | null;
 source: TelemetrySource; model: string;
 ```
@@ -382,7 +382,7 @@ source: TelemetrySource; model: string;
 
 ```typescript
 isSpeaking: boolean; isPaused: boolean;
-voices: Voice[];                 // { identifier, name, language, quality }
+voices: Voice[]; // { identifier, name, language, quality }
 voice: string | null; rate: number; pitch: number;
 maxInputLength: number; lastSpokenText: string | null;
 error: string | null; source: TelemetrySource;
@@ -433,7 +433,7 @@ error: string | null; source: TelemetrySource;
 
 ---
 
-## 📡 Sensors & Physical Actuators
+## Sensors & Physical Actuators
 
 > Full field tables: [`docs/api/sensors-actuators.md`](api/sensors-actuators.md).
 
@@ -448,9 +448,9 @@ error: string | null; source: TelemetrySource;
 | `updateIntervalMs` | `number` | `100` | Sampling period in ms for the IMU, magnetometer and barometer; the light sensor samples at twice this. Changing it re-subscribes every sensor. |
 
 ```typescript
-accelerometer: Vector3D;           // g
-gyroscope: Vector3D;               // rad/s
-magnetometer: Vector3D;            // μT
+accelerometer: Vector3D; // g
+gyroscope: Vector3D; // rad/s
+magnetometer: Vector3D; // μT
 barometer: { pressure: number | null; relativeAltitude?: number | null };
 lightLux?: number; isAvailable: boolean; hasMotionSample: boolean;
 barometerAvailable: boolean | null; lightAvailable: boolean | null;
@@ -469,15 +469,15 @@ error: string | null; source: TelemetrySource;
 * **Outputs**: [field table →](api/sensors-actuators.md#usecamera)
 
 ```typescript
-cameraRef: RefObject<CameraView | null>;      // attach to your CameraView
+cameraRef: RefObject<CameraView | null>; // attach to your CameraView
 viewProps: { facing, zoom, flash, enableTorch, mode };
-facing: 'back' | 'front'; zoomFactor: number;  // 0..1
+facing: 'back' | 'front'; zoomFactor: number; // 0..1
 flashMode: 'auto' | 'on' | 'off'; isTorchOn: boolean;
 mode: 'picture' | 'video'; isReady: boolean; hasPermission: boolean;
 isCapturing: boolean; lastPhoto: CapturedPhoto | null;
 isRecording: boolean; recordingSeconds: number; lastVideoUri: string | null;
 availableLenses: string[]; availablePictureSizes: string[];
-selectedLook: CameraLook;                      // label only
+selectedLook: CameraLook; // label only
 error: string | null; source: TelemetrySource;
 ```
 
@@ -541,7 +541,7 @@ resonantFrequencyHz: number | null; supportedPrimitives: string[]; source: Telem
 
 ---
 
-## 🔐 Radios & Hardware Security
+## Radios & Hardware Security
 
 > Full field tables: [`docs/api/radios-security.md`](api/radios-security.md).
 
@@ -620,7 +620,7 @@ scanError: string | null; error: string | null; source: TelemetrySource;
 isSupported: boolean; isEnabled: boolean; observeModeSupported: boolean;
 antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
 isReading: boolean;
-lastScannedTag: ScannedTag | null;                // id, payload, techs, records, maxSize, writable
+lastScannedTag: ScannedTag | null; // id, payload, techs, records, maxSize, writable
 tagCount: number; pendingWrite: string | null; lastWriteOk: boolean | null;
 error: string | null; source: TelemetrySource;
 ```
@@ -664,9 +664,9 @@ source: TelemetrySource;
 * **Outputs**: [field table →](api/radios-security.md#uselocation)
 
 ```typescript
-latitude: number; longitude: number;          // 0 until hasFix
-altitude: number | null; accuracy: number | null;   // metres
-heading: number | null; speed: number | null;       // degrees, m/s
+latitude: number; longitude: number; // 0 until hasFix
+altitude: number | null; accuracy: number | null; // metres
+heading: number | null; speed: number | null; // degrees, m/s
 hasPermission: boolean; isLocating: boolean; hasFix: boolean;
 lastFixAt: number | null; error: string | null; source: TelemetrySource;
 ```
@@ -677,7 +677,7 @@ lastFixAt: number | null; error: string | null; source: TelemetrySource;
 
 ---
 
-## 📱 System & Media Hooks
+## System & Media Hooks
 
 > Full field tables: [`docs/api/system-media.md`](api/system-media.md).
 
@@ -692,8 +692,8 @@ lastFixAt: number | null; error: string | null; source: TelemetrySource;
 ```typescript
 isRecording: boolean; isPaused: boolean; canRecord: boolean;
 permissionGranted: boolean; durationSeconds: number; quality: 'speech' | 'studio';
-meteringDecibels: number;        // dBFS, -160..0
-peakDecibels: number; level: number;   // level is 0..1, floored at -60 dBFS
+meteringDecibels: number; // dBFS, -160..0
+peakDecibels: number; level: number; // level is 0..1, floored at -60 dBFS
 isSilent: boolean; silenceThresholdDbfs: number;
 inputs: RecordingInput[]; currentInputUid: string | null; route: 'speaker' | 'earpiece';
 lastRecordingUri: string | null; isPlaying: boolean;
@@ -729,7 +729,7 @@ source: TelemetrySource; error: string | null;
 | `initialSource` | `VideoSource` | `null` | Source to create the player with: a file URI, a remote URL, a required asset, or `null` to start empty and call `load()` later. |
 
 ```typescript
-player: VideoPlayer;             // pass to <VideoView player={player} />
+player: VideoPlayer; // pass to <VideoView player={player} />
 hasSource: boolean; isPlaying: boolean; status: string;
 positionSeconds: number; durationSeconds: number; bufferedSeconds: number;
 isMuted: boolean; isLooping: boolean; playbackRate: number; volume: number;
@@ -760,7 +760,7 @@ error: string | null; source: TelemetrySource;
 ```typescript
 permissionGranted: boolean; hasLimitedAccess: boolean;
 isSaving: boolean; isLoading: boolean;
-recent: SavedMedia[];            // { id, uri, filename, width, height, durationSeconds, creationTime }
+recent: SavedMedia[]; // { id, uri, filename, width, height, durationSeconds, creationTime }
 lastSaved: SavedMedia | null;
 error: string | null; source: TelemetrySource;
 ```
@@ -783,7 +783,7 @@ error: string | null; source: TelemetrySource;
 
 ```typescript
 generation: 'unknown' | '2G' | '3G' | '4G' | '5G'; is5G: boolean;
-carrierName: string | null;      // null without READ_PHONE_STATE
+carrierName: string | null; // null without READ_PHONE_STATE
 isoCountryCode: string | null;
 mobileCountryCode: string | null; mobileNetworkCode: string | null;
 allowsVoip: boolean | null;
@@ -808,14 +808,14 @@ permissionGranted: boolean; error: string | null; source: TelemetrySource;
 modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
 pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
 androidApiLevel: number | null;
-hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold
-hasUWB: boolean;                  // Pro since Pixel 6 Pro, all Folds
-hasTitanM3: boolean;              // Pixel 11 family, per Google; not readable from the device
+hasHiLight: boolean; // Pixel 11 Pro / Pro XL / Pro Fold
+hasUWB: boolean; // Pro since Pixel 6 Pro, all Folds
+hasTitanM3: boolean; // Pixel 11 family, per Google; not readable from the device
 geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';
-supportsRangingApi: boolean;      // API 36+
+supportsRangingApi: boolean; // API 36+
 supportsHapticEnvelopes: boolean; // API 36+
-supportsAppFunctions: boolean;    // API 36+
-supportsAndroid17Apis: boolean;   // API 37+
+supportsAppFunctions: boolean; // API 36+
+supportsAndroid17Apis: boolean; // API 37+
 verification: 'device' | 'model-table';
 hasNFC | hasBleChannelSounding | hasWifiRtt | hasSatelliteTelephony | hasStrongBox | hasNpuFeature: boolean | null;
 aicoreVersion: string | null;
@@ -856,17 +856,17 @@ isKeepAwake: boolean; brightness: number; source: TelemetrySource;
 
 ```typescript
 modelName: string; brand: string; osVersion: string;
-batteryPercent: number | null;   // null until read, never a filled-in 0
+batteryPercent: number | null; // null until read, never a filled-in 0
 isCharging: boolean; lowPowerMode: boolean;
 networkType: string; isConnected: boolean; totalMemoryMB?: number;
-batteryTemperatureC: number | null;   // Real NTC thermistor °C
-batteryVoltageMv: number | null;      // Cell terminal voltage (mV)
-batteryCurrentMa: number | null;      // Instantaneous mA (- discharging, + charging)
-batteryPowerWatts: number | null;     // Real-time power draw / charge speed (W)
-batteryHealth: string | null;         // GOOD, OVERHEAT, DEAD, etc.
-batteryCycleCount: number | null;     // Lifetime EEPROM charge cycles
+batteryTemperatureC: number | null; // Real NTC thermistor °C
+batteryVoltageMv: number | null; // Cell terminal voltage (mV)
+batteryCurrentMa: number | null; // Instantaneous mA (- discharging, + charging)
+batteryPowerWatts: number | null; // Real-time power draw / charge speed (W)
+batteryHealth: string | null; // GOOD, OVERHEAT, DEAD, etc.
+batteryCycleCount: number | null; // Lifetime EEPROM charge cycles
 batteryChargeCounterMah: number | null; // Remaining mAh
-pluggedSource: string | null;         // AC, USB, WIRELESS, DOCK, NONE
+pluggedSource: string | null; // AC, USB, WIRELESS, DOCK, NONE
 ```
 
 | Function | Inputs | Output | Description |

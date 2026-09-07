@@ -1,11 +1,11 @@
-# Pixel Pro Exclusives API Reference 🎯
+# Pixel Pro Exclusives API Reference
 > **HiLight Camera Bar LED Ring and Ultra-Wideband (UWB) Ranging**
 
 This document covers hardware exclusive to Google's flagship Pro models. Each entry documents its **Inputs** (arguments, with defaults and units), its **Outputs** (every returned field) and its **Functions** (what each callable takes and returns).
 
 ---
 
-## 📑 Module Index
+## Module Index
 
 * [`useHiLight`](#usehilight) - Rear Camera Bar Multi-Colour Notification & Status Ring
 * [`useUWB`](#useuwb) - Ultra-Wideband Ranging & Angle-of-Arrival (AoA)
@@ -27,24 +27,24 @@ PixelKit includes a native, zero-dependency Java daemon (`scripts/hilight-daemon
 ### Signature
 ```typescript
 function useHiLight(): {
-  availability: 'hardware' | 'unavailable' | 'unsupported';
-  isHardwareSupported: boolean;
-  source: TelemetrySource;
-  isDaemonConnected: boolean;
-  isActive: boolean;
-  currentColor: string;
-  mode: HiLightMode;
-  brightness: number;
-  isFaceDownMode: boolean;
-  error: string | null;
-  refreshDaemonStatus: () => Promise<boolean>;
-  setColor: (hexColor: string) => void;
-  setMode: (mode: HiLightMode) => void;
-  setBrightness: (level: number) => void;
-  triggerGeminiPulse: (durationMs?: number) => void;
-  triggerContactAlert: (hexColor: string, durationMs?: number) => void;
-  turnOff: () => void;
-  toggle: () => void;
+ availability: 'hardware' | 'unavailable' | 'unsupported';
+ isHardwareSupported: boolean;
+ source: TelemetrySource;
+ isDaemonConnected: boolean;
+ isActive: boolean;
+ currentColor: string;
+ mode: HiLightMode;
+ brightness: number;
+ isFaceDownMode: boolean;
+ error: string | null;
+ refreshDaemonStatus: () => Promise<boolean>;
+ setColor: (hexColor: string) => void;
+ setMode: (mode: HiLightMode) => void;
+ setBrightness: (level: number) => void;
+ triggerGeminiPulse: (durationMs?: number) => void;
+ triggerContactAlert: (hexColor: string, durationMs?: number) => void;
+ turnOff: () => void;
+ toggle: () => void;
 };
 
 type HiLightMode = 'off' | 'glow' | 'breathing' | 'pulse' | 'gemini_thinking' | 'incoming_call' | 'notification';
@@ -84,17 +84,17 @@ type HiLightMode = 'off' | 'glow' | 'breathing' | 'pulse' | 'gemini_thinking' | 
 import { useHiLight, HapticButton } from 'pixelkit';
 
 export function HiLightHUD() {
-  const hilight = useHiLight();
-  return (
-    <View>
-      <Text>{hilight.availability} · {hilight.mode}</Text>
-      <HapticButton
-        title="Thinking pulse (4 s)"
-        onPress={() => hilight.triggerGeminiPulse(4000)}
-        disabled={hilight.availability !== 'hardware'}
-      />
-    </View>
-  );
+ const hilight = useHiLight();
+ return (
+ <View>
+ <Text>{hilight.availability} · {hilight.mode}</Text>
+ <HapticButton
+ title="Thinking pulse (4 s)"
+ onPress={() => hilight.triggerGeminiPulse(4000)}
+ disabled={hilight.availability !== 'hardware'}
+ />
+ </View>
+ );
 }
 ```
 
@@ -109,18 +109,18 @@ Ultra-Wideband transceiver state and ranging sessions. Chip presence, enabled st
 ### Signature
 ```typescript
 function useUWB(): {
-  isSupported: boolean;
-  isEnabled: boolean;
-  chipId: string | null;
-  rangingApiSupported: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  isRanging: boolean;
-  activeTargets: UWBSpatialTarget[];
-  sessionInfo: UwbRangingResult | null;
-  sessionError: string | null;
-  startRanging: (sessionId?: number) => Promise<boolean>;
-  stopRanging: () => void;
+ isSupported: boolean;
+ isEnabled: boolean;
+ chipId: string | null;
+ rangingApiSupported: boolean;
+ error: string | null;
+ source: TelemetrySource;
+ isRanging: boolean;
+ activeTargets: UWBSpatialTarget[];
+ sessionInfo: UwbRangingResult | null;
+ sessionError: string | null;
+ startRanging: (sessionId?: number) => Promise<boolean>;
+ stopRanging: () => void;
 };
 ```
 
@@ -150,11 +150,11 @@ function useUWB(): {
 ### Target structure
 ```typescript
 interface UWBSpatialTarget {
-  deviceId: string;           // Identifier of the peer or anchor
-  distanceMeters: number;     // Range in metres
-  azimuthDegrees: number;     // Horizontal angle, -180 to +180
-  elevationDegrees: number;   // Vertical angle, -90 to +90
-  signalQuality: number;      // 0.0 to 1.0 line-of-sight score
+ deviceId: string; // Identifier of the peer or anchor
+ distanceMeters: number; // Range in metres
+ azimuthDegrees: number; // Horizontal angle, -180 to +180
+ elevationDegrees: number; // Vertical angle, -90 to +90
+ signalQuality: number; // 0.0 to 1.0 line-of-sight score
 }
 ```
 
@@ -163,18 +163,18 @@ interface UWBSpatialTarget {
 import { useUWB, HapticButton } from 'pixelkit';
 
 export function RadarHUD() {
-  const { activeTargets, isRanging, startRanging, stopRanging, sessionError } = useUWB();
-  return (
-    <View>
-      {activeTargets.map(t => (
-        <Text key={t.deviceId}>{t.deviceId}: {t.distanceMeters.toFixed(2)} m @ {t.azimuthDegrees}°</Text>
-      ))}
-      {sessionError ? <Text>{sessionError}</Text> : null}
-      <HapticButton
-        title={isRanging ? 'Stop ranging' : 'Start UWB ranging'}
-        onPress={() => (isRanging ? stopRanging() : startRanging())}
-      />
-    </View>
-  );
+ const { activeTargets, isRanging, startRanging, stopRanging, sessionError } = useUWB();
+ return (
+ <View>
+ {activeTargets.map(t => (
+ <Text key={t.deviceId}>{t.deviceId}: {t.distanceMeters.toFixed(2)} m @ {t.azimuthDegrees}°</Text>
+ ))}
+ {sessionError ? <Text>{sessionError}</Text> : null}
+ <HapticButton
+ title={isRanging ? 'Stop ranging' : 'Start UWB ranging'}
+ onPress={() => (isRanging ? stopRanging() : startRanging())}
+ />
+ </View>
+ );
 }
 ```

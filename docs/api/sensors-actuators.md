@@ -1,11 +1,11 @@
-# Sensors & Physical Actuators API Reference 📡
+# Sensors & Physical Actuators API Reference
 > **6-Axis IMU & Barometer, Camera capture, Torch, and Linear Resonant Actuator Haptics**
 
 This document covers physical sensors and mechanical actuation on the Pixel 11 Pro. Each entry documents its **Inputs** (arguments, with defaults and units), its **Outputs** (every returned field, with type and meaning) and its **Functions** (what each callable takes and returns).
 
 ---
 
-## 📑 Module Index
+## Module Index
 
 * [`useSensors`](#usesensors) - 6-Axis IMU, Barometer, Compass, and Ambient Light
 * [`useCamera`](#usecamera) - Photo capture, video recording, zoom, flash, torch
@@ -23,11 +23,11 @@ Altitude is derived from pressure with the international hypsometric formula, so
 ### Signature
 ```typescript
 function useSensors(updateIntervalMs?: number): SensorTelemetry & {
-  hasMotionSample: boolean;
-  barometerAvailable: boolean | null;
-  lightAvailable: boolean | null;
-  error: string | null;
-  source: TelemetrySource;
+ hasMotionSample: boolean;
+ barometerAvailable: boolean | null;
+ lightAvailable: boolean | null;
+ error: string | null;
+ source: TelemetrySource;
 };
 ```
 
@@ -59,14 +59,14 @@ function useSensors(updateIntervalMs?: number): SensorTelemetry & {
 import { useSensors } from 'pixelkit';
 
 export function AltitudeHUD() {
-  const { barometer, accelerometer, barometerAvailable } = useSensors(100);
-  return (
-    <View>
-      <Text>Altitude: {barometerAvailable ? barometer.relativeAltitude ?? '—' : 'no barometer'} m</Text>
-      <Text>Pressure: {barometer.pressure ?? '—'} hPa</Text>
-      <Text>Accel Z: {accelerometer.z.toFixed(2)} g</Text>
-    </View>
-  );
+ const { barometer, accelerometer, barometerAvailable } = useSensors(100);
+ return (
+ <View>
+ <Text>Altitude: {barometerAvailable ? barometer.relativeAltitude ?? '—' : 'no barometer'} m</Text>
+ <Text>Pressure: {barometer.pressure ?? '—'} hPa</Text>
+ <Text>Accel Z: {accelerometer.z.toFixed(2)} g</Text>
+ </View>
+ );
 }
 ```
 
@@ -81,34 +81,34 @@ Two device facts the API does not make obvious. `zoom` is a **0 to 1 fraction of
 ### Signature
 ```typescript
 function useCamera(): CameraTelemetry & {
-  cameraRef: RefObject<CameraView | null>;
-  viewProps: { facing; zoom; flash; enableTorch; mode };
-  mode: 'picture' | 'video';
-  isReady: boolean;
-  isTorchOn: boolean;
-  availableLenses: string[];
-  availablePictureSizes: string[];
-  isCapturing: boolean;
-  lastPhoto: CapturedPhoto | null;
-  isRecording: boolean;
-  recordingSeconds: number;
-  lastVideoUri: string | null;
-  error: string | null;
-  source: TelemetrySource;
-  handleCameraReady: () => Promise<void>;
-  takePicture: (options?: TakePictureOptions) => Promise<CapturedPhoto | null>;
-  startRecording: (options?: StartRecordingOptions) => Promise<string | null>;
-  stopRecording: () => void;
-  toggleFacing: () => void;
-  setZoom: (fraction: number) => void;
-  setZoomStep: (step: number, totalSteps?: number) => void;
-  setFlash: (mode: 'auto' | 'on' | 'off') => void;
-  toggleTorch: () => void;
-  setMode: (mode: 'picture' | 'video') => void;
-  setLook: (look: CameraLook) => void;
-  toggleUltraLowLightVideo: () => void;
-  pausePreview: () => Promise<void>;
-  resumePreview: () => Promise<void>;
+ cameraRef: RefObject<CameraView | null>;
+ viewProps: { facing; zoom; flash; enableTorch; mode };
+ mode: 'picture' | 'video';
+ isReady: boolean;
+ isTorchOn: boolean;
+ availableLenses: string[];
+ availablePictureSizes: string[];
+ isCapturing: boolean;
+ lastPhoto: CapturedPhoto | null;
+ isRecording: boolean;
+ recordingSeconds: number;
+ lastVideoUri: string | null;
+ error: string | null;
+ source: TelemetrySource;
+ handleCameraReady: () => Promise<void>;
+ takePicture: (options?: TakePictureOptions) => Promise<CapturedPhoto | null>;
+ startRecording: (options?: StartRecordingOptions) => Promise<string | null>;
+ stopRecording: () => void;
+ toggleFacing: () => void;
+ setZoom: (fraction: number) => void;
+ setZoomStep: (step: number, totalSteps?: number) => void;
+ setFlash: (mode: 'auto' | 'on' | 'off') => void;
+ toggleTorch: () => void;
+ setMode: (mode: 'picture' | 'video') => void;
+ setLook: (look: CameraLook) => void;
+ toggleUltraLowLightVideo: () => void;
+ pausePreview: () => Promise<void>;
+ resumePreview: () => Promise<void>;
 };
 ```
 
@@ -163,18 +163,18 @@ import { CameraView } from 'expo-camera';
 import { useCamera, HapticButton } from 'pixelkit';
 
 export function Capture() {
-  const cam = useCamera();
-  if (!cam.hasPermission) return <Text>Camera permission needed</Text>;
-  return (
-    <View>
-      <CameraView ref={cam.cameraRef} onCameraReady={cam.handleCameraReady} {...cam.viewProps} style={{ flex: 1 }} />
-      <HapticButton title="Photo" onPress={() => cam.takePicture({ base64: true })} />
-      <HapticButton
-        title={cam.isRecording ? `Stop (${cam.recordingSeconds}s)` : 'Record'}
-        onPress={() => (cam.isRecording ? cam.stopRecording() : cam.startRecording({ maxDurationSeconds: 60 }))}
-      />
-    </View>
-  );
+ const cam = useCamera();
+ if (!cam.hasPermission) return <Text>Camera permission needed</Text>;
+ return (
+ <View>
+ <CameraView ref={cam.cameraRef} onCameraReady={cam.handleCameraReady} {...cam.viewProps} style={{ flex: 1 }} />
+ <HapticButton title="Photo" onPress={() => cam.takePicture({ base64: true })} />
+ <HapticButton
+ title={cam.isRecording ? `Stop (${cam.recordingSeconds}s)` : 'Record'}
+ onPress={() => (cam.isRecording ? cam.stopRecording() : cam.startRecording({ maxDurationSeconds: 60 }))}
+ />
+ </View>
+ );
 }
 ```
 
@@ -189,16 +189,16 @@ Verified on Pixel 11 Pro: camera id `0`, **21 strength levels**; the camera HAL 
 ### Signature
 ```typescript
 function useTorch(): {
-  isAvailable: boolean;
-  isTorchOn: boolean;
-  isStrobing: boolean;
-  maxStrengthLevel: number | null;
-  error: string | null;
-  source: TelemetrySource;
-  setTorch: (on: boolean, strengthLevel?: number) => Promise<boolean>;
-  toggleTorch: () => Promise<boolean>;
-  startStrobe: (intervalMs?: number) => void;
-  stopStrobe: () => void;
+ isAvailable: boolean;
+ isTorchOn: boolean;
+ isStrobing: boolean;
+ maxStrengthLevel: number | null;
+ error: string | null;
+ source: TelemetrySource;
+ setTorch: (on: boolean, strengthLevel?: number) => Promise<boolean>;
+ toggleTorch: () => Promise<boolean>;
+ startStrobe: (intervalMs?: number) => void;
+ stopStrobe: () => void;
 };
 ```
 
@@ -241,22 +241,22 @@ Verified on Pixel 11 Pro: resonant **134.4 Hz**, Q 14.5, amplitude control, `CAP
 ### Signature
 ```typescript
 function useHaptics(): {
-  triggerHaptic: (type?: HapticType) => Promise<void>;
-  selection: () => Promise<void>;
-  light: () => Promise<void>;
-  medium: () => Promise<void>;
-  heavy: () => Promise<void>;
-  success: () => Promise<void>;
-  warning: () => Promise<void>;
-  error: () => Promise<void>;
-  playEnvelope: (points: EnvelopePoint[], initialSharpness?: number) => boolean;
-  playPrimitives: (steps: PrimitiveStep[]) => boolean;
-  cancel: () => void;
-  hasAmplitudeControl: boolean | null;
-  envelopeSupported: boolean;
-  resonantFrequencyHz: number | null;
-  supportedPrimitives: string[];
-  source: TelemetrySource;
+ triggerHaptic: (type?: HapticType) => Promise<void>;
+ selection: () => Promise<void>;
+ light: () => Promise<void>;
+ medium: () => Promise<void>;
+ heavy: () => Promise<void>;
+ success: () => Promise<void>;
+ warning: () => Promise<void>;
+ error: () => Promise<void>;
+ playEnvelope: (points: EnvelopePoint[], initialSharpness?: number) => boolean;
+ playPrimitives: (steps: PrimitiveStep[]) => boolean;
+ cancel: () => void;
+ hasAmplitudeControl: boolean | null;
+ envelopeSupported: boolean;
+ resonantFrequencyHz: number | null;
+ supportedPrimitives: string[];
+ source: TelemetrySource;
 };
 
 type EnvelopePoint = { intensity: number; sharpness: number; durationMs: number };

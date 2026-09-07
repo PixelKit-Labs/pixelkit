@@ -1,11 +1,11 @@
-# System & Media API Reference 📱
+# System & Media API Reference
 > **Microphone capture and metering, display, power, media library, and the modem**
 
 This document covers system telemetry, media capture and playback, power and the wireless modem. Each entry documents its **Inputs** (arguments, with defaults and units), its **Outputs** (every returned field) and its **Functions** (what each callable takes and returns).
 
 ---
 
-## 📑 Module Index
+## Module Index
 
 * [`useAudio`](#useaudio) - Microphone capture, dBFS metering, input selection, playback
 * [`useCapabilities`](#usecapabilities) - What this device actually has
@@ -27,22 +27,22 @@ Verified on Pixel 11 Pro: `dumpsys audio` shows `src:VOICE_RECOGNITION pack:com.
 ### Signature
 ```typescript
 function useAudio(): {
-  isRecording: boolean; isPaused: boolean; canRecord: boolean; permissionGranted: boolean;
-  durationSeconds: number; quality: 'speech' | 'studio';
-  meteringDecibels: number; peakDecibels: number; level: number;
-  isSilent: boolean; silenceThresholdDbfs: number; setSilenceThresholdDbfs: (dbfs: number) => void;
-  inputs: RecordingInput[]; currentInputUid: string | null; route: 'speaker' | 'earpiece';
-  lastRecordingUri: string | null; isPlaying: boolean;
-  playbackPositionSeconds: number; playbackDurationSeconds: number;
-  source: TelemetrySource; error: string | null;
-  startRecording: (options?: { maxDurationSeconds?: number; quality?: 'speech' | 'studio' }) => Promise<boolean>;
-  pauseRecording: () => boolean; resumeRecording: () => boolean;
-  stopRecording: () => Promise<string | null>;
-  setQuality: (quality: 'speech' | 'studio') => void;
-  refreshInputs: () => RecordingInput[]; selectInput: (uid: string) => boolean;
-  setRoute: (route: 'speaker' | 'earpiece') => Promise<void>;
-  playLastRecording: (uri?: string) => Promise<boolean>;
-  pausePlayback: () => void; stopPlayback: () => Promise<void>; seekPlayback: (seconds: number) => Promise<void>;
+ isRecording: boolean; isPaused: boolean; canRecord: boolean; permissionGranted: boolean;
+ durationSeconds: number; quality: 'speech' | 'studio';
+ meteringDecibels: number; peakDecibels: number; level: number;
+ isSilent: boolean; silenceThresholdDbfs: number; setSilenceThresholdDbfs: (dbfs: number) => void;
+ inputs: RecordingInput[]; currentInputUid: string | null; route: 'speaker' | 'earpiece';
+ lastRecordingUri: string | null; isPlaying: boolean;
+ playbackPositionSeconds: number; playbackDurationSeconds: number;
+ source: TelemetrySource; error: string | null;
+ startRecording: (options?: { maxDurationSeconds?: number; quality?: 'speech' | 'studio' }) => Promise<boolean>;
+ pauseRecording: () => boolean; resumeRecording: () => boolean;
+ stopRecording: () => Promise<string | null>;
+ setQuality: (quality: 'speech' | 'studio') => void;
+ refreshInputs: () => RecordingInput[]; selectInput: (uid: string) => boolean;
+ setRoute: (route: 'speaker' | 'earpiece') => Promise<void>;
+ playLastRecording: (uri?: string) => Promise<boolean>;
+ pausePlayback: () => void; stopPlayback: () => Promise<void>; seekPlayback: (seconds: number) => Promise<void>;
 };
 ```
 
@@ -145,7 +145,7 @@ function useCapabilities(): DeviceCapabilities;
 ### Example
 ```tsx
 const caps = useCapabilities();
-if (!caps.hasHiLight) return null;                       // do not offer the control at all
+if (!caps.hasHiLight) return null; // do not offer the control at all
 if (caps.verification === 'device' && caps.hasUWB) enableRanging();
 ```
 
@@ -158,19 +158,19 @@ Display telemetry and control: the live refresh-rate mode, adaptive refresh rate
 ### Signature
 ```typescript
 function useDisplay(): {
-  isKeepAwake: boolean;
-  brightness: number;
-  refreshRateHz: number;
-  hasArrSupport: boolean | null;
-  supportedRefreshRates: number[];
-  resolution: { width: number; height: number; densityDpi: number } | null;
-  hdrTypes: number[];
-  isHdr: boolean;
-  maxLuminance: number | null;
-  source: TelemetrySource;
-  toggleKeepAwake: () => Promise<void>;
-  setScreenBrightness: (value: number) => Promise<void>;
-  setPreferredRefreshRate: (rateHz: number) => Promise<boolean>;
+ isKeepAwake: boolean;
+ brightness: number;
+ refreshRateHz: number;
+ hasArrSupport: boolean | null;
+ supportedRefreshRates: number[];
+ resolution: { width: number; height: number; densityDpi: number } | null;
+ hdrTypes: number[];
+ isHdr: boolean;
+ maxLuminance: number | null;
+ source: TelemetrySource;
+ toggleKeepAwake: () => Promise<void>;
+ setScreenBrightness: (value: number) => Promise<void>;
+ setPreferredRefreshRate: (rateHz: number) => Promise<boolean>;
 };
 ```
 
@@ -207,23 +207,23 @@ Model identity, battery level, fuel gauge thermistor temperature, real-time volt
 ### Signature
 ```typescript
 function useDevice(): DeviceTelemetry & {
-  batteryPercent: number | null;
-  batteryTemperatureC: number | null;
-  batteryVoltageMv: number | null;
-  batteryCurrentMa: number | null;
-  batteryCurrentAvgMa: number | null;
-  batteryPowerWatts: number | null;
-  batteryHealth: 'GOOD' | 'OVERHEAT' | 'DEAD' | 'OVER_VOLTAGE' | 'UNSPECIFIED_FAILURE' | 'COLD' | 'UNKNOWN' | null;
-  batteryCycleCount: number | null;
-  batteryChargeCounterMah: number | null;
-  batteryEnergyCounterMwh: number | null;
-  batteryTechnology: string | null;
-  pluggedSource: 'AC' | 'USB' | 'WIRELESS' | 'DOCK' | 'NONE' | null;
-  batteryTelemetry: BatteryTelemetry | null;
-  hasRead: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  refresh: () => Promise<void>;
+ batteryPercent: number | null;
+ batteryTemperatureC: number | null;
+ batteryVoltageMv: number | null;
+ batteryCurrentMa: number | null;
+ batteryCurrentAvgMa: number | null;
+ batteryPowerWatts: number | null;
+ batteryHealth: 'GOOD' | 'OVERHEAT' | 'DEAD' | 'OVER_VOLTAGE' | 'UNSPECIFIED_FAILURE' | 'COLD' | 'UNKNOWN' | null;
+ batteryCycleCount: number | null;
+ batteryChargeCounterMah: number | null;
+ batteryEnergyCounterMwh: number | null;
+ batteryTechnology: string | null;
+ pluggedSource: 'AC' | 'USB' | 'WIRELESS' | 'DOCK' | 'NONE' | null;
+ batteryTelemetry: BatteryTelemetry | null;
+ hasRead: boolean;
+ error: string | null;
+ source: TelemetrySource;
+ refresh: () => Promise<void>;
 };
 ```
 
@@ -275,11 +275,11 @@ For what kind of cellular connection this is, and which carrier, see [`useCellul
 ### Signature
 ```typescript
 function useNetwork(): NetworkTelemetry & {
-  hasRead: boolean;
-  isChecking: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  refreshNetwork: () => Promise<void>;
+ hasRead: boolean;
+ isChecking: boolean;
+ error: string | null;
+ source: TelemetrySource;
+ refreshNetwork: () => Promise<void>;
 };
 ```
 
@@ -313,18 +313,18 @@ Video playback on `expo-video`, the SDK 57 replacement for the removed `expo-av`
 ### Signature
 ```typescript
 function useVideo(initialSource?: VideoSource): {
-  player: VideoPlayer;
-  hasSource: boolean; isPlaying: boolean;
-  positionSeconds: number; durationSeconds: number; bufferedSeconds: number;
-  status: string; isMuted: boolean; isLooping: boolean; playbackRate: number; volume: number;
-  error: string | null; source: TelemetrySource;
-  load: (next: VideoSource, options?: { autoplay?: boolean; loop?: boolean; muted?: boolean }) => Promise<boolean>;
-  play: () => void; pause: () => void; togglePlay: () => void;
-  seekTo: (seconds: number) => void; seekBy: (seconds: number) => void; replay: () => void;
-  setMuted: (muted: boolean) => void; setLoop: (loop: boolean) => void;
-  setPlaybackRate: (rate: number) => void; setVolume: (value: number) => void;
-  setKeepScreenOn: (keep: boolean) => void;
-  generateThumbnails: (times: number | number[]) => Promise<VideoThumbnail[]>;
+ player: VideoPlayer;
+ hasSource: boolean; isPlaying: boolean;
+ positionSeconds: number; durationSeconds: number; bufferedSeconds: number;
+ status: string; isMuted: boolean; isLooping: boolean; playbackRate: number; volume: number;
+ error: string | null; source: TelemetrySource;
+ load: (next: VideoSource, options?: { autoplay?: boolean; loop?: boolean; muted?: boolean }) => Promise<boolean>;
+ play: () => void; pause: () => void; togglePlay: () => void;
+ seekTo: (seconds: number) => void; seekBy: (seconds: number) => void; replay: () => void;
+ setMuted: (muted: boolean) => void; setLoop: (loop: boolean) => void;
+ setPlaybackRate: (rate: number) => void; setVolume: (value: number) => void;
+ setKeepScreenOn: (keep: boolean) => void;
+ generateThumbnails: (times: number | number[]) => Promise<VideoThumbnail[]>;
 };
 ```
 
@@ -375,18 +375,18 @@ SDK 57 uses the class API (`Asset.create`, `Album.create`, `Query`) rather than 
 ### Signature
 ```typescript
 function useMediaLibrary(): {
-  permissionGranted: boolean;
-  hasLimitedAccess: boolean;
-  isSaving: boolean;
-  isLoading: boolean;
-  recent: SavedMedia[];
-  lastSaved: SavedMedia | null;
-  error: string | null;
-  source: TelemetrySource;
-  requestPermission: (writeOnly?: boolean) => Promise<boolean>;
-  save: (localUri: string, albumName?: string) => Promise<SavedMedia | null>;
-  loadRecent: (limit?: number) => Promise<SavedMedia[]>;
-  remove: (media: SavedMedia) => Promise<boolean>;
+ permissionGranted: boolean;
+ hasLimitedAccess: boolean;
+ isSaving: boolean;
+ isLoading: boolean;
+ recent: SavedMedia[];
+ lastSaved: SavedMedia | null;
+ error: string | null;
+ source: TelemetrySource;
+ requestPermission: (writeOnly?: boolean) => Promise<boolean>;
+ save: (localUri: string, albumName?: string) => Promise<SavedMedia | null>;
+ loadRecent: (limit?: number) => Promise<SavedMedia[]>;
+ remove: (media: SavedMedia) => Promise<boolean>;
 };
 ```
 
@@ -426,18 +426,18 @@ Two caveats. `generation` reflects the current data connection, so it changes as
 ### Signature
 ```typescript
 function useCellular(): {
-  generation: 'unknown' | '2G' | '3G' | '4G' | '5G';
-  is5G: boolean;
-  carrierName: string | null;
-  isoCountryCode: string | null;
-  mobileCountryCode: string | null;
-  mobileNetworkCode: string | null;
-  allowsVoip: boolean | null;
-  permissionGranted: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  refresh: () => Promise<void>;
-  requestPermission: () => Promise<boolean>;
+ generation: 'unknown' | '2G' | '3G' | '4G' | '5G';
+ is5G: boolean;
+ carrierName: string | null;
+ isoCountryCode: string | null;
+ mobileCountryCode: string | null;
+ mobileNetworkCode: string | null;
+ allowsVoip: boolean | null;
+ permissionGranted: boolean;
+ error: string | null;
+ source: TelemetrySource;
+ refresh: () => Promise<void>;
+ requestPermission: () => Promise<boolean>;
 };
 ```
 

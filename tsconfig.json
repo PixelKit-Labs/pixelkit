@@ -18,9 +18,6 @@
     }
   },
   "include": [
-    "App.tsx",
-    "index.ts",
-    "src/**/*",
     "packages/*/src/**/*",
     "packages/*/index.ts"
   ]

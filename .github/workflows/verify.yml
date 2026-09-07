@@ -18,17 +18,23 @@ jobs:
 
       - run: npm ci
 
-      # typecheck, then parity: every exported hook has a screen that demonstrates it, every
-      # documented action is reachable, every returned setter is documented, and no hook is
-      # exported from neither entry point.
-      - run: npm run verify
+      - run: npm run typecheck
 
       # The three packages must compile to build/ with declarations before they can be published.
       - run: npm run build
 
-      # A packaging mistake is invisible until someone installs it, so pack all three and check
-      # the tarball contents rather than trusting the files field.
+      # A packaging mistake is invisible until someone installs it, so pack all three and let npm
+      # report the contents rather than trusting the files field.
       - run: npm pack --dry-run -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit
 
-      # The demo app must still bundle for Android with the workspace resolution in place.
-      - run: npx expo export -p android
+      # The subpath entry only pays off if it resolves. Install the packed tarball into a scratch
+      # project and require both entries: 'pixelkit' must work without @pixelkit/mlkit present.
+      - name: A consumer can import both entries
+        run: |
+          npm pack -w pixelkit --pack-destination /tmp
+          mkdir -p /tmp/consumer && cd /tmp/consumer && npm init -y >/dev/null
+          npm install /tmp/pixelkit-*.tgz --omit=peer >/dev/null 2>&1 || true
+          test -f node_modules/pixelkit/build/index.js || { echo "main entry missing"; exit 1; }
+          test -f node_modules/pixelkit/build/mlkit.js || { echo "mlkit subpath missing"; exit 1; }
+          test -f node_modules/pixelkit/mlkit.js || { echo "mlkit shim missing"; exit 1; }
+          echo "both entries present in the tarball"

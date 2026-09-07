@@ -1,11 +1,11 @@
-# Pixel 11 Pro Silicon & System Architecture ⚡
+# Pixel 11 Pro Silicon & System Architecture
 > **What this device is, separated into what was read from it and what Google states**
 
 This document outlines the hardware of the **Google Pixel 11 Pro** and how PixelKit reaches each layer. Figures marked **verified** were read from the device itself with `adb` and `dumpsys`; the rest are Google's published specification and are labelled as such, because a marketing figure is not a reading.
 
 ---
 
-## 🔬 Silicon Subsystem Overview
+## Silicon Subsystem Overview
 
 | Component | Chipset / Hardware | Key Specifications |
 | :--- | :--- | :--- |
@@ -25,7 +25,7 @@ This document outlines the hardware of the **Google Pixel 11 Pro** and how Pixel
 
 ---
 
-## 🏛️ Tensor G6 "Malibu" Microarchitecture
+## Tensor G6 "Malibu" Microarchitecture
 
 The Tensor G6 was engineered by Google's gChips team to resolve thermal dissipation constraints:
 
@@ -43,7 +43,7 @@ Replaces previous Samsung Exynos modems, eliminating thermal buildup and drain d
 
 ---
 
-## 🛡️ Hardware-backed keystore and biometrics
+## Hardware-backed keystore and biometrics
 
 What is verifiable from the device: `android.hardware.strongbox_keystore` is present, which is what `useCapabilities().hasStrongBox` reports and what makes `useSecurity` hardware-backed.
 
@@ -53,7 +53,7 @@ What is verifiable from the device: `android.hardware.strongbox_keystore` is pre
 
 ---
 
-## 💡 HiLight Camera Bar Glanceable Notification System
+## HiLight Camera Bar Glanceable Notification System
 
 Integrated into the camera flash visor, **HiLight** replaces the legacy infrared thermopile on the Pixel 11 Pro:
 * **Face-Down Glanceable Mode**: Delivers glanceable status when the phone is resting on a desk.
@@ -62,25 +62,25 @@ Integrated into the camera flash visor, **HiLight** replaces the legacy infrared
 
 ---
 
-## ⚡ React Native & Hermes Runtime Bridge
+## React Native & Hermes Runtime Bridge
 
 ```
 [ JavaScript / TypeScript Application Code ]
-                     │
-                     ▼
+ │
+ ▼
 [ Hermes Virtual Machine (AOT Bytecode .hbc) ]
-                     │
-                     ▼
+ │
+ ▼
 [ React Native Fabric Renderer & TurboModules (0.86) ]
-                     │
-                     ▼
+ │
+ ▼
 [ Expo SDK 57 Android Native Modules & C++ JSI ]
-                     │
-                     ▼
+ │
+ ▼
 [ Android 15/16 HAL (Hardware Abstraction Layer) ]
-                     │
-  ┌──────────────┬───┴──────────┬──────────────┬──────────────┐
-  ▼              ▼              ▼              ▼              ▼
-Tensor G6      PowerVR        Keystore       CameraX        Sensors
-CPU / TPU      GPU            Keystore       Zoom           IMU / UWB
+ │
+ ┌──────────────┬───┴──────────┬──────────────┬──────────────┐
+ ▼ ▼ ▼ ▼ ▼
+Tensor G6 PowerVR Keystore CameraX Sensors
+CPU / TPU GPU Keystore Zoom IMU / UWB
 ```

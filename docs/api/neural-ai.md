@@ -1,11 +1,11 @@
-# Neural & AI API Reference 🧠
+# Neural & AI API Reference
 > **Gemini in the cloud, Gemini Nano on-device, ML Kit vision and language, speech in and out**
 
 This document covers conversational reasoning, on-device generative tasks, speech recognition and synthesis, multimodal vision, and hardware-secured API key storage. Each entry documents its **Inputs** (arguments, with defaults), its **Outputs** (every returned field) and its **Functions** (what each callable takes and returns).
 
 ---
 
-## 📑 Module Index
+## Module Index
 
 * [`useGemini`](#usegemini) - Multi-turn cloud chat with full generation parameters
 * [`useGeminiNano`](#usegemininano) - Gemini Nano on-device (ML Kit GenAI Prompt API on AICore)
@@ -27,32 +27,32 @@ Changing the model, the key, or any generation parameter resets the chat session
 ### Signature
 ```typescript
 function useGemini(): {
-  messages: AIMessage[];
-  isLoading: boolean;
-  hasApiKey: boolean;
-  model: string;
-  availableModels: string[];
-  temperature: number; topP: number; topK: number; maxOutputTokens: number;
-  systemInstruction: string; thinkingBudget: number;
-  error: string | null;
-  source: TelemetrySource;
-  sendMessage: (userPrompt: string) => Promise<void>;
-  clearMessages: () => void;
-  setApiKey: (key: string | null) => void;
-  setSelectedModel: (model: string) => void;
-  setTemperature: (n: number) => void; setTopP: (n: number) => void; setTopK: (n: number) => void;
-  setMaxOutputTokens: (n: number) => void;
-  setSystemInstruction: (text: string) => void;
-  setThinkingBudget: (tokens: number) => void;
-  partial: string;
-  lastFirstChunkMs: number | null;
-  lastPromptTokens: number | null;
-  lastGrounding: GroundingSummary | null;
-  safetyThreshold: 'default' | HarmBlockThreshold;
-  searchGrounding: boolean;
-  setSafety: (threshold: 'default' | HarmBlockThreshold) => void;
-  setSearchGroundingEnabled: (enabled: boolean) => void;
-  countTokens: (text: string) => Promise<number | null>;
+ messages: AIMessage[];
+ isLoading: boolean;
+ hasApiKey: boolean;
+ model: string;
+ availableModels: string[];
+ temperature: number; topP: number; topK: number; maxOutputTokens: number;
+ systemInstruction: string; thinkingBudget: number;
+ error: string | null;
+ source: TelemetrySource;
+ sendMessage: (userPrompt: string) => Promise<void>;
+ clearMessages: () => void;
+ setApiKey: (key: string | null) => void;
+ setSelectedModel: (model: string) => void;
+ setTemperature: (n: number) => void; setTopP: (n: number) => void; setTopK: (n: number) => void;
+ setMaxOutputTokens: (n: number) => void;
+ setSystemInstruction: (text: string) => void;
+ setThinkingBudget: (tokens: number) => void;
+ partial: string;
+ lastFirstChunkMs: number | null;
+ lastPromptTokens: number | null;
+ lastGrounding: GroundingSummary | null;
+ safetyThreshold: 'default' | HarmBlockThreshold;
+ searchGrounding: boolean;
+ setSafety: (threshold: 'default' | HarmBlockThreshold) => void;
+ setSearchGroundingEnabled: (enabled: boolean) => void;
+ countTokens: (text: string) => Promise<number | null>;
 };
 ```
 
@@ -106,25 +106,25 @@ import { View, Text, TextInput } from 'react-native';
 import { useGemini, useHiLight, HapticButton } from 'pixelkit';
 
 export function AssistantChat() {
-  const gemini = useGemini();
-  const hilight = useHiLight();
-  const [input, setInput] = useState('');
+ const gemini = useGemini();
+ const hilight = useHiLight();
+ const [input, setInput] = useState('');
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const text = input;
-    setInput('');
-    hilight.triggerGeminiPulse(4000);   // cyan while the model is thinking
-    await gemini.sendMessage(text);
-  };
+ const handleSend = async () => {
+ if (!input.trim()) return;
+ const text = input;
+ setInput('');
+ hilight.triggerGeminiPulse(4000); // cyan while the model is thinking
+ await gemini.sendMessage(text);
+ };
 
-  return (
-    <View>
-      {gemini.messages.map(m => <Text key={m.id}>[{m.role}]: {m.content}</Text>)}
-      <TextInput value={input} onChangeText={setInput} placeholder="Ask assistant…" />
-      <HapticButton title="Send" onPress={handleSend} disabled={gemini.isLoading} />
-    </View>
-  );
+ return (
+ <View>
+ {gemini.messages.map(m => <Text key={m.id}>[{m.role}]: {m.content}</Text>)}
+ <TextInput value={input} onChangeText={setInput} placeholder="Ask assistant…" />
+ <HapticButton title="Send" onPress={handleSend} disabled={gemini.isLoading} />
+ </View>
+ );
 }
 ```
 
@@ -141,31 +141,31 @@ Requires a dev client or release APK on a device with AICore (Pixel 9 and later;
 ### Signature
 ```typescript
 function useGeminiNano(): {
-  status: 'available' | 'downloadable' | 'downloading' | 'unavailable';
-  isAvailable: boolean;
-  info: NanoModelInfo | null;
-  messages: AIMessage[]; partial: string; thoughts: string[];
-  lastLatencyMs: number | null; lastFirstTokenMs: number | null;
-  lastOutputTokens: number | null; lastDecodeTokensPerSec: number | null;
-  downloadedBytes: number | null; isDownloading: boolean;
-  isWarmingUp: boolean; warmupMs: number | null;
-  isGenerating: boolean; error: string | null; source: TelemetrySource;
-  temperature: number; topK: number; candidateCount: number; maxOutputTokens: number;
-  thinkingMode: boolean; systemInstruction: string;
-  setTemperature: (n: number) => void; setTopK: (n: number) => void;
-  setCandidateCount: (n: number) => void; setMaxOutputTokens: (n: number) => void;
-  setThinkingMode: (on: boolean) => void; setSystemInstruction: (text: string) => void;
-  refresh: () => Promise<void>;
-  download: () => Promise<NanoStatus>;
-  warmup: () => Promise<number | null>;
-  countTokens: (prompt: string, options?: NanoOptions) => Promise<number | null>;
-  generate: (prompt: string, options?: NanoOptions) => Promise<NanoResult>;
-  sendMessage: (userPrompt: string) => Promise<void>;
-  clearMessages: () => void;
-  setModelConfig: (stage: 'stable' | 'preview', preference: 'full' | 'fast') => Promise<void>;
-  summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult>;
-  proofread: (text: string, options?: Record<string, any>) => Promise<ProofreadResult>;
-  rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult>;
+ status: 'available' | 'downloadable' | 'downloading' | 'unavailable';
+ isAvailable: boolean;
+ info: NanoModelInfo | null;
+ messages: AIMessage[]; partial: string; thoughts: string[];
+ lastLatencyMs: number | null; lastFirstTokenMs: number | null;
+ lastOutputTokens: number | null; lastDecodeTokensPerSec: number | null;
+ downloadedBytes: number | null; isDownloading: boolean;
+ isWarmingUp: boolean; warmupMs: number | null;
+ isGenerating: boolean; error: string | null; source: TelemetrySource;
+ temperature: number; topK: number; candidateCount: number; maxOutputTokens: number;
+ thinkingMode: boolean; systemInstruction: string;
+ setTemperature: (n: number) => void; setTopK: (n: number) => void;
+ setCandidateCount: (n: number) => void; setMaxOutputTokens: (n: number) => void;
+ setThinkingMode: (on: boolean) => void; setSystemInstruction: (text: string) => void;
+ refresh: () => Promise<void>;
+ download: () => Promise<NanoStatus>;
+ warmup: () => Promise<number | null>;
+ countTokens: (prompt: string, options?: NanoOptions) => Promise<number | null>;
+ generate: (prompt: string, options?: NanoOptions) => Promise<NanoResult>;
+ sendMessage: (userPrompt: string) => Promise<void>;
+ clearMessages: () => void;
+ setModelConfig: (stage: 'stable' | 'preview', preference: 'full' | 'fast') => Promise<void>;
+ summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult>;
+ proofread: (text: string, options?: Record<string, any>) => Promise<ProofreadResult>;
+ rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult>;
 };
 ```
 
@@ -249,16 +249,16 @@ import { HapticButton } from 'pixelkit';
 import { useGeminiNano } from 'pixelkit/mlkit';
 
 export function OnDeviceAssistant() {
-  const nano = useGeminiNano();
-  return (
-    <View>
-      <Text>Gemini Nano: {nano.status} · {nano.info?.baseModelName ?? '—'} · limit {nano.info?.tokenLimit ?? '—'} tokens</Text>
-      {nano.status === 'downloadable' && <HapticButton title="Download model" onPress={() => nano.download()} />}
-      <HapticButton title="Ask on-device" onPress={() => nano.sendMessage('Summarise the thermal state')} disabled={!nano.isAvailable} />
-      {nano.partial ? <Text>{nano.partial}</Text> : null}
-      <Text>{nano.lastLatencyMs ?? '—'} ms · first token {nano.lastFirstTokenMs ?? '—'} ms · {nano.lastDecodeTokensPerSec ?? '—'} tok/s</Text>
-    </View>
-  );
+ const nano = useGeminiNano();
+ return (
+ <View>
+ <Text>Gemini Nano: {nano.status} · {nano.info?.baseModelName ?? '—'} · limit {nano.info?.tokenLimit ?? '—'} tokens</Text>
+ {nano.status === 'downloadable' && <HapticButton title="Download model" onPress={() => nano.download()} />}
+ <HapticButton title="Ask on-device" onPress={() => nano.sendMessage('Summarise the thermal state')} disabled={!nano.isAvailable} />
+ {nano.partial ? <Text>{nano.partial}</Text> : null}
+ <Text>{nano.lastLatencyMs ?? '—'} ms · first token {nano.lastFirstTokenMs ?? '—'} ms · {nano.lastDecodeTokensPerSec ?? '—'} tok/s</Text>
+ </View>
+ );
 }
 ```
 
@@ -271,17 +271,17 @@ Dedicated on-device GenAI task clients on ML Kit and AICore, separate from the c
 ### Signature
 ```typescript
 function useGenAITasks(): {
-  isRunning: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  summaryResult: SummarizeResult | null;
-  proofreadResult: ProofreadResult | null;
-  rewriteResult: RewriteResult | null;
-  imageDescriptionResult: ImageDescriptionResult | null;
-  summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult | null>;
-  proofread: (text: string) => Promise<ProofreadResult | null>;
-  rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult | null>;
-  describeImage: (imageInput: string, style?: 'detailed' | 'caption' | 'labels' | 'concise') => Promise<ImageDescriptionResult | null>;
+ isRunning: boolean;
+ error: string | null;
+ source: TelemetrySource;
+ summaryResult: SummarizeResult | null;
+ proofreadResult: ProofreadResult | null;
+ rewriteResult: RewriteResult | null;
+ imageDescriptionResult: ImageDescriptionResult | null;
+ summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult | null>;
+ proofread: (text: string) => Promise<ProofreadResult | null>;
+ rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult | null>;
+ describeImage: (imageInput: string, style?: 'detailed' | 'caption' | 'labels' | 'concise') => Promise<ImageDescriptionResult | null>;
 };
 ```
 
@@ -321,17 +321,17 @@ On-device natural language intelligence through ML Kit, working entirely offline
 ### Signature
 ```typescript
 function useNaturalLanguageAI(): {
-  isProcessing: boolean;
-  error: string | null;
-  source: TelemetrySource;
-  languageResult: LanguageIdResult | null;
-  translationResult: TranslationResult | null;
-  smartReplyResult: SmartReplyResult | null;
-  entityResult: EntityExtractionResult | null;
-  identifyLanguage: (text: string) => Promise<LanguageIdResult | null>;
-  translate: (text: string, sourceLang?: string, targetLang?: string) => Promise<TranslationResult | null>;
-  suggestReplies: (history: Array<{ text: string; timestamp?: number; isLocalUser?: boolean; sender?: string }>) => Promise<SmartReplyResult | null>;
-  extractEntities: (text: string) => Promise<EntityExtractionResult | null>;
+ isProcessing: boolean;
+ error: string | null;
+ source: TelemetrySource;
+ languageResult: LanguageIdResult | null;
+ translationResult: TranslationResult | null;
+ smartReplyResult: SmartReplyResult | null;
+ entityResult: EntityExtractionResult | null;
+ identifyLanguage: (text: string) => Promise<LanguageIdResult | null>;
+ translate: (text: string, sourceLang?: string, targetLang?: string) => Promise<TranslationResult | null>;
+ suggestReplies: (history: Array<{ text: string; timestamp?: number; isLocalUser?: boolean; sender?: string }>) => Promise<SmartReplyResult | null>;
+ extractEntities: (text: string) => Promise<EntityExtractionResult | null>;
 };
 ```
 
@@ -368,20 +368,20 @@ Without an API key in cloud mode the recording is kept (`lastRecordingUri`) and 
 ### Signature
 ```typescript
 function useSpeechAI(): {
-  isListening: boolean;
-  isTranscribing: boolean;
-  recognitionMode: 'on-device' | 'cloud';
-  setRecognitionMode: (mode: 'on-device' | 'cloud') => void;
-  isOfflineAvailable: boolean;
-  streamingPartial: string;
-  voiceDecibels: number;
-  lastTranscript: SpeechTranscriptionResult | null;
-  lastRecordingUri: string | null;
-  error: string | null;
-  source: TelemetrySource;
-  model: string;
-  startListening: () => Promise<boolean>;
-  stopListeningAndTranscribe: () => Promise<SpeechTranscriptionResult | null>;
+ isListening: boolean;
+ isTranscribing: boolean;
+ recognitionMode: 'on-device' | 'cloud';
+ setRecognitionMode: (mode: 'on-device' | 'cloud') => void;
+ isOfflineAvailable: boolean;
+ streamingPartial: string;
+ voiceDecibels: number;
+ lastTranscript: SpeechTranscriptionResult | null;
+ lastRecordingUri: string | null;
+ error: string | null;
+ source: TelemetrySource;
+ model: string;
+ startListening: () => Promise<boolean>;
+ stopListeningAndTranscribe: () => Promise<SpeechTranscriptionResult | null>;
 };
 ```
 
@@ -415,18 +415,18 @@ const speech = useSpeechAI();
 const gemini = useGemini();
 
 const handleVoice = async () => {
-  if (speech.isListening) {
-    const res = await speech.stopListeningAndTranscribe();
-    if (res?.transcript) gemini.sendMessage(res.transcript);
-  } else {
-    await speech.startListening();
-  }
+ if (speech.isListening) {
+ const res = await speech.stopListeningAndTranscribe();
+ if (res?.transcript) gemini.sendMessage(res.transcript);
+ } else {
+ await speech.startListening();
+ }
 };
 
 <HapticButton
-  title={speech.isListening ? `Listening (${speech.voiceDecibels} dB) — tap to finish` : 'Start voice'}
-  onPress={handleVoice}
-  variant={speech.isListening ? 'danger' : 'primary'}
+ title={speech.isListening ? `Listening (${speech.voiceDecibels} dB) — tap to finish` : 'Start voice'}
+ onPress={handleVoice}
+ variant={speech.isListening ? 'danger' : 'primary'}
 />
 ```
 
@@ -441,26 +441,26 @@ Voices come from the platform speech service, so language coverage and quality d
 ### Signature
 ```typescript
 function useSpeech(): {
-  isSpeaking: boolean;
-  isPaused: boolean;
-  voices: Voice[];
-  voice: string | null;
-  rate: number;
-  pitch: number;
-  maxInputLength: number;
-  lastSpokenText: string | null;
-  error: string | null;
-  source: TelemetrySource;
-  speak: (text: string, options?: SpeakOptions) => Promise<void>;
-  stop: () => Promise<void>;
-  pause: () => Promise<void>;
-  resume: () => Promise<void>;
-  checkSpeaking: () => Promise<boolean>;
-  refreshVoices: () => Promise<Voice[]>;
-  voicesForLanguage: (languageTag: string) => Voice[];
-  setVoice: (id: string | null) => void;
-  setRate: (n: number) => void;
-  setPitch: (n: number) => void;
+ isSpeaking: boolean;
+ isPaused: boolean;
+ voices: Voice[];
+ voice: string | null;
+ rate: number;
+ pitch: number;
+ maxInputLength: number;
+ lastSpokenText: string | null;
+ error: string | null;
+ source: TelemetrySource;
+ speak: (text: string, options?: SpeakOptions) => Promise<void>;
+ stop: () => Promise<void>;
+ pause: () => Promise<void>;
+ resume: () => Promise<void>;
+ checkSpeaking: () => Promise<boolean>;
+ refreshVoices: () => Promise<Voice[]>;
+ voicesForLanguage: (languageTag: string) => Voice[];
+ setVoice: (id: string | null) => void;
+ setRate: (n: number) => void;
+ setPitch: (n: number) => void;
 };
 ```
 
@@ -508,15 +508,15 @@ import { useSpeech, HapticButton } from 'pixelkit';
 import { useGeminiNano } from 'pixelkit/mlkit';
 
 export function TalkBack() {
-  const speech = useSpeech();
-  const nano = useGeminiNano();
+ const speech = useSpeech();
+ const nano = useGeminiNano();
 
-  const answer = async () => {
-    const reply = await nano.generate('Describe the thermal state in one sentence.');
-    await speech.speak(reply.text, { rate: 0.95 });
-  };
+ const answer = async () => {
+ const reply = await nano.generate('Describe the thermal state in one sentence.');
+ await speech.speak(reply.text, { rate: 0.95 });
+ };
 
-  return <HapticButton title="Ask and speak" onPress={answer} disabled={speech.isSpeaking} />;
+ return <HapticButton title="Ask and speak" onPress={answer} disabled={speech.isSpeaking} />;
 }
 ```
 
@@ -541,30 +541,30 @@ Google ML Kit on-device computer vision plus Gemini multimodal scene understandi
 ### Signature
 ```typescript
 function useVisionAI(): {
-  isAnalyzing: boolean;
-  analysis: VisionAnalysisResult | null;
-  selectedImageUri: string | null;
-  selectedImageBase64: string | null;
-  model: string;
-  isOnDeviceProcessing: boolean;
-  barcodeResult: BarcodeScanResult | null; ocrResult: TextRecognitionResult | null;
-  facesResult: FaceDetectionResult | null; faceMeshResult: FaceMeshResult | null;
-  labelsResult: ImageLabelResult | null; objectsResult: ObjectDetectionResult | null;
-  poseResult: PoseDetectionResult | null; selfieResult: SelfieSegmentationResult | null;
-  subjectResult: SubjectSegmentationResult | null; digitalInkResult: DigitalInkResult | null;
-  error: string | null; source: TelemetrySource;
-  pickImage: (useCamera?: boolean) => Promise<{ uri: string; base64?: string } | null>;
-  captureAndAnalyze: (useCamera?: boolean) => Promise<VisionAnalysisResult | null>;
-  scanBarcodes: (imageInput: string) => Promise<BarcodeScanResult | null>;
-  recognizeText: (imageInput: string) => Promise<TextRecognitionResult | null>;
-  detectFaces: (imageInput: string) => Promise<FaceDetectionResult | null>;
-  detectFaceMesh: (imageInput: string) => Promise<FaceMeshResult | null>;
-  labelImage: (imageInput: string) => Promise<ImageLabelResult | null>;
-  detectObjects: (imageInput: string) => Promise<ObjectDetectionResult | null>;
-  detectPose: (imageInput: string) => Promise<PoseDetectionResult | null>;
-  segmentSelfie: (imageInput: string) => Promise<SelfieSegmentationResult | null>;
-  segmentSubject: (imageInput: string) => Promise<SubjectSegmentationResult | null>;
-  recognizeDigitalInk: (strokes: Array<Array<{ x: number; y: number; t?: number }>>, languageTag?: string) => Promise<DigitalInkResult | null>;
+ isAnalyzing: boolean;
+ analysis: VisionAnalysisResult | null;
+ selectedImageUri: string | null;
+ selectedImageBase64: string | null;
+ model: string;
+ isOnDeviceProcessing: boolean;
+ barcodeResult: BarcodeScanResult | null; ocrResult: TextRecognitionResult | null;
+ facesResult: FaceDetectionResult | null; faceMeshResult: FaceMeshResult | null;
+ labelsResult: ImageLabelResult | null; objectsResult: ObjectDetectionResult | null;
+ poseResult: PoseDetectionResult | null; selfieResult: SelfieSegmentationResult | null;
+ subjectResult: SubjectSegmentationResult | null; digitalInkResult: DigitalInkResult | null;
+ error: string | null; source: TelemetrySource;
+ pickImage: (useCamera?: boolean) => Promise<{ uri: string; base64?: string } | null>;
+ captureAndAnalyze: (useCamera?: boolean) => Promise<VisionAnalysisResult | null>;
+ scanBarcodes: (imageInput: string) => Promise<BarcodeScanResult | null>;
+ recognizeText: (imageInput: string) => Promise<TextRecognitionResult | null>;
+ detectFaces: (imageInput: string) => Promise<FaceDetectionResult | null>;
+ detectFaceMesh: (imageInput: string) => Promise<FaceMeshResult | null>;
+ labelImage: (imageInput: string) => Promise<ImageLabelResult | null>;
+ detectObjects: (imageInput: string) => Promise<ObjectDetectionResult | null>;
+ detectPose: (imageInput: string) => Promise<PoseDetectionResult | null>;
+ segmentSelfie: (imageInput: string) => Promise<SelfieSegmentationResult | null>;
+ segmentSubject: (imageInput: string) => Promise<SubjectSegmentationResult | null>;
+ recognizeDigitalInk: (strokes: Array<Array<{ x: number; y: number; t?: number }>>, languageTag?: string) => Promise<DigitalInkResult | null>;
 };
 ```
 

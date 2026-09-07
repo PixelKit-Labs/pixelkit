@@ -1,11 +1,11 @@
-# Troubleshooting & Diagnostics Guide 🛠️
+# Troubleshooting & Diagnostics Guide
 > **Common Issues, Expo SDK 57 Nuances, Permissions, and Hardware Diagnostics**
 
 This guide outlines common errors, hardware lifecycle caveats, and resolution steps for PixelKit developers.
 
 ---
 
-## 📑 Issue Index
+## Issue Index
 
 1. [KeepAwake Tag Error in Expo SDK 57](#1-keepawake-tag-error-in-expo-sdk-57)
 2. [StatusBar BackgroundColor Deprecation](#2-statusbar-backgroundcolor-deprecation)
@@ -32,11 +32,11 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
 const TAG = 'pixelkit_display_lock';
 
-// ✅ CORRECT
+// CORRECT
 await activateKeepAwakeAsync(TAG);
 deactivateKeepAwake(TAG);
 
-// ❌ WRONG (Omitted tag throws in Expo 57)
+// WRONG (Omitted tag throws in Expo 57)
 await activateKeepAwakeAsync();
 ```
 
@@ -54,8 +54,8 @@ In Expo SDK 57, `<StatusBar />` from `expo-status-bar` dropped the `backgroundCo
 Style the parent `<SafeAreaView>` or root `<View>` with `Colors.dark.background` (`#0E1119`) and use `<StatusBar style="light" />`:
 ```tsx
 <SafeAreaView style={{ flex: 1, backgroundColor: '#0E1119' }}>
-  <StatusBar style="light" />
-  {/* Content */}
+ <StatusBar style="light" />
+ {/* Content */}
 </SafeAreaView>
 ```
 
@@ -70,10 +70,10 @@ Camera screen throws `Camera permission not granted` on Android emulator or init
 `useCamera()` includes an asynchronous permission check with a graceful fallback. Ensure `app.json` includes the camera permission:
 ```json
 "android": {
-  "permissions": [
-    "android.permission.CAMERA",
-    "android.permission.RECORD_AUDIO"
-  ]
+ "permissions": [
+ "android.permission.CAMERA",
+ "android.permission.RECORD_AUDIO"
+ ]
 }
 ```
 If running in an emulator without camera hardware, `useVisionAI()` provides gallery photo picking via `captureAndAnalyze(false)`.
@@ -91,9 +91,9 @@ Check `useADPF().thermalStatus`:
 const { thermalStatus } = useADPF();
 
 if (thermalStatus === 'severe' || thermalStatus === 'critical') {
-  // 1. Back off sensor polling to 500ms
-  // 2. Pause non-essential background tensor passes
-  // 3. Extinguish flashlight / HiLight ring
+ // 1. Back off sensor polling to 500ms
+ // 2. Pause non-essential background tensor passes
+ // 3. Extinguish flashlight / HiLight ring
 }
 ```
 

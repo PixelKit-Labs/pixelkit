@@ -1,4 +1,4 @@
-# Silicon & Compute API Reference 💻
+# Silicon & Compute API Reference
 > **Tensor G6 CPU, PowerVR GPU, on-device AI stack, memory, and ADPF thermals, all read from the device**
 
 Every hook in this document reads real Android platform state through the local **PixelNative** Expo Module (`packages/native`). Nothing is fabricated: when a value cannot be read it is `null` and the hook's `source` reports `'unavailable'`. See [Observability](#observability--provenance) for the provenance model.
@@ -7,7 +7,7 @@ Each entry documents its **Inputs** (what you pass in, with defaults and units),
 
 ---
 
-## 📑 Module Index
+## Module Index
 
 * [`useCPU`](#usecpu) - Core topology, cpufreq, governor, app CPU share
 * [`useGPU`](#usegpu) - GL/Vulkan identity and Choreographer frame pacing
@@ -28,17 +28,17 @@ Verified on Pixel 11 Pro: `1x Arm C1-Ultra @ 4.11 GHz + 4x Arm C1-Pro @ 3.38 GHz
 ### Signature
 ```typescript
 function useCPU(): {
-  coreTopology: string;
-  coreCount: number;
-  cpuLoadPercent: number | null;
-  appCpuPercent: number | null;
-  cores: CoreFrequency[];
-  clusters: { part: string | null; name: string | null; maxMHz: number | null; count: number }[];
-  governorMode: string;
-  lastBenchmarkDurationMs: number | null;
-  isBenchmarking: boolean;
-  benchmarkCPU: () => Promise<number>;
-  source: TelemetrySource;
+ coreTopology: string;
+ coreCount: number;
+ cpuLoadPercent: number | null;
+ appCpuPercent: number | null;
+ cores: CoreFrequency[];
+ clusters: { part: string | null; name: string | null; maxMHz: number | null; count: number }[];
+ governorMode: string;
+ lastBenchmarkDurationMs: number | null;
+ isBenchmarking: boolean;
+ benchmarkCPU: () => Promise<number>;
+ source: TelemetrySource;
 };
 ```
 
@@ -82,18 +82,18 @@ Verified on Pixel 11 Pro: `ANGLE (Imagination Technologies, Vulkan 1.4.317 (Powe
 ### Signature
 ```typescript
 function useGPU(): {
-  gpuRenderer: string | null;
-  gpuVendor: string | null;
-  graphicsApi: string | null;
-  frameRenderTimeMs: number | null;
-  maxFrameMs: number | null;
-  measuredFps: number | null;
-  droppedFrameCount: number;
-  jankFramesLastSecond: number;
-  targetBudgetMs: number;
-  isStuttering: boolean;
-  gpuMemoryUsageMB: null;
-  source: TelemetrySource;
+ gpuRenderer: string | null;
+ gpuVendor: string | null;
+ graphicsApi: string | null;
+ frameRenderTimeMs: number | null;
+ maxFrameMs: number | null;
+ measuredFps: number | null;
+ droppedFrameCount: number;
+ jankFramesLastSecond: number;
+ targetBudgetMs: number;
+ isStuttering: boolean;
+ gpuMemoryUsageMB: null;
+ source: TelemetrySource;
 };
 ```
 
@@ -130,19 +130,19 @@ Verified on Pixel 11 Pro: AICore `0.release.prod_aicore_20260723.00_RC11`, Priva
 ### Signature
 ```typescript
 function useTPU(): {
-  aicoreInstalled: boolean;
-  aicoreVersion: string | null;
-  privateComputeServicesVersion: string | null;
-  hasNpuFeature: boolean | null;
-  activeDelegate: 'Tensor TPU' | 'NPU' | 'GPU' | 'CPU Fallback';
-  isHardwareAccelerated: false;
-  lastInferenceLatencyMs: number | null;
-  throughputTokensPerSec: number | null;
-  memoryFootprintMB: number | null;
-  cpuFallbackLatencyMs: number | null;
-  isBenchmarking: boolean;
-  benchmarkTPU: () => Promise<TPUAcceleration>;
-  source: TelemetrySource;
+ aicoreInstalled: boolean;
+ aicoreVersion: string | null;
+ privateComputeServicesVersion: string | null;
+ hasNpuFeature: boolean | null;
+ activeDelegate: 'Tensor TPU' | 'NPU' | 'GPU' | 'CPU Fallback';
+ isHardwareAccelerated: false;
+ lastInferenceLatencyMs: number | null;
+ throughputTokensPerSec: number | null;
+ memoryFootprintMB: number | null;
+ cpuFallbackLatencyMs: number | null;
+ isBenchmarking: boolean;
+ benchmarkTPU: () => Promise<TPUAcceleration>;
+ source: TelemetrySource;
 };
 ```
 
@@ -179,16 +179,16 @@ function useTPU(): {
 ### Signature
 ```typescript
 function useMemory(): {
-  totalRAMMB: number;
-  freeRAMMB: number;
-  usedRAMMB: number;
-  isLowMemory: boolean;
-  lowMemoryThresholdMB: number;
-  appJavaHeapMB: number;
-  appJavaHeapMaxMB: number;
-  appNativeHeapMB: number;
-  purgeCaches: () => void;
-  source: TelemetrySource;
+ totalRAMMB: number;
+ freeRAMMB: number;
+ usedRAMMB: number;
+ isLowMemory: boolean;
+ lowMemoryThresholdMB: number;
+ appJavaHeapMB: number;
+ appJavaHeapMaxMB: number;
+ appNativeHeapMB: number;
+ purgeCaches: () => void;
+ source: TelemetrySource;
 };
 ```
 
@@ -227,16 +227,16 @@ Verified on Pixel 11 Pro: headroom 0.55 at status NONE; thresholds `{1: 0.8, 2: 
 ### Signature
 ```typescript
 function useADPF(): {
-  thermalHeadroom: number | null;
-  thermalThresholds: Record<string, number> | null;
-  thermalStatus: 'nominal' | 'light' | 'moderate' | 'severe' | 'critical';
-  thermalStatusCode: number;
-  cpuHeadroom: number | null;
-  gpuHeadroom: number | null;
-  targetFps: number | null;
-  currentFps: number | null;
-  reportWorkDuration: (actualWorkDurationMs: number, targetDurationMs?: number) => 'WITHIN_BUDGET' | 'BOOST_REQUESTED';
-  source: TelemetrySource;
+ thermalHeadroom: number | null;
+ thermalThresholds: Record<string, number> | null;
+ thermalStatus: 'nominal' | 'light' | 'moderate' | 'severe' | 'critical';
+ thermalStatusCode: number;
+ cpuHeadroom: number | null;
+ gpuHeadroom: number | null;
+ targetFps: number | null;
+ currentFps: number | null;
+ reportWorkDuration: (actualWorkDurationMs: number, targetDurationMs?: number) => 'WITHIN_BUDGET' | 'BOOST_REQUESTED';
+ source: TelemetrySource;
 };
 ```
 

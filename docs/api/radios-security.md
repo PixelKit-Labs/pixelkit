@@ -1,11 +1,11 @@
-# Radios & Hardware Security API Reference 🔐
+# Radios & Hardware Security API Reference
 > **Android Keystore secure storage, Biometrics, Bluetooth LE, NFC, and Dual-Band GNSS**
 
 This document covers wireless radios, near-field interactions, satellite positioning and hardware-backed secret storage on the Pixel 11 Pro. Each entry documents its **Inputs** (arguments, with defaults), its **Outputs** (every returned field, with type and meaning) and its **Functions** (what each callable takes and returns).
 
 ---
 
-## 📑 Module Index
+## Module Index
 
 * [`useBiometrics`](#usebiometrics) - Ultrasonic In-Screen Fingerprint & Class 3 Face Unlock
 * [`useSecurity`](#usesecurity) - SecureStore on the Android Keystore
@@ -25,12 +25,12 @@ A failed prompt is not a broken one: `authenticate` resolves `false` for a cance
 ### Signature
 ```typescript
 function useBiometrics(): BiometricState & {
-  hasChecked: boolean;
-  lastResult: 'success' | 'failed' | 'cancelled' | null;
-  error: string | null;
-  source: TelemetrySource;
-  authenticate: (promptMessage?: string) => Promise<boolean>;
-  refresh: () => Promise<void>;
+ hasChecked: boolean;
+ lastResult: 'success' | 'failed' | 'cancelled' | null;
+ error: string | null;
+ source: TelemetrySource;
+ authenticate: (promptMessage?: string) => Promise<boolean>;
+ refresh: () => Promise<void>;
 };
 ```
 
@@ -65,15 +65,15 @@ No post-quantum algorithms are involved; `isPostQuantumProtected` is always `fal
 ### Signature
 ```typescript
 function useSecurity(): {
-  saveSecureItem: (key: string, value: string) => Promise<boolean>;
-  getSecureItem: (key: string) => Promise<string | null>;
-  deleteSecureItem: (key: string) => Promise<boolean>;
-  isHardwareBacked: boolean;
-  securityModule: 'Android Keystore' | 'none';
-  isPostQuantumProtected: false;
-  error: string | null;
-  lastOperation: string | null;
-  source: TelemetrySource;
+ saveSecureItem: (key: string, value: string) => Promise<boolean>;
+ getSecureItem: (key: string) => Promise<string | null>;
+ deleteSecureItem: (key: string) => Promise<boolean>;
+ isHardwareBacked: boolean;
+ securityModule: 'Android Keystore' | 'none';
+ isPostQuantumProtected: false;
+ error: string | null;
+ lastOperation: string | null;
+ source: TelemetrySource;
 };
 ```
 
@@ -102,12 +102,12 @@ function useSecurity(): {
 import { useSecurity, HapticButton } from 'pixelkit';
 
 export function VaultManager() {
-  const { saveSecureItem, getSecureItem, error } = useSecurity();
-  const handleSave = async () => {
-    const ok = await saveSecureItem('USER_VAULT_KEY', 'secret_token');
-    if (!ok) console.warn(error);
-  };
-  return <HapticButton title="Save to the Keystore vault" onPress={handleSave} />;
+ const { saveSecureItem, getSecureItem, error } = useSecurity();
+ const handleSave = async () => {
+ const ok = await saveSecureItem('USER_VAULT_KEY', 'secret_token');
+ if (!ok) console.warn(error);
+ };
+ return <HapticButton title="Save to the Keystore vault" onPress={handleSave} />;
 }
 ```
 
@@ -120,18 +120,18 @@ Reads the physical Bluetooth adapter state, Bluetooth 5.4 Channel Sounding silic
 ### Signature
 ```typescript
 function useBLE(): {
-  isSupported: boolean;
-  isEnabled: boolean;
-  state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF';
-  channelSounding: boolean;
-  bondedDevices: BondedDevice[];
-  error: string | null;
-  source: TelemetrySource;
-  isScanning: boolean;
-  peripherals: BLEPeripheral[];
-  scanError: string | null;
-  startScan: (timeoutMs?: number) => Promise<boolean>;
-  stopScan: () => void;
+ isSupported: boolean;
+ isEnabled: boolean;
+ state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF';
+ channelSounding: boolean;
+ bondedDevices: BondedDevice[];
+ error: string | null;
+ source: TelemetrySource;
+ isScanning: boolean;
+ peripherals: BLEPeripheral[];
+ scanError: string | null;
+ startScan: (timeoutMs?: number) => Promise<boolean>;
+ stopScan: () => void;
 };
 ```
 
@@ -169,21 +169,21 @@ Two platform constraints are surfaced rather than hidden: reader mode needs a fo
 ### Signature
 ```typescript
 function useNFC(): {
-  isSupported: boolean;
-  isEnabled: boolean;
-  observeModeSupported: boolean;
-  antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
-  isReading: boolean;
-  lastScannedTag: ScannedTag | null;
-  tagCount: number;
-  pendingWrite: string | null;
-  lastWriteOk: boolean | null;
-  error: string | null;
-  source: TelemetrySource;
-  startReader: () => Promise<boolean>;
-  stopReader: () => Promise<void>;
-  writeText: (text: string) => Promise<boolean>;
-  clearTag: () => void;
+ isSupported: boolean;
+ isEnabled: boolean;
+ observeModeSupported: boolean;
+ antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
+ isReading: boolean;
+ lastScannedTag: ScannedTag | null;
+ tagCount: number;
+ pendingWrite: string | null;
+ lastWriteOk: boolean | null;
+ error: string | null;
+ source: TelemetrySource;
+ startReader: () => Promise<boolean>;
+ stopReader: () => Promise<void>;
+ writeText: (text: string) => Promise<boolean>;
+ clearTag: () => void;
 };
 ```
 
@@ -222,13 +222,13 @@ Unified hardware radio telemetry, queried directly from Android system services 
 ### Signature
 ```typescript
 function useRadios(): {
-  nfc: { supported: boolean; enabled: boolean; observeModeSupported: boolean; antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE' };
-  bluetooth: { supported: boolean; bleSupported: boolean; enabled: boolean; state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF'; channelSounding: boolean; bondedDevices: BondedDevice[] };
-  uwb: { supported: boolean; enabled: boolean; chipId: string | null; rangingApiSupported: boolean };
-  wifiRtt: { supported: boolean; available: boolean };
-  satellite: { supported: boolean };
-  source: TelemetrySource;
-  refresh: () => void;
+ nfc: { supported: boolean; enabled: boolean; observeModeSupported: boolean; antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE' };
+ bluetooth: { supported: boolean; bleSupported: boolean; enabled: boolean; state: 'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF'; channelSounding: boolean; bondedDevices: BondedDevice[] };
+ uwb: { supported: boolean; enabled: boolean; chipId: string | null; rangingApiSupported: boolean };
+ wifiRtt: { supported: boolean; available: boolean };
+ satellite: { supported: boolean };
+ source: TelemetrySource;
+ refresh: () => void;
 };
 ```
 
@@ -268,12 +268,12 @@ Position, altitude, heading and speed from the multi-band GNSS receiver (`expo-l
 ### Signature
 ```typescript
 function useLocation(): LocationTelemetry & {
-  isLocating: boolean;
-  hasFix: boolean;
-  lastFixAt: number | null;
-  error: string | null;
-  source: TelemetrySource;
-  refreshLocation: () => Promise<boolean>;
+ isLocating: boolean;
+ hasFix: boolean;
+ lastFixAt: number | null;
+ error: string | null;
+ source: TelemetrySource;
+ refreshLocation: () => Promise<boolean>;
 };
 ```
 

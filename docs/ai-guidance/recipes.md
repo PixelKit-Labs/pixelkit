@@ -1,11 +1,11 @@
-# AI Agent Production Recipes 🍳⚡
+# AI Agent Production Recipes
 > **Field-tested code for autonomous agents on the Pixel 11 Pro**
 
 Complete, production-grade recipes for common agentic tasks. Each one states what it takes in and what it gives back, so an agent can wire it up without reading the hook source first. Every hook contract behind these recipes is documented field by field in [`docs/HARDWARE_API.md`](../HARDWARE_API.md).
 
 ---
 
-## 📑 Recipe Index
+## Recipe Index
 
 1. [Voice-to-Action AI Loop with HiLight Visual Pulse](#recipe-1-voice-to-action-ai-loop-with-hilight-visual-pulse)
 2. [Adaptive Sensor Telemetry with ADPF Thermal Pacing](#recipe-2-adaptive-sensor-telemetry-with-adpf-thermal-pacing)
@@ -31,40 +31,40 @@ import { View, Text } from 'react-native';
 import { useSpeechAI, useGemini, useHiLight, useHaptics, HapticButton } from 'pixelkit';
 
 export function VoiceCommander() {
-  const speech = useSpeechAI();
-  const gemini = useGemini();
-  const hilight = useHiLight();
-  const { light, success, error } = useHaptics();
+ const speech = useSpeechAI();
+ const gemini = useGemini();
+ const hilight = useHiLight();
+ const { light, success, error } = useHaptics();
 
-  const handleVoiceToggle = async () => {
-    if (speech.isListening) {
-      const result = await speech.stopListeningAndTranscribe();
-      if (result?.transcript) {
-        await success();
-        // Cyan ring while the model reasons — only when the daemon can drive the LEDs.
-        if (hilight.availability === 'hardware') hilight.triggerGeminiPulse(5000);
-        await gemini.sendMessage(result.transcript);
-      } else {
-        await error();
-      }
-    } else {
-      await light();
-      await speech.startListening();
-    }
-  };
+ const handleVoiceToggle = async () => {
+ if (speech.isListening) {
+ const result = await speech.stopListeningAndTranscribe();
+ if (result?.transcript) {
+ await success();
+ // Cyan ring while the model reasons — only when the daemon can drive the LEDs.
+ if (hilight.availability === 'hardware') hilight.triggerGeminiPulse(5000);
+ await gemini.sendMessage(result.transcript);
+ } else {
+ await error();
+ }
+ } else {
+ await light();
+ await speech.startListening();
+ }
+ };
 
-  return (
-    <View style={{ padding: 16 }}>
-      <HapticButton
-        title={speech.isListening ? `Listening (${speech.voiceDecibels} dB) — tap to send` : 'Speak to assistant'}
-        onPress={handleVoiceToggle}
-        variant={speech.isListening ? 'danger' : 'primary'}
-      />
-      {speech.streamingPartial ? <Text>{speech.streamingPartial}</Text> : null}
-      {gemini.isLoading && <Text style={{ color: '#00E5FF', marginTop: 10 }}>Waiting on the cloud model…</Text>}
-      {speech.error ? <Text style={{ color: '#F28B82' }}>{speech.error}</Text> : null}
-    </View>
-  );
+ return (
+ <View style={{ padding: 16 }}>
+ <HapticButton
+ title={speech.isListening ? `Listening (${speech.voiceDecibels} dB) — tap to send` : 'Speak to assistant'}
+ onPress={handleVoiceToggle}
+ variant={speech.isListening ? 'danger' : 'primary'}
+ />
+ {speech.streamingPartial ? <Text>{speech.streamingPartial}</Text> : null}
+ {gemini.isLoading && <Text style={{ color: '#00E5FF', marginTop: 10 }}>Waiting on the cloud model…</Text>}
+ {speech.error ? <Text style={{ color: '#F28B82' }}>{speech.error}</Text> : null}
+ </View>
+ );
 }
 ```
 
@@ -86,32 +86,32 @@ import { View } from 'react-native';
 import { useSensors, useADPF, MetricCard } from 'pixelkit';
 
 export function AdaptiveTelemetryHUD() {
-  const [intervalMs, setIntervalMs] = useState(100);
-  const { barometer, barometerAvailable, source } = useSensors(intervalMs);
-  const { thermalStatus, thermalHeadroom } = useADPF();
+ const [intervalMs, setIntervalMs] = useState(100);
+ const { barometer, barometerAvailable, source } = useSensors(intervalMs);
+ const { thermalStatus, thermalHeadroom } = useADPF();
 
-  // Back the sampling rate off as the device warms, rather than being throttled into it.
-  useEffect(() => {
-    if (thermalStatus === 'severe' || thermalStatus === 'critical') setIntervalMs(500);   // 2 Hz
-    else if (thermalStatus === 'moderate') setIntervalMs(250);                            // 4 Hz
-    else setIntervalMs(100);                                                              // 10 Hz
-  }, [thermalStatus]);
+ // Back the sampling rate off as the device warms, rather than being throttled into it.
+ useEffect(() => {
+ if (thermalStatus === 'severe' || thermalStatus === 'critical') setIntervalMs(500); // 2 Hz
+ else if (thermalStatus === 'moderate') setIntervalMs(250); // 4 Hz
+ else setIntervalMs(100); // 10 Hz
+ }, [thermalStatus]);
 
-  const headroomLabel = thermalHeadroom == null ? '—' : `${Math.round(thermalHeadroom * 100)}%`;
+ const headroomLabel = thermalHeadroom == null ? '—' : `${Math.round(thermalHeadroom * 100)}%`;
 
-  return (
-    <View style={{ padding: 16 }}>
-      <MetricCard
-        title="Barometric altitude"
-        value={barometerAvailable === false ? null : barometer.relativeAltitude}
-        unit="m"
-        badge={barometer.pressure == null ? '—' : `${barometer.pressure} hPa`}
-        badgeColor="#8AB4F8"
-        subtitle={`Thermal ${thermalStatus} · headroom ${headroomLabel} · ${intervalMs} ms`}
-        source={source}
-      />
-    </View>
-  );
+ return (
+ <View style={{ padding: 16 }}>
+ <MetricCard
+ title="Barometric altitude"
+ value={barometerAvailable === false ? null : barometer.relativeAltitude}
+ unit="m"
+ badge={barometer.pressure == null ? '—' : `${barometer.pressure} hPa`}
+ badgeColor="#8AB4F8"
+ subtitle={`Thermal ${thermalStatus} · headroom ${headroomLabel} · ${intervalMs} ms`}
+ source={source}
+ />
+ </View>
+ );
 }
 ```
 
@@ -134,30 +134,30 @@ import { CameraView } from 'expo-camera';
 import { useCamera, useMediaLibrary, useHaptics, HapticButton } from 'pixelkit';
 
 export function ProPhotoSuite() {
-  const camera = useCamera();
-  const library = useMediaLibrary();
-  const { selection, success, error } = useHaptics();
+ const camera = useCamera();
+ const library = useMediaLibrary();
+ const { selection, success, error } = useHaptics();
 
-  const capture = async () => {
-    const photo = await camera.takePicture({ base64: false });
-    if (!photo) { await error(); return; }
-    await library.save(photo.uri, 'PixelKit');   // otherwise the system reclaims it
-    await success();
-  };
+ const capture = async () => {
+ const photo = await camera.takePicture({ base64: false });
+ if (!photo) { await error(); return; }
+ await library.save(photo.uri, 'PixelKit'); // otherwise the system reclaims it
+ await success();
+ };
 
-  if (!camera.hasPermission) return <Text>Camera permission needed</Text>;
+ if (!camera.hasPermission) return <Text>Camera permission needed</Text>;
 
-  return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <CameraView ref={camera.cameraRef} onCameraReady={camera.handleCameraReady} {...camera.viewProps} style={{ flex: 1 }} />
-      <Text>Zoom {Math.round(camera.zoomFactor * 100)}% of the lens range · {camera.availableLenses.length} lenses</Text>
-      {[0, 0.25, 0.5, 0.75, 1].map(f => (
-        <HapticButton key={f} title={`${f * 100}%`} onPress={() => { selection(); camera.setZoom(f); }} variant={camera.zoomFactor === f ? 'primary' : 'outline'} />
-      ))}
-      <HapticButton title="Capture" onPress={capture} variant="primary" />
-      {camera.error ? <Text style={{ color: '#F28B82' }}>{camera.error}</Text> : null}
-    </View>
-  );
+ return (
+ <View style={{ flex: 1, padding: 16 }}>
+ <CameraView ref={camera.cameraRef} onCameraReady={camera.handleCameraReady} {...camera.viewProps} style={{ flex: 1 }} />
+ <Text>Zoom {Math.round(camera.zoomFactor * 100)}% of the lens range · {camera.availableLenses.length} lenses</Text>
+ {[0, 0.25, 0.5, 0.75, 1].map(f => (
+ <HapticButton key={f} title={`${f * 100}%`} onPress={() => { selection(); camera.setZoom(f); }} variant={camera.zoomFactor === f ? 'primary' : 'outline'} />
+ ))}
+ <HapticButton title="Capture" onPress={capture} variant="primary" />
+ {camera.error ? <Text style={{ color: '#F28B82' }}>{camera.error}</Text> : null}
+ </View>
+ );
 }
 ```
 
@@ -179,29 +179,29 @@ import { View, Text } from 'react-native';
 import { useSecurity, useBiometrics, HapticButton } from 'pixelkit';
 
 export function CredentialVault() {
-  const security = useSecurity();
-  const biometrics = useBiometrics();
-  const [status, setStatus] = useState('Locked');
+ const security = useSecurity();
+ const biometrics = useBiometrics();
+ const [status, setStatus] = useState('Locked');
 
-  const handleUnlock = async () => {
-    const verified = await biometrics.authenticate('Unlock credential vault');
-    if (!verified) {
-      setStatus(biometrics.lastResult === 'cancelled' ? 'Cancelled' : 'Not recognised');
-      return;
-    }
-    const secret = await security.getSecureItem('USER_AGENT_TOKEN');
-    setStatus(secret ? 'Unlocked · token retrieved' : 'Unlocked · nothing stored');
-  };
+ const handleUnlock = async () => {
+ const verified = await biometrics.authenticate('Unlock credential vault');
+ if (!verified) {
+ setStatus(biometrics.lastResult === 'cancelled' ? 'Cancelled' : 'Not recognised');
+ return;
+ }
+ const secret = await security.getSecureItem('USER_AGENT_TOKEN');
+ setStatus(secret ? 'Unlocked · token retrieved' : 'Unlocked · nothing stored');
+ };
 
-  const canPrompt = biometrics.hasHardware && biometrics.isEnrolled;
+ const canPrompt = biometrics.hasHardware && biometrics.isEnrolled;
 
-  return (
-    <View style={{ padding: 16 }}>
-      <Text style={{ marginBottom: 10 }}>Vault: {status}</Text>
-      <HapticButton title="Biometric unlock" onPress={handleUnlock} variant="primary" disabled={!canPrompt} />
-      {!canPrompt && <Text>{biometrics.hasHardware ? 'No biometric enrolled' : 'No biometric hardware'}</Text>}
-    </View>
-  );
+ return (
+ <View style={{ padding: 16 }}>
+ <Text style={{ marginBottom: 10 }}>Vault: {status}</Text>
+ <HapticButton title="Biometric unlock" onPress={handleUnlock} variant="primary" disabled={!canPrompt} />
+ {!canPrompt && <Text>{biometrics.hasHardware ? 'No biometric enrolled' : 'No biometric hardware'}</Text>}
+ </View>
+ );
 }
 ```
 
@@ -223,28 +223,28 @@ import { View, Text } from 'react-native';
 import { useUWB, HapticButton } from 'pixelkit';
 
 export function SpatialRadarView() {
-  const { activeTargets, isRanging, isSupported, startRanging, stopRanging, sessionError } = useUWB();
+ const { activeTargets, isRanging, isSupported, startRanging, stopRanging, sessionError } = useUWB();
 
-  if (!isSupported) return <Text>This device has no ultra-wideband radio.</Text>;
+ if (!isSupported) return <Text>This device has no ultra-wideband radio.</Text>;
 
-  return (
-    <View style={{ padding: 16 }}>
-      <HapticButton
-        title={isRanging ? 'Stop ranging' : 'Start UWB ranging'}
-        onPress={() => (isRanging ? stopRanging() : startRanging())}
-        variant={isRanging ? 'danger' : 'primary'}
-      />
-      {sessionError ? <Text style={{ color: '#F28B82' }}>{sessionError}</Text> : null}
-      {activeTargets.map(t => (
-        <View key={t.deviceId} style={{ marginTop: 8 }}>
-          <Text style={{ color: '#8AB4F8', fontWeight: '700' }}>{t.deviceId}</Text>
-          <Text style={{ color: '#9398A8' }}>
-            {t.distanceMeters.toFixed(2)} m · azimuth {t.azimuthDegrees}° · quality {Math.round(t.signalQuality * 100)}%
-          </Text>
-        </View>
-      ))}
-      {isRanging && activeTargets.length === 0 && <Text>Session open, no responders in range.</Text>}
-    </View>
-  );
+ return (
+ <View style={{ padding: 16 }}>
+ <HapticButton
+ title={isRanging ? 'Stop ranging' : 'Start UWB ranging'}
+ onPress={() => (isRanging ? stopRanging() : startRanging())}
+ variant={isRanging ? 'danger' : 'primary'}
+ />
+ {sessionError ? <Text style={{ color: '#F28B82' }}>{sessionError}</Text> : null}
+ {activeTargets.map(t => (
+ <View key={t.deviceId} style={{ marginTop: 8 }}>
+ <Text style={{ color: '#8AB4F8', fontWeight: '700' }}>{t.deviceId}</Text>
+ <Text style={{ color: '#9398A8' }}>
+ {t.distanceMeters.toFixed(2)} m · azimuth {t.azimuthDegrees}° · quality {Math.round(t.signalQuality * 100)}%
+ </Text>
+ </View>
+ ))}
+ {isRanging && activeTargets.length === 0 && <Text>Session open, no responders in range.</Text>}
+ </View>
+ );
 }
 ```
