@@ -4,6 +4,11 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.20] - 2026-09-06
+
+### Changed
+- README header rewritten. The old subtitle read "32 typed React hooks over real Android telemetry, two local Kotlin Expo Modules, and an app that refuses to invent a number", which described the project from the inside: it counted internal modules nobody choosing a library asks about, and compressed the no-simulation rule into a riddle that only makes sense to someone who already knows it. It now walks the actual surface by domain (silicon and thermals, camera and video, microphone and speech, radios, biometrics and keystore, the camera-bar LEDs, on-device Gemini) and states the rule plainly as its own line.
+
 ## [1.0.19] - 2026-09-06
 
 ### Added

@@ -29,9 +29,10 @@
   <h2 align="center">PixelKit SDK</h2>
 
   <p align="center">
-    A hardware and on-device AI framework for the <strong>Google Pixel 11 Pro</strong> (Android 17, Google Tensor G6).
+    PixelKit turns the <strong>Google Pixel 11 Pro</strong>'s hardware into React hooks: CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
     <br />
-    32 typed React hooks over real Android telemetry, two local Kotlin Expo Modules, and an app that refuses to invent a number.
+    <br />
+    Every reading comes from the device. When something cannot be read, it says so instead of showing a number that looks right.
     <br />
     <br />
     <a href="./docs/README.md"><strong>Explore the docs »</strong></a>
