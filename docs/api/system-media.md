@@ -232,3 +232,208 @@ function useDevice(): DeviceTelemetry;
 `useDevice()` returns no callables; it is live telemetry.
 
 ---
+
+## `useNetwork`
+
+Connectivity, address and metering from `expo-network`. Being attached to Wi-Fi is not the same as having internet, so `isConnected` requires both a connection and a reachable route. Nothing is assumed before the first read: the type is `UNKNOWN` and `isConnected` is `false` until the platform answers.
+
+For what kind of cellular connection this is, and which carrier, see [`useCellular`](#usecellular).
+
+### Signature
+```typescript
+function useNetwork(): NetworkTelemetry & {
+  hasRead: boolean;
+  isChecking: boolean;
+  error: string | null;
+  source: TelemetrySource;
+  refreshNetwork: () => Promise<void>;
+};
+```
+
+### Inputs
+`useNetwork()` takes no arguments. It reads once on mount; each sub-read (address, state, airplane mode) fails independently so one missing value does not blank the rest.
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `ipAddress` | `string \| null` | Address on the current interface. `null` when it could not be read. |
+| `networkType` | `string` | `'WIFI'`, `'CELLULAR'`, `'NONE'` or `'UNKNOWN'`. `'UNKNOWN'` before the first read. |
+| `isConnected` | `boolean` | Whether a usable internet route exists, not merely an attached interface. |
+| `isMetered` | `boolean` | `true` on cellular, where the user pays per byte. Gate large downloads on it. |
+| `isAirplaneMode` | `boolean` | Whether airplane mode is on. |
+| `hasRead` | `boolean` | Whether a read has completed. Before it, the values above are defaults. |
+| `isChecking` | `boolean` | `true` while a check is running. |
+| `error` | `string \| null` | Why the last read failed. |
+| `source` | `TelemetrySource` | `'hardware'` once a read has completed, `'unavailable'` before that. |
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `refreshNetwork()` | none | `Promise<void>` — the new state lands in the returned fields | Re-runs the connectivity check. Call it after the app returns to the foreground. |
+
+---
+
+## `useVideo`
+
+Video playback on `expo-video`, the SDK 57 replacement for the removed `expo-av`. Pairs with `useCamera().startRecording()`: record a clip, then hand `lastVideoUri` to `load()`. The hook owns the player; a screen renders `<VideoView player={player} />`. Position and duration are polled four times a second, which is enough for a scrubber without waking the JS thread every frame.
+
+### Signature
+```typescript
+function useVideo(initialSource?: VideoSource): {
+  player: VideoPlayer;
+  hasSource: boolean; isPlaying: boolean;
+  positionSeconds: number; durationSeconds: number; bufferedSeconds: number;
+  status: string; isMuted: boolean; isLooping: boolean; playbackRate: number; volume: number;
+  error: string | null; source: TelemetrySource;
+  load: (next: VideoSource, options?: { autoplay?: boolean; loop?: boolean; muted?: boolean }) => Promise<boolean>;
+  play: () => void; pause: () => void; togglePlay: () => void;
+  seekTo: (seconds: number) => void; seekBy: (seconds: number) => void; replay: () => void;
+  setMuted: (muted: boolean) => void; setLoop: (loop: boolean) => void;
+  setPlaybackRate: (rate: number) => void; setVolume: (value: number) => void;
+  setKeepScreenOn: (keep: boolean) => void;
+  generateThumbnails: (times: number | number[]) => Promise<VideoThumbnail[]>;
+};
+```
+
+### Inputs
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `initialSource` | `VideoSource` | `null` | Source to create the player with: a file URI, a remote URL, a require'd asset, or `null` to start empty and call `load()` later. It also seeds `hasSource`. |
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `player` | `VideoPlayer` | Pass to `<VideoView player={player} />`. The hook owns its lifecycle. |
+| `hasSource` | `boolean` | Whether a source has been loaded. |
+| `isPlaying` | `boolean` | Whether playback is running, polled from the player. |
+| `positionSeconds` | `number` | Seconds into the clip, two decimals. |
+| `durationSeconds` | `number` | Total length in seconds. `0` until the source reports it. |
+| `bufferedSeconds` | `number` | How far ahead the player has buffered — useful for a remote source. |
+| `status` | `string` | Player status, e.g. `idle`, `loading`, `readyToPlay`, `error`. |
+| `isMuted` / `isLooping` | `boolean` | Current mute and loop settings. |
+| `playbackRate` | `number` | Speed multiplier; `1` is normal. Pitch is preserved by the player. |
+| `volume` | `number` | Player volume 0–1. |
+| `error` | `string \| null` | Why the last load, seek or playback call failed. |
+| `source` | `TelemetrySource` | `'hardware'` once a source is loaded, `'unavailable'` before that. |
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `load(next, options?)` | `next: VideoSource` — file URI, remote URL, asset or `null`. `options.autoplay?: boolean` — start playing as soon as it is ready. `options.loop?: boolean` — restart at the end. `options.muted?: boolean` — start muted. | `Promise<boolean>` — `true` when the source was replaced, `false` with `error` set on failure | Swaps the source, for example the clip `useCamera` just recorded. |
+| `play()` / `pause()` / `togglePlay()` | none | `void` | Transport controls. |
+| `seekTo(seconds)` | `seconds: number` — absolute position, clamped to `0..duration` | `void` | Jumps to a position. |
+| `seekBy(seconds)` | `seconds: number` — relative offset; negative rewinds | `void` | Moves relative to the current position. |
+| `replay()` | none | `void` | Restarts from the beginning and plays. |
+| `setMuted(muted)` | `muted: boolean` | `void` | Mutes or unmutes without changing `volume`. |
+| `setLoop(loop)` | `loop: boolean` | `void` | Turns looping on or off. |
+| `setPlaybackRate(rate)` | `rate: number` — clamped to 0.25–4; `1` is normal | `void` | Changes speed with pitch preserved. |
+| `setVolume(value)` | `value: number` — 0 to 1, clamped | `void` | Sets player volume. |
+| `setKeepScreenOn(keep)` | `keep: boolean` | `void` | Keeps the screen awake while a video plays, so it does not dim mid-clip. |
+| `generateThumbnails(times)` | `times: number \| number[]` — position(s) in seconds to extract | `Promise<VideoThumbnail[]>` — the frames as images; `[]` on failure with `error` set | Extracts frames for a filmstrip or a poster image. |
+
+---
+
+## `useMediaLibrary`
+
+Saving captures to the device gallery and reading them back, on `expo-media-library`. Without this, a photo from `useCamera().takePicture()` or a clip from `startRecording()` lives in the app cache and disappears when the system reclaims it. `save()` promotes a capture into the user's media store, where it survives and is visible to every other app.
+
+SDK 57 uses the class API (`Asset.create`, `Album.create`, `Query`) rather than the deprecated `createAssetAsync` helpers, which now throw at runtime. Android 13+ grants read access per media type, and the user may share only selected items, so a granted permission does not mean access to everything.
+
+### Signature
+```typescript
+function useMediaLibrary(): {
+  permissionGranted: boolean;
+  hasLimitedAccess: boolean;
+  isSaving: boolean;
+  isLoading: boolean;
+  recent: SavedMedia[];
+  lastSaved: SavedMedia | null;
+  error: string | null;
+  source: TelemetrySource;
+  requestPermission: (writeOnly?: boolean) => Promise<boolean>;
+  save: (localUri: string, albumName?: string) => Promise<SavedMedia | null>;
+  loadRecent: (limit?: number) => Promise<SavedMedia[]>;
+  remove: (media: SavedMedia) => Promise<boolean>;
+};
+```
+
+### Inputs
+`useMediaLibrary()` takes no arguments. It checks existing permission on mount without prompting; `save()` and `loadRecent()` prompt if needed.
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `permissionGranted` | `boolean` | Whether library access has been granted. |
+| `hasLimitedAccess` | `boolean` | Android 13+: `true` when the user shared only selected items, so the library you can see is a subset. |
+| `isSaving` | `boolean` | `true` while a save is in flight. |
+| `isLoading` | `boolean` | `true` while the recent list is being read. |
+| `recent` | `SavedMedia[]` | Newest items from the last `loadRecent()` call, newest first. |
+| `lastSaved` | `SavedMedia \| null` | The item most recently written by this app. `null` until one is saved. |
+| `error` | `string \| null` | Why the last permission request, save, read or delete failed. |
+| `source` | `TelemetrySource` | `'hardware'` once permission is granted, `'unavailable'` otherwise. |
+
+`SavedMedia` is `{ id, uri, filename, width, height, durationSeconds: number \| null, creationTime: number \| null }`; `durationSeconds` is `null` for stills.
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `requestPermission(writeOnly?)` | `writeOnly?: boolean` — ask only for write access, default `false`. Pass `true` when the app saves but never browses. | `Promise<boolean>` — whether access was granted | Prompts for library access and updates `permissionGranted` and `hasLimitedAccess`. |
+| `save(localUri, albumName?)` | `localUri: string` — the file `useCamera` or `useAudio` returned. `albumName?: string` — album to file it under; it is created if it does not exist. | `Promise<SavedMedia \| null>` — the saved item, or `null` when permission was denied or the write failed | Copies a local file into the user's media store. |
+| `loadRecent(limit?)` | `limit?: number` — how many items to read, default `20` | `Promise<SavedMedia[]>` — newest first; `[]` when permission was denied | Reads the newest items and writes them to `recent`. |
+| `remove(media)` | `media: SavedMedia` — an item from `recent` or `lastSaved` | `Promise<boolean>` — `true` when the item was deleted | Deletes an asset from the device. The system may show its own confirmation. |
+
+---
+
+## `useCellular`
+
+Mobile network telemetry on `expo-cellular`: carrier, radio generation and network codes. `useNetwork` can tell you the connection is cellular; it cannot tell you whether that is 5G or 2G, or who is serving it.
+
+Two caveats. `generation` reflects the current data connection, so it changes as the phone moves and reads `unknown` with no cellular data attached, including on Wi-Fi. And carrier and network codes need the phone-state permission on Android; without it they stay `null` rather than being guessed at.
+
+### Signature
+```typescript
+function useCellular(): {
+  generation: 'unknown' | '2G' | '3G' | '4G' | '5G';
+  is5G: boolean;
+  carrierName: string | null;
+  isoCountryCode: string | null;
+  mobileCountryCode: string | null;
+  mobileNetworkCode: string | null;
+  allowsVoip: boolean | null;
+  permissionGranted: boolean;
+  error: string | null;
+  source: TelemetrySource;
+  refresh: () => Promise<void>;
+  requestPermission: () => Promise<boolean>;
+};
+```
+
+### Inputs
+`useCellular()` takes no arguments. It checks the existing permission and reads everything the platform will answer without prompting, on mount.
+
+### Outputs
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `generation` | `'unknown' \| '2G' \| '3G' \| '4G' \| '5G'` | Radio generation of the current data connection. `'unknown'` with no cellular data attached. |
+| `is5G` | `boolean` | Convenience for `generation === '5G'`. |
+| `carrierName` | `string \| null` | Carrier name. `null` without the phone-state permission. |
+| `isoCountryCode` | `string \| null` | ISO country of the SIM, e.g. `"gb"`. |
+| `mobileCountryCode` | `string \| null` | MCC, the first half of the network identifier. |
+| `mobileNetworkCode` | `string \| null` | MNC, the second half. Together MCC+MNC identify a carrier globally. |
+| `allowsVoip` | `boolean \| null` | Whether the carrier permits voice over IP. `null` when it cannot be determined. |
+| `permissionGranted` | `boolean` | Whether the phone-state permission has been granted. |
+| `error` | `string \| null` | Why the last read or permission request failed. |
+| `source` | `TelemetrySource` | `'hardware'` once a read has completed, `'unavailable'` before that. |
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `refresh()` | none | `Promise<void>` — the new values land in the returned fields | Re-reads everything the platform will answer without prompting. |
+| `requestPermission()` | none | `Promise<boolean>` — whether it was granted | Asks for the phone-state permission, which unlocks carrier and network codes on Android, then refreshes. Generation is readable without it. |
+
+### Example
+```tsx
+const cell = useCellular();
+<Text>{cell.carrierName ?? 'Carrier hidden'} · {cell.generation}</Text>
+{!cell.permissionGranted && <HapticButton title="Allow carrier details" onPress={cell.requestPermission} />}
+```

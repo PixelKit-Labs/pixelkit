@@ -1,47 +1,85 @@
 # Neural & AI API Reference 🧠
-> **Google gemini-3.8-flash, Voice Speech-to-Text, Multimodal Vision, and Titan M3 Keystore**
+> **Gemini in the cloud, Gemini Nano on-device, ML Kit vision and language, speech in and out**
 
-This document covers conversational reasoning, speech audio transcription, multimodal camera scene inspection, and hardware-secured API key management.
+This document covers conversational reasoning, on-device generative tasks, speech recognition and synthesis, multimodal vision, and hardware-secured API key storage. Each entry documents its **Inputs** (arguments, with defaults), its **Outputs** (every returned field) and its **Functions** (what each callable takes and returns).
 
 ---
 
 ## 📑 Module Index
 
-* [`useGemini`](#usegemini) - Multi-Turn Conversational Reasoning & Streaming
+* [`useGemini`](#usegemini) - Multi-turn cloud chat with full generation parameters
 * [`useGeminiNano`](#usegemininano) - Gemini Nano on-device (ML Kit GenAI Prompt API on AICore)
-* [`useGenAITasks`](#usegenaitasks) - Dedicated On-Device GenAI Task Clients (Summarize, Proofread, Rewrite)
-* [`useNaturalLanguageAI`](#usenaturallanguageai) - 58-Language Offline Machine Translation, Language ID & Entity Extraction
-* [`useSpeechAI`](#usespeechai) - Dual-Mode ASI Offline & Gemini Cloud Speech Recognition
+* [`useGenAITasks`](#usegenaitasks) - On-device summarize, proofread, rewrite, describe
+* [`useNaturalLanguageAI`](#usenaturallanguageai) - Offline translation, language ID, smart reply, entities
+* [`useSpeechAI`](#usespeechai) - On-device and cloud speech recognition
 * [`useSpeech`](#usespeech) - Text to speech on the platform engine
-* [`useVisionAI`](#usevisionai) - Google ML Kit On-Device Vision Suite & Multimodal Scene Analysis
-* [`geminiClient`](#geminiclient) - Titan M3 Encrypted Credential Management
+* [`useVisionAI`](#usevisionai) - ML Kit on-device vision plus Gemini scene analysis
+* [`geminiClient`](#geminiclient) - Key storage, model listing, client factory
 
 ---
 
 ## `useGemini`
 
-Official Google Gen AI SDK integration (`@google/genai` 2.21) on **`gemini-3.8-flash`** (`GEMINI_MODEL` in `geminiClient.ts`) with real multi-turn history via `ai.chats.create()` and a system instruction. **There is no simulated fallback**: without an API key, `sendMessage` appends a `system`-role message containing `NO_API_KEY_MESSAGE` and logs `sendMessage without key`. Token counts come from the API's `usageMetadata`.
+Official Google Gen AI SDK (`@google/genai`) on **`gemini-3.8-flash`** with real multi-turn history via `ai.chats.create()` and a system instruction. **There is no simulated fallback**: without an API key, `sendMessage` appends a `system`-role message containing `NO_API_KEY_MESSAGE`. Token counts come from the API's `usageMetadata`.
+
+Changing the model, the key, or any generation parameter resets the chat session, because those settings are fixed when the session is created.
 
 ### Signature
 ```typescript
 function useGemini(): {
-  messages: AIMessage[];                 // role 'system' entries are local errors, not model output
+  messages: AIMessage[];
   isLoading: boolean;
-  sendMessage: (prompt: string) => Promise<void>;
-  clearMessages: () => void;             // also resets the chat session
   hasApiKey: boolean;
+  model: string;
+  availableModels: string[];
+  temperature: number; topP: number; topK: number; maxOutputTokens: number;
+  systemInstruction: string; thinkingBudget: number;
+  error: string | null;
+  source: TelemetrySource;
+  sendMessage: (userPrompt: string) => Promise<void>;
+  clearMessages: () => void;
   setApiKey: (key: string | null) => void;
-  model: string;                         // 'gemini-3.8-flash'
+  setSelectedModel: (model: string) => void;
+  setTemperature: (n: number) => void; setTopP: (n: number) => void; setTopK: (n: number) => void;
+  setMaxOutputTokens: (n: number) => void;
+  setSystemInstruction: (text: string) => void;
+  setThinkingBudget: (tokens: number) => void;
 };
 ```
 
-### Properties
-| Property | Type | Description |
+### Inputs
+`useGemini()` takes no arguments. It loads the stored key on mount and, when one exists, fetches the live model list. Everything else is set through the setters below, which are the hook's real inputs.
+
+### Outputs
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| `messages` | `AIMessage[]` | Multi-turn chat history; model replies carry `latencyMs` and API `tokenCount` |
-| `isLoading` | `boolean` | True while a request is in flight |
-| `hasApiKey` | `boolean` | Whether a key is loaded from SecureStore |
-| `model` | `string` | Cloud model id in use |
+| `messages` | `AIMessage[]` | The conversation: `{ id, role, content, timestamp, latencyMs?, tokenCount? }`. Model replies carry the measured round-trip latency and the API's total token count. **`role: 'system'` entries are local errors, not model output.** |
+| `isLoading` | `boolean` | `true` while a request is in flight. |
+| `hasApiKey` | `boolean` | Whether a key is loaded from SecureStore or the environment. Without it, sending appends the "no key" message. |
+| `model` | `string` | Model id in use, `'gemini-3.8-flash'` by default. |
+| `availableModels` | `string[]` | Models the API lists for this key, filtered to Gemini text models. Falls back to a curated default list when offline or unconfigured. |
+| `temperature` | `number` | Sampling temperature sent with the session, default `0.4`. |
+| `topP` | `number` | Nucleus sampling cutoff, default `0.95`. |
+| `topK` | `number` | Top-k sampling cutoff, default `40`. |
+| `maxOutputTokens` | `number` | Ceiling on reply length, default `2048`. |
+| `systemInstruction` | `string` | The instruction the session was created with. Defaults to the PixelKit assistant instruction. |
+| `thinkingBudget` | `number` | Thinking tokens requested, default `0` (off). Above zero, `thinkingConfig` is sent with the session. |
+| `error` | `string \| null` | Latest failure message, or `null`. Failures are also logged and counted. |
+| `source` | `TelemetrySource` | Cloud model: reachable only with a key and a network route. |
+
+### Functions
+| Function | Inputs | Returns | Description |
+| :--- | :--- | :--- | :--- |
+| `sendMessage(userPrompt)` | `userPrompt: string` — the user's turn; empty or whitespace-only input is ignored | `Promise<void>` — the reply lands in `messages`; errors land there too, as a `system` entry | Appends the user turn, creates the chat session on first use, and sends. Records latency and token count on the reply. |
+| `clearMessages()` | none | `void` | Empties `messages` **and** resets the chat session, so the next turn starts with no history. |
+| `setApiKey(key)` | `key: string \| null` — the API key, or `null` to clear it | `void` | Swaps the key, resets the session and refreshes `availableModels`. Persisting the key is `saveApiKey()`'s job. |
+| `setSelectedModel(model)` | `model: string` — an id from `availableModels` | `void` | Switches model and resets the session. |
+| `setTemperature(n)` | `n: number` — typically 0–2; lower is more deterministic | `void` | Takes effect on the next session. |
+| `setTopP(n)` | `n: number` — 0–1 | `void` | Nucleus sampling cutoff. |
+| `setTopK(n)` | `n: number` — positive integer | `void` | Top-k sampling cutoff. |
+| `setMaxOutputTokens(n)` | `n: number` — token ceiling for a reply | `void` | Longer replies cost more and take longer. |
+| `setSystemInstruction(text)` | `text: string` — the standing instruction; empty falls back to the default | `void` | Sets the model's behaviour for new sessions. |
+| `setThinkingBudget(tokens)` | `tokens: number` — thinking tokens; `0` disables thinking | `void` | Only sent when above zero. |
 
 ### Example
 ```tsx
@@ -58,17 +96,14 @@ export function AssistantChat() {
     if (!input.trim()) return;
     const text = input;
     setInput('');
-    // Pulse camera bar LED ring in cyan while reasoning
-    hilight.triggerGeminiPulse(4000);
+    hilight.triggerGeminiPulse(4000);   // cyan while the model is thinking
     await gemini.sendMessage(text);
   };
 
   return (
     <View>
-      {gemini.messages.map(m => (
-        <Text key={m.id}>[{m.role}]: {m.content}</Text>
-      ))}
-      <TextInput value={input} onChangeText={setInput} placeholder="Ask assistant..." />
+      {gemini.messages.map(m => <Text key={m.id}>[{m.role}]: {m.content}</Text>)}
+      <TextInput value={input} onChangeText={setInput} placeholder="Ask assistant…" />
       <HapticButton title="Send" onPress={handleSend} disabled={gemini.isLoading} />
     </View>
   );
@@ -79,293 +114,53 @@ export function AssistantChat() {
 
 ## `useGeminiNano`
 
-Gemini Nano on-device through the local `modules/pixel-nano` Expo Module, which wraps `com.google.mlkit:genai-prompt:1.0.0-beta4` (ML Kit GenAI Prompt API on AICore). Status, base model name, token limit and feature flags (system prompt, thinking mode, structured output, caching) are read from `GenerativeModel`. Latency and time-to-first-token are measured around the native call; output token counts come from the on-device tokenizer (`countTokens`). AICore keeps no history, so `buildNanoTurn()` re-sends a capped transcript with the system instruction. **There is no cloud fallback and no simulated reply**: when the model is not `available`, `sendMessage` appends a `system`-role error.
+Gemini Nano on-device through the local `modules/pixel-nano` Expo Module, which wraps `com.google.mlkit:genai-prompt` (the ML Kit GenAI Prompt API on AICore). Status, base model name, token limit and feature flags come from `GenerativeModel`; latency and time-to-first-token are measured around the native call; token counts come from the on-device tokenizer.
 
-Requires the dev client or a release APK on a device with AICore (Pixel 9 and later; verified on Pixel 11 Pro). On web and in Expo Go the module resolves to `null` and `source` is `'unavailable'`.
+AICore keeps no conversation state, so `buildNanoTurn()` re-sends a capped transcript (6,000 characters, newest turns first) with the system instruction. **There is no cloud fallback and no simulated reply**: when the model is not `available`, `sendMessage` appends a `system`-role error.
+
+Requires a dev client or release APK on a device with AICore (Pixel 9 and later; verified on Pixel 11 Pro). On web and in Expo Go the module resolves to `null` and `source` is `'unavailable'`.
 
 ### Signature
 ```typescript
 function useGeminiNano(): {
   status: 'available' | 'downloadable' | 'downloading' | 'unavailable';
   isAvailable: boolean;
-  info: NanoModelInfo | null;            // baseModelName, tokenLimit, thinkingModeAvailable, systemPromptAvailable, …
-  messages: AIMessage[];                 // role 'system' entries are local errors
-  partial: string;                       // streamed text for the in-flight reply
-  thoughts: string[];                    // thinking-mode output when enabled and supported
-  lastLatencyMs: number | null;          // hardware
-  lastFirstTokenMs: number | null;       // hardware
-  lastOutputTokens: number | null;       // on-device tokenizer
-  lastDecodeTokensPerSec: number | null; // derived: output tokens ÷ time after first token
-  downloadedBytes: number | null; isDownloading: boolean; isWarmingUp: boolean; warmupMs: number | null;
-  isGenerating: boolean; error: string | null;
-  source: 'hardware' | 'unavailable';
-  refresh(): Promise<void>;
-  download(): Promise<NanoStatus>;
-  warmup(): Promise<number | null>;
-  countTokens(prompt: string, options?: NanoOptions): Promise<number | null>;
-  generate(prompt: string, options?: NanoOptions): Promise<NanoResult>;
-  sendMessage(prompt: string): Promise<void>;
-  clearMessages(): void;
-  setModelConfig(stage: 'stable' | 'preview', preference: 'full' | 'fast'): Promise<void>;
+  info: NanoModelInfo | null;
+  messages: AIMessage[]; partial: string; thoughts: string[];
+  lastLatencyMs: number | null; lastFirstTokenMs: number | null;
+  lastOutputTokens: number | null; lastDecodeTokensPerSec: number | null;
+  downloadedBytes: number | null; isDownloading: boolean;
+  isWarmingUp: boolean; warmupMs: number | null;
+  isGenerating: boolean; error: string | null; source: TelemetrySource;
+  temperature: number; topK: number; candidateCount: number; maxOutputTokens: number;
+  thinkingMode: boolean; systemInstruction: string;
+  setTemperature: (n: number) => void; setTopK: (n: number) => void;
+  setCandidateCount: (n: number) => void; setMaxOutputTokens: (n: number) => void;
+  setThinkingMode: (on: boolean) => void; setSystemInstruction: (text: string) => void;
+  refresh: () => Promise<void>;
+  download: () => Promise<NanoStatus>;
+  warmup: () => Promise<number | null>;
+  countTokens: (prompt: string, options?: NanoOptions) => Promise<number | null>;
+  generate: (prompt: string, options?: NanoOptions) => Promise<NanoResult>;
+  sendMessage: (userPrompt: string) => Promise<void>;
+  clearMessages: () => void;
+  setModelConfig: (stage: 'stable' | 'preview', preference: 'full' | 'fast') => Promise<void>;
+  summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult>;
+  proofread: (text: string, options?: Record<string, any>) => Promise<ProofreadResult>;
+  rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult>;
 };
 ```
 
-### Native module (`modules/pixel-nano`)
-| Function | ML Kit call | Notes |
+### Inputs
+`useGeminiNano()` takes no arguments. It reads model info on mount and subscribes to download progress. Generation parameters are held as state and applied to every call; per-call overrides go in the `NanoOptions` argument of `generate` and `countTokens`.
+
+| `NanoOptions` field | Type | Description |
 | :--- | :--- | :--- |
-| `checkStatus()` | `GenerativeModel.checkStatus()` | `FeatureStatus` int mapped to a string |
-| `getModelInfo()` | `getBaseModelName`, `getTokenLimit`, `isThinkingModeAvailable`, `isSystemPromptAvailable`, `isStructuredOutputFeatureAvailable`, `isCachingFeatureAvailable` | each field null when AICore does not answer |
-| `download()` | `download(): Flow<DownloadStatus>` | progress as `onDownloadProgress` events |
-| `warmup()` | `warmup()` | returns wall time in ms |
-| `countTokens(prompt, options)` | `countTokens(request)` | on-device tokenizer |
-| `generate(prompt, options)` | `generateContent(request)` | single shot |
-| `stream(requestId, prompt, options)` | `generateContent(request, StreamingCallback)` | `onToken` / `onThought` events tagged with `requestId` |
-| `setModelConfig(stage, preference)` | `Generation.getClient(generationConfig { modelConfig { … } })` | `ModelReleaseStage.STABLE|PREVIEW`, `ModelPreference.FULL|FAST` |
-
-Options map to `GenerateContentRequest.Builder`: `systemInstruction` (a `SystemInstruction` part), `temperature`, `topK`, `candidateCount`, `maxOutputTokens`, `seed`, `thinking` (`enableThinking`), `imageBase64` (one `ImagePart`). Errors surface as `E_NANO_<ErrorCode>` (`NOT_AVAILABLE`, `BUSY`, `REQUEST_TOO_LARGE`, `BACKGROUND_USE_BLOCKED`, …).
-
-Build note: genai-prompt beta4 is compiled with Kotlin 2.3 while Expo 57 builds with Kotlin 2.1.20. The module passes `-Xskip-metadata-version-check` for its own compile and pins every `kotlin-stdlib` artifact in the build to the project's Kotlin version (see `modules/pixel-nano/android/build.gradle`).
-
-### Usage
-```tsx
-import { useGeminiNano, HapticButton } from './src';
-
-export function OnDeviceAssistant() {
-  const nano = useGeminiNano();
-  return (
-    <View>
-      <Text>Gemini Nano: {nano.status} · {nano.info?.baseModelName ?? '—'} · limit {nano.info?.tokenLimit ?? '—'} tokens</Text>
-      {nano.status === 'downloadable' && <HapticButton title="Download model" onPress={() => nano.download()} />}
-      <HapticButton title="Ask on-device" onPress={() => nano.sendMessage('Summarise the thermal state')} disabled={!nano.isAvailable} />
-      {nano.partial ? <Text>{nano.partial}</Text> : null}
-      <Text>{nano.lastLatencyMs ?? '—'} ms · first token {nano.lastFirstTokenMs ?? '—'} ms · {nano.lastDecodeTokensPerSec ?? '—'} tok/s</Text>
-    </View>
-  );
-}
-```
-
----
-
-## `useSpeechAI`
-
-Voice capture through `useAudio` (expo-audio, 16 kHz mono via the `voice_recognition` source, verified in `dumpsys audio` as `src:VOICE_RECOGNITION pack:com.pixelkit.sdk`) and transcription through Gemini audio understanding (`gemini-3.8-flash`). **No simulated transcript**: without a key the recording is kept (`lastRecordingUri`) and `error` is set to `NO_API_KEY_MESSAGE`. On-device streaming recognition (ML Kit GenAI Speech Recognition) is the planned replacement; see `docs/guides/voice.md`.
-
-### Signature
-```typescript
-function useSpeechAI(): {
-  isListening: boolean;
-  isTranscribing: boolean;
-  voiceDecibels: number;                              // dBFS
-  lastTranscript: SpeechTranscriptionResult | null;   // confidence is null (Gemini does not report one)
-  lastRecordingUri: string | null;
-  error: string | null;
-  startListening: () => Promise<boolean>;
-  stopListeningAndTranscribe: () => Promise<SpeechTranscriptionResult | null>;
-  model: string;
-};
-```
-
-### Properties
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `isListening` | `boolean` | True while audio is actively streaming from mic |
-| `isTranscribing` | `boolean` | True while converting speech audio into text tokens |
-| `voiceDecibels` | `number` | Real-time sound level in dBFS (-160 to 0) |
-| `lastTranscript` | `SpeechTranscriptionResult` | Text transcript, confidence score, and latency |
-
-### Example
-```tsx
-import React from 'react';
-import { View, Text } from 'react-native';
-import { useSpeechAI, useGemini, HapticButton } from './src';
-
-export function VoiceCommander() {
-  const speech = useSpeechAI();
-  const gemini = useGemini();
-
-  const handleVoice = async () => {
-    if (speech.isListening) {
-      const res = await speech.stopListeningAndTranscribe();
-      if (res?.transcript) {
-        gemini.sendMessage(res.transcript);
-      }
-    } else {
-      await speech.startListening();
-    }
-  };
-
-  return (
-    <View>
-      <HapticButton
-        title={speech.isListening ? `Listening (${speech.voiceDecibels} dB)... Tap to Finish` : "Start Voice"}
-        onPress={handleVoice}
-        variant={speech.isListening ? "danger" : "primary"}
-      />
-    </View>
-  );
-}
-```
-
----
-
-## `useGenAITasks`
-
-Dedicated on-device GenAI task clients powered by ML Kit and AICore. Executes directly on the Tensor G6 TPU with hardware-measured latency.
-
-### Signature
-```typescript
-function useGenAITasks(): {
-  isRunning: boolean;
-  error: string | null;
-  summaryResult: SummarizeResult | null;
-  proofreadResult: ProofreadResult | null;
-  rewriteResult: RewriteResult | null;
-  imageDescriptionResult: ImageDescriptionResult | null;
-  summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult | null>;
-  proofread: (text: string) => Promise<ProofreadResult | null>;
-  rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult | null>;
-  describeImage: (input: string, style?: 'detailed' | 'caption' | 'labels' | 'concise') => Promise<ImageDescriptionResult | null>;
-  source: 'hardware' | 'unavailable';
-};
-```
-
----
-
-## `useNaturalLanguageAI`
-
-Comprehensive on-device natural language intelligence operating completely offline:
-* **Machine Translation**: Offline neural translation across 58 language pairs.
-* **Language Identification**: Sub-10ms language identification across 50+ languages with candidate probability distribution.
-* **Smart Reply Generation**: Context-aware conversational reply suggestions.
-* **Entity Extraction**: Regex and neural extraction of dates, addresses, flight numbers, monetary amounts, and shipment tracking codes.
-
-### Signature
-```typescript
-function useNaturalLanguageAI(): {
-  isProcessing: boolean;
-  error: string | null;
-  languageResult: LanguageIdResult | null;
-  translationResult: TranslationResult | null;
-  smartReplyResult: SmartReplyResult | null;
-  entityResult: EntityExtractionResult | null;
-  identifyLanguage: (text: string) => Promise<LanguageIdResult | null>;
-  translate: (text: string, sourceLang?: string, targetLang?: string) => Promise<TranslationResult | null>;
-  suggestReplies: (history: Array<{ text: string; timestamp?: number; isLocalUser?: boolean; sender?: string }>) => Promise<SmartReplyResult | null>;
-  extractEntities: (text: string) => Promise<EntityExtractionResult | null>;
-  source: 'hardware' | 'unavailable';
-};
-```
-
----
-
-## `useVisionAI`
-
-Combines Google ML Kit on-device computer vision with Google Gemini 3.8 multimodal scene understanding:
-* **Text Recognition v2 (OCR)**: Extracts structured text blocks and lines from documents or physical signs on-device.
-* **Barcode & QR Scanning**: Low-latency decoding of 1D and 2D barcode formats on-device.
-* **Image Labeling**: Fast classification of visual entities and environments on-device.
-* **Face & 3D Mesh Detection**: Real-time facial landmark tracking, smile/eye open metrics, and 468-point 3D contour meshes on-device.
-* **Object Detection & Tracking**: Bounding box spatial coordinates and tracking IDs on-device.
-* **Gemini Multimodal Scene Analysis**: Cloud multi-sentence scene synthesis and structured label extraction via JSON schema.
-
-### Signature
-```typescript
-function useVisionAI(): {
-  // Cloud Gemini
-  isAnalyzing: boolean;
-  analysis: VisionAnalysisResult | null;
-  selectedImageUri: string | null;
-  selectedImageBase64: string | null;
-  captureAndAnalyze: (useCamera?: boolean) => Promise<VisionAnalysisResult | null>;
-  pickImage: (useCamera?: boolean) => Promise<{ uri: string; base64?: string } | null>;
-  // On-Device ML Kit
-  isOnDeviceProcessing: boolean;
-  barcodeResult: BarcodeScanResult | null;
-  ocrResult: TextRecognitionResult | null;
-  facesResult: FaceDetectionResult | null;
-  faceMeshResult: FaceMeshResult | null;
-  labelsResult: ImageLabelResult | null;
-  objectsResult: ObjectDetectionResult | null;
-  poseResult: PoseDetectionResult | null;
-  selfieResult: SelfieSegmentationResult | null;
-  subjectResult: SubjectSegmentationResult | null;
-  digitalInkResult: DigitalInkResult | null;
-  scanBarcodes: (input: string) => Promise<BarcodeScanResult | null>;
-  recognizeText: (input: string) => Promise<TextRecognitionResult | null>;
-  detectFaces: (input: string) => Promise<FaceDetectionResult | null>;
-  detectFaceMesh: (input: string) => Promise<FaceMeshResult | null>;
-  labelImage: (input: string) => Promise<ImageLabelResult | null>;
-  detectObjects: (input: string) => Promise<ObjectDetectionResult | null>;
-  detectPose: (input: string) => Promise<PoseDetectionResult | null>;
-  segmentSelfie: (input: string) => Promise<SelfieSegmentationResult | null>;
-  segmentSubject: (input: string) => Promise<SubjectSegmentationResult | null>;
-  recognizeDigitalInk: (strokes: Array<Array<{ x: number; y: number; t?: number }>>, languageTag?: string) => Promise<DigitalInkResult | null>;
-  source: 'hardware' | 'unavailable';
-  error: string | null;
-  model: string;
-};
-```
-
-## `geminiClient`
-
-Provides secure storage and initialization utilities:
-* `getStoredApiKey(): Promise<string | null>`: Pulls encrypted key from Titan M3.
-* `saveApiKey(apiKey: string): Promise<boolean>`: Encrypts key into Titan M3.
-* `createGeminiClient(apiKey: string): GoogleGenAI`: Instantiates the official Google Gen AI client.
-
----
-
-## `useSpeech`
-
-Text to speech on **`expo-speech`**, the output half of the voice story: `useSpeechAI` listens, this one talks back.
-
-Voices come from the platform speech service, so language coverage and quality depend on what the user has downloaded in system settings rather than on this app. Read `voices` instead of assuming a language exists.
-
-`speak` resolves when the engine finishes, so utterances can be awaited in sequence instead of overlapping unpredictably. Text longer than `maxInputLength` is rejected rather than silently truncated, because a sentence cut in half is worse than an error. The engine is stopped on unmount so speech does not continue after the screen is gone.
-
-### Signature
-```typescript
-function useSpeech(): {
-  isSpeaking: boolean;
-  isPaused: boolean;
-  voices: Voice[];                     // { identifier, name, language, quality }
-  voice: string | null;                // null = system default
-  rate: number;                        // 1 = normal
-  pitch: number;                       // 1 = normal
-  maxInputLength: number;
-  lastSpokenText: string | null;
-  error: string | null;
-  source: TelemetrySource;
-  speak: (text: string, options?: {
-    language?: string; voice?: string; rate?: number; pitch?: number; volume?: number;
-  }) => Promise<void>;
-  stop: () => Promise<void>;
-  pause: () => Promise<void>;          // unsupported on some engines
-  resume: () => Promise<void>;
-  checkSpeaking: () => Promise<boolean>;
-  refreshVoices: () => Promise<Voice[]>;
-  voicesForLanguage: (languageTag: string) => Voice[];
-  setVoice: (id: string | null) => void;
-  setRate: (n: number) => void;
-  setPitch: (n: number) => void;
-};
-```
-
-### Example
-```tsx
-import { useGeminiNano, useSpeech } from './src';
-
-export function TalkBack() {
-  const speech = useSpeech();
-  const nano = useGeminiNano();
-
-  const answer = async () => {
-    const reply = await nano.generate('Describe the thermal state in one sentence.');
-    await speech.speak(reply.text, { rate: 0.95 });
-  };
-
-  return <HapticButton title="Ask and speak" onPress={answer} />;
-}
-```
-
-> Await `speak` rather than firing several in a row. Check `voices` before promising a language.
+| `systemInstruction` | `string` | Sent as a `SystemInstruction` part when AICore supports it. |
+| `temperature` | `number` | Sampling temperature. |
+| `topK` | `number` | Top-k sampling cutoff. |
+| `candidateCount` | `number` | How many candidates to generate. |
+| `maxOutputTokens` | `number` | Ceiling on the reply length. |
+| `seed` | `number` | Fixes sampling for a reproducible result. |
+| `thinking` | `boolean` | Enables thinking mode where the model supports it; thoughts arrive on `onThought`. |
+| `imageBase64` | `string` | One image part, for a multimodal prompt. |
