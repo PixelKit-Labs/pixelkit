@@ -8,9 +8,6 @@
 
 <!-- PROJECT HEADER -->
 <br />
-<div align="center">
-  <h1 align="center">PixelKit SDK</h1>
-
   <p align="center">
     A template for building on the <strong>Google Pixel 11 Pro</strong>. Its hardware as React hooks: CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
     <br />
