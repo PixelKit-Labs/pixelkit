@@ -4,6 +4,14 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.8] - 2026-09-07
+
+### Fixed
+- Two leftovers from removing the shields and the `<h1>` in the GitHub web editor: an orphaned
+  `</div>` after the hero paragraph, which left the file with one opening tag and two closing ones,
+  and ten link-reference definitions for shields nothing renders any more. The six **Built With**
+  badge definitions are still in use and are untouched.
+
 ## [1.1.7] - 2026-09-07
 
 ### Added

@@ -21,7 +21,6 @@
     &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=enhancement">Request Feature</a>
   </p>
-</div>
 
 <!-- TABLE OF CONTENTS -->
 <details open>
@@ -661,16 +660,6 @@ Project Link: [https://github.com/Traves-Theberge/PixelKit](https://github.com/T
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[contributors-url]: https://github.com/Traves-Theberge/PixelKit/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[forks-url]: https://github.com/Traves-Theberge/PixelKit/network/members
-[stars-shield]: https://img.shields.io/github/stars/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[stars-url]: https://github.com/Traves-Theberge/PixelKit/stargazers
-[issues-shield]: https://img.shields.io/github/issues/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[issues-url]: https://github.com/Traves-Theberge/PixelKit/issues
-[license-shield]: https://img.shields.io/github/license/Traves-Theberge/PixelKit.svg?style=for-the-badge
-[license-url]: https://github.com/Traves-Theberge/PixelKit/blob/master/LICENSE
 [Expo-shield]: https://img.shields.io/badge/Expo_SDK_57-000020?style=for-the-badge&logo=expo&logoColor=white
 [Expo-url]: https://docs.expo.dev/versions/v57.0.0/
 [ReactNative-shield]: https://img.shields.io/badge/React_Native_0.86-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
