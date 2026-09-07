@@ -4,6 +4,32 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.0] - 2026-09-07
+
+First release of the reorganised app. Everything the SDK documents can now be reached from the
+interface, every documented function states its inputs and outputs, and a check in the build fails
+when either of those stops being true.
+
+### Added
+- Release documentation: `RELEASING.md` (the gates, the signing story, the EAS profiles and the
+  order to do them in), `docs/PRIVACY.md` (what leaves the device and what does not), and
+  `docs/store-listing.md` (listing copy, the data-safety answers, and a justification for each
+  permission the manifest asks for).
+- `expo-asset`, a required peer dependency of `expo-audio` that was missing. `expo-doctor` warned
+  that the app may crash outside Expo Go without it, which is precisely the failure a release build
+  would have shipped. All 21 doctor checks pass now.
+
+### Changed
+- `eas.json` uses `appVersionSource: "local"` and no longer auto-increments the production build.
+  The repo rule is that every change bumps `expo.android.versionCode` by hand, so the checked-in
+  value has to be the one that ships; with `remote` the two would have drifted apart silently.
+
+### Removed
+- `android.permission.BODY_SENSORS` from the manifest. It covers body-worn sensors such as a heart
+  rate monitor; nothing here reads one, and the IMU, magnetometer, barometer and light sensor need
+  no permission at all. Play treats it as sensitive, so asking for it would have meant declaring a
+  capability the app does not have.
+
 ## [1.0.27] - 2026-09-07
 
 ### Removed

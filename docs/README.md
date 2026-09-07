@@ -33,6 +33,11 @@ Documentation for the **PixelKit SDK**: the silicon, sensors, radios and on-devi
 * **[Voice: Speech In, Speech Out, Live Agents](./guides/voice.md)**: On-device streaming STT (Pixel 10/11 Advanced mode), Gemini Live API voice agents with ephemeral tokens, TTS, HiLight/haptic status.
 * **[Troubleshooting & Diagnostics](./guides/troubleshooting.md)**: Expo SDK 57 specifics, camera permissions, keep-awake tags, Hermes bytecode compilation, and thermal throttling mitigations.
 
+### 🚀 Release
+* **[RELEASING.md](../RELEASING.md)**: the gates, versioning, the on-device walk, signing, EAS profiles, and the GitHub and Play steps.
+* **[Privacy policy](./PRIVACY.md)**: what stays on the device, what leaves only with your own API key, and what each permission is for.
+* **[Store listing](./store-listing.md)**: listing copy, data-safety answers and a declared purpose for every sensitive permission.
+
 ### 🔬 [Research](./research/)
 * **[Pixel 11 Pro Hardware Research & SDK Gap Analysis](./research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 API surface, hook-by-hook gap analysis, and prioritised roadmap.
 * **[Device Profile: Pixel 11 Pro (captured from hardware)](./research/DEVICE_PROFILE_PIXEL_11_PRO.md)**: adb-verified identity (Android 17 / SDK 37, Tensor G6, grizzly), CPU clocks, display modes and ARR, AICore version, feature flags (UWB, channel sounding, Wi-Fi RTT, satellite, StrongBox, no thermometer), services, haptic PWLE v2 capabilities, thermal thresholds, full sensor inventory.

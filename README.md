@@ -510,7 +510,9 @@ export function DocumentProcessor() {
 <!-- RELEASE BUILD -->
 ## Release Build
 
-Current version: **1.0.27** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 28).
+Current version: **1.1.0** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 29).
+
+The full procedure — gates, versioning, the device walk, signing, EAS profiles, the GitHub release and the Play paperwork — is in [RELEASING.md](./RELEASING.md).
 
 ```bash
 # 1. Types and parity together
@@ -525,7 +527,7 @@ cd android && ./gradlew assembleRelease
 ```
 
 > [!IMPORTANT]
-> Configure production signing in `android/app/build.gradle` (`signingConfigs.release`) or build via EAS (`eas build -p android`) prior to store deployment.
+> `android/` is generated and untracked, so anything edited there is lost on the next `expo prebuild --clean`. Use EAS credentials, or pass a keystore through the `PIXELKIT_RELEASE_*` environment variables — without one, a local release build is silently **debug-signed**. [RELEASING.md](./RELEASING.md) has the verification command.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
