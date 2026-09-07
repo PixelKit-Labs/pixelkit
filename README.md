@@ -17,9 +17,9 @@
     <a href="#use-it-in-your-own-app"><strong>Install it »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/PixelKit-Labs/pixelkit/issues/new?labels=bug">Report Bug</a>
+    <a href="https://github.com/PixelKit-Labs/pixelkit-sdk/issues/new?labels=bug">Report Bug</a>
     &middot;
-    <a href="https://github.com/PixelKit-Labs/pixelkit/issues/new?labels=enhancement">Request Feature</a>
+    <a href="https://github.com/PixelKit-Labs/pixelkit-sdk/issues/new?labels=enhancement">Request Feature</a>
   </p>
 
 <!-- TABLE OF CONTENTS -->
@@ -330,7 +330,7 @@ import { useGeminiNano } from 'pixelkit/mlkit';
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/PixelKit-Labs/pixelkit.git
+   git clone https://github.com/PixelKit-Labs/pixelkit-sdk.git
    cd pixelkit
    ```
 2. Install dependencies:
@@ -626,7 +626,7 @@ cd android && ./gradlew assembleRelease
 - [ ] Native NDEF read/write tag controller
 - [ ] Standalone release signed APK pipeline with EAS Build
 
-See the [open issues](https://github.com/PixelKit-Labs/pixelkit/issues) for a full list of proposed features and known issues.
+See the [open issues](https://github.com/PixelKit-Labs/pixelkit-sdk/issues) for a full list of proposed features and known issues.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -668,7 +668,7 @@ Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more informati
 
 Traves Theberge - [Traves_theberge@gmail.com](mailto:Traves_theberge@gmail.com)
 
-Project Link: [https://github.com/PixelKit-Labs/pixelkit](https://github.com/PixelKit-Labs/pixelkit)
+Project Link: [https://github.com/PixelKit-Labs/pixelkit-sdk](https://github.com/PixelKit-Labs/pixelkit-sdk)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -71,7 +71,7 @@ counts at runtime.
 ## Documentation
 
 Full input and output tables for all 32 hooks, with a contract for every function:
-[docs/HARDWARE_API.md](https://github.com/PixelKit-Labs/pixelkit/blob/master/docs/HARDWARE_API.md).
+[docs/HARDWARE_API.md](https://github.com/PixelKit-Labs/pixelkit-sdk/blob/master/docs/HARDWARE_API.md).
 
 ## Licence
 

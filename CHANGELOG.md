@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.17] - 2026-09-07
+
+### Changed
+- The repository is **`PixelKit-Labs/pixelkit-sdk`**, renamed from `pixelkit` so it sits alongside
+  the coming `pixelkit-template` rather than competing with it for the plain name. The npm package
+  is still `pixelkit`; only the repository moved.
+- 22 URLs updated across the three package manifests, `README.md`, `docs/PRIVACY.md` and the
+  contributing and security files. GitHub redirects the old address, but a published `repository`
+  field that resolves through a redirect is one that breaks quietly later.
+- `pixelkit-docs` now clones `pixelkit-sdk` by default, and its `PIXELKIT_DOCS` example points at
+  the renamed directory.
+
 ## [1.1.16] - 2026-09-07
 
 ### Changed
@@ -104,7 +116,7 @@ Preparing the repository to be public.
 - The README leads with **Use it in your own app** - the two install commands and the Expo Go
   warning - before the clone instructions, since most readers will want the package, not the repo.
 - Seven repository URLs across `README.md` and `docs/PRIVACY.md` moved from `Traves-Theberge/PixelKit`
-  to `PixelKit-Labs/pixelkit`, and the clone target is the renamed lowercase directory.
+  to `PixelKit-Labs/pixelkit-sdk`, and the clone target is the renamed lowercase directory.
 - The wireless adb example in the three agent files says `<device-ip>` instead of a home LAN address.
 
 ### Verified

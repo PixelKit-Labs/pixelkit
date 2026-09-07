@@ -1,6 +1,6 @@
 {
   "name": "pixelkit",
-  "version": "1.1.16",
+  "version": "1.1.17",
   "description": "The Google Pixel 11 Pro as React hooks: silicon telemetry, sensors, radios, security and Gemini on-device. Android only. Nothing is simulated.",
   "keywords": [
     "expo",
@@ -20,12 +20,12 @@
   "author": "Traves Theberge",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PixelKit-Labs/pixelkit.git",
+    "url": "git+https://github.com/PixelKit-Labs/pixelkit-sdk.git",
     "directory": "packages/pixelkit"
   },
-  "homepage": "https://github.com/PixelKit-Labs/pixelkit#readme",
+  "homepage": "https://github.com/PixelKit-Labs/pixelkit-sdk#readme",
   "bugs": {
-    "url": "https://github.com/PixelKit-Labs/pixelkit/issues"
+    "url": "https://github.com/PixelKit-Labs/pixelkit-sdk/issues"
   },
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -44,11 +44,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@pixelkit/native": "1.1.16"
+    "@pixelkit/native": "1.1.17"
   },
   "peerDependencies": {
     "@google/genai": "^2.21.0",
-    "@pixelkit/mlkit": "1.1.16",
+    "@pixelkit/mlkit": "1.1.17",
     "expo": "~57.0.20",
     "expo-audio": "~57.0.4",
     "expo-battery": "~57.0.2",
