@@ -83,8 +83,12 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
 | **HiLight LED Ring**| `useHiLight()` | `availability, isDaemonConnected, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array (`hardware` with ADB daemon, `simulated` when untethered) |
 | **UWB Radar** | `useUWB()` | `isEnabled, chipId, activeTargets, isRanging, startRanging()` | [Pixel Pro] Hardware chip state (`hardware`), distance & AoA |
-| **Camera & Looks** | `useCamera()` | `zoomFactor, maxZoomFactor, selectedLook, setLook()` | expo-camera zoom; Camera Looks are UI state only |
+| **Camera & capture** | `useCamera()` | `cameraRef, takePicture(), startRecording(), stopRecording(), zoomFactor (0..1), isTorchOn` | Photo and video capture. Zoom is a 0..1 fraction, not a multiplier. Looks are UI state only |
+| **Video playback** | `useVideo()` | `player, positionSeconds, durationSeconds, load(), play(), seekTo()` | Plays back what useCamera recorded; render `<VideoView player={player} />` |
+| **Media library** | `useMediaLibrary()` | `save(uri, album?), loadRecent(), recent, hasLimitedAccess` | Keeps a capture; without it cache files are reclaimed |
+| **Cellular modem** | `useCellular()` | `generation, is5G, carrierName, mobileCountryCode` | 5G vs LTE and which carrier; `useNetwork` cannot answer this |
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
+| **Text to speech** | `useSpeech()` | `speak(text), voices, isSpeaking, setRate(), setPitch()` | Output half of voice; awaits the utterance so calls can be sequenced |
 | **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, interimTranscript, startListening(), stopListeningAndTranscribe()` | Dual-mode: on-device offline ASI and cloud STT |
 | **On-Device GenAI** | `useGenAITasks()` | `summarize(), proofread(), rewrite(), describeImage()` | ML Kit on-device GenAI task acceleration via AICore |
 | **On-Device NLP** | `useNaturalLanguageAI()` | `identifyLanguage(), translate(), suggestReplies(), extractEntities()` | ML Kit 58-language translation, entity extraction & smart reply |
@@ -113,7 +117,7 @@ Always adhere to these requirements:
 1. Import all hardware and AI hooks directly from './src' (e.g. useCPU, useHiLight, useSensors, useGemini, useHaptics, useCamera).
 2. Attach tactile haptic feedback (useHaptics) to all user interactions: selection for navigation, light for taps, success for completed actions, error for failures.
 3. When running Gemini AI, trigger the rear HiLight ring via useHiLight().triggerGeminiPulse() for face-down visual signaling.
-4. Treat Camera Looks and Super Res Zoom as Pixel Camera app features; useCamera() exposes expo-camera zoom and a Look label only.
+4. Treat Camera Looks and Super Res Zoom as Pixel Camera app features. useCamera() does capture (takePicture, startRecording) and exposes zoom as a 0..1 fraction, never an optical multiplier. Save captures with useMediaLibrary() or the system reclaims them.
 5. Respect the 8.33ms 120Hz frame budget. Use useADPF() to check thermal state before heavy workloads.
 6. Use true OLED black (#0E1119) for backgrounds via Colors.dark.background.
 7. Store sensitive keys exclusively through useSecurity().saveSecureItem() (SecureStore, Android Keystore).

@@ -8,7 +8,7 @@ This document covers physical sensors and mechanical actuation modules on the Pi
 ## 📑 Module Index
 
 * [`useSensors`](#usesensors) - 6-Axis IMU, Barometer, Compass, and Ambient Light
-* [`useCamera`](#usecamera) - expo-camera zoom, flash, lens and Camera Look state
+* [`useCamera`](#usecamera) - Photo capture, video recording, zoom, flash, torch
 * [`useTorch`](#usetorch) - Hardware Dual-LED Torch & SOS Optical Strobe
 * [`useHaptics`](#usehaptics) - Linear Resonant Actuator (LRA) Mechanical Tactile Feedback
 

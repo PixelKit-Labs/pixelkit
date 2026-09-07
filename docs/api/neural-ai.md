@@ -12,6 +12,7 @@ This document covers conversational reasoning, speech audio transcription, multi
 * [`useGenAITasks`](#usegenaitasks) - Dedicated On-Device GenAI Task Clients (Summarize, Proofread, Rewrite)
 * [`useNaturalLanguageAI`](#usenaturallanguageai) - 58-Language Offline Machine Translation, Language ID & Entity Extraction
 * [`useSpeechAI`](#usespeechai) - Dual-Mode ASI Offline & Gemini Cloud Speech Recognition
+* [`useSpeech`](#usespeech) - Text to speech on the platform engine
 * [`useVisionAI`](#usevisionai) - Google ML Kit On-Device Vision Suite & Multimodal Scene Analysis
 * [`geminiClient`](#geminiclient) - Titan M3 Encrypted Credential Management
 
@@ -311,3 +312,60 @@ Provides secure storage and initialization utilities:
 * `getStoredApiKey(): Promise<string | null>`: Pulls encrypted key from Titan M3.
 * `saveApiKey(apiKey: string): Promise<boolean>`: Encrypts key into Titan M3.
 * `createGeminiClient(apiKey: string): GoogleGenAI`: Instantiates the official Google Gen AI client.
+
+---
+
+## `useSpeech`
+
+Text to speech on **`expo-speech`**, the output half of the voice story: `useSpeechAI` listens, this one talks back.
+
+Voices come from the platform speech service, so language coverage and quality depend on what the user has downloaded in system settings rather than on this app. Read `voices` instead of assuming a language exists.
+
+`speak` resolves when the engine finishes, so utterances can be awaited in sequence instead of overlapping unpredictably. Text longer than `maxInputLength` is rejected rather than silently truncated, because a sentence cut in half is worse than an error. The engine is stopped on unmount so speech does not continue after the screen is gone.
+
+### Signature
+```typescript
+function useSpeech(): {
+  isSpeaking: boolean;
+  isPaused: boolean;
+  voices: Voice[];                     // { identifier, name, language, quality }
+  voice: string | null;                // null = system default
+  rate: number;                        // 1 = normal
+  pitch: number;                       // 1 = normal
+  maxInputLength: number;
+  lastSpokenText: string | null;
+  error: string | null;
+  source: TelemetrySource;
+  speak: (text: string, options?: {
+    language?: string; voice?: string; rate?: number; pitch?: number; volume?: number;
+  }) => Promise<void>;
+  stop: () => Promise<void>;
+  pause: () => Promise<void>;          // unsupported on some engines
+  resume: () => Promise<void>;
+  checkSpeaking: () => Promise<boolean>;
+  refreshVoices: () => Promise<Voice[]>;
+  voicesForLanguage: (languageTag: string) => Voice[];
+  setVoice: (id: string | null) => void;
+  setRate: (n: number) => void;
+  setPitch: (n: number) => void;
+};
+```
+
+### Example
+```tsx
+import { useGeminiNano, useSpeech } from './src';
+
+export function TalkBack() {
+  const speech = useSpeech();
+  const nano = useGeminiNano();
+
+  const answer = async () => {
+    const reply = await nano.generate('Describe the thermal state in one sentence.');
+    await speech.speak(reply.text, { rate: 0.95 });
+  };
+
+  return <HapticButton title="Ask and speak" onPress={answer} />;
+}
+```
+
+> Await `speak` rather than firing several in a row. Check `voices` before promising a language.

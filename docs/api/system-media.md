@@ -11,6 +11,9 @@ This document covers system telemetry, media capture, power, and wireless modem 
 * [`useDisplay`](#usedisplay) - 3,600 nits Super Actua Display & Wake-Lock
 * [`useDevice`](#usedevice) - Pixelsnap Qi2.2 25W Charging, Thermals & Battery Telemetry
 * [`useNetwork`](#usenetwork) - MediaTek M90 Modem, Wi-Fi 7 & Satellite SOS
+* [`useVideo`](#usevideo) - expo-video playback, seeking & frame thumbnails
+* [`useMediaLibrary`](#usemedialibrary) - Saving captures to the device gallery
+* [`useCellular`](#usecellular) - Carrier, radio generation & network codes
 
 ---
 
@@ -193,3 +196,143 @@ function useNetwork(): NetworkTelemetry & {
 | `isConnected` | `boolean` | Online status |
 | `isMetered` | `boolean` | True if carrier data billing is metered |
 | `isAirplaneMode` | `boolean` | True if all radios are disabled |
+
+---
+
+## `useVideo`
+
+Video playback on **`expo-video`**, the SDK 57 replacement for the removed `expo-av`. The natural partner to `useCamera().startRecording()`: record a clip, hand `lastVideoUri` to `load()`, play it back.
+
+The hook owns the player and a screen renders the view with it. Position, duration, buffered position and status are polled four times a second, which is enough to drive a scrubber without waking the JS thread every frame. Values are read from the player rather than tracked locally, so a seek made elsewhere still shows up.
+
+### Signature
+```typescript
+function useVideo(initialSource?: VideoSource): {
+  player: VideoPlayer;                 // pass to <VideoView player={player} />
+  hasSource: boolean;
+  isPlaying: boolean;
+  positionSeconds: number;
+  durationSeconds: number;             // 0 until the source reports it
+  bufferedSeconds: number;
+  status: string;                      // loading | readyToPlay | error
+  isMuted: boolean; isLooping: boolean;
+  playbackRate: number;                // 0.25..4, pitch preserved
+  volume: number;
+  error: string | null;
+  source: TelemetrySource;
+  load: (source: VideoSource, options?: { autoplay?: boolean; loop?: boolean; muted?: boolean }) => Promise<boolean>;
+  play: () => void; pause: () => void; togglePlay: () => void; replay: () => void;
+  seekTo: (seconds: number) => void; seekBy: (seconds: number) => void;
+  setMuted: (b: boolean) => void; setLoop: (b: boolean) => void;
+  setPlaybackRate: (rate: number) => void; setVolume: (v: number) => void;
+  setKeepScreenOn: (keep: boolean) => void;
+  generateThumbnails: (times: number | number[]) => Promise<VideoThumbnail[]>;
+};
+```
+
+### Example
+```tsx
+import { VideoView } from 'expo-video';
+import { useCamera, useVideo } from './src';
+
+export function Playback() {
+  const cam = useCamera();
+  const video = useVideo();
+  return (
+    <View>
+      <VideoView player={video.player} style={{ height: 220 }} />
+      <HapticButton
+        title="Play last recording"
+        onPress={() => cam.lastVideoUri && video.load(cam.lastVideoUri, { autoplay: true })}
+      />
+      <Text>{video.positionSeconds} / {video.durationSeconds} s</Text>
+    </View>
+  );
+}
+```
+
+> The view needs the `player` object. Passing a URI to `VideoView` renders nothing. Turn `setKeepScreenOn(false)` when playback ends, or the screen stays lit.
+
+---
+
+## `useMediaLibrary`
+
+Saving captures into the user's gallery, on **`expo-media-library`**. Without this, a photo from `useCamera().takePicture()` or a clip from `startRecording()` sits in the app's cache directory and disappears when the system reclaims it.
+
+SDK 57 uses the class API (`Asset.create`, `Album.create`, `Query`); the deprecated `createAssetAsync` helpers throw at runtime. `Asset` exposes async accessors, so the hook flattens each into a plain `SavedMedia` a list can render directly.
+
+Permission is more than a yes or no on modern Android: access is granted per media type and the user may share only selected items, which is what `hasLimitedAccess` reports.
+
+### Signature
+```typescript
+interface SavedMedia {
+  id: string; uri: string; filename: string;
+  width: number; height: number;
+  durationSeconds: number | null;      // null for stills
+  creationTime: number | null;
+}
+
+function useMediaLibrary(): {
+  permissionGranted: boolean;
+  hasLimitedAccess: boolean;           // Android 13+ partial share
+  isSaving: boolean; isLoading: boolean;
+  recent: SavedMedia[];                // newest first
+  lastSaved: SavedMedia | null;
+  error: string | null;
+  source: TelemetrySource;
+  requestPermission: (writeOnly?: boolean) => Promise<boolean>;
+  save: (localUri: string, albumName?: string) => Promise<SavedMedia | null>;
+  loadRecent: (limit?: number) => Promise<SavedMedia[]>;
+  remove: (media: SavedMedia) => Promise<boolean>;
+};
+```
+
+### Example
+```tsx
+const cam = useCamera();
+const library = useMediaLibrary();
+
+const shoot = async () => {
+  const photo = await cam.takePicture();
+  if (photo) await library.save(photo.uri, 'PixelKit');   // creates the album if needed
+};
+```
+
+> Ask with `requestPermission(true)` when the app only needs to save; it is a smaller request than full library access.
+
+---
+
+## `useCellular`
+
+Modem telemetry on **`expo-cellular`**. `useNetwork` can say the connection is cellular; this says whether it is 5G or 2G and which carrier is serving it, which is what you need before deciding to stream.
+
+`generation` reflects the live data connection, so it changes as the device moves and reads `unknown` when no cellular data is attached, including on Wi-Fi. Carrier name and the network codes need `READ_PHONE_STATE` (declared in `app.json`); without it they stay `null` rather than being guessed at. The MCC/MNC pair identifies a carrier globally and is more reliable than matching the display name.
+
+### Signature
+```typescript
+function useCellular(): {
+  generation: 'unknown' | '2G' | '3G' | '4G' | '5G';
+  is5G: boolean;
+  carrierName: string | null;          // null without READ_PHONE_STATE
+  isoCountryCode: string | null;
+  mobileCountryCode: string | null;
+  mobileNetworkCode: string | null;
+  allowsVoip: boolean | null;
+  permissionGranted: boolean;
+  error: string | null;
+  source: TelemetrySource;
+  refresh: () => Promise<void>;
+  requestPermission: () => Promise<boolean>;
+};
+```
+
+### Example
+```tsx
+const net = useNetwork();
+const cell = useCellular();
+
+if (!net.isConnected) return 'offline';
+if (net.isMetered && !cell.is5G) return `on ${cell.generation}, ask before streaming`;
+```
+
+> Pair with `useNetwork().isMetered`: generation tells you how fast, metered tells you who pays.

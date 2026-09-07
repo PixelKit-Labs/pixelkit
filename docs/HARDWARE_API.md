@@ -23,10 +23,11 @@ This document is the consolidated reference for every hook in the PixelKit SDK (
    - [useGenAITasks](#usegenaitasks) (Dedicated On-Device GenAI Task Modules)
    - [useNaturalLanguageAI](#usenaturallanguageai) (58-Language Offline NLP Suite)
    - [useSpeechAI](#usespeechai) (ASI Offline & Gemini Audio Speech Recognition)
+   - [useSpeech](#usespeech) (Text to speech on the platform engine)
    - [useVisionAI](#usevisionai) (ML Kit On-Device Vision + Multimodal Gemini)
 5. [Sensors & Physical Actuators](#sensors--physical-actuators)
    - [useSensors](#usesensors) (6-Axis IMU & Barometer)
-   - [useCamera](#usecamera) (expo-camera zoom, flash, lens)
+   - [useCamera](#usecamera) (photo capture, video recording, zoom, torch)
    - [useTorch](#usetorch) (Dual-LED Flashlight & Strobe)
    - [useHaptics](#usehaptics) (Linear Resonant Actuator)
 6. [Radios & Hardware Security](#radios--hardware-security)
@@ -37,7 +38,10 @@ This document is the consolidated reference for every hook in the PixelKit SDK (
    - [useRadios](#useradios) (Unified Radio Telemetry)
    - [useLocation](#uselocation) (Dual-Band L1/L5 GNSS)
 7. [System & Media Hooks](#system--media-hooks)
-   - [useAudio](#useaudio) (expo-audio dBFS meter)
+   - [useAudio](#useaudio) (expo-audio capture, metering, playback)
+   - [useVideo](#usevideo) (expo-video playback, seek, thumbnails)
+   - [useMediaLibrary](#usemedialibrary) (save captures to the gallery)
+   - [useCellular](#usecellular) (carrier, radio generation, network codes)
    - [useDisplay](#usedisplay) (3,600 nits 120Hz LTPO OLED)
    - [useDevice](#usedevice) (Pixelsnap Qi2.2 25W & Battery)
    - [useNetwork](#usenetwork) (MediaTek M90 Wi-Fi 7 & 5G Modem)
@@ -243,6 +247,28 @@ function NotificationRing() {
 
 ---
 
+### `useSpeech`
+* **File Path**: `src/ai/useSpeech.ts`
+* **Backing Module**: `expo-speech` on the platform speech service.
+* **Description**: The output half of voice. `speak` resolves when the engine finishes, so utterances can be sequenced rather than overlapping. Text longer than `maxInputLength` is rejected rather than silently truncated. Voice coverage depends on what the user has installed in system settings, so read `voices` instead of assuming a language. The engine is stopped on unmount.
+
+#### Interface
+```typescript
+isSpeaking: boolean; isPaused: boolean;
+voices: Voice[];                 // { identifier, name, language, quality }
+voice: string | null; rate: number; pitch: number;
+maxInputLength: number; lastSpokenText: string | null;
+error: string | null; source: TelemetrySource;
+speak(text, { language?, voice?, rate?, pitch?, volume? }?): Promise<void>;
+stop(): Promise<void>; pause(): Promise<void>; resume(): Promise<void>;
+checkSpeaking(): Promise<boolean>;
+refreshVoices(): Promise<Voice[]>;
+voicesForLanguage(tag): Voice[];
+setVoice(id | null): void; setRate(n): void; setPitch(n): void;
+```
+
+---
+
 ### `useVisionAI`
 * **File Path**: `src/ai/useVisionAI.ts` + `modules/pixel-nano` (Kotlin)
 * **Target Hardware**: CameraX Optical Stack + ML Kit On-Device Vision Subsystem & Multimodal Gemini 3.8.
@@ -261,25 +287,28 @@ function NotificationRing() {
 
 ### `useCamera`
 * **File Path**: `src/hardware/useCamera.ts`
-* **Target Hardware**: Triple Camera Array (50MP Wide, 48MP Ultrawide, 48MP Periscope Telephoto).
-* **Description**: expo-camera lens switching, zoom, flash and permission state. Camera Looks (*Original, Natural, Shadows, Vanilla, Editorial, Velvet, Classic, Digi, Black Tie, Minimal*), Super Res Zoom and low-light video are Pixel Camera app features; the hook holds a Look label and low-light flag as UI state only.
+* **Backing Module**: `expo-camera`.
+* **Description**: Lens selection, zoom, flash, torch and capture. The hook owns a ref to a `CameraView`, so a screen renders the view and attaches `cameraRef` and `handleCameraReady`. `takePicture` resolves with a file on disk plus dimensions and optional base64; `startRecording` resolves with a video file when recording ends, either through `stopRecording` or a duration or size limit. **`zoom` is a 0..1 fraction of the lens range, not an optical multiplier**, so a "5x" figure from the Pixel Camera app does not map onto it. Camera Looks, Super Res Zoom and the low-light video mode belong to the Pixel Camera app and are held as interface state only.
 
 #### Interface
 ```typescript
-type CameraLook = 'Original' | 'Natural' | 'Shadows' | 'Vanilla' | 'Editorial' | 'Velvet' | 'Classic' | 'Digi' | 'Black Tie' | 'Minimal';
-
-interface CameraState {
-  facing: 'back' | 'front';
-  zoomFactor: number;
-  maxZoomFactor: number; // 120.0x
-  flashMode: 'auto' | 'on' | 'off';
-  hasPermission: boolean;
-  selectedLook: CameraLook;
-  isUltraLowLightVideoActive: boolean;
-  setLook: (look: CameraLook) => void;
-  setZoom: (ratio: number) => void;
-  toggleUltraLowLightVideo: () => void;
-}
+cameraRef: RefObject<CameraView | null>;      // attach to your CameraView
+viewProps: { facing, zoom, flash, enableTorch, mode };
+facing: 'back' | 'front'; zoomFactor: number;  // 0..1
+flashMode: 'auto' | 'on' | 'off'; isTorchOn: boolean;
+mode: 'picture' | 'video'; isReady: boolean; hasPermission: boolean;
+isCapturing: boolean; lastPhoto: CapturedPhoto | null;
+isRecording: boolean; recordingSeconds: number; lastVideoUri: string | null;
+availableLenses: string[]; availablePictureSizes: string[];
+selectedLook: CameraLook;                      // label only
+error: string | null; source: TelemetrySource;
+handleCameraReady(): Promise<void>;
+takePicture({ quality?, base64?, exif?, shutterSound? }?): Promise<CapturedPhoto | null>;
+startRecording({ maxDurationSeconds?, maxFileSizeBytes?, mirror? }?): Promise<string | null>;
+stopRecording(): void;
+toggleFacing(): void; setZoom(fraction): void; setZoomStep(step, total?): void;
+setFlash(mode): void; toggleTorch(): void; setMode(mode): void;
+pausePreview(): Promise<void>; resumePreview(): Promise<void>;
 ```
 
 ---
@@ -404,6 +433,68 @@ setQuality(q): void; refreshInputs(): RecordingInput[]; selectInput(uid): boolea
 setRoute(r): Promise<void>;
 playLastRecording(uri?): Promise<boolean>; pausePlayback(): void;
 stopPlayback(): Promise<void>; seekPlayback(seconds): Promise<void>;
+```
+
+---
+
+### `useVideo`
+* **File Path**: `src/hardware/useVideo.ts`
+* **Backing Module**: `expo-video` (SDK 57 replacement for the removed `expo-av`).
+* **Description**: Plays a local file or remote stream. The hook owns the player; a screen renders `<VideoView player={player} />`. Position, duration, buffered position and status are polled four times a second, which is enough for a scrubber without waking the JS thread every frame. Pairs with `useCamera().lastVideoUri`.
+
+#### Interface
+```typescript
+player: VideoPlayer;             // pass to <VideoView player={player} />
+hasSource: boolean; isPlaying: boolean; status: string;
+positionSeconds: number; durationSeconds: number; bufferedSeconds: number;
+isMuted: boolean; isLooping: boolean; playbackRate: number; volume: number;
+error: string | null; source: TelemetrySource;
+load(source, { autoplay?, loop?, muted? }?): Promise<boolean>;
+play(): void; pause(): void; togglePlay(): void; replay(): void;
+seekTo(seconds): void; seekBy(seconds): void;
+setMuted(b): void; setLoop(b): void; setPlaybackRate(rate): void; setVolume(v): void;
+setKeepScreenOn(b): void;
+generateThumbnails(times: number | number[]): Promise<VideoThumbnail[]>;
+```
+
+---
+
+### `useMediaLibrary`
+* **File Path**: `src/hardware/useMediaLibrary.ts`
+* **Backing Module**: `expo-media-library` (SDK 57 class API: `Asset.create`, `Album.create`, `Query`; the `createAssetAsync` helpers now throw).
+* **Description**: Promotes a capture out of the app cache, where the system will eventually reclaim it, into the user's media store. Also lists recent items and deletes them. Android 13+ grants read access per media type and the user may share only selected items, which is reported as `hasLimitedAccess`.
+
+#### Interface
+```typescript
+permissionGranted: boolean; hasLimitedAccess: boolean;
+isSaving: boolean; isLoading: boolean;
+recent: SavedMedia[];            // { id, uri, filename, width, height, durationSeconds, creationTime }
+lastSaved: SavedMedia | null;
+error: string | null; source: TelemetrySource;
+requestPermission(writeOnly?): Promise<boolean>;
+save(localUri, albumName?): Promise<SavedMedia | null>;
+loadRecent(limit?): Promise<SavedMedia[]>;
+remove(media): Promise<boolean>;
+```
+
+---
+
+### `useCellular`
+* **File Path**: `src/hardware/useCellular.ts`
+* **Backing Module**: `expo-cellular`. Carrier and network codes need `READ_PHONE_STATE`; generation does not.
+* **Description**: Answers what `useNetwork` cannot: whether a cellular connection is 5G or something slower, and which carrier is serving it. `generation` follows the live data connection, so it changes as the device moves and reads `unknown` with no cellular data attached, including on Wi-Fi. Match carriers on the MCC/MNC pair rather than the display name.
+
+#### Interface
+```typescript
+generation: 'unknown' | '2G' | '3G' | '4G' | '5G';
+is5G: boolean;
+carrierName: string | null;      // null without READ_PHONE_STATE
+isoCountryCode: string | null;
+mobileCountryCode: string | null; mobileNetworkCode: string | null;
+allowsVoip: boolean | null;
+permissionGranted: boolean; error: string | null; source: TelemetrySource;
+refresh(): Promise<void>;
+requestPermission(): Promise<boolean>;
 ```
 
 ---

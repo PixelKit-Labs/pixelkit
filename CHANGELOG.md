@@ -4,6 +4,24 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.17] - 2026-09-06
+
+### Added
+- `useCamera` can now capture. It previously held interface state only and could not take a photo or record video. Adds a `CameraView` ref the hook drives, `takePicture` (resolving with a file, dimensions and optional base64 for the AI hooks), `startRecording` and `stopRecording` with duration and size limits and live elapsed time, torch, picture/video mode, available lenses and picture sizes, and preview pause and resume.
+- `useVideo` (`expo-video`): playback of a local file or remote stream with position, duration, buffered position, status, seek, playback rate, loop, mute, volume, keep-screen-on and frame thumbnails. Plays back what `useCamera` records.
+- `useSpeech` (`expo-speech`): text to speech, the output half of voice. Installed voices with language and quality, rate and pitch, and a `speak` that resolves when the utterance finishes so calls can be sequenced. Rejects text over the engine limit rather than truncating it.
+- `useMediaLibrary` (`expo-media-library`): saves captures into the user's gallery so they survive, using the SDK 57 class API; lists recent items, creates albums, deletes. Reports Android 13+ limited access.
+- `useCellular` (`expo-cellular`): radio generation from 2G to 5G, carrier name, ISO country, mobile country and network codes, VoIP support. Answers what `useNetwork` cannot, namely whether a cellular connection is actually 5G and who is serving it.
+- `READ_PHONE_STATE` permission and the `expo-media-library` config plugin in `app.json`.
+
+### Fixed
+- `useCamera` zoom was wrong. `expo-camera` takes a 0..1 fraction of the lens range, but the hook defaulted to `1.0`, which is maximum zoom, and clamped input to 0.5..120 so any "5x" style value was passed straight through out of range. Zoom is now a 0..1 fraction with `setZoomStep` for discrete stops, and the documentation says so explicitly.
+- Docs data carried duplicate entries for the four new hooks after two agents added them concurrently. The set that matches the shipped implementations is kept.
+
+### Changed
+- Reference documentation brought back in sync, which the previous two releases had missed: `docs/HARDWARE_API.md`, `docs/api/system-media.md`, `docs/api/neural-ai.md`, `docs/api/sensors-actuators.md` and `docs/AI_PRIMER.md` now cover capture, playback, speech, media library and cellular.
+- In-app Docs gained entries for the four new hooks and a rewritten `useCamera` entry, taking the reference to 32 modules.
+
 ## [1.0.16] - 2026-09-06
 
 ### Changed
