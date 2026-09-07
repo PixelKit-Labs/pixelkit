@@ -49,3 +49,6 @@ scripts/hilight-daemon/*.jar
 # Workspace package build output
 packages/*/build/
 *.tgz
+
+# Agent worktrees are scratch checkouts of this repo, never content
+.claude/worktrees/
