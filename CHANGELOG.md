@@ -4,6 +4,20 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.27] - 2026-09-07
+
+### Removed
+- `scripts/hilight-daemon/hilight-daemon.jar` is no longer tracked. It is compiled output; `run.ps1` already builds it when it is missing, and `.gitignore` now covers `scripts/hilight-daemon/*.jar`.
+- Aliases nothing called, which existed only to be documented: `useAudio.currentDecibels`, `useUWB.isSupportedOnDevice`, `useDisplay.setBrightness`, and `useNFC.isScanning` / `startScan` / `stopScan`. The real names are `meteringDecibels`, `isSupported`, `setScreenBrightness`, `isReading` / `startReader` / `stopReader`.
+- `DeviceTelemetry.batteryLevel`, which the shared type forced to be a number and so reported `0` for an unread battery — a fabricated default of exactly the kind rule 3 forbids. `batteryPercent: number | null` is the honest field and is what the app already used.
+- `GlowBackdrop` from `Decor.tsx`: defined, exported, never rendered anywhere.
+- `docs/ai-guidance/agent-primer.md`, a shorter and partly stale copy of `docs/AI_PRIMER.md` — its system prompt still described `useCamera` as a zoom and a label after capture had landed. `docs/README.md` points at the one primer.
+
+### Changed
+- `src/screens/docsData.ts` was 2,221 lines. The entries now live one file per category under `src/screens/docs/` (`silicon`, `pro`, `ai`, `sensors`, `radios`, `system`) with shared types and badge colours in `shared.ts`; `docsData.ts` is a 32-line aggregator, so every import of `DOC_MODULES` is unchanged.
+- `src/screens/AILabScreen.tsx` was 1,906 lines. It is now a 130-line composer over `src/screens/ailab/`: `ChatSection`, `TasksSection`, `VisionSection`, `LanguageSection`, `VoiceSection`, `AgentsSection` and the shared `styles.ts`. The hooks stay in the screen so a conversation, a transcript or a detection result survives a tab switch; sections own their own interface state.
+- `scripts/check-parity.js` reads the split files: documentation entries from `src/screens/docs/*`, and each tab's controls from its screen plus its section directory. It fails loudly if the entries cannot be found, so the action check cannot silently pass again.
+
 ## [1.0.26] - 2026-09-07
 
 ### Added

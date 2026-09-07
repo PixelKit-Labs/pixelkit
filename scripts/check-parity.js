@@ -14,16 +14,33 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const SCREENS = ['DashboardScreen', 'AILabScreen', 'SensorsLabScreen', 'DocsScreen'];
-const TAB_FILES = {
-  silicon: 'DashboardScreen',
-  ai: 'AILabScreen',
-  sensors: 'SensorsLabScreen',
-  docs: 'DocsScreen',
+/**
+ * The interface files for each tab. AI Lab is a directory: the screen composes six section
+ * components beside it. src/screens/docs is deliberately absent — it holds the documentation
+ * entries, and their example code must not count as a control that exists.
+ */
+const TAB_SOURCES = {
+  silicon: ['DashboardScreen.tsx'],
+  ai: ['AILabScreen.tsx', 'ailab'],
+  sensors: ['SensorsLabScreen.tsx'],
+  docs: ['DocsScreen.tsx'],
 };
 
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
-const screenSource = (name) => read(path.join('src', 'screens', name + '.tsx'));
+
+/** Every source file behind one tab: the screen, plus each component in its section directory. */
+function tabSource(tab) {
+  const parts = [];
+  for (const entry of TAB_SOURCES[tab]) {
+    const full = path.join(ROOT, 'src', 'screens', entry);
+    if (fs.statSync(full).isDirectory()) {
+      for (const f of fs.readdirSync(full)) parts.push(fs.readFileSync(path.join(full, f), 'utf8'));
+    } else {
+      parts.push(fs.readFileSync(full, 'utf8'));
+    }
+  }
+  return parts.join(String.fromCharCode(10));
+}
 
 const WAIVED = require('./parity-waivers.json');
 
@@ -38,7 +55,7 @@ for (const m of surface.matchAll(/^ {2}(use\w+): \{ tab: '(\w+)', section: '(\w+
 
 const indexSrc = read(path.join('src', 'index.ts'));
 const exportedHooks = [...new Set([...indexSrc.matchAll(/\buse[A-Z]\w+/g)].map((m) => m[0]))];
-const screenSources = Object.fromEntries(SCREENS.map((s) => [s, screenSource(s)]));
+const screenSources = Object.fromEntries(Object.keys(TAB_SOURCES).map((tab) => [tab, tabSource(tab)]));
 const allScreens = Object.values(screenSources).join('\n');
 
 // 1. Every exported hook has a home, and that home screen actually calls it.
@@ -48,18 +65,26 @@ for (const hook of exportedHooks) {
     failures.push(hook + ' is exported from src/index.ts but has no entry in src/core/surface.ts');
     continue;
   }
-  const file = TAB_FILES[home.tab];
-  if (!file) {
+  if (!TAB_SOURCES[home.tab]) {
     failures.push(hook + ' is homed on the unknown tab "' + home.tab + '"');
     continue;
   }
-  if (!screenSources[file].includes(hook + '(')) {
-    failures.push(hook + ' is homed on ' + home.tab + ' (' + file + ') but that screen never calls it');
+  if (!screenSources[home.tab].includes(hook + '(')) {
+    failures.push(hook + ' is homed on the ' + home.tab + ' tab but nothing there calls it');
   }
 }
 
 // 2. Every documented action is reachable from some screen, or waived with a reason.
-const docsData = read(path.join('src', 'screens', 'docsData.ts'));
+// The entries live one file per category under src/screens/docs; docsData.ts only assembles them.
+const docsDir = path.join(ROOT, 'src', 'screens', 'docs');
+const docsData = fs
+  .readdirSync(docsDir)
+  .filter((f) => f.endsWith('.ts') && f !== 'shared.ts')
+  .map((f) => fs.readFileSync(path.join(docsDir, f), 'utf8'))
+  .join(String.fromCharCode(10));
+if (!docsData.includes('actions:')) {
+  failures.push('no documentation entries found under src/screens/docs — the action check would silently pass');
+}
 let currentModule = null;
 let inActions = false;
 for (const line of docsData.split('\n')) {

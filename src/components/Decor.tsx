@@ -18,15 +18,7 @@ export const Scrims: React.FC = () => (
   </View>
 );
 
-/** Kept for existing imports; renders the top scrim only. */
-export const GlowBackdrop: React.FC<{ height?: number; style?: StyleProp<ViewStyle> }> = ({ height = 320, style }) => (
-  <LinearGradient colors={[...Gradients.scrimCyan]} style={[styles.scrimTop, { height }, style]} pointerEvents="none" />
-);
-
-/**
- * Identity mark: a small triangle (the Delta family geometry) beside the name in caps with open
- * tracking. It does not glow.
- */
+/** Wordmark: the mark and the product name, used in the top bar. */
 export const Wordmark: React.FC<{ name?: string; style?: StyleProp<ViewStyle> }> = ({ name = 'PixelKit', style }) => (
   <View style={[styles.wordmark, style]}>
     <View style={styles.mark}>

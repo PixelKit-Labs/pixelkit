@@ -145,8 +145,7 @@ export function useDevice() {
 
   const telemetry: DeviceTelemetry = {
     ...identity,
-    // The shared type requires a number; callers wanting the honest value read `batteryPercent`.
-    batteryLevel: batteryLevel ?? 0,
+    batteryPercent: batteryLevel,
     isCharging,
     lowPowerMode,
     networkType,
@@ -166,8 +165,6 @@ export function useDevice() {
 
   return {
     ...telemetry,
-    /** Battery percentage, or null when it has not been read. Prefer this over `batteryLevel`. */
-    batteryPercent: batteryLevel,
     /** Physical temperature of the battery pack in °C (fuel gauge thermistor), or null. */
     batteryTemperatureC: battery?.temperatureC ?? null,
     /** Real-time cell terminal voltage in mV, or null. */

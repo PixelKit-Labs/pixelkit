@@ -216,7 +216,7 @@ isSupported: boolean; isEnabled: boolean; chipId: string | null;
 rangingApiSupported: boolean; isRanging: boolean;
 activeTargets: UWBSpatialTarget[];       // { deviceId, distanceMeters, azimuthDegrees, elevationDegrees, signalQuality }
 sessionInfo: UwbRangingResult | null; sessionError: string | null;
-error: string | null; source: TelemetrySource; isSupportedOnDevice: boolean;
+error: string | null; source: TelemetrySource;
 ```
 
 | Function | Inputs | Returns | Description |
@@ -612,7 +612,7 @@ scanError: string | null; error: string | null; source: TelemetrySource;
 ```typescript
 isSupported: boolean; isEnabled: boolean; observeModeSupported: boolean;
 antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
-isReading: boolean; isScanning: boolean;          // isScanning is an alias
+isReading: boolean;
 lastScannedTag: ScannedTag | null;                // id, payload, techs, records, maxSize, writable
 tagCount: number; pendingWrite: string | null; lastWriteOk: boolean | null;
 error: string | null; source: TelemetrySource;
@@ -620,8 +620,8 @@ error: string | null; source: TelemetrySource;
 
 | Function | Inputs | Returns | Description |
 | :--- | :--- | :--- | :--- |
-| `startReader()` / `startScan()` | none | `Promise<boolean>` — `false` with a reason in `error` when there is no radio, NFC is off, or the build has no reader | Enables reader mode; tags then arrive as events. |
-| `stopReader()` / `stopScan()` | none | `Promise<void>` | Disables reader mode and clears any pending write. |
+| `startReader()` | none | `Promise<boolean>` — `false` with a reason in `error` when there is no radio, NFC is off, or the build has no reader | Enables reader mode; tags then arrive as events. |
+| `stopReader()` | none | `Promise<void>` | Disables reader mode and clears any pending write. |
 | `writeText(text)` | `text: string` — the NDEF text record to write | `Promise<boolean>` — `true` when **queued**, not when written; the outcome arrives as `lastWriteOk` | Queues a write for the next tag. Requires the reader to be running. |
 | `clearTag()` | none | `void` | Clears `lastScannedTag` and `lastWriteOk`. |
 
@@ -686,7 +686,6 @@ lastFixAt: number | null; error: string | null; source: TelemetrySource;
 isRecording: boolean; isPaused: boolean; canRecord: boolean;
 permissionGranted: boolean; durationSeconds: number; quality: 'speech' | 'studio';
 meteringDecibels: number;        // dBFS, -160..0
-currentDecibels: number;         // alias
 peakDecibels: number; level: number;   // level is 0..1, floored at -60 dBFS
 isSilent: boolean; silenceThresholdDbfs: number;
 inputs: RecordingInput[]; currentInputUid: string | null; route: 'speaker' | 'earpiece';
@@ -836,7 +835,7 @@ isKeepAwake: boolean; brightness: number; source: TelemetrySource;
 | Function | Inputs | Returns | Description |
 | :--- | :--- | :--- | :--- |
 | `toggleKeepAwake()` | none | `Promise<void>` — new state in `isKeepAwake` | Acquires or releases a tagged screen wake lock. |
-| `setScreenBrightness(value)` / `setBrightness(value)` | `value: number` — 0 to 1, clamped | `Promise<void>` | Sets app-window brightness; no-op on web. |
+| `setScreenBrightness(value)` | `value: number` — 0 to 1, clamped | `Promise<void>` | Sets app-window brightness; no-op on web. |
 | `setPreferredRefreshRate(rateHz)` | `rateHz: number` — the rate to request for this window | `Promise<boolean>` — `true` when applied | A request, not a guarantee: the system may pick another mode. |
 
 ---
@@ -850,7 +849,7 @@ isKeepAwake: boolean; brightness: number; source: TelemetrySource;
 
 ```typescript
 modelName: string; brand: string; osVersion: string;
-batteryLevel: number; batteryPercent: number | null;
+batteryPercent: number | null;   // null until read, never a filled-in 0
 isCharging: boolean; lowPowerMode: boolean;
 networkType: string; isConnected: boolean; totalMemoryMB?: number;
 batteryTemperatureC: number | null;   // Real NTC thermistor °C

@@ -106,7 +106,9 @@ pixel-delta/ (PixelKit Framework)
 │       ├── DashboardScreen.tsx # Silicon: Compute · System · Network · Trace
 │       ├── AILabScreen.tsx     # AI Lab: Chat · Tasks · Vision · Language · Voice · Agents
 │       ├── SensorsLabScreen.tsx# Sensors: Motion · Capture · Audio · Actuators · Radios · Security
-│       └── DocsScreen.tsx      # Docs: all 32 hooks, each saying where in the app to try it
+│       ├── DocsScreen.tsx      # Docs: all 32 hooks, each saying where in the app to try it
+│       ├── ailab/              # One file per AI Lab section, sharing styles.ts
+│       └── docs/               # Documentation entries, one file per category
 ```
 
 ---

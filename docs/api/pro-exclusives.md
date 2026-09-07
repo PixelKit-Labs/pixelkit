@@ -121,7 +121,6 @@ function useUWB(): {
   sessionError: string | null;
   startRanging: (sessionId?: number) => Promise<boolean>;
   stopRanging: () => void;
-  isSupportedOnDevice: boolean;
 };
 ```
 
@@ -141,7 +140,6 @@ function useUWB(): {
 | `activeTargets` | `UWBSpatialTarget[]` | Peers the session reports: `deviceId`, `distanceMeters`, `azimuthDegrees` (−180 to +180), `elevationDegrees` (−90 to +90), `signalQuality` (0–1 line-of-sight score). Empty when nothing is being tracked. |
 | `sessionInfo` | `UwbRangingResult \| null` | Session diagnostics: `{ success, sessionId, technology, serviceAvailable, serviceName, rangingFeature, status, timestampMs }`. `null` before the first attempt. |
 | `sessionError` | `string \| null` | Why the last session failed to start, e.g. no native ranging service or unsupported hardware. |
-| `isSupportedOnDevice` | `boolean` | Alias of `isSupported`, kept for older call sites. |
 
 ### Functions
 | Function | Inputs | Returns | Description |

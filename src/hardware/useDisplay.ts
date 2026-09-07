@@ -91,8 +91,6 @@ export function useDisplay() {
     toggleKeepAwake,
     brightness,
     setScreenBrightness,
-    /** Alias kept for docs compatibility */
-    setBrightness: setScreenBrightness,
     /** Current display mode refresh rate in Hz (live; changes with ARR). 0 until the first read. */
     refreshRateHz: display ? Math.round(display.refreshRate) : 0,
     /** Android 16+ adaptive refresh rate support flag (null if unknown) */

@@ -22,7 +22,7 @@ Documentation for the **PixelKit SDK**: the silicon, sensors, radios and on-devi
 * **[System & Media](./api/system-media.md)**: `useAudio`, `useCapabilities`, `useDisplay` (1-120 Hz LTPO, HDR, ARR), `useDevice`, `useNetwork`, `useVideo`, `useMediaLibrary`, `useCellular`.
 
 ### 🤖 [AI Agent Guidance](./ai-guidance/)
-* **[Agent Operational Primer](./ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelKit, and copy-paste system prompt directives.
+* **[Agent Primer](./AI_PRIMER.md)**: the rules an agent follows here, the hook table with inputs, outputs and functions, worked recipes, and a copy-paste system prompt.
 * **[Production Recipes](./ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, face-down HiLight visual signaling, and spatial tracking.
 * **Agent Skills & Tooling**: 26 official Expo agent skills (`.agents/skills/` tracked via `skills-lock.json`) covering navigation, UI, modules, animations, and deployment alongside Google `android-cli`.
 

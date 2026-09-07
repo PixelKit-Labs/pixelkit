@@ -105,7 +105,5 @@ export function useUWB() {
     startRanging,
     /** Stop spatial ranging session */
     stopRanging,
-    /** Whether device hardware has dedicated UWB chip (Pixel Pro exclusive) */
-    isSupportedOnDevice: isSupported,
   };
 }

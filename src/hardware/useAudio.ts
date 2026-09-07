@@ -393,8 +393,6 @@ export function useAudio() {
     // ── level ──
     /** Live level in dBFS, -160 silence to 0 clipping */
     meteringDecibels,
-    /** Alias kept for older call sites */
-    currentDecibels: meteringDecibels,
     /** Loudest dBFS seen during this take */
     peakDecibels,
     /** 0..1 mapping of the level for meters, floored at -60 dBFS */

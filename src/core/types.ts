@@ -66,8 +66,8 @@ export interface DeviceTelemetry {
   brand: string;
   /** Operating system version (e.g. "Android 16") */
   osVersion: string;
-  /** Battery percentage (0 to 100) */
-  batteryLevel: number;
+  /** Battery percentage 0 to 100, or null when it has not been read yet. */
+  batteryPercent: number | null;
   /** Whether the device is plugged into AC, USB, or Qi wireless charging */
   isCharging: boolean;
   /** Whether Android Battery Saver mode is currently active */

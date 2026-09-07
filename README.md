@@ -393,6 +393,8 @@ Pixel delta/ (PixelKit)
 │   ├── components/              # ScreenScaffold, HapticButton, MetricCard, SensorVisualizer, Decor
 │   ├── theme/                   # colors.ts (design tokens), mode.ts (state -> colour)
 │   └── screens/                 # Silicon, AI Lab, Sensors, Docs — one home per hook
+│       ├── ailab/               # Chat, Tasks, Vision, Language, Voice, Agents sections
+│       └── docs/                # Documentation entries, one file per category
 │
 └── docs/                        # Subsystem references, guides, and empirical research
 ```
@@ -508,7 +510,7 @@ export function DocumentProcessor() {
 <!-- RELEASE BUILD -->
 ## Release Build
 
-Current version: **1.0.25** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 26).
+Current version: **1.0.27** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 28).
 
 ```bash
 # 1. Types and parity together

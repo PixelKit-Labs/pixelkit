@@ -29,7 +29,7 @@ Verified on Pixel 11 Pro: `dumpsys audio` shows `src:VOICE_RECOGNITION pack:com.
 function useAudio(): {
   isRecording: boolean; isPaused: boolean; canRecord: boolean; permissionGranted: boolean;
   durationSeconds: number; quality: 'speech' | 'studio';
-  meteringDecibels: number; currentDecibels: number; peakDecibels: number; level: number;
+  meteringDecibels: number; peakDecibels: number; level: number;
   isSilent: boolean; silenceThresholdDbfs: number; setSilenceThresholdDbfs: (dbfs: number) => void;
   inputs: RecordingInput[]; currentInputUid: string | null; route: 'speaker' | 'earpiece';
   lastRecordingUri: string | null; isPlaying: boolean;
@@ -59,7 +59,6 @@ function useAudio(): {
 | `durationSeconds` | `number` | Elapsed seconds of the current take, one decimal, updated every 100 ms. |
 | `quality` | `'speech' \| 'studio'` | Active capture profile. `speech` = 16 kHz mono, noise-suppressed; `studio` = 48 kHz stereo, unprocessed. |
 | `meteringDecibels` | `number` | Live level in dBFS: −160 is digital silence, 0 is clipping. |
-| `currentDecibels` | `number` | Alias of `meteringDecibels`, kept for older call sites. |
 | `peakDecibels` | `number` | Loudest dBFS seen during this take, reset at each start. |
 | `level` | `number` | The level mapped to 0–1 for a meter, floored at −60 dBFS. |
 | `isSilent` | `boolean` | `true` until the level rises above `silenceThresholdDbfs`, and always `true` before the first sample. |
@@ -171,7 +170,6 @@ function useDisplay(): {
   source: TelemetrySource;
   toggleKeepAwake: () => Promise<void>;
   setScreenBrightness: (value: number) => Promise<void>;
-  setBrightness: (value: number) => Promise<void>;
   setPreferredRefreshRate: (rateHz: number) => Promise<boolean>;
 };
 ```
@@ -198,7 +196,6 @@ function useDisplay(): {
 | :--- | :--- | :--- | :--- |
 | `toggleKeepAwake()` | none | `Promise<void>` — the new state lands in `isKeepAwake` | Acquires or releases a tagged screen wake lock, so the display does not dim during a long read or a capture. |
 | `setScreenBrightness(value)` | `value: number` — 0 to 1, clamped | `Promise<void>` | Sets app-window brightness. No-op on web. Failures are logged and leave `brightness` unchanged. |
-| `setBrightness(value)` | Same as above | `Promise<void>` | Alias kept for docs compatibility. |
 | `setPreferredRefreshRate(rateHz)` | `rateHz: number` — the rate to request for this window, e.g. 120 during an animation and 60 otherwise | `Promise<boolean>` — `true` when the request was applied | A request, not a guarantee: the system may pick a different mode. |
 
 ---
@@ -231,7 +228,7 @@ function useDevice(): DeviceTelemetry & {
 ```
 
 ### Inputs
-`useDevice()` takes no arguments. It reads once on mount and then keeps `batteryLevel` and `isCharging` current through `expo-battery` listeners and `PixelNative.getBatteryTelemetry()`.
+`useDevice()` takes no arguments. It reads once on mount and then keeps `batteryPercent` and `isCharging` current through `expo-battery` listeners and `PixelNative.getBatteryTelemetry()`.
 
 ### Outputs
 | Field | Type | Description |
@@ -239,7 +236,7 @@ function useDevice(): DeviceTelemetry & {
 | `modelName` | `string` | Marketing model name from `expo-device`. |
 | `brand` | `string` | Manufacturer brand, e.g. `"Google"`. |
 | `osVersion` | `string` | Android version string. |
-| `batteryLevel` | `number` | Charge as a percentage, 0–100, updated live. |
+| `batteryPercent` | `number | null` | Charge as a percentage, 0–100, updated live. `null` until the first read — it is never reported as 0 to fill the gap. |
 | `batteryPercent` | `number \| null` | Honest charge percentage, null until read. |
 | `isCharging` | `boolean` | `true` while charging or full, on AC, USB, wireless or dock. |
 | `lowPowerMode` | `boolean` | Whether Android Battery Saver is active. Back off from heavy work when it is. |

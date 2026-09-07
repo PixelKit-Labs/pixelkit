@@ -1,6 +1,4 @@
 {
-  "useNFC.startScan": "alias of startReader, kept for older call sites",
-  "useNFC.stopScan": "alias of stopReader, kept for older call sites",
   "useVideo.setKeepScreenOn": "lifecycle concern for a caller, not a demo control",
   "useVideo.setVolume": "the hardware volume keys own this",
   "useVideo.setMuted": "the native player controls expose mute",

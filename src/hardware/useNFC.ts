@@ -205,8 +205,6 @@ export function useNFC() {
     antennaState,
     /** Whether reader mode is running. Stops when the app leaves the foreground. */
     isReading,
-    /** Alias kept for older call sites. */
-    isScanning: isReading,
     /** The last tag read from the field, with decoded NDEF records. */
     lastScannedTag,
     /** How many tags have been read this session. */
@@ -221,9 +219,6 @@ export function useNFC() {
 
     startReader,
     stopReader,
-    /** Alias kept for older call sites. */
-    startScan: startReader,
-    stopScan: stopReader,
     writeText,
     clearTag,
   };

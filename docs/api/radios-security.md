@@ -174,7 +174,6 @@ function useNFC(): {
   observeModeSupported: boolean;
   antennaState: 'ENABLED' | 'DISABLED' | 'UNAVAILABLE';
   isReading: boolean;
-  isScanning: boolean;
   lastScannedTag: ScannedTag | null;
   tagCount: number;
   pendingWrite: string | null;
@@ -183,8 +182,6 @@ function useNFC(): {
   source: TelemetrySource;
   startReader: () => Promise<boolean>;
   stopReader: () => Promise<void>;
-  startScan: () => Promise<boolean>;
-  stopScan: () => Promise<void>;
   writeText: (text: string) => Promise<boolean>;
   clearTag: () => void;
 };
@@ -201,7 +198,6 @@ function useNFC(): {
 | `observeModeSupported` | `boolean` | Whether Android 15 Observe Mode is available on this adapter. |
 | `antennaState` | `'ENABLED' \| 'DISABLED' \| 'UNAVAILABLE'` | Antenna state as the adapter reports it. |
 | `isReading` | `boolean` | Whether reader mode is running. It stops when the app leaves the foreground. |
-| `isScanning` | `boolean` | Alias of `isReading`, kept for older call sites. |
 | `lastScannedTag` | `ScannedTag \| null` | The last tag read: `id` (hex UID), `payload` (best single string: a URI if present, else the first text record), `tech`, `timestamp`, `techs[]`, `records[]` (`{ tnf, type, payload, bytes, uri }`), `maxSize` (capacity in bytes), `writable`, `ndefType`. `null` before the first tag. |
 | `tagCount` | `number` | How many tags have been read since mount. |
 | `pendingWrite` | `string \| null` | Text waiting to be written to the next tag presented, or `null` when nothing is queued. |
@@ -214,7 +210,6 @@ function useNFC(): {
 | :--- | :--- | :--- | :--- |
 | `startReader()` | none | `Promise<boolean>` — `true` when reader mode started; `false` with a reason in `error` when the build has no reader, the device has no radio, or NFC is off | Enables `NfcAdapter` reader mode on the foreground Activity. Tags then arrive as events. |
 | `stopReader()` | none | `Promise<void>` | Disables reader mode, clears any pending write and logs how many tags were read. |
-| `startScan()` / `stopScan()` | none | Same as `startReader` / `stopReader` | Aliases kept for older call sites. |
 | `writeText(text)` | `text: string` — the text record to write | `Promise<boolean>` — `true` when the write was queued, not when it completed; the outcome arrives later as `lastWriteOk` | Queues an NDEF text record for the next tag presented. Requires the reader to be running. |
 | `clearTag()` | none | `void` | Clears `lastScannedTag` and `lastWriteOk`, for a "scan another" control. |
 

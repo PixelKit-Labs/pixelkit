@@ -42,5 +42,6 @@ yarn-error.*
 modules/**/build/
 .gradle/
 
-# HiLight daemon build output
+# HiLight daemon build output (run.ps1 rebuilds the jar when it is missing)
 scripts/hilight-daemon/build/
+scripts/hilight-daemon/*.jar
