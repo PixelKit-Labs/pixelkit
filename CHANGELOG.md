@@ -4,6 +4,19 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.11] - 2026-09-07
+
+### Fixed
+- **`LICENSE` still carried Expo's copyright.** It read "Copyright (c) 2015-present 650 Industries,
+  Inc. (aka Expo)", untouched since the `create-expo-app` scaffold in the first commit. Every
+  manifest declares MIT, so three packages were one command away from being published attributing
+  this work to Expo. Now "Copyright (c) 2026 Traves Theberge".
+
+### Added
+- `LICENSE` is copied into each package and listed in its `files`. npm only picks up a licence file
+  from the package directory, so without this all three tarballs would have shipped an MIT
+  declaration in `package.json` and no licence text.
+
 ## [1.1.10] - 2026-09-07
 
 ### Changed
