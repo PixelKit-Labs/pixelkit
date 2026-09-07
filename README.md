@@ -1,337 +1,392 @@
-# PixelKit SDK ⚡
-> **The Hardware & AI Framework for Google Pixel & Android**  
-> *Engineered for high-performance mobile applications and autonomous AI agents.*
+# PixelKit SDK
+
+> **A hardware and on-device AI framework for the Google Pixel 11 Pro.**
+> 28 typed React hooks over real Android telemetry, two local Kotlin Expo Modules, and an app that refuses to invent a number.
 
 [![Expo SDK](https://img.shields.io/badge/Expo-SDK%2057-black?style=flat-square&logo=expo)](https://docs.expo.dev/versions/v57.0.0/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?style=flat-square&logo=react)](https://reactnative.dev/)
-[![Android Version](https://img.shields.io/badge/Android-15%20%2F%2016%20%2F%2017-3DDC84?style=flat-square&logo=android)](https://developer.android.com/)
-[![Google Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
-[![Tensor TPU](https://img.shields.io/badge/Hardware-Tensor%20TPU-00E5FF?style=flat-square)](https://developers.google.com/tensor)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.86.3-61DAFB?style=flat-square&logo=react)](https://reactnative.dev/)
+[![Android](https://img.shields.io/badge/Android-17%20(API%2037)-3DDC84?style=flat-square&logo=android)](https://developer.android.com/)
+[![Gemini](https://img.shields.io/badge/Cloud-gemini--3.8--flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
+[![On-device](https://img.shields.io/badge/On--device-Gemini%20Nano%20%2B%20ML%20Kit-00E5FF?style=flat-square)](https://developers.google.com/ml-kit)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict%20%C2%B7%200%20errors-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Version](https://img.shields.io/badge/version-1.0.13-6FDCF2?style=flat-square)](./CHANGELOG.md)
 
 ---
 
-## 📖 Overview
+## Overview
 
-**PixelKit** is a modular framework and developer SDK designed specifically to unlock 100% of the hardware silicon and on-device machine learning capabilities of the **Google Pixel 11 Pro** (and modern Android devices). 
+PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into typed React hooks. Hardware access goes through Expo modules and two local Kotlin Expo Modules rather than fragmented native bridges.
 
-Instead of dealing with fragmented low-level Android APIs or complex native bridges, PixelKit abstracts the phone's physical hardware into 24 typed, reusable **React hooks** with integrated tactile haptics, thermal headroom management, and multimodal Gemini AI intelligence.
+The framework has one rule that shapes everything else:
 
-It is structured as an authoritative foundation for developers and autonomous AI coding agents (including the upcoming **Delta Bot**) to build, test, and ship mobile experiences rapidly.
+> **No mocks.** Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'`. A value that cannot be read is `null` and renders as `—`. Nothing is ever substituted with a plausible default.
+
+That makes PixelKit usable as ground truth by autonomous coding agents, which is the reason the provenance tag appears on every metric card in the app.
+
+| | |
+| :--- | :--- |
+| **Hooks** | 21 hardware + 7 AI = **28** |
+| **Native modules** | `pixel-native` (23 functions), `pixel-nano` (26 functions) |
+| **App screens** | Silicon, AI Lab, Sensors, Docs |
+| **Build target** | compileSdk/targetSdk 36, minSdk 26, Hermes |
+| **Verified on** | Pixel 11 Pro (`grizzly`), Android 17, SDK 37, Tensor G6 |
 
 ---
 
-## 🚀 Hardware & Silicon Feature Matrix
+## Interface
 
-| Subsystem | Developer Hook | Physical Hardware Mapped |
+| Silicon Dashboard |
+| :---: |
+| ![Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png) |
+
+*Every card carries a provenance tag: `HW` read from hardware, `DERIVED` computed from hardware, `SIMULATED` state-only, `N/A` unreadable.*
+
+---
+
+## Telemetry provenance
+
+The four values of `TelemetrySource` (`src/core/observability.ts`) and what each promises:
+
+| Source | Meaning | Example |
 | :--- | :--- | :--- |
-| **Tensor G6 CPU** | `useCPU()` | Real topology from /proc/cpuinfo + cpufreq (1x C1-Ultra 4.11 GHz, 4x C1-Pro 3.38 GHz, 2x C1-Pro 2.65 GHz), per-core MHz, governor, frequency utilisation, app CPU share |
-| **PowerVR GPU** | `useGPU()` | EGL renderer string (PowerVR CXTP-48-1536, Vulkan 1.4), Choreographer frame pacing: presented FPS, avg/max frame interval, jank |
-| **Tensor TPU / NPU** | `useTPU()` | AICore / Private Compute Services detection (Gemini Nano host), NPU feature flag; inference itself is `useGeminiNano()` |
-| **LPDDR5X RAM** | `useMemory()` | ActivityManager total/available/LMK threshold, Java + native heaps, GC request |
-| **Dynamic Thermals** | `useADPF()` | PowerManager thermal headroom + status listener, thresholds, Android 16+ SystemHealth CPU/GPU headroom, display target vs measured FPS |
-| **HiLight LED Ring** | `useHiLight()` | **[Pixel 11 Pro Exclusive]** Eight-LED camera-bar array; real LEDs via native ADB daemon (`npm run hilight:daemon`), on-screen mirror when untethered |
-| **Motion & Atmosphere**| `useSensors()` | 6-Axis IMU (Gyro/Accel), Barometer (hypsometric altimeter), Magnetometer, Light |
-| **Tactile Haptics** | `useHaptics()` | LRA patterns plus Android 16 envelope effects (PWLE v2, 134.4 Hz resonance) and primitive compositions |
-| **Camera & Looks** | `useCamera()` | expo-camera lens, zoom, flash and permission state; Camera Looks kept as UI state (Pixel Camera app feature) |
-| **Multimodal Vision** | `useVisionAI()` | Ultra HDR camera capture, gallery picker, and Gemini Multimodal scene analysis |
-| **Voice & Speech** | `useSpeechAI()` | Multi-mic voice recording, decibel metering, and Speech-to-Text transcription |
-| **Conversational AI** | `useGemini()` | Multi-turn chat on gemini-3.8-flash via ai.chats, API token counts, key in SecureStore; no simulated replies |
-| **On-device Gemini Nano** | `useGeminiNano()` | ML Kit GenAI Prompt API on AICore via `modules/pixel-nano`: status, model name, token limit, streaming tokens, measured latency and decode rate; no cloud fallback |
-| **Spatial Radar** | `useUWB()` | **[Pixel Pro Exclusive]** Ultra-Wideband chip status (READY, default) & AoA; hardware verified, ranging simulated until RangingManager |
-| **Device Capabilities** | `useCapabilities()` | Resolves what this Pixel physically has (HiLight, UWB, Titan M3, Gemini Nano tier) and which Android 16/17 APIs exist |
-| **Contactless NFC** | `useNFC()` | Physical NFC controller, antenna state, Android 15+ Observe Mode, and NDEF smart tag reader |
-| **Bluetooth Low Energy**| `useBLE()` | Physical Bluetooth adapter, Channel Sounding verification, paired/bonded devices, and BLE scanner |
-| **Hardware Radios** | `useRadios()` | Unified hardware radio subsystem telemetry (NFC, BLE, UWB, Wi-Fi RTT, Satellite) from Android system services |
-| **Flashlight / Torch** | `useTorch()` | CameraManager torch with 21 brightness levels (Android 13+), system torch callback, SOS strobe |
-| **Super Actua Display**| `useDisplay()` | Live refresh rate + ARR support, 1-120 Hz mode list, HDR types, preferred-rate control, wake lock, brightness |
-| **Biometrics** | `useBiometrics()` | Titan M3-backed under-display Fingerprint and Class 3 Face Unlock authentication |
-| **Secure Storage** | `useSecurity()` | expo-secure-store on the Android Keystore (StrongBox present on Pixel 11 Pro); classical AES, no post-quantum claims |
-| **Satellite & Modem** | `useNetwork()` | MediaTek M90 modem, Wi-Fi 7, 5G Sub-6/mmWave, and Satellite SOS connectivity |
-| **Satellite GNSS** | `useLocation()` | Multi-band dual-frequency L1/L5 GPS receiver, speed, altitude, and compass heading |
-| **Pixelsnap & Power** | `useDevice()` | Pixelsnap Qi2.2 25W magnetic wireless charging, battery health, and PMIC telemetry |
-| **Studio Mic Array** | `useAudio()` | Multi-mic recording via `expo-audio` (16 kHz mono, `voice_recognition` source) & real-time dBFS metering |
+| `hardware` | Read from a device API this run | `useCPU` per-core MHz from cpufreq |
+| `derived` | Computed from hardware readings | `useCPU` app CPU share (process time ÷ wall time) |
+| `simulated` | State model only, no hardware read | `useHiLight` when the LED daemon is not running |
+| `unavailable` | Could not be read; value is `null` | Any native-backed hook on web or in Expo Go |
+
+Events are logged with a `[PixelKit]` prefix, visible via `adb logcat -s ReactNativeJS` and in the live observability panel on the Silicon tab.
 
 ---
 
-## 📋 Prerequisites
+## Hardware & silicon hooks (21)
 
-Ensure your development workstation has:
-
-### 1. Node.js
-* Version **20.x** or higher (tested on Node 24).
-* Verify: `node -v`
-
-### 2. Official Google Android CLI (`android.exe`)
-The official Google Android CLI provides tools to manage SDK components, inspect device layouts, capture screenshots, and generate descriptive project metadata.
-
-#### Installation:
-* **Windows (PowerShell / CMD)**:
-  ```cmd
-  curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"
-  ```
-* **macOS (Apple Silicon)**:
-  ```bash
-  curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | bash
-  ```
-* **Linux (x86_64)**:
-  ```bash
-  curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash
-  ```
-* Verify: `android --help`
+| Subsystem | Hook | What it actually reads |
+| :--- | :--- | :--- |
+| **Tensor G6 CPU** | `useCPU()` | Core topology and per-core part ids from `/proc/cpuinfo`, current/max MHz from cpufreq sysfs, kernel governor, cluster frequency utilisation (HW) and this app's CPU share (DERIVED). Android hides system-wide `/proc/stat`, so no "system load" is invented. |
+| **PowerVR GPU** | `useGPU()` | `GL_RENDERER`/`GL_VENDOR`/`GL_VERSION` via an offscreen EGL context, Vulkan version from the system feature, and Choreographer frame pacing (presented FPS, average/max frame interval, jank above 1.5× expected). GPU memory is not exposed by Android → `null`. |
+| **Tensor TPU / AICore** | `useTPU()` | AICore and Private Compute Services package versions, NPU feature flag. Inference metrics stay `null` here by design; real on-device latency lives in `useGeminiNano()`. `benchmarkTPU()` runs a JS matmul labelled **CPU fallback**. |
+| **LPDDR5X memory** | `useMemory()` | `ActivityManager.getMemoryInfo` total/available/LMK threshold and flag, Java heap, native heap. "Purge" requests a GC and re-reads; it never claims to free system RAM. |
+| **Thermals / ADPF** | `useADPF()` | `PowerManager.getThermalHeadroom` on the 10 s cadence Google recommends, live thermal-status listener, headroom thresholds, Android 16+ SystemHealth CPU/GPU headroom when reported, display target FPS vs measured FPS. |
+| **Display** | `useDisplay()` | Live refresh rate re-read every 2 s (ARR changes it continuously), supported mode list, ARR support, HDR types, resolution and density, preferred-rate control, brightness, wake lock. |
+| **HiLight LED array** | `useHiLight()` | **[Pixel 11 Pro family]** 8 addressable RGB LEDs around the flash. Drives the real LEDs when the local ADB daemon is running, otherwise keeps the state model and mirrors it on screen. See [HiLight](#hilight-led-array). |
+| **Torch** | `useTorch()` | `CameraManager.setTorchMode`, plus `turnOnTorchWithStrengthLevel` on Android 13+ for variable brightness. State follows the system torch callback, so Quick Settings toggles are reflected. SOS strobe. |
+| **Haptics** | `useHaptics()` | `expo-haptics` standard patterns plus the vibrator's real capabilities (amplitude control, resonant frequency, supported primitives) and Android 16+ envelope effects via `BasicEnvelopeBuilder`. |
+| **Motion & atmosphere** | `useSensors()` | 6-axis IMU (accelerometer, gyroscope), magnetometer, barometer with hypsometric altitude, ambient light. Configurable sampling interval. |
+| **Camera** | `useCamera()` | `expo-camera` lens selection, zoom, flash and permission state. Camera Looks and Super Res Zoom belong to the Pixel Camera app and are held here as UI state only. |
+| **Audio** | `useAudio()` | `expo-audio` recording at 16 kHz mono through the `voice_recognition` source, with 100 ms dBFS metering. |
+| **NFC** | `useNFC()` | Physical `NfcAdapter` state, antenna state, Android 15+ Observe Mode support. Tag reading is simulated until a native NDEF path lands. |
+| **Bluetooth LE** | `useBLE()` | Physical adapter state, Bluetooth 5.4 Channel Sounding support, bonded devices. Peripheral scanning is simulated. |
+| **UWB** | `useUWB()` | **[Pro]** Real chip state and id from `UwbManager` (`source: 'hardware'`). Ranging sessions are simulated until `RangingManager` is wired. |
+| **All radios** | `useRadios()` | One unified read of NFC, Bluetooth/BLE, UWB, Wi-Fi RTT and satellite telephony from Android system services, polled every 5 s. |
+| **Biometrics** | `useBiometrics()` | `BiometricPrompt` hardware presence, enrolment state, supported modalities, and an `authenticate()` prompt. |
+| **Secure storage** | `useSecurity()` | `expo-secure-store` encrypted by a key held in the Android Keystore, StrongBox-backed on this device. Classical AES; no post-quantum claims. |
+| **Location** | `useLocation()` | Multi-band GNSS position, altitude, accuracy, heading and speed with permission handling. |
+| **Network** | `useNetwork()` | Interface type, IP address, reachability, metered state, airplane mode. |
+| **Device & power** | `useDevice()` | Model and OS identity, battery level, charging state, battery-saver mode, network type, total RAM. |
+| **Capabilities** | `useCapabilities()` | Single source of truth for what this Pixel physically has. Starts from the model table, then upgrades to PackageManager-verified flags and the installed AICore version when the native module is present. |
 
 ---
 
-## 🛠️ Android CLI & Project Describing (`android describe`)
+## AI hooks (7)
 
-PixelKit integrates directly with `android describe`:
+### Cloud
+
+| Hook | Backend | Notes |
+| :--- | :--- | :--- |
+| `useGemini()` | `@google/genai` on **gemini-3.8-flash** | Multi-turn chat over `ai.chats` with a system instruction. Token counts come from the API's `usageMetadata`. **No simulated replies**: with no API key, `sendMessage` appends a system-role error explaining how to configure one. |
+| `useVisionAI()` | Gemini multimodal **+ ML Kit on-device** | Cloud scene description with structured JSON labels, plus the on-device vision suite below. |
+| `useSpeechAI()` | Offline ASI **or** Gemini audio | Dual-mode speech to text: on-device streaming recognition, or cloud transcription of a recorded clip. No simulated transcript. |
+
+### On-device (Tensor G6 through AICore and ML Kit)
+
+| Hook | Capability |
+| :--- | :--- |
+| `useGeminiNano()` | Gemini Nano chat through the **ML Kit GenAI Prompt API**: model status and download with progress, base model name, token limit, feature flags (system prompt, thinking mode, structured output, caching), streaming tokens, warm-up, on-device tokenizer counts, natively measured latency, time-to-first-token and decode rate. Sampling controls for temperature, topK, candidate count and max output tokens. |
+| `useGenAITasks()` | ML Kit GenAI task modules: **summarization** (article or conversation, 1–3 bullets), **proofreading**, **rewriting** in 6 tones (elaborate, emojify, shorten, friendly, professional, rephrase), and **image description**. |
+| `useNaturalLanguageAI()` | **58-language offline translation**, BCP-47 language identification with confidence, smart reply suggestions, and entity extraction (dates, addresses, money, flight and tracking numbers, phone numbers). |
+| `useVisionAI()` on-device half | **Barcode scanning**, **text recognition v2 (OCR)**, **face detection** with landmarks and Euler angles, **468-point face mesh**, **image labeling**, **object detection and tracking**, **33-point pose detection**, **selfie and subject segmentation**, **digital ink recognition**. |
+
+All on-device AI runs through `modules/pixel-nano`, which links 18 ML Kit artifacts including `genai-prompt`, `genai-summarization`, `genai-proofreading`, `genai-rewriting`, `translate`, `entity-extraction` and the vision set.
+
+---
+
+## Verified device facts
+
+Measured on the target device over adb on 2026-09-06. Nothing in this table is quoted from marketing material.
+
+| Property | Value |
+| :--- | :--- |
+| Model / codename | Pixel 11 Pro (`grizzly`) |
+| OS | Android 17, SDK 37 |
+| SoC | Tensor G6 |
+| CPU topology | 1× Arm C1-Ultra @ 4.11 GHz + 4× Arm C1-Pro @ 3.38 GHz + 2× Arm C1-Pro @ 2.65 GHz, governor `sched_pixel` |
+| GPU | PowerVR C-Series CXTP-48-1536 MC1, Vulkan 1.4, OpenGL ES 3.2 (via ANGLE) |
+| Memory | 12 GB LPDDR5X (reports 11,647 MB total) |
+| AICore | `0.release.prod_aicore_20260723.00_RC11` |
+| HiLight | 8 lights, `Light.LIGHT_TYPE_APPLICATION` (10), ids 1–8, RGB + animation, 33 ms minimum update period |
+| Declared features | `uwb`, `nfc` (+ `ese`, `hce`, `hcef`), `bluetooth_le`, `bluetooth_le.channel_sounding`, `wifi.rtt`, `telephony.satellite`, `strongbox_keystore=400`, `hardware_keystore=500`, `se.omapi.ese`/`uicc` (167 total) |
+| **Not** declared | `neural_processing_unit`, `hardware.ranging` — so `hasNpuFeature` and the Ranging API feature flag are **false** on this unit |
+| Thermometer | **Absent.** The infrared thermopile of Pixel 8–10 Pro is gone; the sensor list has no object-temperature sensor. `useTemperature` was removed in 1.0.4. |
+
+Full captures live in [`docs/research/`](./docs/research/).
+
+---
+
+## HiLight LED array
+
+The eight LEDs around the rear flash are exposed by Android 17 through the public `android.hardware.lights` API, but every lights session requires `android.permission.CONTROL_DEVICE_LIGHTS`, which is `signature|privileged`. A third-party app cannot hold it; the adb shell user (UID 2000) can.
+
+PixelKit ships a **zero-dependency Java daemon** that runs as UID 2000 over adb and exposes a small local HTTP surface on `127.0.0.1:11080` (`/ping`, `/status`, `/set`, `/off`).
 
 ```bash
-# Analyze project structure and generate JSON metadata for build targets and APK outputs
-android describe --project_dir=.
+npm run hilight:build     # compile scripts/hilight-daemon → hilight-daemon.jar
+npm run hilight:daemon    # push, start as UID 2000, and adb-forward port 11080
 ```
 
-### Essential Android CLI Commands:
-* `android describe`: Generates descriptive metadata JSON files detailing build targets, APK locations, and artifact outputs.
-* `android layout`: Dumps the JSON UI layout tree of a connected Pixel device or emulator.
-* `android screen`: Inspects UI elements, bounds, and takes screenshots of connected devices.
-* `android sdk list --all`: Lists available and installed Android SDK packages.
-* `android emulator`: Manages and launches Android Virtual Devices.
-* `android skills`: Manages agent skills (official `android-cli` skill located in `.agents/skills/android-cli/`).
+| Daemon | `useHiLight().availability` | `source` | Behaviour |
+| :--- | :--- | :--- | :--- |
+| Running | `hardware` | `hardware` | Drives the physical LEDs (~3 ms per write) |
+| Not running | `simulated` | `simulated` | Keeps the colour and pattern state, mirrors it on screen with LRA haptics |
+| No array | `unsupported` | `unavailable` | Card hidden |
+
+The daemon is a development tool: it needs an adb connection and must be restarted after a reboot. Background and technical detail in [`docs/research/HILIGHT_LED_ARRAY.md`](./docs/research/HILIGHT_LED_ARRAY.md).
 
 ---
 
-## 🏛️ Project Structure
+## Still simulated
+
+Stated plainly, because the no-mocks rule requires every surface to say so:
+
+| Hook | Real today | Simulated today |
+| :--- | :--- | :--- |
+| `useNFC()` | Adapter state, antenna state, Observe Mode support | Tag read/write payloads |
+| `useBLE()` | Adapter state, Channel Sounding support, bonded devices | Peripheral scan results and RSSI |
+| `useUWB()` | Chip state, chip id, feature flags | Ranging sessions (distance, azimuth, elevation) |
+| `useHiLight()` | LEDs when the daemon runs | Colour/pattern state when it does not |
+
+---
+
+## Prerequisites
+
+**Node.js 20+** (tested on 24) and the **Android SDK** with platform-tools on `PATH`.
+
+Native builds additionally need **JDK 17** and, on Windows, a build path without spaces (see the quickstart guide).
+
+### Optional: Google Android CLI
+
+```bash
+# Windows
+curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"
+# macOS (Apple Silicon)
+curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | bash
+# Linux (x86_64)
+curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash
+```
+
+Useful commands: `android describe --project_dir=.`, `android layout`, `android screen capture`, `android sdk list --all`, `android skills`.
+
+---
+
+## Quick start
+
+```bash
+npm install
+npm run typecheck            # must exit with 0 errors
+npm run android              # expo run:android — builds and installs the dev client
+npm start                    # Metro for subsequent runs
+```
+
+> **Expo Go will not work.** PixelKit links two local Kotlin modules (`pixel-native`, `pixel-nano`), so it needs a **development build**. In Expo Go every native-backed hook correctly reports `source: 'unavailable'` and renders `—`, which is the honest result but not a useful one.
+
+**Wireless device workflow**
+
+```bash
+adb pair <ip>:<port>                 # once, from Wireless debugging
+adb connect <ip>:<port>
+adb reverse tcp:8081 tcp:8081        # so the dev client reaches Metro on localhost
+adb logcat -s ReactNativeJS | grep PixelKit
+```
+
+**Web preview** (`npm run web`) renders the full UI at `http://localhost:8081` in a phone-width column. Native telemetry is `unavailable` there by design; it is useful for layout work only.
+
+---
+
+## Project structure
 
 ```text
-Pixel delta/ (PixelKit Framework)
-├── App.tsx                     # Main App Shell & 4-Tab Navigator (HUD, AI Lab, Sensors, Docs)
-├── PIXELKIT.md                 # Canonical AI Reference & Prompt Manual
-├── README.md                   # Complete Developer Reference & Quickstart
-├── AGENTS.md                   # Antigravity agent guidelines & Android CLI rules
-├── CLAUDE.md                   # Claude agent guidelines mirror & mandatory doc sync rule
-├── GEMINI.md                   # Gemini agent guidelines mirror & mandatory doc sync rule
-├── app.json                    # Android 15/16/17 Permissions & 120Hz LTPO Manifest
-├── package.json                # Dependencies: Expo 57, React 19, React Native 0.86, @google/genai
-├── skills-lock.json            # Deterministic lockfile for installed agent skills
-│
-├── .agents/skills/             # Built-in Agent Skills
-│   ├── android-cli/            # Google Android CLI skill (SDK, emulator, device inspection)
-│   └── expo/skills             # 26 Official Expo agent skills (expo-router, expo-ui, eas-*, etc.)
-│
-├── docs/                       # Comprehensive Modular Documentation Suite
-│   ├── README.md               # Documentation portal & sitemap
-│   ├── HARDWARE_API.md         # Consolidated 24-module hardware reference manual
-│   ├── AI_PRIMER.md            # Consolidated AI operational manual & 5 Golden Rules
-│   ├── getting-started/        # Quickstart & silicon architecture guides
-│   ├── api/                    # Modular API references by subsystem (silicon, pro, ai, etc.)
-│   ├── ai-guidance/            # AI agent primer and production recipes
-│   ├── guides/                 # On-device Gemini Nano, Function Calling, Voice, Diagnostics
-│   └── research/               # Ground-truth Pixel 11 Pro hardware research & deep dives
+Pixel delta/ (PixelKit)
+├── App.tsx                      # Shell: fonts, scrims, wordmark, 4-tab navigation
+├── AGENTS.md / CLAUDE.md / GEMINI.md   # Identical agent guides (keep in sync)
+├── PIXELKIT.md                  # Canonical AI reference and prompt manual
+├── CHANGELOG.md                 # Every change bumps the patch version
 │
 ├── modules/
-│   ├── pixel-native/           # Local Expo Module (Kotlin): CPU, memory, thermal, display, GPU, torch, haptics
-│   └── pixel-nano/             # Local Expo Module (Kotlin): Gemini Nano via ML Kit GenAI Prompt API (AICore)
+│   ├── pixel-native/            # Kotlin Expo Module: SoC, CPU, memory, thermal, display,
+│   │                            #   GPU, torch, haptics, radios, offline speech, AppFunctions
+│   └── pixel-nano/              # Kotlin Expo Module: Gemini Nano (ML Kit GenAI) + 18 ML Kit APIs
+│
+├── scripts/
+│   └── hilight-daemon/          # Zero-dependency Java daemon, runs as UID 2000 over adb
 │
 ├── src/
-│   ├── index.ts                # Master barrel export for all hooks and UI primitives
+│   ├── index.ts                 # Single barrel export for every hook and component
 │   ├── core/
-│   │   ├── types.ts            # Strongly-typed telemetry, silicon, and AI interfaces
-│   │   ├── capabilities.ts     # Pure device capability resolver + PackageManager verification
-│   │   └── observability.ts    # Telemetry provenance (hardware/derived/simulated/unavailable), event log
+│   │   ├── types.ts             # Telemetry, silicon and AI interfaces
+│   │   ├── capabilities.ts      # Device capability resolver + PackageManager verification
+│   │   └── observability.ts     # TelemetrySource, event log, [PixelKit] logging
 │   │
-│   ├── hardware/               # Physical Silicon & Hardware Abstractions (15 hooks)
-│   │   ├── useCPU.ts           # Tensor G6 7-Core cluster (4.11GHz C1-Ultra, C-1 Pro) on TSMC 2nm
-│   │   ├── useGPU.ts           # PowerVR / Vulkan frame pacing (8.33ms budget) & dropped frames
-│   │   ├── useMemory.ts        # LPDDR5X RAM usage, free memory & Low Memory Killer (LMK) protection
-│   │   ├── useADPF.ts          # Android Dynamic Performance Framework (CPU/GPU headroom & thermals)
-│   │   ├── useSensors.ts       # 6-Axis Motion (Gyro/Accel), Barometer/Altimeter, Compass, Light
-│   │   ├── useHaptics.ts       # Linear Resonant Actuator tactile waveforms & mechanical ticks
-│   │   ├── useCamera.ts        # expo-camera zoom, flash, lens; Look label as UI state
-│   │   ├── useHiLight.ts       # [Pixel Pro Exclusive] Rear camera bar notification LED ring
-│   │   ├── useTorch.ts         # Hardware LED flashlight & emergency SOS strobe controller
-│   │   ├── useDevice.ts        # Pixelsnap Qi2.2 25W charging, battery health & telemetry
-│   │   ├── useDisplay.ts       # 3,600 nits 120Hz LTPO OLED display, screen wake lock & brightness
-│   │   ├── useBiometrics.ts    # Titan M3 in-display Fingerprint & Face Unlock auth
-│   │   ├── useSecurity.ts      # SecureStore on the Android Keystore (StrongBox)
-│   │   ├── useLocation.ts      # Multi-band GNSS satellite positioning, altitude & heading
-│   │   ├── useNetwork.ts       # MediaTek M90 Wi-Fi 7, 5G Sub-6/mmWave & Satellite SOS
-│   │   ├── useCapabilities.ts  # Device capability resolution (what this Pixel really has)
-│   │   ├── useAudio.ts         # Multi-mic recording (expo-audio) & real-time dBFS metering
-│   │   ├── useBLE.ts           # Bluetooth Low Energy adapter, channel sounding & bonded devices
-│   │   ├── useNFC.ts           # Contactless NFC adapter, antenna state & NDEF tag reader
-│   │   ├── useRadios.ts        # Unified hardware radio telemetry (NFC, BLE, UWB, RTT, Satellite)
-│   │   └── useUWB.ts           # [Pixel Pro] Ultra-Wideband spatial radar & Angle-of-Arrival
+│   ├── hardware/                # 21 hooks
+│   │   ├── useCPU.ts            # /proc/cpuinfo + cpufreq topology, governor, load
+│   │   ├── useGPU.ts            # EGL identity + Choreographer frame pacing
+│   │   ├── useMemory.ts         # ActivityManager memory, Java and native heaps
+│   │   ├── useADPF.ts           # Thermal headroom, status listener, SystemHealth headroom
+│   │   ├── useDisplay.ts        # Refresh rate, ARR, HDR, brightness, wake lock
+│   │   ├── useDevice.ts         # Battery, charging, power profile, network type
+│   │   ├── useSensors.ts        # IMU, magnetometer, barometer, ambient light
+│   │   ├── useHaptics.ts        # LRA patterns, Android 16 envelopes, primitives
+│   │   ├── useTorch.ts          # CameraManager torch, strength levels, SOS strobe
+│   │   ├── useCamera.ts         # expo-camera lens, zoom, flash, permission
+│   │   ├── useAudio.ts          # expo-audio recording and dBFS metering
+│   │   ├── useHiLight.ts        # [Pro] 8-LED array via the ADB daemon, else simulated
+│   │   ├── useUWB.ts            # [Pro] UWB chip state; ranging simulated
+│   │   ├── useNFC.ts            # NfcAdapter state, antenna, Observe Mode
+│   │   ├── useBLE.ts            # Adapter, Channel Sounding, bonded devices
+│   │   ├── useRadios.ts         # Unified NFC/BLE/UWB/RTT/satellite telemetry
+│   │   ├── useBiometrics.ts     # BiometricPrompt fingerprint and face
+│   │   ├── useSecurity.ts       # SecureStore on the Android Keystore (StrongBox)
+│   │   ├── useLocation.ts       # Multi-band GNSS position, altitude, heading
+│   │   ├── useNetwork.ts        # Interface, IP, reachability, airplane mode
+│   │   └── useCapabilities.ts   # What this Pixel really has
 │   │
-│   ├── ai/                     # Intelligence & Silicon Acceleration Layer (4 hooks + client)
-│   │   ├── useTPU.ts           # Google Tensor TPU hardware accelerator & latency benchmarker
-│   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
-│   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
-│   │   ├── useGeminiNano.ts    # Gemini Nano on-device chat, status, download, measured latency
-│   │   ├── useVisionAI.ts      # Multimodal camera capture & visual scene inspection
-│   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
+│   ├── ai/                      # 7 hooks + client
+│   │   ├── useTPU.ts            # AICore / PCS detection; CPU-fallback benchmark
+│   │   ├── useGemini.ts         # Cloud chat on gemini-3.8-flash
+│   │   ├── useGeminiNano.ts     # On-device Nano chat, streaming, measured latency
+│   │   ├── useGenAITasks.ts     # Summarize, proofread, rewrite, describe image
+│   │   ├── useNaturalLanguageAI.ts  # Translate (58 lang), language ID, smart reply, entities
+│   │   ├── useVisionAI.ts       # ML Kit vision suite + Gemini multimodal
+│   │   ├── useSpeechAI.ts       # Offline streaming STT or Gemini audio
+│   │   └── geminiClient.ts      # Client factory, key persistence in SecureStore
 │   │
-│   ├── theme/
-│   │   ├── colors.ts           # Design tokens (Delta-aligned): field, accent, meaning colours, Geist type
-│   │   └── mode.ts             # State → colour/label map for the reactor and status chip
-│   │
-│   ├── components/             # Reusable UI Primitives (PixelKit design system)
-│   │   ├── HapticButton.tsx    # Gradient / white CTA / glass pill button with haptics
-│   │   ├── MetricCard.tsx      # Glass telemetry card with provenance tag
-│   │   ├── SensorVisualizer.tsx# Centred 3-axis bars with per-sensor ranges
-│   │   └── Decor.tsx           # Glow backdrop, orbit rings, section header, chip
-│   │
-│   └── screens/
-│       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)
-│       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and Voice Speech-to-Text
-│       ├── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
-│       └── DocsScreen.tsx      # Interactive on-device API documentation & AI Primer viewer
+│   ├── components/              # HapticButton, MetricCard, SensorVisualizer, Decor
+│   ├── theme/                   # colors.ts (design tokens), mode.ts (state → colour)
+│   └── screens/                 # Dashboard, AILab, SensorsLab, Docs
+│
+└── docs/                        # api/, guides/, getting-started/, ai-guidance/, research/
 ```
 
 ---
 
-## ⚡ Quick Start (Running on Your Pixel 11 Pro)
+## Using the SDK
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+Everything is exported from a single barrel:
 
-2. **Verify TypeScript compilation**:
-   ```bash
-   npm run typecheck
-   ```
-   *Should exit with 0 errors.*
-
-3. **Verify Metro Hermes bytecode export**:
-   ```bash
-   npx expo export -p android
-   ```
-   *Compiles all 696 modules to optimized Hermes bytecode (`.hbc`).*
-
-4. **Start the development server**:
-   ```bash
-   npm start
-   # Or with local AI MCP tools enabled:
-   npm run start:mcp
-   ```
-
-5. **Test & Edit the UI**:
-   * **Physical Device (Fast Refresh)**: Install **Expo Go** from Google Play on your Pixel 11 Pro, scan the terminal QR code, and watch UI edits reflect live in <500ms.
-   * **Web Browser Preview & React Grab**: Run `npm run web` (or press `w` in Metro) to preview and inspect layout at `http://localhost:8081`. Hold **`Ctrl+C`** / **`Cmd+C`** and click any visual element to copy its exact source location and component stack for AI agents.
-   * **Android Emulator**: Press `a` in Metro to launch on an active Android Virtual Device (AVD).
-
----
-
-## 📦 Release Build (v1.0.0)
-
-Versioning follows `CHANGELOG.md`: every change bumps the patch version and adds an entry. Current: **1.0.0** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 1).
-
-```bash
-npm run typecheck
-npx expo export -p android                 # Hermes bundle check
-cd android && ./gradlew assembleRelease     # release APK (Windows: build from the space-free junction, see docs/getting-started/quickstart.md)
-# output: android/app/build/outputs/apk/release/app-release.apk
-```
-
-The generated Gradle project signs release builds with the **debug keystore** until a release keystore is configured (`android/app/build.gradle` → `signingConfigs.release`) or the app is built with EAS (`eas build -p android`). Do not upload a debug-signed APK to Google Play.
-
-Release checklist: `CHANGELOG.md` entry, version fields bumped together, `npm run typecheck` clean, `npx expo export` clean, on-device pass recorded in `docs/research/DEVICE_TEST_REPORT_<date>.md`.
-
----
-
-## 💡 How to Build With PixelKit
-
-All hooks and UI components are available from a single centralized import:
-
-```typescript
-import { 
-  useCPU,
-  useGPU,
-  useTPU,
-  useMemory,
-  useHiLight,
-  useCamera,
-  useSensors, 
-  useHaptics, 
-  useSpeechAI,
-  useGemini, 
-  useGeminiNano,
-  useVisionAI, 
-  useUWB,
-  useSecurity,
-  useDevice,
-  HapticButton, 
-  MetricCard 
+```tsx
+import {
+  useCPU, useGPU, useADPF, useMemory,
+  useHiLight, useHaptics, useSensors, useTorch,
+  useGemini, useGeminiNano, useVisionAI, useNaturalLanguageAI,
+  MetricCard, HapticButton,
 } from './src';
 
-export default function MyPixelTool() {
-  const { light, success } = useHaptics();
-  const { currentFps } = useGPU();
+export default function ThermalWatch() {
+  const gpu = useGPU();
+  const adpf = useADPF();
   const hilight = useHiLight();
+  const { success } = useHaptics();
 
-  const handleAction = async () => {
-    await light();
-    hilight.triggerGeminiPulse(3000);
+  // Signal on the LED array when the device starts throttling.
+  const alert = async () => {
+    hilight.triggerContactAlert('#F25C55', 3000);
     await success();
   };
 
   return (
     <MetricCard
-      title="Presented FPS"
-      value={currentFps}
-      unit="FPS"
-      badge="Choreographer"
+      title="Frame interval"
+      value={gpu.frameRenderTimeMs}          // null renders as "—"
+      unit="ms"
+      badge={`budget ${gpu.targetBudgetMs} ms`}
+      subtitle={`thermal ${adpf.thermalStatus}`}
+      source={gpu.source}                     // provenance is never optional
     />
   );
 }
 ```
 
+On-device AI, with the status check the no-mocks rule requires:
+
+```tsx
+const nano = useGeminiNano();
+
+if (nano.status === 'downloadable') await nano.download();   // progress in nano.downloadedBytes
+if (nano.isAvailable) {
+  await nano.sendMessage('Summarise the current thermal state in one sentence.');
+  // nano.partial streams; nano.lastLatencyMs and nano.lastDecodeTokensPerSec are measured natively
+}
+```
+
 ---
 
-## 📚 Comprehensive Documentation Suite
+## Release build
 
-PixelKit features an exhaustive, multi-tier documentation system kept in continuous synchronization with the codebase:
+Version **1.0.13** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 14).
 
-### 🧭 [Documentation Hub (docs/README.md)](./docs/README.md)
-The central sitemap and entry portal for all developer guides and reference manuals.
+```bash
+npm run typecheck                       # 0 errors
+npx expo export -p android              # Hermes bundle check
+cd android && ./gradlew assembleRelease
+# → android/app/build/outputs/apk/release/app-release.apk
+```
 
-### 🚀 Getting Started
-* **[Quickstart Guide](./docs/getting-started/quickstart.md)**: Workstation prerequisites, Android CLI setup, and launching on physical Pixel devices.
-* **[Silicon Architecture](./docs/getting-started/architecture.md)**: Overview of the Tensor G6 7-core CPU, PowerVR GPU, Titan M3 PQC, and Pixelsnap Qi2.2 magnetic charging.
+Release builds are currently signed with the **debug keystore**. Configure `signingConfigs.release` in `android/app/build.gradle`, or build with EAS (`eas build -p android`), before distributing anything.
 
-### 📚 API Reference (By Subsystem)
-* **[Silicon & Compute](./docs/api/silicon-compute.md)**: `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`.
-* **[Pixel Pro Exclusives](./docs/api/pro-exclusives.md)**: `useHiLight`, `useUWB`.
-* **[Neural & AI](./docs/api/neural-ai.md)**: `useGemini`, `useGeminiNano`, `useSpeechAI`, `useVisionAI`, `geminiClient`.
-* **[Sensors & Actuators](./docs/api/sensors-actuators.md)**: `useSensors`, `useCamera`, `useTorch`, `useHaptics`.
-* **[Radios & Security](./docs/api/radios-security.md)**: `useBiometrics`, `useSecurity`, `useBLE`, `useNFC`, `useLocation`.
-* **[System & Media](./docs/api/system-media.md)**: `useAudio`, `useDisplay`, `useDevice`, `useNetwork`.
+**Release checklist:** CHANGELOG entry, `version` and `versionCode` bumped together, typecheck clean, `expo export` clean, on-device pass recorded in `docs/research/DEVICE_TEST_REPORT_<date>.md`.
 
-### 🤖 AI Agent Guidance & Primers
-* **[Agent Operational Primer](./docs/ai-guidance/agent-primer.md)**: Foundational laws for autonomous coding agents, the 5 Golden Rules of PixelKit, and copy-paste system prompts.
-* **[Production Recipes](./docs/ai-guidance/recipes.md)**: Copy-pasteable recipes for voice agent loops, multimodal scene reasoning, HiLight visual signaling, and spatial tracking.
+---
 
-### 🛠️ Production Guides & Diagnostics
-* **[Built-in AI, Function Calling & Voice Hub](./docs/guides/README.md)**: Hybrid decision tree (Gemini Nano 4 on-device vs Gemini cloud) and build prerequisites.
-* **[On-Device AI with Gemini Nano](./docs/guides/on-device-ai-gemini-nano.md)**: ML Kit GenAI Prompt API, local Expo Module, structured output, and thinking mode.
-* **[Function Calling & Hardware Tools](./docs/guides/function-calling.md)**: Unified tool registry for cloud Gemini, Gemini Nano, and Android AppFunctions.
-* **[Voice: Speech In, Speech Out, Live Agents](./docs/guides/voice.md)**: On-device streaming STT, Gemini Live API bidirectional agents, and audio haptics.
-* **[Troubleshooting & Diagnostics](./docs/guides/troubleshooting.md)**: Expo SDK 57 nuances, KeepAwake tags, StatusBar styling, and thermal throttling mitigations.
+## Documentation
 
-### 🔬 Research & Deep Dives
-* **[Pixel 11 Pro Hardware Research](./docs/research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)**: Ground-truth spec sheet, Android 17 (API 37) surfaces, and SDK gap analysis.
-* **[Pixel 11 Pro Deep Dive (Round 2)](./docs/research/PIXEL_11_PRO_DEEP_DIVE.md)**: Corrections, Android 16/17 APIs (`RangingManager`, ADPF headroom, ARR), and store deadlines.
+**Start here**
+* [Documentation hub](./docs/README.md) — sitemap for everything below
+* [Quickstart](./docs/getting-started/quickstart.md) — prerequisites, device setup, first run
+* [Silicon architecture](./docs/getting-started/architecture.md) — how the layers fit together
 
-### 📝 Change Log & Agent Guide
-* **[CHANGELOG.md](./CHANGELOG.md)**: Release history; every change adds an entry and bumps the patch version.
-* **[AGENTS.md](./AGENTS.md)**: Rules for any coding agent (identical to `CLAUDE.md` and `GEMINI.md`).
+**API reference by subsystem**
+* [Silicon & compute](./docs/api/silicon-compute.md) — `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`
+* [Pixel Pro exclusives](./docs/api/pro-exclusives.md) — `useHiLight`, `useUWB`
+* [Neural & AI](./docs/api/neural-ai.md) — `useGemini`, `useGeminiNano`, `useSpeechAI`, `useVisionAI`, `geminiClient`
+* [Sensors & actuators](./docs/api/sensors-actuators.md) — `useSensors`, `useCamera`, `useTorch`, `useHaptics`
+* [Radios & security](./docs/api/radios-security.md) — `useBiometrics`, `useSecurity`, `useBLE`, `useNFC`, `useLocation`
+* [System & media](./docs/api/system-media.md) — `useAudio`, `useDisplay`, `useDevice`, `useNetwork`
+* [HARDWARE_API.md](./docs/HARDWARE_API.md) — every module in one file
 
-### 📑 Consolidated Single-File Manuals
-* **[HARDWARE_API.md](./docs/HARDWARE_API.md)**: Complete 24-module hardware and AI API manual in a single file.
-* **[AI_PRIMER.md](./docs/AI_PRIMER.md)**: Complete AI agent operational manual in a single file.
+**Guides**
+* [Built-in AI hub](./docs/guides/README.md) — on-device vs cloud decision tree
+* [On-device AI with Gemini Nano](./docs/guides/on-device-ai-gemini-nano.md) — ML Kit GenAI Prompt API end to end
+* [Function calling](./docs/guides/function-calling.md) — one tool registry for cloud, Nano and AppFunctions
+* [Voice](./docs/guides/voice.md) — streaming STT, live agents, audio haptics
+* [Troubleshooting](./docs/guides/troubleshooting.md) — SDK 57 nuances and thermal behaviour
 
-### 📱 In-App Documentation Viewer
-Browse live documentation, interactive copyable TypeScript snippets, and AI tips on the device itself via the **Docs** tab (`DocsScreen.tsx`).
+**For coding agents**
+* [AGENTS.md](./AGENTS.md) — the rules; identical to `CLAUDE.md` and `GEMINI.md`
+* [AI_PRIMER.md](./docs/AI_PRIMER.md) — operational manual in one file
+* [Agent primer](./docs/ai-guidance/agent-primer.md) and [recipes](./docs/ai-guidance/recipes.md)
 
+**Research (device ground truth)**
+* [Pixel 11 Pro hardware research](./docs/research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)
+* [Deep dive round 2](./docs/research/PIXEL_11_PRO_DEEP_DIVE.md)
+* [Device profile](./docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md) — adb-captured identity
+* [HiLight LED array](./docs/research/HILIGHT_LED_ARRAY.md) — lights service, permission gate, daemon
 
+The **Docs** tab inside the app carries the same reference with copyable snippets, filtered by subsystem, on the device itself.
+
+---
+
+## Contributing rules
+
+Anyone, human or agent, working in this repository follows [AGENTS.md](./AGENTS.md). The three that matter most:
+
+1. **Changelog on every change.** Bump the patch version in `package.json` and `app.json` together, increment `versionCode`, add a `CHANGELOG.md` entry in the same commit.
+2. **Docs in sync.** A change to a hook, type, screen or dependency updates the API reference, the primers, this README, and the in-app `DocsScreen` entry.
+3. **No mocks.** Render `null` as `—` and pass `source` to every `MetricCard`. If it cannot be read, say so.

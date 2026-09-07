@@ -4,6 +4,42 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.13] - 2026-09-06
+
+### Changed
+- Full capability audit of the app against the source tree and the physical Pixel 11 Pro, and a complete rewrite of `README.md` around it.
+- README now documents all **28** hooks (21 hardware + 7 AI). It previously claimed 24, listed `hardware/` as 15 hooks and `ai/` as 6, and omitted `useGenAITasks`, `useNaturalLanguageAI` and `useRadios` from the structure tree.
+- Added a **telemetry provenance** section (`hardware | derived | simulated | unavailable`) and an explicit **"Still simulated"** table for `useNFC`, `useBLE`, `useUWB` and `useHiLight`, so the no-mocks rule is visible from the front page.
+- Added a **verified device facts** table sourced from adb on 2026-09-06, including the two features this unit does **not** declare (`neural_processing_unit`, `hardware.ranging`), which make `hasNpuFeature` and the Ranging feature flag false.
+- Documented the HiLight ADB daemon workflow (`npm run hilight:build`, `npm run hilight:daemon`, `127.0.0.1:11080`, endpoints `/ping` `/status` `/set` `/off`) and its `hardware` / `simulated` / `unsupported` availability mapping.
+- Documented the on-device ML Kit surface: GenAI tasks, 58-language offline translation, language ID, smart reply, entity extraction, and the nine vision capabilities.
+
+### Fixed
+- README linked five screenshots that do not exist (`02_ailab_chat.png`, `04_ailab_vision.png`, `05_ailab_language.png`, `06_sensors_lab.png`, `07_docs_screen.png`); only the one present image is referenced now.
+- Quick start told users to install **Expo Go**, which cannot load this app because it links two local Kotlin modules. It now directs to a development build and explains what Expo Go would report instead.
+- Release section said **v1.0.0** with `versionCode` 1; corrected to the real version and version code.
+- Removed unverifiable claims that violated the comments-state-facts rule: "TSMC 2nm", "3,600 nits", "Titan M3 PQC", "696 modules", and the cloud model badge that still read "Gemini 2.5 Flash" (the model is `gemini-3.8-flash`).
+- Every relative link in the README is now verified to resolve.
+
+## [1.0.12] - 2026-09-06
+
+### Added
+- Complete On-Device Google ML Kit Intelligence Suite in `PixelNanoModule.kt` and `modules/pixel-nano`:
+  - GenAI Task Modules (`useGenAITasks.ts`): On-device Summarization, Proofreading, Rewriting (styles: Casual, Formal, Concise, Elaborate, Emoji), and Image Description running locally via AICore/ML Kit.
+  - Natural Language AI (`useNaturalLanguageAI.ts`): Offline 58-language neural translation, BCP-47 language identification, smart reply suggestion generation, and entity extraction (dates, addresses, phones, emails).
+  - Vision AI Suite (`useVisionAI.ts`): On-device Text Recognition (OCR v2), Barcode scanning (1D/2D all formats), Face detection, Face Mesh detection (468 3D points), Image labeling, and Object tracking.
+  - Dual-Mode Speech AI (`useSpeechAI.ts`): Added local Android System Intelligence (ASI) offline streaming speech recognition with interim partial token updates, plus cloud Gemini STT.
+  - Android 17 AppFunctions: Registered `PixelAppFunctionService` in `AndroidManifest.xml` and native service so system agents (Gemini, Ask Pixel) can invoke PixelKit actuators (HiLight, Torch).
+- AI Studio Redesign in `AILabScreen.tsx`:
+  - 6 dedicated studio workspaces: Chat, Tasks, Vision, Language, Voice, and Agents.
+  - Interactive Hyperparameter Drawer for both Cloud models (temperature, topP, topK, candidateCount, presencePenalty, frequencyPenalty) and on-device Gemini Nano (maxTokens, contextBudget, samplingMode).
+  - Dynamic model catalog fetched directly from Google Generative AI API with live model picker.
+  - Bottom navigation bar clearance (`paddingBottom: 140`) across all studio views to eliminate content clipping.
+
+### Fixed
+- CPU / GPU Headroom in `DashboardScreen.tsx`: Fixed headroom reporting on Android 17 / Pixel 11 Pro where HAL `SystemHealthManager` returns unsupported. Accurately derived CPU headroom (`(100 - cpuLoadPercent)%`) and GPU frame budget headroom (`(targetBudgetMs - frameRenderTimeMs) / targetBudgetMs`) with clear provenance `source: 'derived'`.
+- Namespace Migration: Resolved `ReactNativeApplicationEntryPoint` autolinking compilation by establishing `com.pixelkit.sdk` namespace across Gradle and adding a `com.pixelforge.sdk.BuildConfig` compatibility shim.
+
 ## [1.0.11] - 2026-09-06
 
 ### Changed
