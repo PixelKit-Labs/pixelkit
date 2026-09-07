@@ -17,6 +17,10 @@ export interface DocField {
   type: string;
   /** One sentence on what it means and when it matters. */
   desc: string;
+  /** For a callable: every argument it accepts, with its default and units. */
+  inputs?: DocField[];
+  /** For a callable: what it resolves to, and what a failure looks like. */
+  output?: string;
 }
 
 export interface DocModule {

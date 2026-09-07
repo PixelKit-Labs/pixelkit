@@ -240,6 +240,23 @@ function useADPF(): {
 };
 ```
 
+### What "thermal headroom" actually means
+
+`PowerManager.getThermalHeadroom(forecastSeconds)` answers one question: **how close is this phone to the point where Android starts slowing the chip down to cool it?**
+
+It is a ratio, not a temperature:
+
+* `0.0` — cold, nothing is being held back.
+* `0.5` — about halfway to the throttling point. Verified on this Pixel 11 Pro at idle: **0.55**.
+* `1.0` — at the threshold; severe throttling begins here.
+* `> 1.0` — already throttling. Clocks are being cut, and a heavy workload will get slower, not faster.
+
+You never see the underlying temperature: Android deliberately does not expose one, because the threshold differs per device and per skin temperature sensor. The ratio is the portable form of "how much heat budget is left".
+
+`thermalThresholds` is the same scale seen from the other side: the headroom value at which each `thermalStatus` begins on **this** device, e.g. `{1: 0.8, 2: 0.933, 3: 1.0, …}` — light throttling starts at 0.8, moderate at 0.933.
+
+Practical use: read it before starting something expensive, not during. Above roughly 0.8, shed work — drop the frame rate target, stop a benchmark loop, defer a model download — because the alternative is the system doing it for you, less gracefully. Google's minimum polling interval is 10 seconds; asking faster returns `NaN`, which is why this hook polls at exactly that rate.
+
 ### Inputs
 `useADPF()` takes no arguments. Thermal readings poll every 10,000 ms; status changes and frame stats arrive as native events.
 

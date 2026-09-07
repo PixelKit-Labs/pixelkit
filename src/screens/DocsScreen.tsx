@@ -58,7 +58,10 @@ const SYSTEM_PROMPT_DIRECTIVE = `You are building an application with the PixelK
 6. Prefer on-device AI (useGeminiNano, useGenAITasks, useNaturalLanguageAI, useVisionAI) over the cloud when it can do the job.
 7. Store secrets only through useSecurity().saveSecureItem().`;
 
-/** One documented field: name, type, and what it means. */
+/**
+ * One documented field: name, type, and what it means. For a callable it also renders each
+ * argument it takes and what the call gives back, so a caller never has to guess either side.
+ */
 const FieldRow: React.FC<{ field: DocField }> = ({ field }) => (
   <View style={styles.fieldRow}>
     <View style={styles.fieldHead}>
@@ -66,6 +69,28 @@ const FieldRow: React.FC<{ field: DocField }> = ({ field }) => (
       <Text style={styles.fieldType}>{field.type}</Text>
     </View>
     <Text style={styles.fieldDesc}>{field.desc}</Text>
+
+    {field.inputs && field.inputs.length > 0 && (
+      <View style={styles.fieldIo}>
+        <Text style={styles.fieldIoLabel}>TAKES</Text>
+        {field.inputs.map((input) => (
+          <View key={input.name} style={styles.fieldIoRow}>
+            <Text style={styles.fieldIoName}>
+              {input.name}
+              <Text style={styles.fieldIoType}>{` ${input.type}`}</Text>
+            </Text>
+            <Text style={styles.fieldDesc}>{input.desc}</Text>
+          </View>
+        ))}
+      </View>
+    )}
+
+    {field.output ? (
+      <View style={styles.fieldIo}>
+        <Text style={styles.fieldIoLabel}>GIVES BACK</Text>
+        <Text style={styles.fieldDesc}>{field.output}</Text>
+      </View>
+    ) : null}
   </View>
 );
 
@@ -697,6 +722,34 @@ const styles = StyleSheet.create({
     ...Type.caption,
     color: Colors.dark.textMuted,
     marginTop: 3,
+  },
+  /** Inputs and output of a callable, nested under it. */
+  fieldIo: {
+    marginTop: 8,
+    paddingLeft: 10,
+    borderLeftWidth: 1,
+    borderLeftColor: Colors.dark.cardBorder,
+  },
+  fieldIoLabel: {
+    ...Type.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: Colors.dark.textMuted,
+    opacity: 0.7,
+  },
+  fieldIoRow: {
+    marginTop: 4,
+  },
+  fieldIoName: {
+    fontFamily: Fonts.monoSemi,
+    fontSize: 11,
+    color: Colors.dark.text,
+  },
+  fieldIoType: {
+    ...Type.mono,
+    fontSize: 10,
+    color: Colors.dark.primary,
+    opacity: 0.85,
   },
 
   codeBlock: {

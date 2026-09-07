@@ -147,7 +147,7 @@ source: TelemetrySource;
 ### `useADPF`
 * **File Path**: `src/hardware/useADPF.ts`
 * **Target Hardware**: Android Dynamic Performance Framework. Verified: headroom 0.55 at status NONE; thresholds `{1: 0.8, 2: 0.933, 3: 1.0, 4: 1.05, 5: 1.233, 6: 1.667}`.
-* **Description**: `PowerManager.getThermalHeadroom` on a 10 s poll (Google's minimum), a live thermal-status listener, headroom thresholds, Android 16+ `SystemHealthManager` CPU/GPU headroom, display-mode `targetFps` and Choreographer `currentFps`.
+* **Description**: `PowerManager.getThermalHeadroom` on a 10 s poll (Google's minimum) — **how close the phone is to throttling itself: 0.0 cold, 1.0 the point where clocks get cut, above 1.0 already throttling** ([what that means](api/silicon-compute.md#what-thermal-headroom-actually-means)) — a live thermal-status listener, headroom thresholds, Android 16+ `SystemHealthManager` CPU/GPU headroom, display-mode `targetFps` and Choreographer `currentFps`.
 * **Inputs**: none.
 * **Outputs**: [field table →](api/silicon-compute.md#useadpf)
 

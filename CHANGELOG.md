@@ -4,6 +4,12 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.22] - 2026-09-06
+
+### Added
+- Thermal headroom architecture guide in `docs/api/silicon-compute.md` and `docs/HARDWARE_API.md` detailing `PowerManager.getThermalHeadroom` ratio mechanics (0.0 cool … 1.0 throttling point), verified 0.55 idle baseline on Tensor G6, per-status thresholds (`thermalThresholds`), and ADPF workload shedding strategies.
+- In-app Docs tab (`DocsScreen.tsx`, `docsData.ts`): added nested action I/O cards displaying structured `TAKES` (argument names, types, descriptions) and `GIVES BACK` (resolved promises and error shapes) for every callable function.
+
 ## [1.0.21] - 2026-09-06
 
 ### Changed
