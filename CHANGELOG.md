@@ -4,6 +4,34 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.2] - 2026-09-07
+
+PixelKit is a template, not an app that ships to a store. This release says so everywhere it
+matters, and stops the work that assumed otherwise.
+
+### Added
+- `docs/getting-started/using-this-template.md`: the ten places the PixelKit name is baked in and
+  has to be renamed (app name and slug, `com.pixelkit.sdk`, both Kotlin module Gradle groups, the
+  HiLight daemon Java package and the `pkill` string in `run.ps1` that must match it, the SecureStore
+  key, the demo constants, the icons), what is worth keeping (`observability.ts`, the surface map and
+  the parity check, `MetricCard`'s `source` discipline, `ScreenScaffold`), what to delete when a
+  feature is not wanted, and the six steps to add a hook that `npm run verify` will accept.
+- The repository is now a GitHub template, so it can be used with **Use this template**. Topics
+  gained `template`, `gemini-nano`, `on-device-ai` and `android`.
+
+### Changed
+- The README hero says what the repo is — a template — before it lists what it can do, and links
+  straight to the template guide.
+- `RELEASING.md` opens by stating that PixelKit itself is released as source: a tag and a GitHub
+  release, no binary. The runbook is for shipping an app built from it, and for the source releases
+  here, whose gates are identical.
+- `docs/PRIVACY.md` and `docs/store-listing.md` carry a notice for forks: they describe what *this*
+  code does, verified against it, and every claim has to be re-checked against yours before being
+  published under your name. The data-safety form in particular is a declaration you are accountable
+  for.
+- The v1.1.0 GitHub release is published as a source release with no attached binary, which is what
+  a template release is.
+
 ## [1.1.1] - 2026-09-07
 
 ### Added

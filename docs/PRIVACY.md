@@ -2,6 +2,11 @@
 
 **Last updated: 7 September 2026**
 
+> **If you forked this template:** this policy describes what *this* code does, verified against it.
+> It is a starting point, not boilerplate to sign. Re-check every claim against your own code before
+> publishing it under your name — particularly if you add analytics, a backend, or any network call
+> beyond the Gemini API.
+
 PixelKit reads hardware on the device it is installed on and shows you what it read. This policy
 describes what the app does with that, in the same terms the code uses.
 

@@ -5,11 +5,15 @@
   <h2 align="center">PixelKit SDK</h2>
 
   <p align="center">
-    PixelKit turns the <strong>Google Pixel 11 Pro</strong>'s hardware into React hooks: CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
+    A template for building on the <strong>Google Pixel 11 Pro</strong>: its hardware as React hooks — CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
     <br />
+    <br />
+    Nothing is simulated. A value that cannot be read is <code>null</code>, renders as "—", and says so.
     <br />
     <br />
     <a href="./docs/README.md"><strong>Explore the docs »</strong></a>
+    &middot;
+    <a href="./docs/getting-started/using-this-template.md"><strong>Use this template »</strong></a>
     <br />
     <br />
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=bug">Report Bug</a>
@@ -25,6 +29,7 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
+        <li><a href="#using-this-as-a-template">Using this as a template</a></li>
         <li><a href="#built-with">Built With</a></li>
         <li><a href="#core-architectural-principles">Core Architectural Principles</a></li>
       </ul>
@@ -73,6 +78,13 @@ Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallback
 > **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'`. A value that cannot be read is `null` and renders as `—`. Nothing is ever substituted with a plausible default.
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
+
+### Using this as a template
+
+PixelKit is a template and a reference implementation, not a shipped app. Press **Use this template**
+on GitHub, or clone it, and read [Using this template](./docs/getting-started/using-this-template.md):
+what to rename, what is worth keeping, what to delete when you do not need it, and how to add a hook
+so the parity check passes.
 
 ### Built With
 
@@ -518,7 +530,7 @@ export function DocumentProcessor() {
 <!-- RELEASE BUILD -->
 ## Release Build
 
-Current version: **1.1.1** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 30).
+Current version: **1.1.2** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 31).
 
 The full procedure — gates, versioning, the device walk, signing, EAS profiles, the GitHub release and the Play paperwork — is in [RELEASING.md](./RELEASING.md).
 

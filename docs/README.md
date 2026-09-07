@@ -11,6 +11,7 @@ Documentation for the **PixelKit SDK**: the silicon, sensors, radios and on-devi
 
 ### 🚀 [Getting Started](./getting-started/)
 * **[Quickstart Guide](./getting-started/quickstart.md)**: Workstation prerequisites (Node 20+, Google Android CLI), installing dependencies, running on Pixel 11 Pro via Expo Go or development builds.
+* **[Using this template](./getting-started/using-this-template.md)**: what to rename, what to keep, what to delete, and how to add a hook the parity check accepts.
 * **[Architecture & Silicon Overview](./getting-started/architecture.md)**: The Tensor G6 7-core cluster, the PowerVR GPU, the StrongBox-backed keystore, wireless charging and the Hermes runtime — with device-verified figures separated from Google's published specification.
 
 ### 📚 [API Reference](./api/)

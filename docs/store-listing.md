@@ -2,6 +2,9 @@
 
 Everything Play asks for, with the reasoning behind each answer. Copy is written to be pasted as-is.
 
+> **If you forked this template:** the answers below are true of this code. Re-derive them for yours
+> before you submit — the data-safety form is a declaration you are accountable for.
+
 ---
 
 ## Identity

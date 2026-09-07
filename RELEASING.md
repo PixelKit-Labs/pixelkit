@@ -1,5 +1,9 @@
 # Releasing PixelKit
 
+PixelKit itself is a template and is released as source: a tag and a GitHub release, no binary.
+This runbook is for **shipping an app built from it** — and for the tagged source releases here,
+whose gates are the same.
+
 What has to be true before a build goes out, in the order it has to be true. Every command here
 runs from the repo root on Windows with the Android SDK at `%LOCALAPPDATA%\Android\Sdk`.
 
