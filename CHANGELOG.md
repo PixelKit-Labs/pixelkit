@@ -4,6 +4,27 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.14] - 2026-09-07
+
+### Fixed
+- **Restored `docs/research/`, deleted by mistake in 1.1.3.** That commit was about the Gemini Nano
+  system prompt and also removed five research documents totalling 665 lines: the device profile,
+  the 2026-09-06 test report, the HiLight LED array notes, the deep dive and the hardware research.
+  Nothing in the commit message mentioned it. They matter: `CLAUDE.md` names
+  `DEVICE_PROFILE_PIXEL_11_PRO.md` as the source of verified device facts and the reason not to
+  restate marketing claims, and `DEVICE_TEST_REPORT_2026-09-06.md` is the on-device verification
+  procedure. Five README links pointed at files that were not there.
+
+### Changed
+- The README no longer tells visitors to use this repository as a template without qualification.
+  A new **SDK, or starting point** section separates the two ways to use PixelKit: install
+  `pixelkit` when you want the hooks in an app you are already building and do not need to own the
+  code, or fork when you want to change what a hook reads. The hero link is now **Install it**
+  rather than **Use this template**, and the banner alt text says what PixelKit is rather than
+  calling it a template.
+- The section notes that a dedicated starter repository is planned in the PixelKit-Labs
+  organisation, and that forking is the way to start from PixelKit until it exists.
+
 ## [1.1.13] - 2026-09-07
 
 Preparing the repository to be public.

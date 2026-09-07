@@ -3,7 +3,7 @@
 
 <!-- PROJECT BANNER -->
 <div align="center">
-  <img src="./PixelKit_readme.jpg" alt="PixelKit SDK: a Google Pixel 11 Pro template, React hooks for hardware" width="100%" />
+  <img src="./PixelKit_readme.jpg" alt="PixelKit SDK: Google Pixel hardware and on-device AI as React hooks" width="100%" />
 </div>
 
 <!-- PROJECT HEADER -->
@@ -14,7 +14,7 @@
     <br />
     <a href="./docs/README.md"><strong>Explore the docs »</strong></a>
     &middot;
-    <a href="./docs/getting-started/using-this-template.md"><strong>Use this template »</strong></a>
+    <a href="#use-it-in-your-own-app"><strong>Install it »</strong></a>
     <br />
     <br />
     <a href="https://github.com/PixelKit-Labs/pixelkit/issues/new?labels=bug">Report Bug</a>
@@ -29,7 +29,7 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
-        <li><a href="#using-this-as-a-template">Using this as a template</a></li>
+        <li><a href="#sdk-or-starting-point">SDK, or starting point</a></li>
         <li><a href="#built-with">Built With</a></li>
         <li><a href="#core-architectural-principles">Core Architectural Principles</a></li>
       </ul>
@@ -77,12 +77,22 @@ Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallback
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
 
-### Using this as a template
+### SDK, or starting point
 
-PixelKit is a template and a reference implementation, not a shipped app. Press **Use this template**
-on GitHub, or clone it, and read [Using this template](./docs/getting-started/using-this-template.md):
-what to rename, what is worth keeping, what to delete when you do not need it, and how to add a hook
-so the parity check passes.
+There are two ways to use PixelKit, and they want different things from you.
+
+**Install the SDK** when you want the hooks in an app you are already building. You depend on
+`pixelkit`, you get updates, and you do not own the code. Start at
+[Use it in your own app](#use-it-in-your-own-app).
+
+**Fork it** when you want to change what a hook reads - a different sysfs path, a device that is
+not a Pixel, a reading this project does not take. Read
+[Using this template](./docs/getting-started/using-this-template.md): what to rename, what is worth
+keeping, what to delete, and how to add a hook so the parity check still passes.
+
+A dedicated starter repository is planned in the [PixelKit-Labs](https://github.com/PixelKit-Labs)
+organisation. Until it exists, forking this repository is the way to start from PixelKit rather
+than depend on it.
 
 ### Built With
 
