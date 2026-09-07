@@ -9,8 +9,10 @@ This document covers conversational reasoning, speech audio transcription, multi
 
 * [`useGemini`](#usegemini) - Multi-Turn Conversational Reasoning & Streaming
 * [`useGeminiNano`](#usegemininano) - Gemini Nano on-device (ML Kit GenAI Prompt API on AICore)
-* [`useSpeechAI`](#usespeechai) - Microphone recording & Gemini transcription
-* [`useVisionAI`](#usevisionai) - Multimodal Camera Scene & Document Analysis
+* [`useGenAITasks`](#usegenaitasks) - Dedicated On-Device GenAI Task Clients (Summarize, Proofread, Rewrite)
+* [`useNaturalLanguageAI`](#usenaturallanguageai) - 58-Language Offline Machine Translation, Language ID & Entity Extraction
+* [`useSpeechAI`](#usespeechai) - Dual-Mode ASI Offline & Gemini Cloud Speech Recognition
+* [`useVisionAI`](#usevisionai) - Google ML Kit On-Device Vision Suite & Multimodal Scene Analysis
 * [`geminiClient`](#geminiclient) - Titan M3 Encrypted Credential Management
 
 ---
@@ -205,31 +207,103 @@ export function VoiceCommander() {
 
 ---
 
+## `useGenAITasks`
+
+Dedicated on-device GenAI task clients powered by ML Kit and AICore. Executes directly on the Tensor G6 TPU with hardware-measured latency.
+
+### Signature
+```typescript
+function useGenAITasks(): {
+  isRunning: boolean;
+  error: string | null;
+  summaryResult: SummarizeResult | null;
+  proofreadResult: ProofreadResult | null;
+  rewriteResult: RewriteResult | null;
+  imageDescriptionResult: ImageDescriptionResult | null;
+  summarize: (text: string, options?: SummarizeOptions) => Promise<SummarizeResult | null>;
+  proofread: (text: string) => Promise<ProofreadResult | null>;
+  rewrite: (text: string, tone?: TaskTone) => Promise<RewriteResult | null>;
+  describeImage: (input: string, style?: 'detailed' | 'caption' | 'labels' | 'concise') => Promise<ImageDescriptionResult | null>;
+  source: 'hardware' | 'unavailable';
+};
+```
+
+---
+
+## `useNaturalLanguageAI`
+
+Comprehensive on-device natural language intelligence operating completely offline:
+* **Machine Translation**: Offline neural translation across 58 language pairs.
+* **Language Identification**: Sub-10ms language identification across 50+ languages with candidate probability distribution.
+* **Smart Reply Generation**: Context-aware conversational reply suggestions.
+* **Entity Extraction**: Regex and neural extraction of dates, addresses, flight numbers, monetary amounts, and shipment tracking codes.
+
+### Signature
+```typescript
+function useNaturalLanguageAI(): {
+  isProcessing: boolean;
+  error: string | null;
+  languageResult: LanguageIdResult | null;
+  translationResult: TranslationResult | null;
+  smartReplyResult: SmartReplyResult | null;
+  entityResult: EntityExtractionResult | null;
+  identifyLanguage: (text: string) => Promise<LanguageIdResult | null>;
+  translate: (text: string, sourceLang?: string, targetLang?: string) => Promise<TranslationResult | null>;
+  suggestReplies: (history: Array<{ text: string; timestamp?: number; isLocalUser?: boolean; sender?: string }>) => Promise<SmartReplyResult | null>;
+  extractEntities: (text: string) => Promise<EntityExtractionResult | null>;
+  source: 'hardware' | 'unavailable';
+};
+```
+
+---
+
 ## `useVisionAI`
 
-Captures a photo (camera or gallery via expo-image-picker) and sends it to Gemini with a JSON response schema (`responseJsonSchema`), so **the description and labels come from the model**, not from hard-coded strings. Without a key the image is kept and `error` is set; nothing is simulated.
+Combines Google ML Kit on-device computer vision with Google Gemini 3.8 multimodal scene understanding:
+* **Text Recognition v2 (OCR)**: Extracts structured text blocks and lines from documents or physical signs on-device.
+* **Barcode & QR Scanning**: Low-latency decoding of 1D and 2D barcode formats on-device.
+* **Image Labeling**: Fast classification of visual entities and environments on-device.
+* **Face & 3D Mesh Detection**: Real-time facial landmark tracking, smile/eye open metrics, and 468-point 3D contour meshes on-device.
+* **Object Detection & Tracking**: Bounding box spatial coordinates and tracking IDs on-device.
+* **Gemini Multimodal Scene Analysis**: Cloud multi-sentence scene synthesis and structured label extraction via JSON schema.
 
 ### Signature
 ```typescript
 function useVisionAI(): {
+  // Cloud Gemini
   isAnalyzing: boolean;
-  analysis: VisionAnalysisResult | null;      // { description, labels[], latencyMs, timestamp }
+  analysis: VisionAnalysisResult | null;
   selectedImageUri: string | null;
-  error: string | null;                        // permission, missing key, or API error
+  selectedImageBase64: string | null;
   captureAndAnalyze: (useCamera?: boolean) => Promise<VisionAnalysisResult | null>;
+  pickImage: (useCamera?: boolean) => Promise<{ uri: string; base64?: string } | null>;
+  // On-Device ML Kit
+  isOnDeviceProcessing: boolean;
+  barcodeResult: BarcodeScanResult | null;
+  ocrResult: TextRecognitionResult | null;
+  facesResult: FaceDetectionResult | null;
+  faceMeshResult: FaceMeshResult | null;
+  labelsResult: ImageLabelResult | null;
+  objectsResult: ObjectDetectionResult | null;
+  poseResult: PoseDetectionResult | null;
+  selfieResult: SelfieSegmentationResult | null;
+  subjectResult: SubjectSegmentationResult | null;
+  digitalInkResult: DigitalInkResult | null;
+  scanBarcodes: (input: string) => Promise<BarcodeScanResult | null>;
+  recognizeText: (input: string) => Promise<TextRecognitionResult | null>;
+  detectFaces: (input: string) => Promise<FaceDetectionResult | null>;
+  detectFaceMesh: (input: string) => Promise<FaceMeshResult | null>;
+  labelImage: (input: string) => Promise<ImageLabelResult | null>;
+  detectObjects: (input: string) => Promise<ObjectDetectionResult | null>;
+  detectPose: (input: string) => Promise<PoseDetectionResult | null>;
+  segmentSelfie: (input: string) => Promise<SelfieSegmentationResult | null>;
+  segmentSubject: (input: string) => Promise<SubjectSegmentationResult | null>;
+  recognizeDigitalInk: (strokes: Array<Array<{ x: number; y: number; t?: number }>>, languageTag?: string) => Promise<DigitalInkResult | null>;
+  source: 'hardware' | 'unavailable';
+  error: string | null;
   model: string;
 };
 ```
-
-### Properties
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `isAnalyzing` | `boolean` | True while the multimodal request is in flight |
-| `analysis` | `VisionAnalysisResult` | Model-generated description and 1–5 labels, with latency |
-| `selectedImageUri` | `string \| null` | Local file URI of the captured photo |
-| `error` | `string \| null` | Why the last call produced no analysis |
-
----
 
 ## `geminiClient`
 

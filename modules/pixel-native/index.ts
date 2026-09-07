@@ -92,10 +92,23 @@ export type RadioInfo = {
   };
 };
 
+export type AppFunctionInfo = {
+  id: string;
+  name: string;
+  description: string;
+  category: 'actuator' | 'telemetry' | 'system';
+  target: 'hardware' | 'daemon' | 'service';
+  enabled: boolean;
+};
+
 type Events = {
   onThermalStatus(e: { status: number }): void;
   onFrameStats(e: FrameStats): void;
   onTorchState(e: TorchState): void;
+  onSpeechPartial(e: { requestId: string; text: string }): void;
+  onSpeechResult(e: { requestId: string; text: string; isFinal: boolean }): void;
+  onSpeechRms(e: { requestId: string; rmsdB: number }): void;
+  onSpeechError(e: { requestId: string; error: string; code?: number }): void;
 };
 
 declare class PixelNativeModule extends NativeModule<Events> {
@@ -117,6 +130,11 @@ declare class PixelNativeModule extends NativeModule<Events> {
   playPrimitives(steps: PrimitiveStep[]): boolean;
   cancelVibration(): boolean;
   getRadioInfo(): RadioInfo;
+  isOfflineSpeechAvailable(): boolean;
+  startSpeechRecognition(requestId: string, onDevice: boolean): Promise<boolean>;
+  stopSpeechRecognition(): boolean;
+  cancelSpeechRecognition(): boolean;
+  getAppFunctions(): AppFunctionInfo[];
 }
 
 /** `null` when the native module is absent (web, Expo Go, or not yet built). */

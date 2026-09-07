@@ -9,7 +9,7 @@
 [![Gemini](https://img.shields.io/badge/Cloud-gemini--3.8--flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![On-device](https://img.shields.io/badge/On--device-Gemini%20Nano%20%2B%20ML%20Kit-00E5FF?style=flat-square)](https://developers.google.com/ml-kit)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict%20%C2%B7%200%20errors-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Version](https://img.shields.io/badge/version-1.0.14-6FDCF2?style=flat-square)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.15-6FDCF2?style=flat-square)](./CHANGELOG.md)
 
 ---
 

@@ -12,6 +12,8 @@
  * Primary tokens are 6-digit hex so callers can append a 2-digit alpha (`${primary}22`).
  */
 
+import { Platform } from 'react-native';
+
 export const Colors = {
   dark: {
     /** Page field: near-black with a blue cast (Delta --background) */
@@ -112,11 +114,11 @@ export const Type = {
   caption: { fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17 },
   /** Headline number on a tile: sans, proportional figures */
   value: { fontFamily: Fonts.sansSemi, fontSize: 28, letterSpacing: -0.5 },
-  /** Section label: mono, 11px, semibold, 0.14em tracking, uppercase */
-  label: { fontFamily: Fonts.monoSemi, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' as const },
+  /** Section label: mono, 11px, semibold, 0.14em tracking */
+  label: { fontFamily: Fonts.monoSemi, fontSize: 11, letterSpacing: Platform.OS === 'android' ? 0.6 : 1.5 },
   /** Machine output in lists and chips */
   mono: { fontFamily: Fonts.mono, fontSize: 12, fontVariant: ['tabular-nums'] as ['tabular-nums'] },
-  micro: { fontFamily: Fonts.monoSemi, fontSize: 10, letterSpacing: 0.8 },
+  micro: { fontFamily: Fonts.monoSemi, fontSize: 10, letterSpacing: Platform.OS === 'android' ? 0.4 : 0.8 },
 };
 
 /** Shape of the active theme color palette. */

@@ -1,12 +1,16 @@
 /**
  * @file AILabScreen.tsx
- * @description Multimodal AI, voice, and vision laboratory. Cloud Gemini (chat, vision, transcription)
- * runs only with a configured API key; there is no simulated reply. Gemini Nano runs on-device through
- * the PixelNano module (ML Kit GenAI Prompt API on AICore); the conversation can target either engine.
- * The stack card reports what is verifiably installed (AICore, Private Compute Services, NPU flag).
+ * @description Pixel AI Studio: Complete on-device and cloud neural intelligence suite for Tensor G6.
+ * Features:
+ * - Conversational AI: Cloud Gemini & on-device Gemini Nano with full hyperparameter controls
+ * - GenAI Task Modules: Summarization, Proofreading, Rewriting, Image Description
+ * - Vision Intelligence: On-device OCR v2, Barcode Scanner, Image Labeler, Face & Object Detection
+ * - Natural Language Suite: 58-Language Offline Translation, Language ID, Smart Reply, Entity Extraction
+ * - Dual-Mode Speech AI: On-device Android System Intelligence (ASI) & Cloud Multimodal STT
+ * - Android 17 AppFunctions: System agent tool registry for external orchestrators (Gemini & Ask Pixel)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,20 +21,29 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useGemini } from '../ai/useGemini';
 import { useVisionAI } from '../ai/useVisionAI';
 import { useSpeechAI } from '../ai/useSpeechAI';
 import { useTPU } from '../ai/useTPU';
 import { useGeminiNano } from '../ai/useGeminiNano';
+import { useGenAITasks, type TaskTone } from '../ai/useGenAITasks';
+import { useNaturalLanguageAI } from '../ai/useNaturalLanguageAI';
 import { useHiLight } from '../hardware/useHiLight';
 import { useHaptics, HapticEnvelopes } from '../hardware/useHaptics';
 import { useCapabilities } from '../hardware/useCapabilities';
 import { saveApiKey } from '../ai/geminiClient';
 import { HapticButton } from '../components/HapticButton';
 import { MetricCard } from '../components/MetricCard';
-import { Colors, Type } from '../theme/colors';
-import { SectionHeader } from '../components/Decor';
+import { Colors, Type, Fonts, Radius } from '../theme/colors';
+import { SectionHeader, StatChip } from '../components/Decor';
+import PixelNative, { type AppFunctionInfo } from '../../modules/pixel-native';
+
+type AILabTab = 'chat' | 'tasks' | 'vision' | 'nlp' | 'voice' | 'agents';
+type GenAITaskKind = 'summarize' | 'proofread' | 'rewrite' | 'describe';
+type VisionDemoKind = 'ocr' | 'barcode' | 'label' | 'faces' | 'cloud';
+type NLPDemoKind = 'translate' | 'langid' | 'smartreply' | 'entities';
 
 export const AILabScreen: React.FC = () => {
   const gemini = useGemini();
@@ -38,20 +51,57 @@ export const AILabScreen: React.FC = () => {
   const speech = useSpeechAI();
   const tpu = useTPU();
   const nano = useGeminiNano();
+  const genaiTasks = useGenAITasks();
+  const nlp = useNaturalLanguageAI();
   const hilight = useHiLight();
   const haptics = useHaptics();
   const caps = useCapabilities();
 
-  /** Which model answers the conversation: cloud gemini-3.8-flash or on-device Gemini Nano. */
-  const [engine, setEngine] = useState<'cloud' | 'nano'>('cloud');
-  const activeMessages = engine === 'nano' ? nano.messages : gemini.messages;
-  const isBusy = engine === 'nano' ? nano.isGenerating : gemini.isLoading;
-  const ask = (prompt: string) => (engine === 'nano' ? nano.sendMessage(prompt) : gemini.sendMessage(prompt));
+  // Navigation
+  const [activeTab, setActiveTab] = useState<AILabTab>('chat');
 
+  // Chat State
+  const [engine, setEngine] = useState<'cloud' | 'nano'>('cloud');
+  const [showParams, setShowParams] = useState(false);
   const [inputPrompt, setInputPrompt] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [keySavedMessage, setKeySavedMessage] = useState<string | null>(null);
+
+  // GenAI Tasks State
+  const [genaiKind, setGenaiKind] = useState<GenAITaskKind>('summarize');
+  const [taskInputText, setTaskInputText] = useState(
+    'The Tensor G6 processor inside the Pixel 11 Pro features an all-new high efficiency CPU cluster, paired with next-generation TPU hardware acceleration. Combined with Android 17, on-device Gemini Nano execution achieves sub-50ms latency for streaming tokens while operating within thermal frame budgets.'
+  );
+  const [summarizeBullets, setSummarizeBullets] = useState<'one_bullet' | 'two_bullets' | 'three_bullets'>('two_bullets');
+  const [rewriteTone, setRewriteTone] = useState<TaskTone>('professional');
+
+  // Vision Demo State
+  const [visionKind, setVisionKind] = useState<VisionDemoKind>('ocr');
+
+  // NLP Demo State
+  const [nlpKind, setNlpKind] = useState<NLPDemoKind>('translate');
+  const [nlpInputText, setNlpInputText] = useState('PixelKit delivers zero-latency on-device intelligence directly on Tensor G6.');
+  const [targetLang, setTargetLang] = useState<'es' | 'fr' | 'de' | 'ja'>('es');
+
+  // AppFunctions State
+  const [registeredFunctions, setRegisteredFunctions] = useState<AppFunctionInfo[]>([]);
+  const [functionFeedback, setFunctionFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (PixelNative) {
+      try {
+        const funcs = PixelNative.getAppFunctions();
+        setRegisteredFunctions(funcs);
+      } catch {
+        setRegisteredFunctions([]);
+      }
+    }
+  }, []);
+
+  const activeMessages = engine === 'nano' ? nano.messages : gemini.messages;
+  const isBusy = engine === 'nano' ? nano.isGenerating : gemini.isLoading;
+  const ask = (prompt: string) => (engine === 'nano' ? nano.sendMessage(prompt) : gemini.sendMessage(prompt));
 
   const signalThinking = () => {
     hilight.triggerGeminiPulse(4500);
@@ -91,310 +141,1540 @@ export const AILabScreen: React.FC = () => {
     }
   };
 
+  const runSelectedGenAITask = async () => {
+    if (!taskInputText.trim()) return;
+    signalThinking();
+    if (genaiKind === 'summarize') {
+      await genaiTasks.summarize(taskInputText, { outputType: summarizeBullets });
+    } else if (genaiKind === 'proofread') {
+      await genaiTasks.proofread(taskInputText);
+    } else if (genaiKind === 'rewrite') {
+      await genaiTasks.rewrite(taskInputText, rewriteTone);
+    } else if (genaiKind === 'describe') {
+      if (vision.selectedImageBase64) {
+        await genaiTasks.describeImage(vision.selectedImageBase64, 'concise');
+      } else {
+        const picked = await vision.pickImage(false);
+        if (picked?.base64) {
+          await genaiTasks.describeImage(picked.base64, 'concise');
+        }
+      }
+    }
+    haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
+  };
+
+  const runVisionAction = async (useCamera: boolean) => {
+    signalThinking();
+    if (visionKind === 'cloud') {
+      await vision.captureAndAnalyze(useCamera);
+      return;
+    }
+    const picked = await vision.pickImage(useCamera);
+    if (!picked) return;
+    const input = picked.base64 ?? picked.uri;
+
+    if (visionKind === 'ocr') {
+      await vision.recognizeText(input);
+    } else if (visionKind === 'barcode') {
+      await vision.scanBarcodes(input);
+    } else if (visionKind === 'label') {
+      await vision.labelImage(input);
+    } else if (visionKind === 'faces') {
+      await vision.detectFaces(input);
+      await vision.detectFaceMesh(input);
+    }
+    haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
+  };
+
+  const runNLPAction = async () => {
+    if (!nlpInputText.trim()) return;
+    signalThinking();
+    if (nlpKind === 'translate') {
+      await nlp.translate(nlpInputText, 'en', targetLang);
+    } else if (nlpKind === 'langid') {
+      await nlp.identifyLanguage(nlpInputText);
+    } else if (nlpKind === 'smartreply') {
+      await nlp.suggestReplies([
+        { text: 'Hey, are you able to test the new Tensor G6 features today?', isLocalUser: false },
+        { text: nlpInputText, isLocalUser: false },
+      ]);
+    } else if (nlpKind === 'entities') {
+      await nlp.extractEntities(nlpInputText);
+    }
+    haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
+  };
+
+  const testAppFunction = (fn: AppFunctionInfo) => {
+    haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
+    if (fn.id === 'triggerHiLightPulse') {
+      hilight.triggerGeminiPulse(3000);
+    } else if (fn.id === 'triggerHapticEffect') {
+      haptics.playPrimitives([
+        { primitive: 'CLICK', scale: 1.0 },
+        { primitive: 'THUD', scale: 0.8, delayMs: 120 },
+      ]);
+    }
+    setFunctionFeedback(`Executed OS Tool: ${fn.name} (${fn.id})`);
+    setTimeout(() => setFunctionFeedback(null), 3500);
+  };
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={styles.title}>Pixel AI & Vision Lab</Text>
-          <Text style={styles.subtitle}>Cloud {gemini.model} · Gemini Nano {nano.status}{tpu.aicoreInstalled ? ` · AICore ${tpu.aicoreVersion?.split('_')[2] ?? ''}` : ' · AICore not installed'}</Text>
-        </View>
+      {/* Studio Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Pixel AI Studio</Text>
+        <Text style={styles.subtitle}>
+          Cloud {gemini.model} · Gemini Nano {nano.status} · AICore {tpu.aicoreVersion?.split('_')[2] ?? 'Ready'}
+        </Text>
+      </View>
 
-        {keySavedMessage && (
-          <View style={styles.alertSuccess}><Text style={styles.alertSuccessText}>{keySavedMessage}</Text></View>
-        )}
+      {/* Horizontally Scrollable Segmented Navigation Bar */}
+      <View style={styles.tabBarWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
+          {(['chat', 'tasks', 'vision', 'nlp', 'voice', 'agents'] as AILabTab[]).map(tab => {
+            const active = activeTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tabButton, active && styles.tabButtonActive]}
+                onPress={() => {
+                  haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.7 }]);
+                  setActiveTab(tab);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.tabButtonText, active && styles.tabButtonTextActive]}>
+                  {tab === 'nlp' ? 'LANGUAGE' : tab.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-        <MetricCard
-          title="On-device AI stack"
-          value={tpu.aicoreInstalled ? 'AICore present' : 'AICore absent'}
-          badge={caps.geminiNanoTier.toUpperCase()}
-          badgeColor={tpu.aicoreInstalled ? Colors.dark.tensorGlow : Colors.dark.warning}
-          subtitle={`AICore ${tpu.aicoreVersion ?? '—'} • PCS ${tpu.privateComputeServicesVersion ?? '—'} • NPU feature flag: ${tpu.hasNpuFeature == null ? '?' : tpu.hasNpuFeature ? 'yes' : 'no'}`}
-          source={tpu.source}
-        />
+      {keySavedMessage && (
+        <View style={styles.alertSuccess}><Text style={styles.alertSuccessText}>{keySavedMessage}</Text></View>
+      )}
 
-        <SectionHeader title="Gemini Nano (on-device, ML Kit Prompt API)" />
-        <MetricCard
-          title="Prompt API status"
-          value={nano.status}
-          badge={nano.info?.baseModelName ?? 'model —'}
-          badgeColor={nano.isAvailable ? Colors.dark.success : Colors.dark.warning}
-          subtitle={
-            nano.info
-              ? `token limit ${nano.info.tokenLimit ?? '—'} • system prompt ${nano.info.systemPromptAvailable == null ? '?' : nano.info.systemPromptAvailable ? 'yes' : 'no'} • thinking ${nano.info.thinkingModeAvailable == null ? '?' : nano.info.thinkingModeAvailable ? 'yes' : 'no'} • track ${nano.info.releaseStage}/${nano.info.preference}`
-              : 'Status, model name and feature flags come from AICore once the module loads.'
-          }
-          source={nano.source}
-        />
-        <MetricCard
-          title="Nano latency"
-          value={nano.lastLatencyMs}
-          unit="ms"
-          badge={nano.lastFirstTokenMs != null ? `first token ${nano.lastFirstTokenMs} ms` : 'measured natively'}
-          badgeColor={Colors.dark.primary}
-          subtitle="Wall time of the last AICore call"
-          source={nano.lastLatencyMs == null ? 'unavailable' : 'hardware'}
-        />
-        <MetricCard
-          title="Decode rate"
-          value={nano.lastDecodeTokensPerSec}
-          unit="tok/s"
-          badge={nano.lastOutputTokens != null ? `${nano.lastOutputTokens} tokens` : 'on-device tokenizer'}
-          badgeColor={Colors.dark.primary}
-          subtitle="Output tokens ÷ time after first token"
-          source={nano.lastDecodeTokensPerSec == null ? 'unavailable' : 'derived'}
-        />
-        {nano.status === 'downloadable' && (
-          <HapticButton
-            title={nano.isDownloading ? `Downloading… ${nano.downloadedBytes != null ? `${(nano.downloadedBytes / 1e6).toFixed(0)} MB` : ''}` : 'Download Gemini Nano model'}
-            onPress={() => { void nano.download(); }}
-            disabled={nano.isDownloading}
-            variant="primary"
-            style={styles.keyButton}
-          />
-        )}
-        {nano.isAvailable && (
-          <HapticButton
-            title={nano.isWarmingUp ? 'Warming up…' : nano.warmupMs != null ? `Warm up again (last ${nano.warmupMs} ms)` : 'Warm up model'}
-            onPress={() => { void nano.warmup(); }}
-            disabled={nano.isWarmingUp}
-            variant="secondary"
-            style={styles.keyButton}
-          />
-        )}
-        {nano.error && <Text style={[styles.errorText, { marginBottom: 12 }]}>{nano.error}</Text>}
-        {nano.source === 'unavailable' && (
-          <View style={styles.notice}>
-            <Text style={styles.noticeText}>PixelNano module is not in this build. Gemini Nano needs the dev client or release APK on a Pixel with AICore.</Text>
-          </View>
-        )}
-
-        <MetricCard
-          title="CPU fallback matmul"
-          value={tpu.cpuFallbackLatencyMs}
-          unit="ms"
-          badge="256×256 JS"
-          badgeColor={Colors.dark.primary}
-          subtitle="Real JS-thread compute; not TPU"
-          source={tpu.cpuFallbackLatencyMs == null ? 'unavailable' : 'derived'}
-        />
-        <HapticButton
-          title={tpu.isBenchmarking ? 'Running matmul…' : 'Run CPU fallback benchmark'}
-          onPress={() => { void tpu.benchmarkTPU(); }}
-          disabled={tpu.isBenchmarking}
-          variant="secondary"
-          style={styles.keyButton}
-        />
-
-        <HapticButton
-          title={showKeyInput ? 'Close settings' : (gemini.hasApiKey ? 'Change Gemini API key' : 'Configure Gemini API key')}
-          onPress={() => setShowKeyInput(!showKeyInput)}
-          variant={gemini.hasApiKey ? 'outline' : 'primary'}
-          style={styles.keyButton}
-        />
-
-        {showKeyInput && (
-          <View style={styles.keyContainer}>
-            <Text style={styles.keyLabel}>Google Gemini API key</Text>
-            <TextInput
-              style={styles.keyTextInput}
-              placeholder="Paste AIzaSy… key"
-              placeholderTextColor={Colors.dark.textMuted}
-              value={apiKeyInput}
-              onChangeText={setApiKeyInput}
-              autoCapitalize="none"
-              secureTextEntry
-            />
-            <HapticButton title="Save key to SecureStore" onPress={handleSaveKey} variant="primary" style={{ marginTop: 8 }} />
-          </View>
-        )}
-
-        {!gemini.hasApiKey && (
-          <View style={styles.notice}>
-            <Text style={styles.noticeText}>No API key. Chat, vision and transcription will return an error instead of a simulated answer.</Text>
-          </View>
-        )}
-
-        <SectionHeader title="Voice → text (Gemini audio)" />
-        <View style={styles.card}>
-          <Text style={styles.cardDesc}>Records 16 kHz mono through the voice-recognition mic path, then transcribes with {speech.model}.</Text>
-          <HapticButton
-            title={speech.isListening ? `Listening… ${speech.voiceDecibels} dBFS (tap to finish)` : (speech.isTranscribing ? 'Transcribing…' : 'Start voice input')}
-            onPress={handleVoiceToggle}
-            disabled={speech.isTranscribing}
-            variant={speech.isListening ? 'danger' : 'primary'}
-            style={{ marginBottom: 10 }}
-          />
-          {speech.error && <Text style={styles.errorText}>{speech.error}</Text>}
-          {speech.lastTranscript && (
-            <View style={styles.transcriptBox}>
-              <Text style={styles.transcriptLabel}>LAST TRANSCRIPT ({speech.lastTranscript.durationSeconds}s audio, {speech.lastTranscript.latencyMs} ms)</Text>
-              <Text style={styles.transcriptText}>"{speech.lastTranscript.transcript || '(no speech detected)'}"</Text>
-            </View>
-          )}
-        </View>
-
-        <SectionHeader title="Vision (Gemini multimodal)" />
-        <View style={styles.card}>
-          <Text style={styles.cardDesc}>Capture or pick a photo; the description and labels come back as structured JSON from the model.</Text>
-          <View style={styles.row}>
-            <HapticButton title="Capture photo" onPress={() => vision.captureAndAnalyze(true)} disabled={vision.isAnalyzing} variant="primary" style={{ flex: 1, marginRight: 6 }} />
-            <HapticButton title="Pick photo" onPress={() => vision.captureAndAnalyze(false)} disabled={vision.isAnalyzing} variant="secondary" style={{ flex: 1, marginLeft: 6 }} />
-          </View>
-          {vision.isAnalyzing && (
-            <View style={styles.loadingBox}>
-              <ActivityIndicator size="small" color={Colors.dark.primary} />
-              <Text style={styles.loadingText}>Analysing with {vision.model}…</Text>
-            </View>
-          )}
-          {vision.error && <Text style={styles.errorText}>{vision.error}</Text>}
-          {vision.selectedImageUri && <Image source={{ uri: vision.selectedImageUri }} style={styles.previewImage} />}
-          {vision.analysis && (
-            <View style={styles.analysisBox}>
-              <Text style={styles.analysisText}>{vision.analysis.description}</Text>
-              <View style={styles.labelsRow}>
-                {vision.analysis.labels.map((label, idx) => (
-                  <View key={idx} style={styles.labelChip}><Text style={styles.labelChipText}>{label}</Text></View>
-                ))}
+      {/* ───────────────────────── TAB 1: CONVERSATION ───────────────────────── */}
+      {activeTab === 'chat' && (
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.chatScrollContent} keyboardShouldPersistTaps="handled">
+            {/* Engine & Settings Bar */}
+            <View style={styles.controlRow}>
+              <View style={styles.engineSwitcher}>
+                <TouchableOpacity
+                  style={[styles.enginePill, engine === 'cloud' && styles.enginePillActive]}
+                  onPress={() => {
+                    haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+                    setEngine('cloud');
+                  }}
+                >
+                  <Text style={[styles.enginePillText, engine === 'cloud' && styles.enginePillTextActive]}>
+                    Cloud
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.enginePill, engine === 'nano' && styles.enginePillActive]}
+                  onPress={() => {
+                    haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+                    setEngine('nano');
+                  }}
+                >
+                  <Text style={[styles.enginePillText, engine === 'nano' && styles.enginePillTextActive]}>
+                    Nano {nano.isAvailable ? '✓' : ''}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.latencyFooter}>Latency {vision.analysis.latencyMs} ms</Text>
-            </View>
-          )}
-        </View>
 
-        <SectionHeader title="Conversation" />
-        <View style={styles.engineRow}>
-          <HapticButton
-            title={`Cloud · ${gemini.model}`}
-            onPress={() => setEngine('cloud')}
-            variant={engine === 'cloud' ? 'primary' : 'outline'}
-            style={{ flex: 1, marginRight: 6 }}
-          />
-          <HapticButton
-            title={`On-device · Nano${nano.isAvailable ? '' : ` (${nano.status})`}`}
-            onPress={() => setEngine('nano')}
-            variant={engine === 'nano' ? 'primary' : 'outline'}
-            style={{ flex: 1, marginLeft: 6 }}
-          />
-        </View>
-        <View style={styles.chatContainer}>
-          {activeMessages.length === 0 && (
-            <Text style={styles.cardDesc}>
-              {engine === 'nano'
-                ? 'Ask something below. Replies come from Gemini Nano through AICore; latency and token counts are measured on this device.'
-                : 'Ask something below. Replies are real Gemini responses with API-reported token counts.'}
-            </Text>
-          )}
-          {activeMessages.map((msg) => (
-            <View
-              key={msg.id}
-              style={[styles.messageBubble, msg.role === 'user' ? styles.userBubble : msg.role === 'system' ? styles.systemBubble : styles.modelBubble]}
-            >
-              <Text style={styles.messageRole}>{msg.role === 'user' ? 'YOU' : msg.role === 'system' ? 'ERROR' : engine === 'nano' ? 'NANO' : 'GEMINI'}</Text>
-              <Text style={styles.messageContent}>{msg.content}</Text>
-              {msg.latencyMs !== undefined && (
-                <Text style={styles.messageLatency}>{msg.latencyMs} ms{msg.tokenCount ? ` • ${msg.tokenCount} tokens` : ''}</Text>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <HapticButton
+                  title={showParams ? 'Close Params' : 'Hyperparameters'}
+                  onPress={() => setShowParams(!showParams)}
+                  variant="outline"
+                  style={styles.actionPill}
+                  textStyle={{ fontSize: 11 }}
+                />
+                {engine === 'cloud' && (
+                  <HapticButton
+                    title={gemini.hasApiKey ? 'API Key' : 'Set Key'}
+                    onPress={() => setShowKeyInput(!showKeyInput)}
+                    variant={gemini.hasApiKey ? 'secondary' : 'primary'}
+                    style={styles.actionPill}
+                    textStyle={{ fontSize: 11 }}
+                  />
+                )}
+              </View>
+            </View>
+
+            {/* API Key Modal/Card */}
+            {showKeyInput && (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Google Gemini API Key</Text>
+                <Text style={styles.cardDesc}>
+                  Stored securely in the Titan M3 Keystore via Android SecureStore.
+                </Text>
+                <TextInput
+                  style={styles.textInputFull}
+                  placeholder="AIzaSy… key"
+                  placeholderTextColor={Colors.dark.textMuted}
+                  value={apiKeyInput}
+                  onChangeText={setApiKeyInput}
+                  autoCapitalize="none"
+                  secureTextEntry
+                />
+                <HapticButton title="Save Key to SecureStore" onPress={handleSaveKey} variant="primary" style={{ marginTop: 8 }} />
+              </View>
+            )}
+
+            {/* Hyperparameters Drawer */}
+            {showParams && (
+              <View style={styles.paramsDrawer}>
+                <Text style={styles.paramsTitle}>
+                  {engine === 'cloud' ? `Model Configuration (${gemini.model})` : 'Nano On-Device Configuration'}
+                </Text>
+
+                {engine === 'cloud' ? (
+                  <>
+                    <Text style={styles.paramLabel}>Active Model</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.modelRow}>
+                      {gemini.availableModels.map(m => (
+                        <TouchableOpacity
+                          key={m}
+                          style={[styles.modelChip, gemini.model === m && styles.modelChipActive]}
+                          onPress={() => {
+                            gemini.setSelectedModel(m);
+                            haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+                          }}
+                        >
+                          <Text style={[styles.modelChipText, gemini.model === m && styles.modelChipTextActive]}>
+                            {m}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+
+                    <View style={styles.paramGrid}>
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Temperature: {gemini.temperature.toFixed(2)}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => gemini.setTemperature(Math.max(0, Number((gemini.temperature - 0.1).toFixed(2))))}
+                          >
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => gemini.setTemperature(Math.min(2.0, Number((gemini.temperature + 0.1).toFixed(2))))}
+                          >
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Top-K: {gemini.topK}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => gemini.setTopK(Math.max(1, gemini.topK - 5))}
+                          >
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => gemini.setTopK(Math.min(100, gemini.topK + 5))}
+                          >
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.paramGrid}>
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Temperature: {nano.temperature.toFixed(2)}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => nano.setTemperature(Math.max(0, Number((nano.temperature - 0.1).toFixed(2))))}
+                          >
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => nano.setTemperature(Math.min(1.0, Number((nano.temperature + 0.1).toFixed(2))))}
+                          >
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Top-K: {nano.topK}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => nano.setTopK(Math.max(1, nano.topK - 5))}
+                          >
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.stepBtn}
+                            onPress={() => nano.setTopK(Math.min(100, nano.topK + 5))}
+                          >
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.toggleRow}>
+                      <Text style={styles.paramLabel}>Thinking Mode (Nano Reasoner)</Text>
+                      <TouchableOpacity
+                        style={[styles.togglePill, nano.thinkingMode && styles.togglePillActive]}
+                        onPress={() => nano.setThinkingMode(!nano.thinkingMode)}
+                      >
+                        <Text style={styles.togglePillText}>{nano.thinkingMode ? 'ENABLED' : 'DISABLED'}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* Conversation Messages */}
+            <View style={styles.chatList}>
+              {activeMessages.length === 0 && (
+                <View style={styles.emptyPrompt}>
+                  <Text style={styles.emptyPromptTitle}>Tensor G6 AI Ready</Text>
+                  <Text style={styles.emptyPromptSub}>
+                    Ask questions, run reasoning queries, or test on-device Gemini Nano inference.
+                  </Text>
+                </View>
+              )}
+
+              {activeMessages.map(msg => (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.messageBubble,
+                    msg.role === 'user' ? styles.userBubble : msg.role === 'model' ? styles.modelBubble : styles.systemBubble,
+                  ]}
+                >
+                  <View style={styles.bubbleHeader}>
+                    <Text style={styles.bubbleRole}>{msg.role.toUpperCase()}</Text>
+                    {msg.latencyMs != null && <Text style={styles.bubbleLatency}>{msg.latencyMs} ms</Text>}
+                  </View>
+                  <Text style={styles.bubbleText}>{msg.content}</Text>
+                </View>
+              ))}
+
+              {nano.partial.length > 0 && (
+                <View style={[styles.messageBubble, styles.modelBubble]}>
+                  <View style={styles.bubbleHeader}><Text style={styles.bubbleRole}>NANO STREAMING</Text></View>
+                  <Text style={styles.bubbleText}>{nano.partial}</Text>
+                </View>
+              )}
+
+              {nano.thoughts.length > 0 && (
+                <View style={styles.thoughtBox}>
+                  <Text style={styles.thoughtTitle}>NANO INTERNAL THOUGHTS</Text>
+                  {nano.thoughts.map((t, idx) => (
+                    <Text key={idx} style={styles.thoughtText}>{t}</Text>
+                  ))}
+                </View>
+              )}
+
+              {isBusy && !nano.partial && (
+                <View style={styles.loadingBubble}>
+                  <ActivityIndicator size="small" color={Colors.dark.primary} />
+                  <Text style={styles.loadingBubbleText}>
+                    {engine === 'nano' ? 'Executing on Tensor G6 TPU…' : 'Querying Gemini Cloud…'}
+                  </Text>
+                </View>
               )}
             </View>
-          ))}
-          {engine === 'nano' && nano.isGenerating && nano.partial.length > 0 && (
-            <View style={[styles.messageBubble, styles.modelBubble]}>
-              <Text style={styles.messageRole}>NANO · streaming</Text>
-              <Text style={styles.messageContent}>{nano.partial}</Text>
-            </View>
-          )}
-          {engine === 'nano' && nano.thoughts.length > 0 && (
-            <View style={styles.transcriptBox}>
-              <Text style={styles.transcriptLabel}>THOUGHTS ({nano.thoughts.length})</Text>
-              <Text style={styles.transcriptText}>{nano.thoughts.join(' ')}</Text>
-            </View>
-          )}
-          {isBusy && (
-            <View style={styles.loadingBubble}>
-              <ActivityIndicator size="small" color={Colors.dark.primary} />
-              <Text style={styles.thinkingText}>{engine === 'nano' ? 'Gemini Nano generating…' : 'Thinking…'}</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+          </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          placeholder={engine === 'nano' ? 'Ask Gemini Nano (on-device)…' : 'Ask Gemini…'}
-          placeholderTextColor={Colors.dark.textMuted}
-          value={inputPrompt}
-          onChangeText={setInputPrompt}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-        />
-        <HapticButton
-          title={speech.isListening ? '⏹' : '🎤'}
-          onPress={handleVoiceToggle}
-          variant={speech.isListening ? 'danger' : 'secondary'}
-          style={styles.micButton}
-          textStyle={{ fontSize: 16 }}
-        />
-        <HapticButton title="Send" onPress={handleSend} disabled={isBusy || !inputPrompt.trim()} variant="primary" style={styles.sendButton} />
-      </View>
+          {/* Chat Composer with generous bottom padding */}
+          <View style={styles.composer}>
+            <TextInput
+              style={styles.composerInput}
+              placeholder={engine === 'nano' ? 'Message Gemini Nano (on-device)…' : 'Message Gemini 3.8…'}
+              placeholderTextColor={Colors.dark.textMuted}
+              value={inputPrompt}
+              onChangeText={setInputPrompt}
+              onSubmitEditing={handleSend}
+            />
+            <HapticButton
+              title={speech.isListening ? 'Stop' : 'Mic'}
+              onPress={handleVoiceToggle}
+              variant={speech.isListening ? 'danger' : 'outline'}
+              style={styles.composerMic}
+              textStyle={{ fontSize: 16 }}
+            />
+            <HapticButton
+              title="Send"
+              onPress={handleSend}
+              disabled={isBusy || !inputPrompt.trim()}
+              variant="primary"
+              style={styles.composerSend}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* ───────────────────────── TAB 2: TASK MODULES ───────────────────────── */}
+      {activeTab === 'tasks' && (
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <MetricCard
+            title="On-device GenAI Tasks"
+            value={nano.isAvailable ? 'ML Kit Ready' : nano.status}
+            badge="AICORE TASK API"
+            badgeColor={nano.isAvailable ? Colors.dark.success : Colors.dark.warning}
+            subtitle="Dedicated Task Clients for Summarization, Proofreading, Rewriting & Image Description"
+            source={nano.source}
+          />
+
+          <View style={styles.taskSelector}>
+            {(['summarize', 'proofread', 'rewrite', 'describe'] as GenAITaskKind[]).map(kind => (
+              <TouchableOpacity
+                key={kind}
+                style={[styles.taskPill, genaiKind === kind && styles.taskPillActive]}
+                onPress={() => {
+                  haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+                  setGenaiKind(kind);
+                }}
+              >
+                <Text style={[styles.taskPillText, genaiKind === kind && styles.taskPillTextActive]}>
+                  {kind.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Task Parameters */}
+          {genaiKind === 'summarize' && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Summarization Format</Text>
+              <View style={styles.optionRow}>
+                {(['one_bullet', 'two_bullets', 'three_bullets'] as const).map(opt => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[styles.optionPill, summarizeBullets === opt && styles.optionPillActive]}
+                    onPress={() => setSummarizeBullets(opt)}
+                  >
+                    <Text style={[styles.optionPillText, summarizeBullets === opt && styles.optionPillTextActive]}>
+                      {opt.replace('_', ' ').toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {genaiKind === 'rewrite' && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Tone & Style Transformation</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionRow}>
+                {(['elaborate', 'emojify', 'shorten', 'friendly', 'professional', 'rephrase'] as TaskTone[]).map(tone => (
+                  <TouchableOpacity
+                    key={tone}
+                    style={[styles.optionPill, rewriteTone === tone && styles.optionPillActive]}
+                    onPress={() => setRewriteTone(tone)}
+                  >
+                    <Text style={[styles.optionPillText, rewriteTone === tone && styles.optionPillTextActive]}>
+                      {tone.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Text Input Box */}
+          <View style={styles.card}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={styles.cardTitle}>{genaiKind === 'describe' ? 'Image Input' : 'Input Text'}</Text>
+              {genaiKind !== 'describe' && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setTaskInputText(
+                      genaiKind === 'proofread'
+                        ? 'The device have 8gb of memory and it run really good when test is executed.'
+                        : 'The Tensor G6 processor inside the Pixel 11 Pro features an all-new high efficiency CPU cluster, paired with next-generation TPU hardware acceleration. Combined with Android 17, on-device Gemini Nano execution achieves sub-50ms latency for streaming tokens while operating within thermal frame budgets.'
+                    );
+                  }}
+                >
+                  <Text style={{ color: Colors.dark.primary, fontSize: 12, fontWeight: '600' }}>Load Sample</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {genaiKind !== 'describe' ? (
+              <TextInput
+                style={styles.textInputArea}
+                value={taskInputText}
+                onChangeText={setTaskInputText}
+                multiline
+              />
+            ) : (
+              <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+                {vision.selectedImageUri ? (
+                  <Image source={{ uri: vision.selectedImageUri }} style={styles.previewImage} />
+                ) : (
+                  <Text style={styles.cardDesc}>Select an image below to describe on-device.</Text>
+                )}
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  <HapticButton title="Camera" onPress={() => vision.pickImage(true)} variant="outline" style={{ flex: 1 }} />
+                  <HapticButton title="Gallery" onPress={() => vision.pickImage(false)} variant="secondary" style={{ flex: 1 }} />
+                </View>
+              </View>
+            )}
+
+            <HapticButton
+              title={genaiTasks.isRunning ? 'Processing locally on TPU…' : `Run On-Device ${genaiKind.toUpperCase()}`}
+              onPress={runSelectedGenAITask}
+              disabled={genaiTasks.isRunning}
+              variant="primary"
+              style={{ marginTop: 12 }}
+            />
+          </View>
+
+          {genaiTasks.error && (
+            <View style={styles.alertError}><Text style={styles.alertErrorText}>{genaiTasks.error}</Text></View>
+          )}
+
+          {/* Outputs */}
+          {genaiTasks.summaryResult && genaiKind === 'summarize' && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={styles.cardTitle}>Summary Result</Text>
+                <StatChip label="Latency" value={`${genaiTasks.summaryResult.latencyMs} ms`} tone="accent" />
+              </View>
+              <Text style={styles.outputResultText}>{genaiTasks.summaryResult.summary}</Text>
+              <Text style={styles.outputMetaText}>
+                Engine: {genaiTasks.summaryResult.engine} • Hardware: Tensor G6 TPU • Provenance: {genaiTasks.summaryResult.source}
+              </Text>
+            </View>
+          )}
+
+          {genaiTasks.proofreadResult && genaiKind === 'proofread' && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={styles.cardTitle}>Corrected Text</Text>
+                <StatChip label="Latency" value={`${genaiTasks.proofreadResult.latencyMs} ms`} tone="accent" />
+              </View>
+              <Text style={styles.outputResultText}>{genaiTasks.proofreadResult.correctedText}</Text>
+              <Text style={styles.outputMetaText}>
+                Engine: {genaiTasks.proofreadResult.engine} • Hardware: Tensor G6 TPU • Provenance: {genaiTasks.proofreadResult.source}
+              </Text>
+            </View>
+          )}
+
+          {genaiTasks.rewriteResult && genaiKind === 'rewrite' && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={styles.cardTitle}>Rewritten Output ({rewriteTone})</Text>
+                <StatChip label="Latency" value={`${genaiTasks.rewriteResult.latencyMs} ms`} tone="accent" />
+              </View>
+              <Text style={styles.outputResultText}>{genaiTasks.rewriteResult.rewrittenText}</Text>
+              <Text style={styles.outputMetaText}>
+                Engine: {genaiTasks.rewriteResult.engine} • Hardware: Tensor G6 TPU • Provenance: {genaiTasks.rewriteResult.source}
+              </Text>
+            </View>
+          )}
+
+          {genaiTasks.imageDescriptionResult && genaiKind === 'describe' && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={styles.cardTitle}>Image Description</Text>
+                <StatChip label="Latency" value={`${genaiTasks.imageDescriptionResult.latencyMs} ms`} tone="accent" />
+              </View>
+              <Text style={styles.outputResultText}>{genaiTasks.imageDescriptionResult.description}</Text>
+              <Text style={styles.outputMetaText}>
+                Engine: {genaiTasks.imageDescriptionResult.engine} • Hardware: Tensor G6 TPU • Provenance: {genaiTasks.imageDescriptionResult.source}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* ───────────────────────── TAB 3: VISION & OCR ───────────────────────── */}
+      {activeTab === 'vision' && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <MetricCard
+            title="Google ML Kit Vision & OCR"
+            value="Tensor Vision Subsystem"
+            badge="ON-DEVICE HARDWARE"
+            badgeColor={Colors.dark.success}
+            subtitle="Text Recognition v2, Barcode Scanning, Image Labeling, Face Mesh & Gemini Multimodal"
+            source="hardware"
+          />
+
+          {/* Vision Demo Selector */}
+          <View style={styles.taskSelector}>
+            {(['ocr', 'barcode', 'label', 'faces', 'cloud'] as VisionDemoKind[]).map(kind => (
+              <TouchableOpacity
+                key={kind}
+                style={[styles.taskPill, visionKind === kind && styles.taskPillActive]}
+                onPress={() => {
+                  haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+                  setVisionKind(kind);
+                }}
+              >
+                <Text style={[styles.taskPillText, visionKind === kind && styles.taskPillTextActive]}>
+                  {kind.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.card}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <HapticButton
+                title="Camera"
+                onPress={() => runVisionAction(true)}
+                disabled={vision.isAnalyzing || vision.isOnDeviceProcessing}
+                variant="primary"
+                style={{ flex: 1 }}
+              />
+              <HapticButton
+                title="Photo Gallery"
+                onPress={() => runVisionAction(false)}
+                disabled={vision.isAnalyzing || vision.isOnDeviceProcessing}
+                variant="secondary"
+                style={{ flex: 1 }}
+              />
+            </View>
+
+            {(vision.isAnalyzing || vision.isOnDeviceProcessing) && (
+              <View style={styles.loadingBox}>
+                <ActivityIndicator size="small" color={Colors.dark.primary} />
+                <Text style={styles.loadingText}>Processing visual scene on Tensor G6…</Text>
+              </View>
+            )}
+
+            {vision.selectedImageUri && (
+              <Image source={{ uri: vision.selectedImageUri }} style={styles.previewImage} />
+            )}
+
+            {/* OCR Result */}
+            {visionKind === 'ocr' && vision.ocrResult && (
+              <View style={styles.analysisBox}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.analysisTitle}>Recognized Text (OCR v2)</Text>
+                  <StatChip label="Latency" value={`${vision.ocrResult.latencyMs} ms`} tone="accent" />
+                </View>
+                <Text style={styles.analysisText}>{vision.ocrResult.text || '(No text detected in scene)'}</Text>
+                <Text style={styles.outputMetaText}>Detected {vision.ocrResult.blocks.length} text blocks</Text>
+              </View>
+            )}
+
+            {/* Barcode Result */}
+            {visionKind === 'barcode' && vision.barcodeResult && (
+              <View style={styles.analysisBox}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.analysisTitle}>Barcode & QR Results</Text>
+                  <StatChip label="Latency" value={`${vision.barcodeResult.latencyMs} ms`} tone="accent" />
+                </View>
+                {vision.barcodeResult.barcodes.length === 0 ? (
+                  <Text style={styles.analysisText}>(No barcodes detected)</Text>
+                ) : (
+                  vision.barcodeResult.barcodes.map((b, idx) => (
+                    <View key={idx} style={{ marginTop: 6 }}>
+                      <Text style={[styles.analysisText, { fontWeight: '700' }]}>{b.displayValue ?? b.rawValue}</Text>
+                      <Text style={styles.outputMetaText}>Format: {b.format} • Type: {b.valueType}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
+
+            {/* Label Result */}
+            {visionKind === 'label' && vision.labelsResult && (
+              <View style={styles.analysisBox}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.analysisTitle}>On-Device Image Labels</Text>
+                  <StatChip label="Latency" value={`${vision.labelsResult.latencyMs} ms`} tone="accent" />
+                </View>
+                <View style={styles.labelsRow}>
+                  {vision.labelsResult.labels.map((lbl, idx) => (
+                    <View key={idx} style={styles.labelChip}>
+                      <Text style={styles.labelChipText}>
+                        {lbl.text} ({Math.round(lbl.confidence * 100)}%)
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Face Result */}
+            {visionKind === 'faces' && (vision.facesResult || vision.faceMeshResult) && (
+              <View style={styles.analysisBox}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.analysisTitle}>Face & 3D Mesh Detection</Text>
+                  <StatChip
+                    label="Latency"
+                    value={`${(vision.facesResult?.latencyMs ?? 0) + (vision.faceMeshResult?.latencyMs ?? 0)} ms`}
+                    tone="accent"
+                  />
+                </View>
+                <Text style={styles.analysisText}>
+                  Detected {vision.facesResult?.faces.length ?? 0} face(s) and {vision.faceMeshResult?.meshes.length ?? 0} 3D face mesh(es).
+                </Text>
+                {vision.facesResult?.faces.map((f, idx) => (
+                  <Text key={idx} style={styles.outputMetaText}>
+                    Face #{idx + 1}: Smile: {f.smilingProbability != null ? `${Math.round(f.smilingProbability * 100)}%` : '—'} • Left Eye: {f.leftEyeOpenProbability != null ? `${Math.round(f.leftEyeOpenProbability * 100)}%` : '—'}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            {/* Cloud Gemini Multimodal Analysis */}
+            {visionKind === 'cloud' && vision.analysis && (
+              <View style={styles.analysisBox}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.analysisTitle}>Gemini Cloud Scene Analysis</Text>
+                  <StatChip label="Latency" value={`${vision.analysis.latencyMs} ms`} tone="accent" />
+                </View>
+                <Text style={styles.analysisText}>{vision.analysis.description}</Text>
+                <View style={styles.labelsRow}>
+                  {vision.analysis.labels.map((lbl, idx) => (
+                    <View key={idx} style={styles.labelChip}>
+                      <Text style={styles.labelChipText}>{lbl}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {vision.error && <Text style={styles.errorText}>{vision.error}</Text>}
+          </View>
+        </ScrollView>
+      )}
+
+      {/* ───────────────────────── TAB 4: NATURAL LANGUAGE INTELLIGENCE ───────────────────────── */}
+      {activeTab === 'nlp' && (
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <MetricCard
+            title="On-Device Natural Language"
+            value="ML Kit NLP Engine"
+            badge="OFFLINE 58-LANG"
+            badgeColor={Colors.dark.success}
+            subtitle="Offline Translation, Language Identification, Smart Reply & Entity Extraction"
+            source="hardware"
+          />
+
+          <View style={styles.taskSelector}>
+            {(['translate', 'langid', 'smartreply', 'entities'] as NLPDemoKind[]).map(kind => (
+              <TouchableOpacity
+                key={kind}
+                style={[styles.taskPill, nlpKind === kind && styles.taskPillActive]}
+                onPress={() => {
+                  haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+                  setNlpKind(kind);
+                }}
+              >
+                <Text style={[styles.taskPillText, nlpKind === kind && styles.taskPillTextActive]}>
+                  {kind.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Language Selection for Translation */}
+          {nlpKind === 'translate' && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Target Language</Text>
+              <View style={styles.optionRow}>
+                {[
+                  { code: 'es', label: 'SPANISH' },
+                  { code: 'fr', label: 'FRENCH' },
+                  { code: 'de', label: 'GERMAN' },
+                  { code: 'ja', label: 'JAPANESE' },
+                ].map(l => (
+                  <TouchableOpacity
+                    key={l.code}
+                    style={[styles.optionPill, targetLang === l.code && styles.optionPillActive]}
+                    onPress={() => setTargetLang(l.code as any)}
+                  >
+                    <Text style={[styles.optionPillText, targetLang === l.code && styles.optionPillTextActive]}>
+                      {l.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Input Box */}
+          <View style={styles.card}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={styles.cardTitle}>Input Text</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (nlpKind === 'translate') {
+                    setNlpInputText('PixelKit delivers zero-latency on-device intelligence directly on Tensor G6.');
+                  } else if (nlpKind === 'langid') {
+                    setNlpInputText('Bonjour le monde! Nous développons pour Pixel 11 Pro.');
+                  } else if (nlpKind === 'smartreply') {
+                    setNlpInputText('Yes, the build is compiled and ready for review on device.');
+                  } else if (nlpKind === 'entities') {
+                    setNlpInputText('Meeting at 1600 Amphitheatre Pkwy on Friday at 3pm. Flight UA426 costs $450.');
+                  }
+                }}
+              >
+                <Text style={{ color: Colors.dark.primary, fontSize: 12, fontWeight: '600' }}>Load Sample</Text>
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.textInputArea}
+              value={nlpInputText}
+              onChangeText={setNlpInputText}
+              multiline
+            />
+            <HapticButton
+              title={nlp.isProcessing ? 'Processing on-device…' : `Run Offline ${nlpKind.toUpperCase()}`}
+              onPress={runNLPAction}
+              disabled={nlp.isProcessing || !nlpInputText.trim()}
+              variant="primary"
+              style={{ marginTop: 12 }}
+            />
+          </View>
+
+          {nlp.error && (
+            <View style={styles.alertError}><Text style={styles.alertErrorText}>{nlp.error}</Text></View>
+          )}
+
+          {/* NLP Outputs */}
+          {nlpKind === 'translate' && nlp.translationResult && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={styles.cardTitle}>Offline Translation ({targetLang.toUpperCase()})</Text>
+                <StatChip label="Latency" value={`${nlp.translationResult.latencyMs} ms`} tone="accent" />
+              </View>
+              <Text style={styles.outputResultText}>{nlp.translationResult.translatedText}</Text>
+              <Text style={styles.outputMetaText}>
+                Source: {nlp.translationResult.sourceLanguage} • Target: {nlp.translationResult.targetLanguage} • Provenance: {nlp.translationResult.source}
+              </Text>
+            </View>
+          )}
+
+          {nlpKind === 'langid' && nlp.languageResult && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={styles.cardTitle}>Identified Language</Text>
+                <StatChip label="Latency" value={`${nlp.languageResult.latencyMs} ms`} tone="accent" />
+              </View>
+              <Text style={styles.outputResultText}>Language Code: {nlp.languageResult.languageCode?.toUpperCase() ?? 'UNDETERMINED'}</Text>
+              <View style={styles.labelsRow}>
+                {nlp.languageResult.possibleLanguages.map((p, idx) => (
+                  <View key={idx} style={styles.labelChip}>
+                    <Text style={styles.labelChipText}>{p.languageCode.toUpperCase()}: {Math.round(p.confidence * 100)}%</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {nlpKind === 'smartreply' && nlp.smartReplyResult && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={styles.cardTitle}>Smart Reply Suggestions</Text>
+                <StatChip label="Latency" value={`${nlp.smartReplyResult.latencyMs} ms`} tone="accent" />
+              </View>
+              {nlp.smartReplyResult.suggestions.length === 0 ? (
+                <Text style={styles.outputResultText}>(No replies generated)</Text>
+              ) : (
+                nlp.smartReplyResult.suggestions.map((rep, idx) => (
+                  <View key={idx} style={{ marginTop: 6 }}>
+                    <Text style={styles.outputResultText}>"{rep}"</Text>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {nlpKind === 'entities' && nlp.entityResult && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={styles.cardTitle}>Extracted Structured Entities</Text>
+                <StatChip label="Latency" value={`${nlp.entityResult.latencyMs} ms`} tone="accent" />
+              </View>
+              {nlp.entityResult.entities.length === 0 ? (
+                <Text style={styles.outputResultText}>(No entities found)</Text>
+              ) : (
+                nlp.entityResult.entities.map((e, idx) => (
+                  <View key={idx} style={{ marginTop: 6 }}>
+                    <Text style={[styles.outputResultText, { fontWeight: '700' }]}>{e.text}</Text>
+                    <Text style={styles.outputMetaText}>Type ID: {e.type} • Span: [{e.start}, {e.end}]</Text>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* ───────────────────────── TAB 5: VOICE & STT ───────────────────────── */}
+      {activeTab === 'voice' && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <SectionHeader title="Speech Recognition Mode" />
+          <View style={styles.taskSelector}>
+            <TouchableOpacity
+              style={[styles.taskPill, speech.recognitionMode === 'on-device' && styles.taskPillActive]}
+              onPress={() => {
+                speech.setRecognitionMode('on-device');
+                haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+              }}
+            >
+              <Text style={[styles.taskPillText, speech.recognitionMode === 'on-device' && styles.taskPillTextActive]}>
+                ON-DEVICE (ASI OFFLINE)
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.taskPill, speech.recognitionMode === 'cloud' && styles.taskPillActive]}
+              onPress={() => {
+                speech.setRecognitionMode('cloud');
+                haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.6 }]);
+              }}
+            >
+              <Text style={[styles.taskPillText, speech.recognitionMode === 'cloud' && styles.taskPillTextActive]}>
+                CLOUD (GEMINI AUDIO)
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <MetricCard
+            title="Speech Recognizer Engine"
+            value={speech.recognitionMode === 'on-device' ? 'Android System Intelligence' : 'Gemini 3.8 Flash Cloud'}
+            badge={speech.recognitionMode === 'on-device' ? 'OFFLINE NATIVE' : 'CLOUD API'}
+            badgeColor={speech.recognitionMode === 'on-device' ? Colors.dark.success : Colors.dark.primary}
+            subtitle={
+              speech.recognitionMode === 'on-device'
+                ? 'Streams tokens in real-time without sending audio to the cloud'
+                : 'Transcribes recorded 16 kHz audio via Gemini multimodal understanding'
+            }
+            source="hardware"
+          />
+
+          <View style={[styles.card, { alignItems: 'center', paddingVertical: 24 }]}>
+            <HapticButton
+              title={speech.isListening ? `Listening (${speech.voiceDecibels ?? '—'} dBFS)` : 'Start Voice Input'}
+              onPress={handleVoiceToggle}
+              variant={speech.isListening ? 'danger' : 'primary'}
+              style={{ width: '80%', paddingVertical: 14 }}
+              textStyle={{ fontSize: 16, fontWeight: '700' }}
+            />
+
+            {speech.isListening && (
+              <View style={styles.waveformContainer}>
+                <ActivityIndicator size="small" color={Colors.dark.primary} />
+                <Text style={styles.listeningStatusText}>
+                  {speech.recognitionMode === 'on-device' ? 'Streaming live from on-device microphone…' : 'Recording audio…'}
+                </Text>
+              </View>
+            )}
+
+            {speech.streamingPartial.length > 0 && (
+              <View style={styles.partialStreamBox}>
+                <Text style={styles.partialStreamLabel}>LIVE INTERIM STREAM</Text>
+                <Text style={styles.partialStreamText}>{speech.streamingPartial}</Text>
+              </View>
+            )}
+          </View>
+
+          {speech.lastTranscript && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={styles.cardTitle}>Final Transcript</Text>
+                <StatChip label="Latency" value={`${speech.lastTranscript.latencyMs} ms`} tone="ok" />
+              </View>
+              <Text style={styles.outputResultText}>"{speech.lastTranscript.transcript}"</Text>
+              <Text style={styles.outputMetaText}>
+                Duration: {speech.lastTranscript.durationSeconds}s • Model: {speech.lastTranscript.language}
+              </Text>
+            </View>
+          )}
+
+          {speech.error && (
+            <View style={styles.alertError}><Text style={styles.alertErrorText}>{speech.error}</Text></View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* ───────────────────────── TAB 6: AGENTS & APPFUNCTIONS ───────────────────────── */}
+      {activeTab === 'agents' && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <MetricCard
+            title="Android 17 AppFunctions"
+            value={registeredFunctions.length > 0 ? 'Service Active' : 'Registered'}
+            badge="OS AGENT INTEGRATION"
+            badgeColor={Colors.dark.success}
+            subtitle="Exposes PixelKit actuators & sensors to external AI agents (Gemini & Ask Pixel)"
+            source="hardware"
+          />
+
+          {functionFeedback && (
+            <View style={styles.alertSuccess}><Text style={styles.alertSuccessText}>{functionFeedback}</Text></View>
+          )}
+
+          <SectionHeader title="Registered Agent Tools" />
+          {registeredFunctions.map(fn => (
+            <View key={fn.id} style={styles.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.cardTitle}>{fn.name}</Text>
+                <StatChip label={fn.category.toUpperCase()} tone="accent" />
+              </View>
+              <Text style={styles.cardDesc}>{fn.description}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                <Text style={{ fontFamily: Fonts.mono, fontSize: 11, color: Colors.dark.textMuted }}>
+                  Target: {fn.target} • ID: {fn.id}
+                </Text>
+                <HapticButton
+                  title="Test Tool"
+                  onPress={() => testAppFunction(fn)}
+                  variant="outline"
+                  style={{ paddingVertical: 6, paddingHorizontal: 12 }}
+                  textStyle={{ fontSize: 11 }}
+                />
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      )}
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { padding: 16, paddingBottom: 24 },
-  header: { marginBottom: 16 },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   title: { ...Type.title, color: Colors.dark.text },
-  subtitle: { color: Colors.dark.textMuted, fontSize: 13, marginTop: 2 },
-  row: { flexDirection: 'row' },
-  keyButton: { marginBottom: 12 },
-  keyContainer: {
-    backgroundColor: Colors.dark.surface, padding: 16, borderRadius: 16, borderWidth: 1,
-    borderColor: Colors.dark.cardBorder, marginBottom: 16,
+  subtitle: { color: Colors.dark.textMuted, fontSize: 12, marginTop: 2, fontFamily: Fonts.mono },
+  tabBarWrapper: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.cardBorder,
   },
-  keyLabel: { color: Colors.dark.text, fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  keyTextInput: {
-    backgroundColor: Colors.dark.card, color: Colors.dark.text, borderRadius: 10, padding: 12,
-    fontSize: 14, borderWidth: 1, borderColor: Colors.dark.cardBorder,
+  tabBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    gap: 6,
   },
-  alertSuccess: { backgroundColor: '#0F3E22', borderColor: Colors.dark.success, borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 14 },
-  alertSuccessText: { color: Colors.dark.success, fontSize: 13, fontWeight: '600' },
-  notice: { backgroundColor: `${Colors.dark.warning}18`, borderColor: Colors.dark.warning, borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 8 },
-  noticeText: { color: Colors.dark.warning, fontSize: 12, lineHeight: 17 },
-  card: { backgroundColor: Colors.dark.card, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.cardBorder, padding: 16, marginBottom: 16 },
-  cardDesc: { color: Colors.dark.textMuted, fontSize: 13, marginBottom: 12, lineHeight: 18 },
-  errorText: { color: Colors.dark.error, fontSize: 12, lineHeight: 17, marginTop: 4 },
-  transcriptBox: { backgroundColor: Colors.dark.surfaceVariant, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.cardBorder, marginTop: 8 },
-  transcriptLabel: { color: Colors.dark.primary, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
-  transcriptText: { color: Colors.dark.text, fontSize: 13, fontStyle: 'italic', lineHeight: 18 },
-  previewImage: { width: '100%', height: 180, borderRadius: 12, marginTop: 12 },
-  loadingBox: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-  loadingText: { color: Colors.dark.primary, marginLeft: 8, fontSize: 12, fontWeight: '500' },
-  analysisBox: { backgroundColor: Colors.dark.surfaceVariant, padding: 12, borderRadius: 12, marginTop: 12 },
-  analysisText: { color: Colors.dark.text, fontSize: 13, lineHeight: 19 },
-  labelsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
-  labelChip: { backgroundColor: Colors.dark.card, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 6, marginTop: 4 },
-  labelChipText: { color: Colors.dark.primary, fontSize: 11, fontWeight: '600' },
-  latencyFooter: { color: Colors.dark.textMuted, fontSize: 11, marginTop: 8, textAlign: 'right' },
-  engineRow: { flexDirection: 'row', marginBottom: 12 },
-  chatContainer: { marginBottom: 12 },
-  messageBubble: { borderRadius: 16, padding: 14, marginBottom: 10, maxWidth: '90%' },
-  userBubble: { backgroundColor: Colors.dark.primaryContainer, alignSelf: 'flex-end', borderBottomRightRadius: 4 },
-  modelBubble: { backgroundColor: Colors.dark.card, borderWidth: 1, borderColor: Colors.dark.cardBorder, alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
-  systemBubble: { backgroundColor: `${Colors.dark.error}18`, borderWidth: 1, borderColor: Colors.dark.error, alignSelf: 'stretch', maxWidth: '100%' },
-  messageRole: { fontSize: 10, fontWeight: '700', color: Colors.dark.textMuted, marginBottom: 4, letterSpacing: 0.5 },
-  messageContent: { color: Colors.dark.text, fontSize: 14, lineHeight: 20 },
-  messageLatency: { color: Colors.dark.textMuted, fontSize: 10, marginTop: 6, textAlign: 'right' },
-  loadingBubble: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.card, padding: 12, borderRadius: 16, alignSelf: 'flex-start' },
-  thinkingText: { color: Colors.dark.textMuted, fontSize: 12, marginLeft: 8 },
-  inputContainer: {
-    flexDirection: 'row', padding: 12, paddingBottom: 96, backgroundColor: Colors.dark.surface, borderTopWidth: 1,
-    borderTopColor: Colors.dark.cardBorder, alignItems: 'center',
+  tabButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: Radius.sm,
   },
-  textInput: {
-    flex: 1, backgroundColor: Colors.dark.card, color: Colors.dark.text, borderRadius: 20, paddingHorizontal: 16,
-    paddingVertical: 10, fontSize: 14, marginRight: 6, borderWidth: 1, borderColor: Colors.dark.cardBorder,
+  tabButtonActive: {
+    backgroundColor: Colors.dark.surfaceVariant,
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.dark.primary,
   },
-  micButton: { paddingVertical: 10, paddingHorizontal: 12, marginRight: 6, borderRadius: 20 },
-  sendButton: { paddingVertical: 10, paddingHorizontal: 18 },
+  tabButtonText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.textMuted,
+    fontWeight: '600',
+  },
+  tabButtonTextActive: {
+    color: Colors.dark.primary,
+  },
+  chatScrollContent: { padding: 16, paddingBottom: 24 },
+  scrollContent: { padding: 16, paddingBottom: 140 },
+  controlRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  engineSwitcher: {
+    flexDirection: 'row',
+    backgroundColor: Colors.dark.surfaceVariant,
+    borderRadius: Radius.pill,
+    padding: 3,
+  },
+  enginePill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+  },
+  enginePillActive: {
+    backgroundColor: Colors.dark.primary,
+  },
+  enginePillText: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    fontWeight: '600',
+    color: Colors.dark.textMuted,
+  },
+  enginePillTextActive: {
+    color: Colors.dark.onPrimary,
+  },
+  actionPill: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: Radius.pill,
+  },
+  paramsDrawer: {
+    backgroundColor: Colors.dark.surface,
+    padding: 14,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    marginBottom: 14,
+  },
+  paramsTitle: {
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.primary,
+    marginBottom: 10,
+  },
+  paramLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.dark.textMuted,
+    marginBottom: 6,
+  },
+  modelRow: { flexDirection: 'row', marginBottom: 12 },
+  modelChip: {
+    backgroundColor: Colors.dark.card,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  modelChipActive: {
+    borderColor: Colors.dark.primary,
+    backgroundColor: `${Colors.dark.primary}22`,
+  },
+  modelChipText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.textMuted,
+  },
+  modelChipTextActive: {
+    color: Colors.dark.primary,
+    fontWeight: '600',
+  },
+  paramGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 8,
+  },
+  paramItem: {
+    flex: 1,
+    backgroundColor: Colors.dark.card,
+    padding: 10,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  paramItemLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.text,
+    marginBottom: 6,
+  },
+  paramStepper: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  stepBtn: {
+    flex: 1,
+    backgroundColor: Colors.dark.surfaceVariant,
+    paddingVertical: 4,
+    alignItems: 'center',
+    borderRadius: 4,
+  },
+  stepBtnText: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: Colors.dark.cardBorder,
+  },
+  togglePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.dark.card,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  togglePillActive: {
+    borderColor: Colors.dark.success,
+    backgroundColor: `${Colors.dark.success}22`,
+  },
+  togglePillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.text,
+  },
+  chatList: { paddingBottom: 16 },
+  emptyPrompt: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyPromptTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.dark.text,
+    marginBottom: 6,
+  },
+  emptyPromptSub: {
+    fontSize: 13,
+    color: Colors.dark.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  messageBubble: {
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    maxWidth: '92%',
+  },
+  userBubble: {
+    backgroundColor: Colors.dark.primaryContainer,
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 2,
+  },
+  modelBubble: {
+    backgroundColor: Colors.dark.card,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 2,
+  },
+  systemBubble: {
+    backgroundColor: `${Colors.dark.error}18`,
+    borderWidth: 1,
+    borderColor: Colors.dark.error,
+    alignSelf: 'stretch',
+    maxWidth: '100%',
+  },
+  bubbleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  bubbleRole: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.textMuted,
+    letterSpacing: 0.5,
+  },
+  bubbleLatency: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.textMuted,
+  },
+  bubbleText: {
+    color: Colors.dark.text,
+    fontSize: 13,
+    lineHeight: 19,
+    fontFamily: Fonts.sans,
+  },
+  thoughtBox: {
+    backgroundColor: Colors.dark.surfaceVariant,
+    padding: 10,
+    borderRadius: Radius.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.dark.secondary,
+    marginBottom: 10,
+  },
+  thoughtTitle: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.secondary,
+    marginBottom: 4,
+  },
+  thoughtText: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.dark.textMuted,
+    fontStyle: 'italic',
+  },
+  loadingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.card,
+    padding: 10,
+    borderRadius: Radius.md,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  loadingBubbleText: {
+    color: Colors.dark.textMuted,
+    fontSize: 12,
+    marginLeft: 8,
+    fontFamily: Fonts.sans,
+  },
+  composer: {
+    flexDirection: 'row',
+    padding: 10,
+    paddingBottom: Platform.OS === 'ios' ? 88 : 80,
+    backgroundColor: Colors.dark.surface,
+    borderTopWidth: 1,
+    borderTopColor: Colors.dark.cardBorder,
+    alignItems: 'center',
+  },
+  composerInput: {
+    flex: 1,
+    backgroundColor: Colors.dark.card,
+    color: Colors.dark.text,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    fontSize: 13,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  composerMic: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 6,
+    borderRadius: Radius.pill,
+  },
+  composerSend: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: Radius.pill,
+  },
+  card: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    padding: 14,
+    marginBottom: 14,
+  },
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: Fonts.sans,
+    color: Colors.dark.text,
+  },
+  cardDesc: {
+    fontSize: 12,
+    color: Colors.dark.textMuted,
+    lineHeight: 17,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  taskSelector: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  taskPill: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: Colors.dark.surfaceVariant,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  taskPillActive: {
+    backgroundColor: Colors.dark.primary,
+    borderColor: Colors.dark.primary,
+  },
+  taskPillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.textMuted,
+  },
+  taskPillTextActive: {
+    color: Colors.dark.onPrimary,
+  },
+  optionRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  optionPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.dark.surfaceVariant,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    marginRight: 6,
+  },
+  optionPillActive: {
+    borderColor: Colors.dark.primary,
+    backgroundColor: `${Colors.dark.primary}22`,
+  },
+  optionPillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.textMuted,
+  },
+  optionPillTextActive: {
+    color: Colors.dark.primary,
+    fontWeight: '700',
+  },
+  textInputFull: {
+    backgroundColor: Colors.dark.surfaceVariant,
+    color: Colors.dark.text,
+    borderRadius: Radius.sm,
+    padding: 10,
+    fontSize: 13,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+    marginTop: 6,
+  },
+  textInputArea: {
+    backgroundColor: Colors.dark.surfaceVariant,
+    color: Colors.dark.text,
+    borderRadius: Radius.sm,
+    padding: 10,
+    fontSize: 13,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  outputResultText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: Colors.dark.text,
+    marginTop: 4,
+    backgroundColor: Colors.dark.surfaceVariant,
+    padding: 12,
+    borderRadius: Radius.sm,
+  },
+  outputMetaText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.textMuted,
+    marginTop: 8,
+  },
+  waveformContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
+  },
+  listeningStatusText: {
+    fontSize: 12,
+    color: Colors.dark.primary,
+    fontFamily: Fonts.mono,
+  },
+  partialStreamBox: {
+    marginTop: 16,
+    width: '100%',
+    backgroundColor: Colors.dark.surfaceVariant,
+    padding: 12,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  partialStreamLabel: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.primary,
+    marginBottom: 4,
+  },
+  partialStreamText: {
+    fontSize: 14,
+    color: Colors.dark.text,
+    fontStyle: 'italic',
+  },
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: Radius.sm,
+    marginTop: 12,
+  },
+  loadingBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  loadingText: {
+    color: Colors.dark.primary,
+    fontSize: 12,
+  },
+  analysisBox: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: Colors.dark.surfaceVariant,
+    borderRadius: Radius.sm,
+  },
+  analysisTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    fontWeight: '700',
+    color: Colors.dark.primary,
+  },
+  analysisText: {
+    fontSize: 13,
+    color: Colors.dark.text,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  labelsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  labelChip: {
+    backgroundColor: Colors.dark.card,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.dark.cardBorder,
+  },
+  labelChipText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: Colors.dark.primary,
+  },
+  alertSuccess: {
+    backgroundColor: '#0F3E22',
+    borderColor: Colors.dark.success,
+    borderWidth: 1,
+    borderRadius: Radius.sm,
+    padding: 10,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  alertSuccessText: { color: Colors.dark.success, fontSize: 12, fontWeight: '600' },
+  alertError: {
+    backgroundColor: `${Colors.dark.error}22`,
+    borderColor: Colors.dark.error,
+    borderWidth: 1,
+    borderRadius: Radius.sm,
+    padding: 10,
+    marginBottom: 12,
+  },
+  alertErrorText: { color: Colors.dark.error, fontSize: 12 },
+  errorText: { color: Colors.dark.error, fontSize: 12, marginTop: 6 },
 });

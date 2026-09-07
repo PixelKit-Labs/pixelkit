@@ -51,7 +51,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       <View style={styles.header}>
         <View style={styles.titleRow}>
           {icon}
-          <Text style={[styles.title, { marginLeft: icon ? 6 : 0 }]} numberOfLines={2}>{title}</Text>
+          <Text style={[styles.title, { marginLeft: icon ? 6 : 0 }]} numberOfLines={2}>{title.toUpperCase()}</Text>
         </View>
         {badge && (
           <View style={[styles.badge, { backgroundColor: `${badgeColor}1F`, borderColor: `${badgeColor}55` }]}>

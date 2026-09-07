@@ -71,6 +71,8 @@ export { useUWB } from './hardware/useUWB';
 export { useTPU } from './ai/useTPU';
 export { useGemini } from './ai/useGemini';
 export { useGeminiNano, buildNanoTurn, NANO_SYSTEM_INSTRUCTION } from './ai/useGeminiNano';
+export { useGenAITasks, type TaskTone } from './ai/useGenAITasks';
+export { useNaturalLanguageAI } from './ai/useNaturalLanguageAI';
 export { useVisionAI } from './ai/useVisionAI';
 export { useSpeechAI } from './ai/useSpeechAI';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';

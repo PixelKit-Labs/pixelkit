@@ -4,6 +4,28 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.15] - 2026-09-06
+
+### Added
+- Complete On-Device Google ML Kit Intelligence Suite in `PixelNanoModule.kt` and `modules/pixel-nano`:
+  - `useGenAITasks.ts`: On-device Summarization, Proofreading, Rewriting (6 styles), and Image Description via AICore/ML Kit.
+  - `useNaturalLanguageAI.ts`: Offline 58-language neural translation, BCP-47 language identification, smart reply suggestion generation, and entity extraction.
+  - `useVisionAI.ts`: On-device Text Recognition (OCR v2), Barcode scanning (all 1D/2D formats), Face detection, Face Mesh detection (468 3D points), Image labeling, and Object tracking.
+  - `useSpeechAI.ts`: Local Android System Intelligence (ASI) offline streaming speech recognition with interim partial tokens, plus cloud Gemini STT.
+  - Android 17 AppFunctions: Registered `PixelAppFunctionService` exposing PixelKit actuators (HiLight, Torch, Haptics) to OS assistants (Gemini, Ask Pixel).
+- Camera Actuator Expansion in `useCamera.ts`:
+  - Added real photo capture (`takePictureAsync`), video recording (`recordAsync`) with live elapsed duration, continuous torch toggle, lens & resolution enumeration, and preview controls.
+- Pixel AI Studio Redesign in `AILabScreen.tsx`:
+  - 6 dedicated studio workspaces: Chat, Tasks, Vision, Language, Voice, and Agents.
+  - Interactive Hyperparameter Drawer for Cloud models and on-device Gemini Nano.
+  - Dynamic model catalog fetched from Google Generative AI API with live model picker.
+  - Bottom navigation bar clearance (`paddingBottom: 140`) across all views to eliminate bottom bar clipping.
+- Real on-device screenshots captured on physical Google Pixel 11 Pro testbed embedded in `README.md` and `PIXELKIT.md`.
+
+### Fixed
+- Fixed CPU / GPU Headroom in `DashboardScreen.tsx`: Derived CPU load headroom and Choreographer frame budget headroom with strict provenance `source: 'derived'`.
+- Cleaned up obsolete documentation references regarding pending module status.
+
 ## [1.0.14] - 2026-09-06
 
 ### Added

@@ -1,5 +1,6 @@
 # PixelKit SDK
-> **The Hardware & AI Framework for Google Pixel & Android**  
+
+> **The Hardware &amp; AI Framework for Google Pixel &amp; Android**  
 > *Hardware and AI framework for the Google Pixel 11 Pro.*
 
 ---
@@ -12,22 +13,56 @@ This document serves as the **canonical API Reference and Blueprint for AI agent
 
 ---
 
-## 🛠️ Android CLI & Tooling Integration
+## 📱 Production Interface Gallery
+
+
+| Silicon Dashboard                                                        | On-Device Gemini Nano Chat                                                 |
+| :------------------------------------------------------------------------: | :--------------------------------------------------------------------------: |
+| ![Silicon Dashboard](./docs/assets/screenshots/01_silicon_dashboard.png) | ![On-Device Gemini Nano Chat](./docs/assets/screenshots/02_ailab_chat.png) |
+
+
+
+| On-Device Vision Subsystem                                                   | Offline 58-Language Translation                                                     |
+| :----------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------: |
+| ![On-Device Vision Subsystem](./docs/assets/screenshots/04_ailab_vision.png) | ![Offline 58-Language Translation](./docs/assets/screenshots/05_ailab_language.png) |
+
+
+
+| Android 17 AppFunctions Actuators                                         | Hardware &amp; Sensor Lab                                              |
+| :-------------------------------------------------------------------------: | :----------------------------------------------------------------------: |
+| ![Android 17 AppFunctions](./docs/assets/screenshots/06_ailab_agents.png) | ![Hardware & Sensor Lab](./docs/assets/screenshots/07_sensors_lab.png) |
+
+
+
+| Physical UWB &amp; Torch Actuators                                       | Interactive In-App API Docs                                                  |
+| :------------------------------------------------------------------------: | :----------------------------------------------------------------------------: |
+| ![Physical UWB & Torch](./docs/assets/screenshots/07_sensors_radios.png) | ![Interactive In-App API Docs](./docs/assets/screenshots/08_docs_screen.png) |
+
+
+*All views captured from the live Google Pixel 11 Pro testbed. Strict provenance tagging (`HW`, `DERIVED`, `SIMULATED`, `N/A`) is enforced on every card.*
+
+---
+
+## 🛠️ Android CLI &amp; Tooling Integration
 
 PixelKit integrates with Google's official **Android CLI** (`android.exe`).
 
 ### Installation
-* **Windows**: `curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"`
-* **macOS**: `curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | bash`
-* **Linux**: `curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash`
+
+- **Windows**: `curl.exe -fsSL https://dl.google.com/android/cli/latest/windows_x86_64/install.cmd -o "%TEMP%\i.cmd" && "%TEMP%\i.cmd"`
+- **macOS**: `curl -fsSL https://dl.google.com/android/cli/latest/darwin_arm64/install.sh | bash`
+- **Linux**: `curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | bash`
 
 ### Project Describing (`android describe`)
+
 Agents and tools can analyze project structure, build targets, and APK artifact outputs:
+
 ```bash
 android describe --project_dir=<path>
 ```
-* **Device Inspection**: `android layout` (JSON UI tree) & `android screen` (visual bounds & screenshots).
-* **CLI Skills**: Built-in skill instructions available in `.agents/skills/android-cli/` and 26 official Expo skills (`.agents/skills/` via `npx skills add expo/skills` and `skills-lock.json`).
+
+- **Device Inspection**: `android layout` (JSON UI tree) &amp; `android screen` (visual bounds &amp; screenshots).
+- **CLI Skills**: Built-in skill instructions available in `.agents/skills/android-cli/` and 26 official Expo skills (`.agents/skills/` via `npx skills add expo/skills` and `skills-lock.json`).
 
 ---
 
@@ -73,10 +108,12 @@ pixel-delta/ (PixelKit Framework)
 │   │
 │   ├── ai/                     # Intelligence & Silicon Acceleration Layer
 │   │   ├── useTPU.ts           # AICore / Gemini Nano stack detection (inference lives in useGeminiNano)
-│   │   ├── useSpeechAI.ts      # Voice speech-to-text recording & transcription pipeline
+│   │   ├── useSpeechAI.ts      # Voice speech-to-text (dual-mode ASI offline + cloud)
 │   │   ├── useGemini.ts        # Multi-turn conversational chat, reasoning & token metrics
 │   │   ├── useGeminiNano.ts    # Gemini Nano on-device chat, status, download, measured latency
-│   │   ├── useVisionAI.ts      # Multimodal camera capture & visual scene inspection
+│   │   ├── useGenAITasks.ts    # On-device ML Kit GenAI (summarize, proofread, rewrite, describeImage)
+│   │   ├── useNaturalLanguageAI.ts # On-device ML Kit NLP (58-lang translate, lang ID, smart replies, entities)
+│   │   ├── useVisionAI.ts      # On-device ML Kit Vision (OCR, barcodes, faces, mesh) + Gemini multimodal
 │   │   └── geminiClient.ts     # Google Gen AI client factory with encrypted key persistence
 │   │
 │   ├── theme/
@@ -98,9 +135,10 @@ pixel-delta/ (PixelKit Framework)
 
 ---
 
-## 🔌 Core Hardware & Silicon APIs
+## 🔌 Core Hardware &amp; Silicon APIs
 
 Import any hardware or AI hook from `./src`:
+
 ```typescript
 import { 
   useCPU,
@@ -133,10 +171,12 @@ import {
 
 ---
 
-> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`modules/pixel-native`) or the `PixelNano` module (`modules/pixel-nano`, Gemini Nano via ML Kit GenAI). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). The only remaining simulations are NFC, BLE, UWB and HiLight, and they are labelled `simulated` in every surface.
+> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`modules/pixel-native`, telemetry &amp; actuators), or the `PixelNano` module (`modules/pixel-nano`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), while live scan sessions remain simulated until dedicated scan services land. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and acts as an on-screen mirror when untethered (`source: 'simulated'`).
 
 ### 1. `useCPU()` — Real CPU topology and load
+
 `/proc/cpuinfo` part ids and cpufreq sysfs via PixelNative. On Pixel 11 Pro: `1x Arm C1-Ultra @ 4.11 GHz + 4x Arm C1-Pro @ 3.38 GHz + 2x Arm C1-Pro @ 2.65 GHz`, governor `sched_pixel`.
+
 ```typescript
 const { coreTopology, cpuLoadPercent, appCpuPercent, cores, benchmarkCPU } = useCPU();
 // cpuLoadPercent = cluster frequency utilisation (HW); appCpuPercent = this process (DERIVED); null until read
@@ -146,6 +186,7 @@ const ms = await benchmarkCPU(); // real JS single-thread prime sieve
 ---
 
 ### 2. `useGPU()` — GPU identity and Choreographer frame pacing
+
 ```typescript
 const { gpuRenderer, measuredFps, frameRenderTimeMs, targetBudgetMs, isStuttering } = useGPU();
 // gpuRenderer on Pixel 11 Pro: "ANGLE (Imagination Technologies, Vulkan 1.4.317 (PowerVR C-Series CXTP-48-1536 MC1)…"
@@ -155,17 +196,21 @@ if (isStuttering) console.warn(`avg frame ${frameRenderTimeMs} ms exceeds ${targ
 ---
 
 ### 3. `useTPU()` — On-device AI stack detection
-The TPU is reachable only through AICore (Gemini Nano via ML Kit) or LiteRT. Inference metrics are `null` until the `pixel-nano` module lands.
+
+The TPU is reachable through AICore (Gemini Nano via ML Kit Prompt API in `pixel-nano`) or LiteRT. On-device inference metrics (latency, token throughput, time-to-first-token) live in `useGeminiNano()`. `benchmarkTPU()` runs a real JS matmul labelled **CPU fallback**.
+
 ```typescript
-const { aicoreInstalled, aicoreVersion, hasNpuFeature, benchmarkTPU } = useTPU();
-// Pixel 11 Pro: AICore 0.release.prod_aicore_20260723.00_RC11
-const r = await benchmarkTPU(); // real JS matmul, r.activeDelegate === 'CPU Fallback'
+const { aicoreVersion, isAICoreAvailable, benchmarkTPU } = useTPU();
+// aicoreVersion on Pixel 11 Pro: "0.release.prod_aicore_20260723.00_RC11"
+const result = await benchmarkTPU(); // 256×256 matmul, source: 'simulated' (CPU fallback)
 ```
 
 ---
 
-### 4. `useMemory()` — LPDDR5X System RAM & Low Memory Killer (LMK)
+### 4. `useMemory()` — LPDDR5X System RAM &amp; Low Memory Killer (LMK)
+
 Tracks RAM allocation and provides cache purging utilities:
+
 ```typescript
 const { totalRAMMB, usedRAMMB, freeRAMMB, isLowMemory, purgeCaches } = useMemory();
 if (isLowMemory) {
@@ -175,8 +220,10 @@ if (isLowMemory) {
 
 ---
 
-### 5. `useSpeechAI()` — Voice Speech-To-Text & Audio Transcription
+### 5. `useSpeechAI()` — Voice Speech-To-Text &amp; Audio Transcription
+
 Records voice input and passes audio directly to Gemini Multimodal Audio or edge speech pipelines:
+
 ```typescript
 const { isListening, voiceDecibels, startListening, stopListeningAndTranscribe } = useSpeechAI();
 await startListening();
@@ -188,7 +235,9 @@ console.log(`Transcribed voice: "${result?.transcript}" (${result?.latencyMs}ms)
 ---
 
 ### 6. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
+
 Hardware UWB chip state (default, READY) and spatial targets (ranging simulated until RangingManager):
+
 ```typescript
 const { isEnabled, chipId, activeTargets, isRanging, startRanging } = useUWB();
 console.log(`UWB Chip: ${chipId} (${isEnabled ? 'READY' : 'OFF'})`);
@@ -200,8 +249,10 @@ activeTargets.forEach(target => {
 
 ---
 
-### 7. `useBLE()` — Bluetooth Low Energy Adapter & Bonded Devices
+### 7. `useBLE()` — Bluetooth Low Energy Adapter &amp; Bonded Devices
+
 Reads physical adapter state, Bluetooth 5.4 Channel Sounding support, and bonded devices:
+
 ```typescript
 const { state, channelSounding, bondedDevices, isScanning, peripherals, startScan } = useBLE();
 console.log(`Bluetooth: ${state}, Channel Sounding: ${channelSounding}, Bonded: ${bondedDevices.length}`);
@@ -211,8 +262,10 @@ peripherals.forEach(p => console.log(`${p.name}: ${p.rssi} dBm (~${p.estimatedDi
 
 ---
 
-### 8. `useTorch()` — Rear LED Flashlight & SOS Strobe
+### 8. `useTorch()` — Rear LED Flashlight &amp; SOS Strobe
+
 Direct hardware flashlight control with emergency signaling:
+
 ```typescript
 const { isTorchOn, toggleTorch, startStrobe, stopStrobe } = useTorch();
 await toggleTorch();
@@ -221,7 +274,8 @@ startStrobe(100); // 100ms rapid strobe
 
 ---
 
-### 9. `useSensors()` — 6-Axis IMU & Barometer Altimeter
+### 9. `useSensors()` — 6-Axis IMU &amp; Barometer Altimeter
+
 ```typescript
 const { accelerometer, gyroscope, barometer } = useSensors(50);
 console.log(`Altitude: ${barometer.relativeAltitude}m, Air Pressure: ${barometer.pressure} hPa`);
@@ -230,6 +284,7 @@ console.log(`Altitude: ${barometer.relativeAltitude}m, Air Pressure: ${barometer
 ---
 
 ### 10. `useHaptics()` — Linear Resonant Actuator Tactile Feedback
+
 ```typescript
 const { light, medium, heavy, success, warning, error } = useHaptics();
 success(); // Dual pulse confirmation waveform
@@ -237,16 +292,27 @@ success(); // Dual pulse confirmation waveform
 
 ---
 
-### 11. `useGemini()` & `useVisionAI()` — Conversational & Vision AI
+### 11. `useGemini()` &amp; `useVisionAI()` — Conversational &amp; Vision AI
+
 ```typescript
 // Conversational AI
 const { messages, sendMessage } = useGemini();
 await sendMessage("Optimize sensor polling rate for battery longevity.");
 
-// Camera Vision Inspection
-const { captureAndAnalyze } = useVisionAI();
-const visionResult = await captureAndAnalyze(true);
-console.log(`Vision result: ${visionResult?.description}`);
+// Camera Vision Inspection (On-device OCR, Barcodes, Faces & Cloud Multimodal)
+const { recognizeText, scanBarcodes, captureAndAnalyze } = useVisionAI();
+const ocr = await recognizeText(imageUri);
+console.log(`Extracted text: ${ocr?.text}`);
+
+// On-Device GenAI Tasks (Summarization, Proofreading, Rewriting)
+const { summarize, proofread, rewrite } = useGenAITasks();
+const summary = await summarize(longArticleText);
+const refined = await rewrite(draftText, 'Concise');
+
+// On-Device Natural Language AI (58-Language Translation, Language ID, Smart Reply)
+const { translate, identifyLanguage, suggestReplies } = useNaturalLanguageAI();
+const french = await translate("Hello, welcome to PixelKit!", "en", "fr");
+const replies = await suggestReplies([{ text: "Are you free today?", isLocalUser: false }]);
 ```
 
 ---
@@ -254,9 +320,9 @@ console.log(`Vision result: ${visionResult?.description}`);
 ## 🚀 Running on Your Pixel 11 Pro
 
 1. Start the Expo development server:
-   ```bash
+  ```bash
    npm start
-   ```
+  ```
 2. Open **Expo Go** on your Pixel 11 Pro.
 3. Scan the terminal QR code.
 4. Test the Silicon HUD, tactile haptics, CPU/GPU pacing, UWB radar, and Gemini voice lab live!
@@ -265,8 +331,10 @@ console.log(`Vision result: ${visionResult?.description}`);
 
 ## 🤖 Instructions for AI Agents Building Apps
 
-When an AI agent (such as Delta) builds an application on top of PixelKit:
+When an AI agent builds an application on top of PixelKit:
+
 1. **Import from `./src`**: Never re-implement hardware wrappers or sensors.
 2. **Prioritize Tactile Haptics**: Always call `useHaptics()` on user interactions.
-3. **Respect Thermal & Memory Headroom**: Query `useADPF()` and `useMemory()` before intensive workloads.
+3. **Respect Thermal &amp; Memory Headroom**: Query `useADPF()` and `useMemory()` before intensive workloads.
 4. **Use Material 3 Colors**: Always style with `Colors.dark` from `./src/theme/colors` for OLED battery savings and true black contrast.
+

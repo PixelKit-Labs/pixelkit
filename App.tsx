@@ -68,7 +68,9 @@ function Shell() {
             const active = currentTab === t.key;
             return (
               <Pressable key={t.key} onPress={() => select(t.key)} accessibilityRole="tab" accessibilityState={{ selected: active }} style={styles.navItem}>
-                <Text style={[styles.navText, active && styles.navTextActive]}>{t.title}</Text>
+                <Text style={[styles.navText, active && styles.navTextActive]} numberOfLines={1}>
+                  {t.title + (Platform.OS === 'android' ? ' ' : '')}
+                </Text>
                 <View style={[styles.navUnderline, active && styles.navUnderlineActive]} />
               </Pressable>
             );
@@ -156,12 +158,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
     paddingTop: 6,
+    paddingHorizontal: 2,
   },
   navText: {
     fontFamily: Fonts.sansMedium,
-    fontSize: 13,
+    fontSize: Platform.OS === 'android' ? 11 : 12,
     color: Colors.dark.textMuted,
-    paddingHorizontal: 4,
+    paddingHorizontal: 1,
+    includeFontPadding: false,
   },
   navTextActive: {
     color: Colors.dark.text,

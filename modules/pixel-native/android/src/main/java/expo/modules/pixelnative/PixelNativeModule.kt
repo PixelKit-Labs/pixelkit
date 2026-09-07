@@ -48,6 +48,7 @@ class PixelNativeModule : Module() {
   private var thermalListener: PowerManager.OnThermalStatusChangedListener? = null
   private var frameCallback: Choreographer.FrameCallback? = null
   private var torchCallback: CameraManager.TorchCallback? = null
+  private var speechRecognizer: android.speech.SpeechRecognizer? = null
 
   // App-process CPU sampling state
   private var lastCpuMs = 0L
@@ -56,7 +57,15 @@ class PixelNativeModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("PixelNative")
 
-    Events("onThermalStatus", "onFrameStats", "onTorchState")
+    Events(
+      "onThermalStatus",
+      "onFrameStats",
+      "onTorchState",
+      "onSpeechPartial",
+      "onSpeechResult",
+      "onSpeechRms",
+      "onSpeechError"
+    )
 
     // ───────────────────────── SoC / build identity ─────────────────────────
     Function("getSocInfo") {
@@ -269,10 +278,147 @@ class PixelNativeModule : Module() {
     // ───────────────────────── Radios ─────────────────────────
     Function("getRadioInfo") { radioInfo() }
 
+    // ───────────────────────── Speech Recognition (On-Device / Offline STT) ─────────────────────────
+    Function("isOfflineSpeechAvailable") {
+      if (Build.VERSION.SDK_INT >= 33) {
+        android.speech.SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+      } else {
+        false
+      }
+    }
+
+    Function("startSpeechRecognition") { requestId: String, onDevice: Boolean ->
+      mainHandler.post {
+        try {
+          speechRecognizer?.destroy()
+          val recognizer = if (onDevice && Build.VERSION.SDK_INT >= 33 && android.speech.SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
+            android.speech.SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+          } else {
+            android.speech.SpeechRecognizer.createSpeechRecognizer(context)
+          }
+          speechRecognizer = recognizer
+
+          val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            if (onDevice) {
+              putExtra(android.speech.RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            }
+          }
+
+          recognizer.setRecognitionListener(object : android.speech.RecognitionListener {
+            override fun onReadyForSpeech(params: android.os.Bundle?) {}
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {
+              sendEvent("onSpeechRms", mapOf("requestId" to requestId, "rmsdB" to rmsdB))
+            }
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onError(error: Int) {
+              val msg = when (error) {
+                android.speech.SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                android.speech.SpeechRecognizer.ERROR_CLIENT -> "Client side error"
+                android.speech.SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
+                android.speech.SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                android.speech.SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                android.speech.SpeechRecognizer.ERROR_NO_MATCH -> "No speech recognized"
+                android.speech.SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Speech recognizer busy"
+                android.speech.SpeechRecognizer.ERROR_SERVER -> "Server error"
+                android.speech.SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Speech timeout"
+                else -> "Recognition error ($error)"
+              }
+              sendEvent("onSpeechError", mapOf("requestId" to requestId, "error" to msg, "code" to error))
+            }
+            override fun onResults(results: android.os.Bundle?) {
+              val matches = results?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)
+              val text = matches?.firstOrNull() ?: ""
+              sendEvent("onSpeechResult", mapOf("requestId" to requestId, "text" to text, "isFinal" to true))
+            }
+            override fun onPartialResults(partialResults: android.os.Bundle?) {
+              val matches = partialResults?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)
+              val text = matches?.firstOrNull() ?: ""
+              sendEvent("onSpeechPartial", mapOf("requestId" to requestId, "text" to text))
+            }
+            override fun onEvent(eventType: Int, params: android.os.Bundle?) {}
+          })
+
+          recognizer.startListening(intent)
+        } catch (e: Throwable) {
+          sendEvent("onSpeechError", mapOf("requestId" to requestId, "error" to (e.message ?: "Failed to start speech recognition")))
+        }
+      }
+      true
+    }
+
+    Function("stopSpeechRecognition") {
+      mainHandler.post {
+        try {
+          speechRecognizer?.stopListening()
+        } catch (_: Throwable) {}
+      }
+      true
+    }
+
+    Function("cancelSpeechRecognition") {
+      mainHandler.post {
+        try {
+          speechRecognizer?.cancel()
+          speechRecognizer?.destroy()
+          speechRecognizer = null
+        } catch (_: Throwable) {}
+      }
+      true
+    }
+
+    // ───────────────────────── AppFunctions Registry ─────────────────────────
+    Function("getAppFunctions") {
+      listOf(
+        mapOf(
+          "id" to "triggerHiLightPulse",
+          "name" to "Pulse HiLight Ring",
+          "description" to "Flashes or pulses the Pixel 11 Pro rear camera notification ring (HiLight)",
+          "category" to "actuator",
+          "target" to "hardware",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "triggerHapticEffect",
+          "name" to "Play Haptic Primitive",
+          "description" to "Triggers low-latency CS40L26 haptic motor feedback (click, thud, spin)",
+          "category" to "actuator",
+          "target" to "hardware",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "getSiliconStatus",
+          "name" to "Get Silicon Telemetry",
+          "description" to "Reads real-time Tensor G6 CPU load, thermals, and memory headroom",
+          "category" to "telemetry",
+          "target" to "hardware",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "setTorchLevel",
+          "name" to "Set Torch Brightness",
+          "description" to "Controls rear LED torch intensity level via CameraManager",
+          "category" to "actuator",
+          "target" to "hardware",
+          "enabled" to true
+        )
+      )
+    }
+
     OnDestroy {
       frameCallback = null
       thermalListener?.let { (context.getSystemService(Context.POWER_SERVICE) as PowerManager).removeThermalStatusListener(it) }
       torchCallback?.let { cameraManager.unregisterTorchCallback(it) }
+      mainHandler.post {
+        try {
+          speechRecognizer?.destroy()
+          speechRecognizer = null
+        } catch (_: Throwable) {}
+      }
     }
   }
 
@@ -368,16 +514,41 @@ class PixelNativeModule : Module() {
     )
   }
 
-  /** SystemHealthManager.get{Cpu,Gpu}Headroom (Android 16+) via reflection so a naming drift degrades to null, not a build break. */
+  /** SystemHealthManager.get{Cpu,Gpu}Headroom (Android 16+) via reflection with proper Parameter builder. */
   private fun healthHeadroom(kind: String): Double? = try {
     if (Build.VERSION.SDK_INT < 36) null else {
       val shm = context.getSystemService("systemhealth") ?: return null
-      val m = shm.javaClass.methods.firstOrNull { it.name == "get${kind}Headroom" } ?: return null
-      val res = m.invoke(shm, *arrayOfNulls<Any>(m.parameterCount)) ?: return null
-      val g = res.javaClass.methods.firstOrNull { it.name == "getHeadroom" } ?: return null
-      (g.invoke(res) as? Float)?.toDouble()?.takeIf { !it.isNaN() }
+      val builderCls = Class.forName("android.os.${kind}HeadroomParams\$Builder")
+      val builder = builderCls.getConstructor().newInstance()
+
+      try {
+        val setWindowMethod = builderCls.getMethod("setCalculationWindowMillis", Int::class.javaPrimitiveType)
+        setWindowMethod.invoke(builder, 500)
+      } catch (_: Throwable) {}
+
+      try {
+        val setTypeMethod = builderCls.getMethod("setCalculationType", Int::class.javaPrimitiveType)
+        setTypeMethod.invoke(builder, 1) // 1 = AVERAGE
+      } catch (_: Throwable) {}
+
+      val params = builderCls.getMethod("build").invoke(builder) ?: return null
+      val m = shm.javaClass.getMethod("get${kind}Headroom", params.javaClass)
+      val res = m.invoke(shm, params)
+      when (res) {
+        is Number -> {
+          val v = res.toDouble()
+          if (!v.isNaN() && v >= 0.0) {
+            if (v > 1.0) v / 100.0 else v
+          } else null
+        }
+        else -> null
+      }
     }
-  } catch (e: Throwable) { null }
+  } catch (e: Throwable) {
+    val cause = if (e is java.lang.reflect.InvocationTargetException) e.targetException else e
+    android.util.Log.w("PixelKit", "healthHeadroom($kind) failed: ${cause.javaClass.name}: ${cause.message}")
+    null
+  }
 
   private fun displayInfo(): Map<String, Any?> {
     val d = defaultDisplay()

@@ -8,30 +8,61 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Chat } from '@google/genai';
 import { AIMessage } from '../core/types';
-import { getStoredApiKey, createGeminiClient, GEMINI_MODEL, NO_API_KEY_MESSAGE } from './geminiClient';
+import {
+  getStoredApiKey,
+  createGeminiClient,
+  listAvailableModels,
+  DEFAULT_MODELS,
+  GEMINI_MODEL,
+  NO_API_KEY_MESSAGE,
+} from './geminiClient';
 import { logEvent, recordMetric } from '../core/observability';
 
 const MODULE = 'useGemini';
 
-const SYSTEM_INSTRUCTION =
+export const DEFAULT_GEMINI_SYSTEM_INSTRUCTION =
   'You are PixelKit, a concise hardware and AI assistant running on a Google Pixel 11 Pro. Answer in a few sentences unless asked for detail.';
 
 export function useGemini() {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string | null>(null);
+  const [model, setModel] = useState<string>(GEMINI_MODEL);
+  const [availableModels, setAvailableModels] = useState<string[]>(DEFAULT_MODELS);
+  const [temperature, setTemperature] = useState<number>(0.4);
+  const [topP, setTopP] = useState<number>(0.95);
+  const [topK, setTopK] = useState<number>(40);
+  const [maxOutputTokens, setMaxOutputTokens] = useState<number>(2048);
+  const [systemInstruction, setSystemInstruction] = useState<string>(DEFAULT_GEMINI_SYSTEM_INSTRUCTION);
+  const [thinkingBudget, setThinkingBudget] = useState<number>(0);
+
   const chatRef = useRef<Chat | null>(null);
 
   useEffect(() => {
     getStoredApiKey().then(k => {
       setApiKeyState(k);
       logEvent(MODULE, 'api key', { configured: !!k });
+      if (k) {
+        listAvailableModels(k).then(models => {
+          if (models.length > 0) setAvailableModels(models);
+        });
+      }
     });
   }, []);
 
   const setApiKey = useCallback((key: string | null) => {
     setApiKeyState(key);
     chatRef.current = null; // new key → new session
+    if (key) {
+      listAvailableModels(key).then(models => {
+        if (models.length > 0) setAvailableModels(models);
+      });
+    }
+  }, []);
+
+  const setSelectedModel = useCallback((newModel: string) => {
+    setModel(newModel);
+    chatRef.current = null; // reset chat session for new model
   }, []);
 
   const sendMessage = useCallback(async (userPrompt: string): Promise<void> => {
@@ -50,9 +81,19 @@ export function useGemini() {
     const start = performance.now();
     try {
       if (!chatRef.current) {
+        const config: any = {
+          systemInstruction: systemInstruction.trim() || DEFAULT_GEMINI_SYSTEM_INSTRUCTION,
+          temperature,
+          topP,
+          topK,
+          maxOutputTokens,
+        };
+        if (thinkingBudget > 0) {
+          config.thinkingConfig = { thinkingBudget };
+        }
         chatRef.current = createGeminiClient(apiKey).chats.create({
-          model: GEMINI_MODEL,
-          config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.4 },
+          model,
+          config,
         });
       }
       const response = await chatRef.current.sendMessage({ message: prompt });
@@ -67,7 +108,7 @@ export function useGemini() {
         tokenCount: tokens,
       }]);
       recordMetric(MODULE, 'latencyMs', elapsedMs, 'hardware');
-      logEvent(MODULE, 'reply', { model: GEMINI_MODEL, latencyMs: elapsedMs, tokens });
+      logEvent(MODULE, 'reply', { model, latencyMs: elapsedMs, tokens });
     } catch (err: any) {
       const message = err?.message ?? 'Unknown error';
       setMessages(prev => [...prev, { id: `err_${Date.now()}`, role: 'system', content: `Gemini error: ${message}`, timestamp: Date.now() }]);
@@ -75,7 +116,7 @@ export function useGemini() {
     } finally {
       setIsLoading(false);
     }
-  }, [apiKey]);
+  }, [apiKey, model, temperature, topP, topK, maxOutputTokens, systemInstruction, thinkingBudget]);
 
   const clearMessages = useCallback((): void => {
     setMessages([]);
@@ -90,6 +131,20 @@ export function useGemini() {
     clearMessages,
     hasApiKey: !!apiKey,
     setApiKey,
-    model: GEMINI_MODEL,
+    model,
+    setSelectedModel,
+    availableModels,
+    temperature,
+    setTemperature,
+    topP,
+    setTopP,
+    topK,
+    setTopK,
+    maxOutputTokens,
+    setMaxOutputTokens,
+    systemInstruction,
+    setSystemInstruction,
+    thinkingBudget,
+    setThinkingBudget,
   };
 }

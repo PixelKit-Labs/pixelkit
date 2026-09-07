@@ -58,6 +58,40 @@ export async function saveApiKey(key: string): Promise<boolean> {
   }
 }
 
+/** Default models list when API list is loading or unauthenticated */
+export const DEFAULT_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+];
+
+/**
+ * Fetches available Gemini models dynamically from Google's API via client.models.list().
+ * Falls back to curated defaults when offline or unconfigured.
+ */
+export async function listAvailableModels(apiKey?: string | null): Promise<string[]> {
+  const key = apiKey ?? (await getStoredApiKey());
+  if (!key) return DEFAULT_MODELS;
+  try {
+    const client = createGeminiClient(key);
+    const response = await client.models.list();
+    const models: string[] = [];
+    for await (const m of response) {
+      const id = m.name ? m.name.replace(/^models\//, '') : '';
+      if (id && (id.includes('gemini') || id.includes('flash') || id.includes('pro'))) {
+        if (!id.includes('embedding') && !id.includes('aqa')) {
+          models.push(id);
+        }
+      }
+    }
+    return models.length > 0 ? models : DEFAULT_MODELS;
+  } catch {
+    return DEFAULT_MODELS;
+  }
+}
+
 /**
  * Instantiates the official Google Gen AI SDK client with configured API key.
  * @param apiKey Valid Gemini API key.

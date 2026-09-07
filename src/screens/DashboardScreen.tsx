@@ -129,12 +129,21 @@ export const DashboardScreen: React.FC = () => {
       />
       <MetricCard
         title="CPU / GPU headroom"
-        value={adpf.cpuHeadroom == null ? null : `${pct(adpf.cpuHeadroom)} / ${pct(adpf.gpuHeadroom) ?? '—'}`}
-        unit="%"
-        badge="SystemHealth"
+        value={
+          adpf.cpuHeadroom != null && adpf.gpuHeadroom != null
+            ? `${pct(adpf.cpuHeadroom) ?? '—'} / ${pct(adpf.gpuHeadroom) ?? '—'}`
+            : cpu.cpuLoadPercent != null
+            ? `${Math.round(100 - cpu.cpuLoadPercent)}% / ${gpu.frameRenderTimeMs != null && gpu.targetBudgetMs > 0 ? `${Math.round(Math.max(0, (gpu.targetBudgetMs - gpu.frameRenderTimeMs) / gpu.targetBudgetMs * 100))}%` : '—'}`
+            : '—'
+        }
+        badge={adpf.cpuHeadroom != null && adpf.gpuHeadroom != null ? "SystemHealth" : "ADPF / Frame"}
         badgeColor={Colors.dark.primary}
-        subtitle="Android 16+ API"
-        source={adpf.cpuHeadroom == null ? 'unavailable' : 'hardware'}
+        subtitle={
+          adpf.cpuHeadroom != null && adpf.gpuHeadroom != null
+            ? "Android 16+ SystemHealthManager"
+            : "Derived from cluster load & frame render budget"
+        }
+        source={adpf.cpuHeadroom != null && adpf.gpuHeadroom != null ? 'hardware' : 'derived'}
       />
 
       {/* GPU & frames */}
@@ -334,7 +343,7 @@ export const DashboardScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  content: { padding: 16, paddingBottom: 120 },
+  content: { padding: 16, paddingBottom: 130 },
   hero: {
     backgroundColor: Colors.dark.card, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.cardBorder,
     paddingTop: 12, paddingBottom: 6, paddingHorizontal: 16, marginBottom: 6, overflow: 'hidden',

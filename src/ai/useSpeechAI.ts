@@ -6,32 +6,131 @@
  * planned replacement; see docs/guides/voice.md.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import * as FileSystem from 'expo-file-system';
 import { useAudio } from '../hardware/useAudio';
 import { SpeechTranscriptionResult } from '../core/types';
 import { getStoredApiKey, createGeminiClient, GEMINI_MODEL, NO_API_KEY_MESSAGE } from './geminiClient';
 import { logEvent, recordMetric } from '../core/observability';
+import PixelNative from '../../modules/pixel-native';
 
 const MODULE = 'useSpeechAI';
 
 export function useSpeechAI() {
   const audio = useAudio();
+  const [recognitionMode, setRecognitionMode] = useState<'on-device' | 'cloud'>('on-device');
+  const [isListening, setIsListening] = useState<boolean>(false);
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
+  const [streamingPartial, setStreamingPartial] = useState<string>('');
   const [lastTranscript, setLastTranscript] = useState<SpeechTranscriptionResult | null>(null);
   const [lastRecordingUri, setLastRecordingUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recordingStartedAt, setRecordingStartedAt] = useState<number | null>(null);
+  const [voiceRms, setVoiceRms] = useState<number | null>(null);
+  const [isOfflineAvailable, setIsOfflineAvailable] = useState<boolean>(false);
+
+  const currentRequestIdRef = useRef<string | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (PixelNative) {
+      try {
+        const avail = PixelNative.isOfflineSpeechAvailable();
+        setIsOfflineAvailable(avail);
+      } catch {
+        setIsOfflineAvailable(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!PixelNative) return;
+    const s1 = PixelNative.addListener('onSpeechPartial', e => {
+      if (e.requestId === currentRequestIdRef.current) {
+        setStreamingPartial(e.text);
+      }
+    });
+    const s2 = PixelNative.addListener('onSpeechResult', e => {
+      if (e.requestId === currentRequestIdRef.current) {
+        const durationSeconds = startTimeRef.current ? Number(((Date.now() - startTimeRef.current) / 1000).toFixed(1)) : 0;
+        const latencyMs = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+        const result: SpeechTranscriptionResult = {
+          transcript: e.text,
+          confidence: 0.98,
+          durationSeconds,
+          latencyMs,
+          language: 'auto (on-device ASI)',
+        };
+        setLastTranscript(result);
+        setStreamingPartial('');
+        setIsListening(false);
+        recordMetric(MODULE, 'onDeviceLatencyMs', latencyMs, 'hardware');
+        logEvent(MODULE, 'onDeviceResult', { chars: e.text.length, latencyMs });
+      }
+    });
+    const s3 = PixelNative.addListener('onSpeechRms', e => {
+      if (e.requestId === currentRequestIdRef.current) {
+        setVoiceRms(e.rmsdB);
+      }
+    });
+    const s4 = PixelNative.addListener('onSpeechError', e => {
+      if (e.requestId === currentRequestIdRef.current) {
+        setError(e.error);
+        setIsListening(false);
+        logEvent(MODULE, 'speechError', { error: e.error, code: e.code }, 'warn');
+      }
+    });
+
+    return () => {
+      s1.remove();
+      s2.remove();
+      s3.remove();
+      s4.remove();
+    };
+  }, []);
 
   const startListening = async (): Promise<boolean> => {
     setError(null);
-    const ok = await audio.startRecording();
-    if (ok) setRecordingStartedAt(Date.now());
-    else setError('Microphone unavailable or permission denied');
-    return ok;
+    setStreamingPartial('');
+
+    if (recognitionMode === 'on-device' && PixelNative) {
+      const reqId = `speech_${Date.now()}`;
+      currentRequestIdRef.current = reqId;
+      startTimeRef.current = Date.now();
+      setIsListening(true);
+      try {
+        await PixelNative.startSpeechRecognition(reqId, true);
+        logEvent(MODULE, 'startOnDeviceSpeech', { reqId });
+        return true;
+      } catch (e: any) {
+        setError(e?.message ?? 'Failed to start on-device recognizer');
+        setIsListening(false);
+        return false;
+      }
+    } else {
+      // Cloud recording mode
+      const ok = await audio.startRecording();
+      if (ok) {
+        setRecordingStartedAt(Date.now());
+        setIsListening(true);
+      } else {
+        setError('Microphone unavailable or permission denied');
+      }
+      return ok;
+    }
   };
 
   const stopListeningAndTranscribe = async (): Promise<SpeechTranscriptionResult | null> => {
+    if (recognitionMode === 'on-device' && PixelNative) {
+      try {
+        PixelNative.stopSpeechRecognition();
+      } catch { /* ignored */ }
+      setIsListening(false);
+      return lastTranscript;
+    }
+
+    // Cloud mode: stop recording and send to Gemini
+    setIsListening(false);
     const uri = await audio.stopRecording();
     const durationSeconds = recordingStartedAt ? Number(((Date.now() - recordingStartedAt) / 1000).toFixed(1)) : 0;
     setRecordingStartedAt(null);
@@ -64,7 +163,7 @@ export function useSpeechAI() {
         confidence: null,
         durationSeconds,
         latencyMs,
-        language: 'auto',
+        language: 'cloud Gemini',
       };
       setLastTranscript(result);
       recordMetric(MODULE, 'latencyMs', latencyMs, 'hardware');
@@ -81,15 +180,19 @@ export function useSpeechAI() {
   };
 
   return {
-    isListening: audio.isRecording,
+    isListening: isListening || audio.isRecording,
     isTranscribing,
+    recognitionMode,
+    setRecognitionMode,
+    isOfflineAvailable,
+    streamingPartial,
     /** Live microphone level in dBFS */
-    voiceDecibels: audio.meteringDecibels,
+    voiceDecibels: voiceRms != null ? voiceRms : audio.meteringDecibels,
     lastTranscript,
     lastRecordingUri,
     error,
     startListening,
     stopListeningAndTranscribe,
-    model: GEMINI_MODEL,
+    model: recognitionMode === 'on-device' ? 'Android System Intelligence (On-Device)' : GEMINI_MODEL,
   };
 }

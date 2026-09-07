@@ -85,8 +85,10 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **UWB Radar** | `useUWB()` | `isEnabled, chipId, activeTargets, isRanging, startRanging()` | [Pixel Pro] Hardware chip state (`hardware`), distance & AoA |
 | **Camera & Looks** | `useCamera()` | `zoomFactor, maxZoomFactor, selectedLook, setLook()` | expo-camera zoom; Camera Looks are UI state only |
 | **Sensors** | `useSensors(ms)` | `accelerometer, gyroscope, magnetometer, barometer` | 6-axis motion & hypsometric altitude |
-| **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, stopListeningAndTranscribe()` | Voice speech-to-text token transcription |
-| **Vision AI** | `useVisionAI()` | `captureAndAnalyze(cameraRef), analysis` | Multimodal camera inspection |
+| **Speech AI** | `useSpeechAI()` | `isListening, voiceDecibels, interimTranscript, startListening(), stopListeningAndTranscribe()` | Dual-mode: on-device offline ASI and cloud STT |
+| **On-Device GenAI** | `useGenAITasks()` | `summarize(), proofread(), rewrite(), describeImage()` | ML Kit on-device GenAI task acceleration via AICore |
+| **On-Device NLP** | `useNaturalLanguageAI()` | `identifyLanguage(), translate(), suggestReplies(), extractEntities()` | ML Kit 58-language translation, entity extraction & smart reply |
+| **Vision & OCR** | `useVisionAI()` | `recognizeText(), scanBarcodes(), labelImage(), detectFaces(), detectFaceMesh(), detectObjects()` | On-device ML Kit Vision + cloud Gemini multimodal |
 | **Conversational** | `useGemini()` | `messages, isLoading, sendMessage(prompt)` | gemini-3.8-flash chat via ai.chats |
 | **On-device Nano** | `useGeminiNano()` | `status, info, messages, partial, sendMessage(prompt), download()` | Gemini Nano through AICore; latency and tok/s measured on device |
 | **Bluetooth LE** | `useBLE()` | `state, channelSounding, bondedDevices, peripherals, isScanning` | Physical BT adapter, Channel Sounding, bonded devices & scanner |

@@ -12,6 +12,10 @@ import PixelNano, {
   type NanoOptions,
   type NanoResult,
   type NanoStatus,
+  type SummarizeOptions,
+  type SummarizeResult,
+  type ProofreadResult,
+  type RewriteResult,
 } from '../../modules/pixel-nano';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 import type { AIMessage } from '../core/types';
@@ -56,6 +60,15 @@ export function useGeminiNano() {
   const [lastOutputTokens, setLastOutputTokens] = useState<number | null>(null);
   const [lastDecodeTokensPerSec, setLastDecodeTokensPerSec] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Parameterization
+  const [temperature, setTemperature] = useState<number>(0.7);
+  const [topK, setTopK] = useState<number>(40);
+  const [candidateCount, setCandidateCount] = useState<number>(1);
+  const [maxOutputTokens, setMaxOutputTokens] = useState<number>(1024);
+  const [thinkingMode, setThinkingMode] = useState<boolean>(false);
+  const [systemInstruction, setSystemInstruction] = useState<string>(NANO_SYSTEM_INSTRUCTION);
+
   const messagesRef = useRef<AIMessage[]>([]);
   messagesRef.current = messages;
 
@@ -191,8 +204,15 @@ export function useGeminiNano() {
       const history = messagesRef.current;
       const useSystemPart = info?.systemPromptAvailable === true;
       const body = buildNanoTurn(history, prompt);
-      const text = useSystemPart ? body : `${NANO_SYSTEM_INSTRUCTION}\n\n${body}`;
-      const options: NanoOptions = { temperature: 0.4, ...(useSystemPart ? { systemInstruction: NANO_SYSTEM_INSTRUCTION } : {}) };
+      const text = useSystemPart ? body : `${systemInstruction}\n\n${body}`;
+      const options: NanoOptions = {
+        temperature,
+        topK,
+        candidateCount,
+        maxOutputTokens,
+        thinking: thinkingMode && info?.thinkingModeAvailable === true,
+        ...(useSystemPart ? { systemInstruction } : {}),
+      };
 
       const res = await PixelNano.stream(requestId, text, options);
 
@@ -229,11 +249,65 @@ export function useGeminiNano() {
       setPartial('');
       setIsGenerating(false);
     }
-  }, [status, info]);
+  }, [status, info, temperature, topK, candidateCount, maxOutputTokens, thinkingMode, systemInstruction]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
     setThoughts([]);
+  }, []);
+
+  /** On-Device GenAI Summarization via ML Kit / AICore */
+  const summarize = useCallback(async (text: string, options?: SummarizeOptions): Promise<SummarizeResult> => {
+    if (!PixelNano) throw new Error('PixelNano module not available');
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const res = await PixelNano.summarize(text, options);
+      recordMetric(MODULE, 'summarizeLatencyMs', res.latencyMs, 'hardware');
+      logEvent(MODULE, 'summarize', { latencyMs: res.latencyMs, engine: res.engine });
+      return res;
+    } catch (e: any) {
+      setError(e?.message ?? 'summarize failed');
+      throw e;
+    } finally {
+      setIsGenerating(false);
+    }
+  }, []);
+
+  /** On-Device GenAI Proofreading via ML Kit / AICore */
+  const proofread = useCallback(async (text: string, options?: Record<string, any>): Promise<ProofreadResult> => {
+    if (!PixelNano) throw new Error('PixelNano module not available');
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const res = await PixelNano.proofread(text, options);
+      recordMetric(MODULE, 'proofreadLatencyMs', res.latencyMs, 'hardware');
+      logEvent(MODULE, 'proofread', { latencyMs: res.latencyMs, engine: res.engine });
+      return res;
+    } catch (e: any) {
+      setError(e?.message ?? 'proofread failed');
+      throw e;
+    } finally {
+      setIsGenerating(false);
+    }
+  }, []);
+
+  /** On-Device GenAI Rewriting via ML Kit / AICore */
+  const rewrite = useCallback(async (text: string, tone?: 'elaborate' | 'emojify' | 'shorten' | 'friendly' | 'professional' | 'rephrase'): Promise<RewriteResult> => {
+    if (!PixelNano) throw new Error('PixelNano module not available');
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const res = await PixelNano.rewrite(text, tone);
+      recordMetric(MODULE, 'rewriteLatencyMs', res.latencyMs, 'hardware');
+      logEvent(MODULE, 'rewrite', { latencyMs: res.latencyMs, engine: res.engine });
+      return res;
+    } catch (e: any) {
+      setError(e?.message ?? 'rewrite failed');
+      throw e;
+    } finally {
+      setIsGenerating(false);
+    }
   }, []);
 
   /** Switches the AICore model track; the next call creates a new client. */
@@ -267,6 +341,20 @@ export function useGeminiNano() {
     lastDecodeTokensPerSec,
     error,
     source,
+    // Parameterization
+    temperature,
+    setTemperature,
+    topK,
+    setTopK,
+    candidateCount,
+    setCandidateCount,
+    maxOutputTokens,
+    setMaxOutputTokens,
+    thinkingMode,
+    setThinkingMode,
+    systemInstruction,
+    setSystemInstruction,
+    // Actions
     refresh,
     download,
     warmup,
@@ -275,5 +363,8 @@ export function useGeminiNano() {
     sendMessage,
     clearMessages,
     setModelConfig,
+    summarize,
+    proofread,
+    rewrite,
   };
 }

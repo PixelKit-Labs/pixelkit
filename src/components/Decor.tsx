@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { Animated, Easing, View, Text, StyleSheet, ViewStyle, StyleProp, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Fonts, Gradients, Radius, Type } from '../theme/colors';
 import { MODE_STYLES, type HudMode } from '../theme/mode';
@@ -33,7 +33,7 @@ export const Wordmark: React.FC<{ name?: string; style?: StyleProp<ViewStyle> }>
       <View style={styles.markTriangle} />
       <View style={styles.markInner} />
     </View>
-    <Text style={styles.wordmarkText}>{name.toUpperCase()}</Text>
+    <Text style={styles.wordmarkText}>{name.toUpperCase() + (Platform.OS === 'android' ? ' ' : '')}</Text>
   </View>
 );
 
@@ -66,8 +66,8 @@ export const Chip: React.FC<{ label: string; color?: string; filled?: boolean; s
 /** Section label: mono, 11 px, semibold, wide tracking, uppercase, muted. Optional right meta. */
 export const SectionHeader: React.FC<{ title: string; hint?: string; style?: StyleProp<ViewStyle> }> = ({ title, hint, style }) => (
   <View style={[styles.section, style]}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    {hint ? <Text style={styles.sectionHint}>{hint}</Text> : null}
+    <Text style={styles.sectionTitle}>{title.toUpperCase() + (Platform.OS === 'android' ? ' ' : '')}</Text>
+    {hint ? <Text style={styles.sectionHint}>{hint + (Platform.OS === 'android' ? ' ' : '')}</Text> : null}
   </View>
 );
 
@@ -76,7 +76,7 @@ export const TelemetryRow: React.FC<{ label: string; value: string; tone?: 'defa
   const color = tone === 'on' ? Colors.dark.success : tone === 'warn' ? Colors.dark.warning : tone === 'default' ? Colors.dark.text : Colors.dark.textMuted;
   return (
     <View style={styles.teleRow}>
-      <Text style={styles.teleLabel}>{label}</Text>
+      <Text style={styles.teleLabel}>{label.toUpperCase() + (Platform.OS === 'android' ? ' ' : '')}</Text>
       <Text style={[styles.teleValue, { color }]} numberOfLines={1}>{value}</Text>
     </View>
   );
@@ -164,10 +164,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 7,
     borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: Colors.dark.background,
   },
-  wordmarkText: { fontFamily: Fonts.sansSemi, fontSize: 13, letterSpacing: 3.4, color: Colors.dark.text, paddingRight: 6 },
+  wordmarkText: { fontFamily: Fonts.sansSemi, fontSize: 13, letterSpacing: Platform.OS === 'android' ? 2.0 : 3.4, color: Colors.dark.text, paddingRight: 10 },
   chip: {
     flexDirection: 'row', alignItems: 'center', height: 30, paddingHorizontal: 11, borderRadius: Radius.pill,
-    borderWidth: 1, borderColor: Colors.dark.cardBorder, backgroundColor: Colors.dark.card, gap: 6,
+    borderWidth: 1, borderColor: Colors.dark.cardBorder, backgroundColor: Colors.dark.card, gap: 6, flexShrink: 0,
   },
   chipDot: { width: 6, height: 6, borderRadius: 3 },
   chipLabel: { ...Type.caption, color: Colors.dark.textMuted },
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'baseline', paddingVertical: 6,
     borderBottomWidth: 1, borderBottomColor: Colors.dark.cardBorder,
   },
-  teleLabel: { ...Type.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: Colors.dark.textMuted, flexShrink: 0, marginRight: 8 },
+  teleLabel: { ...Type.mono, fontSize: 11, letterSpacing: Platform.OS === 'android' ? 0.4 : 1, color: Colors.dark.textMuted, flexShrink: 0, marginRight: 8 },
   teleValue: { ...Type.mono, marginLeft: 'auto', textAlign: 'right', flexShrink: 1 },
   reactor: { alignItems: 'center', paddingVertical: 8 },
   halo: { position: 'absolute' },
