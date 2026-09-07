@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.3] - 2026-09-07
+
+Layout polish for bottom navigation bar and README presentation following Best-README-Template with genuine on-device screenshots.
+
+### Added
+- Embedded high-resolution hardware showcase gallery in `README.md` featuring 5 genuine captures from the physical Google Pixel 11 Pro (`grizzly`) testbed running Android 17 (Silicon HUD with live battery temp 37.2°C, Sensors & Actuators with 134.4Hz resonant LRA, Radios stack, Agent Guide architecture, and interactive in-app Docs contracts).
+- Project shields, logo header, and built-with badges following Best-README-Template specification.
+- Screenshot artifacts preserved in `docs/assets/screenshots/`.
+
+### Fixed
+- Bottom bar clipping: docked navigation bar in normal flex flow with `backgroundColor: Colors.dark.background` and normalized scroll container padding across screens, ensuring content is never obscured behind the tab bar.
+
 ## [1.1.2] - 2026-09-07
 
 PixelKit is a template, not an app that ships to a store. This release says so everywhere it

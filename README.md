@@ -1,8 +1,25 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 
+<!-- PROJECT SHIELDS -->
 <div align="center">
-  <h2 align="center">PixelKit SDK</h2>
+
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+
+</div>
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/Traves-Theberge/PixelKit">
+    <img src="assets/icon.png" alt="PixelKit Logo" width="96" height="96">
+  </a>
+
+  <h1 align="center">PixelKit SDK</h1>
 
   <p align="center">
     A template for building on the <strong>Google Pixel 11 Pro</strong>: its hardware as React hooks — CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
@@ -16,6 +33,8 @@
     <a href="./docs/getting-started/using-this-template.md"><strong>Use this template »</strong></a>
     <br />
     <br />
+    <a href="#live-hardware-showcase">View Screenshots</a>
+    &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=bug">Report Bug</a>
     &middot;
     <a href="https://github.com/Traves-Theberge/PixelKit/issues/new?labels=enhancement">Request Feature</a>
@@ -29,6 +48,7 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
+        <li><a href="#live-hardware-showcase">Live Hardware Showcase</a></li>
         <li><a href="#using-this-as-a-template">Using this as a template</a></li>
         <li><a href="#built-with">Built With</a></li>
         <li><a href="#core-architectural-principles">Core Architectural Principles</a></li>
@@ -79,6 +99,54 @@ Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallback
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
 
+### Live Hardware Showcase
+
+Captured directly from the physical **Google Pixel 11 Pro** (`grizzly`) testbed running Android 17 over wireless ADB:
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <a href="./docs/assets/screenshots/01_silicon_dashboard.png">
+          <img src="./docs/assets/screenshots/01_silicon_dashboard.png" alt="Silicon Dashboard" width="260" />
+        </a>
+        <br />
+        <sub><b>Silicon Dashboard</b><br />Live Tensor G6, fuel gauge 37.2°C, 120Hz LTPO</sub>
+      </td>
+      <td align="center" width="33%">
+        <a href="./docs/assets/screenshots/02_sensors_haptics.png">
+          <img src="./docs/assets/screenshots/02_sensors_haptics.png" alt="Actuators & Haptics" width="260" />
+        </a>
+        <br />
+        <sub><b>Actuators & Haptics</b><br />134.4Hz resonant LRA, PWLE v2 envelopes</sub>
+      </td>
+      <td align="center" width="33%">
+        <a href="./docs/assets/screenshots/03_sensors_radios.png">
+          <img src="./docs/assets/screenshots/03_sensors_radios.png" alt="Sensors & Radios" width="260" />
+        </a>
+        <br />
+        <sub><b>Sensors & Radios</b><br />Barometer ISA, 5GHz Wi-Fi, BLE 5.4, UWB</sub>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <a href="./docs/assets/screenshots/04_docs_architecture.png">
+          <img src="./docs/assets/screenshots/04_docs_architecture.png" alt="Documentation & Agent Guide" width="260" />
+        </a>
+        <br />
+        <sub><b>Agent Guide & Architecture</b><br />5 SDK rules, prompt contracts, zero simulation</sub>
+      </td>
+      <td align="center" width="50%">
+        <a href="./docs/assets/screenshots/05_docs_contracts.png">
+          <img src="./docs/assets/screenshots/05_docs_contracts.png" alt="Live Code Contracts" width="260" />
+        </a>
+        <br />
+        <sub><b>In-App Interactive Docs</b><br />32 typed hooks, copyable code, HAL details</sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ### Using this as a template
 
 PixelKit is a template and a reference implementation, not a shipped app. Press **Use this template**
@@ -88,12 +156,12 @@ so the parity check passes.
 
 ### Built With
 
-* [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) — React Native 0.86, dev client, local modules
-* [Kotlin](https://kotlinlang.org/) — the two local Expo Modules, `pixel-native` and `pixel-nano`
-* [Android 17 (API 37)](https://developer.android.com/about/versions/17) — ADPF, AppFunctions, adaptive refresh rate
-* [Google ML Kit GenAI](https://developers.google.com/ml-kit) — Gemini Nano on AICore, vision and language models
-* [Google Gen AI SDK](https://ai.google.dev/) — `gemini-3.8-flash` in the cloud
-* [TypeScript](https://www.typescriptlang.org/) — strict mode, zero errors as a release gate
+* [![Expo][Expo-shield]][Expo-url]
+* [![React Native][ReactNative-shield]][ReactNative-url]
+* [![Kotlin][Kotlin-shield]][Kotlin-url]
+* [![TypeScript][TypeScript-shield]][TypeScript-url]
+* [![Android 17][Android-shield]][Android-url]
+* [![Google Gemini][Gemini-shield]][Gemini-url]
 
 ### Core Architectural Principles
 
@@ -530,7 +598,7 @@ export function DocumentProcessor() {
 <!-- RELEASE BUILD -->
 ## Release Build
 
-Current version: **1.1.2** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 31).
+Current version: **1.1.3** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 32).
 
 The full procedure — gates, versioning, the device walk, signing, EAS profiles, the GitHub release and the Play paperwork — is in [RELEASING.md](./RELEASING.md).
 
@@ -659,3 +727,28 @@ Project Link: [https://github.com/Traves-Theberge/PixelKit](https://github.com/T
 * [Google ML Kit Team](https://developers.google.com/ml-kit)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/Traves-Theberge/PixelKit.svg?style=for-the-badge
+[contributors-url]: https://github.com/Traves-Theberge/PixelKit/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Traves-Theberge/PixelKit.svg?style=for-the-badge
+[forks-url]: https://github.com/Traves-Theberge/PixelKit/network/members
+[stars-shield]: https://img.shields.io/github/stars/Traves-Theberge/PixelKit.svg?style=for-the-badge
+[stars-url]: https://github.com/Traves-Theberge/PixelKit/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Traves-Theberge/PixelKit.svg?style=for-the-badge
+[issues-url]: https://github.com/Traves-Theberge/PixelKit/issues
+[license-shield]: https://img.shields.io/github/license/Traves-Theberge/PixelKit.svg?style=for-the-badge
+[license-url]: https://github.com/Traves-Theberge/PixelKit/blob/master/LICENSE
+[Expo-shield]: https://img.shields.io/badge/Expo_SDK_57-000020?style=for-the-badge&logo=expo&logoColor=white
+[Expo-url]: https://docs.expo.dev/versions/v57.0.0/
+[ReactNative-shield]: https://img.shields.io/badge/React_Native_0.86-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[ReactNative-url]: https://reactnative.dev/
+[Kotlin-shield]: https://img.shields.io/badge/Kotlin_2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white
+[Kotlin-url]: https://kotlinlang.org/
+[TypeScript-shield]: https://img.shields.io/badge/TypeScript_5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://www.typescriptlang.org/
+[Android-shield]: https://img.shields.io/badge/Android_17_(API_37)-34A853?style=for-the-badge&logo=android&logoColor=white
+[Android-url]: https://developer.android.com/about/versions/17
+[Gemini-shield]: https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white
+[Gemini-url]: https://ai.google.dev/
