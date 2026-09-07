@@ -53,9 +53,5 @@ packages/*/build/
 # Agent worktrees are scratch checkouts of this repo, never content
 .claude/worktrees/
 
-# Docs site (apps/docs, Astro Starlight): build output, cache, and the generated mirror of
 # docs/ that scripts/sync-docs.mjs writes before every dev/build run (docs/ stays the source
 # of truth; this copy must never be committed).
-apps/docs/dist/
-apps/docs/.astro/
-apps/docs/src/content/docs/

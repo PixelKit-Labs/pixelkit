@@ -4,6 +4,25 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.16] - 2026-09-07
+
+### Changed
+- **The CLI and the documentation site moved to their own repositories**, one release after landing
+  here. They were built in this workspace because the toolchain already worked; that was the wrong
+  home, and keeping them would have made this repository three products in a trench coat.
+  - [PixelKit-Labs/pixelkit-cli](https://github.com/PixelKit-Labs/pixelkit-cli) - `@pixelkit/cli`,
+    standalone, its own version line, no workspace assumptions. Builds and packs on its own.
+  - [PixelKit-Labs/pixelkit-docs](https://github.com/PixelKit-Labs/pixelkit-docs) - the Astro
+    Starlight site. It shallow-clones this repository for `docs/` at build time rather than keeping
+    a copy, so the markdown still lives beside the code it describes and rule 2 still holds.
+    `PIXELKIT_DOCS` points it at a local checkout for offline work. Its CI rebuilds daily, because
+    a repository whose content lives elsewhere cannot tell from its own commits whether it still
+    works.
+- The root `overrides` pin on `cookie` is gone with the Astro build that needed it.
+- `package-lock.json` regenerated: removing a workspace leaves entries npm then tries to fetch from
+  the registry, and `@pixelkit/cli` was still listed as a root dependency, so `npm install` failed
+  `E404` on a package that has never been published.
+
 ## [1.1.15] - 2026-09-07
 
 ### Added

@@ -1,6 +1,6 @@
 {
   "name": "pixelkit",
-  "version": "1.1.15",
+  "version": "1.1.16",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",
@@ -8,8 +8,8 @@
     "@expo/metro-runtime": "~57.0.15",
     "@expo/vector-icons": "^15.0.2",
     "@google/genai": "^2.21.0",
-    "@pixelkit/mlkit": "1.1.15",
-    "@pixelkit/native": "1.1.15",
+    "@pixelkit/mlkit": "1.1.16",
+    "@pixelkit/native": "1.1.16",
     "expo": "~57.0.20",
     "expo-asset": "~57.0.16",
     "expo-audio": "~57.0.4",
@@ -37,13 +37,12 @@
     "expo-speech": "~57.0.2",
     "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.3",
-    "pixelkit": "1.1.15",
+    "pixelkit": "1.1.16",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-web": "^0.21.2",
-    "@pixelkit/cli": "1.1.15"
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
@@ -64,15 +63,11 @@
     "describe": "android describe --project_dir=.",
     "hilight:build": "powershell -ExecutionPolicy Bypass -File scripts/hilight-daemon/build.ps1",
     "hilight:daemon": "powershell -ExecutionPolicy Bypass -File scripts/hilight-daemon/run.ps1",
-    "build": "npm run build -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit -w @pixelkit/cli",
+    "build": "npm run build -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit",
     "sync-versions": "node scripts/sync-versions.js"
   },
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/docs"
-  ],
-  "overrides": {
-    "cookie": "^2.0.1"
-  }
+    "packages/*"
+  ]
 }

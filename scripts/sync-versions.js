@@ -20,7 +20,6 @@ const PACKAGES = {
   pixelkit: 'pixelkit',
   '@pixelkit/native': 'native',
   '@pixelkit/mlkit': 'mlkit',
-  '@pixelkit/cli': 'cli',
 };
 const NAMES = Object.keys(PACKAGES);
 
