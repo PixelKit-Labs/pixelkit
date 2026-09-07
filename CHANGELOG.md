@@ -4,6 +4,25 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.2.2] - 2026-09-07
+
+### Added
+- `.github/workflows/release.yml`: pushing a `v*` tag builds, typechecks, packs and publishes all
+  three packages to npm with provenance. Two guards worth naming:
+  - **The tag must match all four manifests.** A tag that disagrees ships a version nobody asked
+    for, and npm does not let you take a version back.
+  - **Publish order is fixed** - `@pixelkit/native` and `@pixelkit/mlkit` first, then `pixelkit`,
+    which pins both by exact version and would otherwise resolve against nothing.
+
+  Needs an `NPM_TOKEN` secret on the repository. `workflow_dispatch` runs everything except the
+  publish, so the pipeline can be exercised before it is trusted.
+
+### Notes
+- This is the event the rest of the project reacts to. npm gets the version, Dependabot opens a
+  grouped pull request on the template within a day, and that pull request runs the template's
+  parity check against `node_modules/pixelkit` - so **a hook this SDK exports with nowhere to try
+  it in the template fails that build, by name.** New capability cannot arrive undemonstrated.
+
 ## [1.2.1] - 2026-09-07
 
 ### Removed
