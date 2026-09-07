@@ -18,7 +18,7 @@
   <h1 align="center">PixelKit SDK</h1>
 
   <p align="center">
-    A template for building on the <strong>Google Pixel 11 Pro</strong>: its hardware as React hooks — CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
+    A template for building on the <strong>Google Pixel 11 Pro</strong>. Its hardware as React hooks: CPU clocks and thermal headroom, the camera and video capture, the microphone and speech both directions, every radio from NFC to ultra-wideband, the fingerprint sensor and the keystore, the LEDs on the camera bar, and Gemini running on the phone itself.
     <br />
     <br />
     <a href="./docs/README.md"><strong>Explore the docs »</strong></a>
@@ -85,7 +85,7 @@ PixelKit maps the physical silicon and on-device machine learning stack of the *
 
 Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
 
-> **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'`. A value that cannot be read is `null` and renders as `—`. Nothing is ever substituted with a plausible default.
+> **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'`. A value that cannot be read is `null` and renders as an em dash. Nothing is ever substituted with a plausible default.
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
 
@@ -126,7 +126,7 @@ PixelKit strictly avoids inventing data. The four provenance values defined in `
 | :--- | :--- | :--- |
 | `hardware` | Read directly from a verified device API / sysfs during this run | `useCPU` per-core MHz from cpufreq |
 | `derived` | Computed mathematically from genuine hardware readings | `useCPU` app CPU share (process time ÷ wall time) |
-| `unavailable` | Could not be read; value is explicitly `null` (renders as `—`) | Any native-backed hook executing on web or in Expo Go |
+| `unavailable` | Could not be read; value is explicitly `null` (renders as an em dash) | Any native-backed hook executing on web or in Expo Go |
 
 All provenance events are logged with a `[PixelKit]` tag, inspectable via `adb logcat -s ReactNativeJS` and in the live observability stream on the Silicon tab.
 
@@ -139,7 +139,7 @@ All provenance events are logged with a `[PixelKit]` tag, inspectable via `adb l
 
 PixelKit exposes **32 strongly-typed React hooks** across two distinct categories.
 
-Every hook is documented with its **inputs** (arguments, defaults and units), its **outputs** (every returned field and what it means) and a contract for each function it exposes — what each parameter does, what the call resolves to, and what a failure looks like. Start at [docs/HARDWARE_API.md](./docs/HARDWARE_API.md) for all 32 in one place, or the per-domain pages under [docs/api/](./docs/api/).
+Every hook is documented with its **inputs** (arguments, defaults and units), its **outputs** (every returned field and what it means) and a contract for each function it exposes: what each parameter does, what the call resolves to, and what a failure looks like. Start at [docs/HARDWARE_API.md](./docs/HARDWARE_API.md) for all 32 in one place, or the per-domain pages under [docs/api/](./docs/api/).
 
 ### Hardware & Silicon Hooks (24)
 
@@ -422,7 +422,7 @@ Pixel delta/ (PixelKit)
 │   │
 │   ├── components/              # ScreenScaffold, HapticButton, MetricCard, SensorVisualizer, Decor
 │   ├── theme/                   # colors.ts (design tokens), mode.ts (state -> colour)
-│   └── screens/                 # Silicon, AI Lab, Sensors, Docs — one home per hook
+│   └── screens/                 # Silicon, AI Lab, Sensors, Docs; one home per hook
 │       ├── ailab/               # Chat, Tasks, Vision, Language, Voice, Agents sections
 │       └── docs/                # Documentation entries, one file per category
 │
@@ -436,7 +436,7 @@ Pixel delta/ (PixelKit)
 <!-- SCREENS -->
 ## Screens
 
-Four tabs. Every hook has exactly one home, declared in `src/core/surface.ts`, and the Docs entry for a hook tells you which one — so what the SDK documents and what the app demonstrates cannot drift apart.
+Four tabs. Every hook has exactly one home, declared in `src/core/surface.ts`, and the Docs entry for a hook tells you which one, so what the SDK documents and what the app demonstrates cannot drift apart.
 
 | Tab | Sections | Hooks |
 | :--- | :--- | :--- |
@@ -481,7 +481,7 @@ export default function ThermalMonitor() {
     <View>
       <MetricCard
         title="Frame Render Time"
-        value={gpu.frameRenderTimeMs}          // Unreadable values render as "—"
+        value={gpu.frameRenderTimeMs}          // Unreadable values render as an em dash
         unit="ms"
         badge={`Budget ${gpu.targetBudgetMs}ms`}
         subtitle={`Thermal status: ${adpf.thermalStatus}`}
@@ -542,7 +542,7 @@ export function DocumentProcessor() {
 
 Current version: **1.1.3** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 32).
 
-The full procedure — gates, versioning, the device walk, signing, EAS profiles, the GitHub release and the Play paperwork — is in [RELEASING.md](./RELEASING.md).
+The full procedure (gates, versioning, the device walk, signing, EAS profiles, the GitHub release and the Play paperwork) is in [RELEASING.md](./RELEASING.md).
 
 ```bash
 # 1. Types and parity together
@@ -557,7 +557,7 @@ cd android && ./gradlew assembleRelease
 ```
 
 > [!IMPORTANT]
-> `android/` is generated and untracked, so anything edited there is lost on the next `expo prebuild --clean`. Use EAS credentials, or pass a keystore through the `PIXELKIT_RELEASE_*` environment variables — without one, a local release build is silently **debug-signed**. [RELEASING.md](./RELEASING.md) has the verification command.
+> `android/` is generated and untracked, so anything edited there is lost on the next `expo prebuild --clean`. Use EAS credentials, or pass a keystore through the `PIXELKIT_RELEASE_*` environment variables. Without one, a local release build is silently **debug-signed**. [RELEASING.md](./RELEASING.md) has the verification command.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -567,25 +567,25 @@ cd android && ./gradlew assembleRelease
 ## Documentation
 
 * **Getting Started**
-  * [Documentation Hub](./docs/README.md) — Complete sitemap and navigation
-  * [Quickstart Guide](./docs/getting-started/quickstart.md) — Environment setup and first run
-  * [Silicon Architecture](./docs/getting-started/architecture.md) — Native bridge and HAL design
+  * [Documentation Hub](./docs/README.md): Complete sitemap and navigation
+  * [Quickstart Guide](./docs/getting-started/quickstart.md): Environment setup and first run
+  * [Silicon Architecture](./docs/getting-started/architecture.md): Native bridge and HAL design
 * **API Specifications**
-  * [Silicon & Compute](./docs/api/silicon-compute.md) — `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`
-  * [Pixel Pro Exclusives](./docs/api/pro-exclusives.md) — `useHiLight`, `useUWB`
-  * [Neural & AI](./docs/api/neural-ai.md) — `useGemini`, `useGeminiNano`, `useGenAITasks`, `useVisionAI`
-  * [Sensors & Actuators](./docs/api/sensors-actuators.md) — `useSensors`, `useCamera`, `useTorch`, `useHaptics`
-  * [Radios & Security](./docs/api/radios-security.md) — `useBiometrics`, `useSecurity`, `useBLE`, `useNFC`
-  * [System & Media](./docs/api/system-media.md) — `useAudio`, `useDisplay`, `useDevice`, `useNetwork`
-  * [Complete Hardware API](./docs/HARDWARE_API.md) — All modules consolidated
+  * [Silicon & Compute](./docs/api/silicon-compute.md): `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`
+  * [Pixel Pro Exclusives](./docs/api/pro-exclusives.md): `useHiLight`, `useUWB`
+  * [Neural & AI](./docs/api/neural-ai.md): `useGemini`, `useGeminiNano`, `useGenAITasks`, `useVisionAI`
+  * [Sensors & Actuators](./docs/api/sensors-actuators.md): `useSensors`, `useCamera`, `useTorch`, `useHaptics`
+  * [Radios & Security](./docs/api/radios-security.md): `useBiometrics`, `useSecurity`, `useBLE`, `useNFC`
+  * [System & Media](./docs/api/system-media.md): `useAudio`, `useDisplay`, `useDevice`, `useNetwork`
+  * [Complete Hardware API](./docs/HARDWARE_API.md): All modules consolidated
 * **Empirical Research & Captures**
   * [Pixel 11 Pro Hardware Research](./docs/research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)
   * [Device Deep Dive](./docs/research/PIXEL_11_PRO_DEEP_DIVE.md)
   * [ADB Device Profile](./docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md)
   * [HiLight Hardware Protocol](./docs/research/HILIGHT_LED_ARRAY.md)
 * **Agent Guidelines**
-  * [AGENTS.md](./AGENTS.md) — Rules for autonomous coding agents (identical to `CLAUDE.md` and `GEMINI.md`)
-  * [AI Primer](./docs/AI_PRIMER.md) — Operational architecture and prompt contracts
+  * [AGENTS.md](./AGENTS.md): Rules for autonomous coding agents (identical to `CLAUDE.md` and `GEMINI.md`)
+  * [AI Primer](./docs/AI_PRIMER.md): Operational architecture and prompt contracts
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -4,6 +4,17 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.6] - 2026-09-07
+
+### Changed
+- `README.md` contains no em dashes. Punctuation ones became colons, semicolons, parentheses or
+  full stops. The three that were the literal placeholder character, in the provenance blockquote,
+  the `unavailable` row of the provenance table and the `MetricCard` example comment, now say
+  "renders as an em dash" in words, which stays true to what `MetricCard` actually prints without
+  putting the character in the file.
+- En dashes in numeric ranges (`1-21` torch levels, `1-120Hz`, ids `1-8`, Pixel `8-10 Pro`) are
+  left as they are; they are a different character and read as "to".
+
 ## [1.1.5] - 2026-09-07
 
 ### Removed
