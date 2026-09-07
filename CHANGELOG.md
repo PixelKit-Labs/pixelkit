@@ -4,6 +4,43 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.15] - 2026-09-07
+
+### Added
+- **`@pixelkit/cli`** (`packages/cli`) with one command, `pixelkit doctor`. It exists to answer the
+  question every new user asks within a minute: "why is everything showing an em dash?" Six checks -
+  adb and a single connected device, what the device actually is, whether a development build is
+  installed (and that Expo Go can never work), whether `@pixelkit/native` and `@pixelkit/mlkit`
+  resolve, whether AICore is present for Gemini Nano, and whether `adb reverse tcp:8081` is set.
+  Each reports `pass`, `fail`, `n/a` or `UNKN`. That fourth state is the point: a check that cannot
+  be run says so rather than guessing, the same discipline as a hook's `source: 'unavailable'`.
+  No dependencies beyond `child_process` and `util`. Exits 1 if anything failed or was undetermined.
+- **The documentation site** (`apps/docs`), Astro Starlight, 21 pages. `scripts/sync-docs.mjs` copies
+  `docs/` into a gitignored mirror before every build and injects a `title` from each file's first
+  heading; `docs/` stays the single source of truth, so rule 2 still holds and no prose is
+  duplicated in the tree. The sidebar is derived from the directories actually present, which is why
+  deleting `docs/research` removed its section with no config change.
+
+### Fixed
+- **`scripts/sync-versions.js` did not touch `peerDependencies`.** `pixelkit` pins `@pixelkit/mlkit`
+  in both `dependencies` and `peerDependencies`, and only the first was being updated, so the peer
+  pin sat at `1.1.11` while the workspace moved to `1.1.14`. npm then tried to fetch a version that
+  was never published and a plain `npm install` failed with `E404`. Both agents hit it independently.
+  The script now updates every field, and `npm install` resolves again.
+- A root `overrides` entry pins `cookie` to `^2.0.1`. `@google/genai` carries a bundled MCP server
+  chain that pulls `express` and `cookie@0.7.2` (CommonJS), while Astro needs the ESM `cookie@2`;
+  with both in the tree Vite's prerenderer resolved the wrong copy and the docs build failed on
+  `Named export 'parseCookie' not found`. Nothing in this repository imports `express`.
+- `doctor`'s "could not determine" marker was `????`, which reads like a broken-encoding bug rather
+  than a status. It is `UNKN`.
+
+### Removed
+- `docs/research/` and every reference to it: five README links, the `docs/README.md` list, the
+  pointer in `docs/getting-started/architecture.md` and `docs/HARDWARE_API.md`, one JSDoc comment in
+  `capabilities.ts`, and the line in the three agent guides naming `DEVICE_PROFILE_PIXEL_11_PRO.md`
+  as the source of verified device facts. That rule survives as a statement about method - device
+  facts are read from the hardware with `adb` and `dumpsys` - rather than a pointer to a file.
+
 ## [1.1.14] - 2026-09-07
 
 ### Fixed

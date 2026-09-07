@@ -1,7 +1,7 @@
 # PixelKit Hardware API Reference
 > **Hook-by-hook reference for the Google Pixel 11 Pro build**
 
-This document is the consolidated reference for every hook in the PixelKit SDK (React Native, Expo SDK 57) on the **Google Pixel 11 Pro** (Android 17, Google Tensor G6). Verified device facts are taken from `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`.
+This document is the consolidated reference for every hook in the PixelKit SDK (React Native, Expo SDK 57) on the **Google Pixel 11 Pro** (Android 17, Google Tensor G6). Figures described as verified were read from the device with `adb` and `dumpsys`.
 
 **How to read an entry.** Each hook lists where it lives, what hardware or platform API it sits on, what it does, its **Inputs** (arguments, with defaults and units), its **Outputs** (the returned object, with a link to the field-by-field table in the matching `docs/api/*` page) and its **Functions** (every callable, with what each parameter means and what the call returns). No hook fabricates a reading: a value that cannot be read is `null` and `source` reports `'unavailable'`.
 

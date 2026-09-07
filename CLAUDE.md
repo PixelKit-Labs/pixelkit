@@ -6,7 +6,7 @@ This file is the single source of truth for any coding agent (Claude, Gemini, An
 
 PixelKit is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and two local Kotlin Expo Modules: `packages/native` (telemetry and actuators) and `packages/mlkit` (Gemini Nano via ML Kit GenAI on AICore). Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four tabs — Silicon, AI Lab, Sensors, Docs — each divided into the sections declared in `src/core/surface.ts`, which is also where every hook declares the one screen that demonstrates it.
 
-Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
+Device facts come from the hardware, read with `adb` and `dumpsys`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
 
 ## Rules
 
@@ -30,7 +30,7 @@ Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do
 - `npm run verify` must pass: `typecheck` with 0 errors, then `parity` with no unhomed hooks and no unreachable documented actions.
 - `npx expo export -p android` must bundle.
 - Native changes: build from the space-free junction `C:\dev\pixel-delta\android` with `.\gradlew.bat assembleDebug` (JDK 17, SDK at `%LOCALAPPDATA%\Android\Sdk`), then `adb install -r -g android/app/build/outputs/apk/debug/app-debug.apk`.
-- On-device checks: `adb logcat -s ReactNativeJS | grep PixelKit` for provenance events; `dumpsys` for independent confirmation (see `docs/research/DEVICE_TEST_REPORT_2026-09-06.md`).
+- On-device checks: `adb logcat -s ReactNativeJS | grep PixelKit` for provenance events; `dumpsys` for independent confirmation.
 
 ## Tooling
 

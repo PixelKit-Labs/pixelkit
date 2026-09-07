@@ -1,7 +1,7 @@
 # Pixel 11 Pro Silicon & System Architecture ⚡
 > **What this device is, separated into what was read from it and what Google states**
 
-This document outlines the hardware of the **Google Pixel 11 Pro** and how PixelKit reaches each layer. Figures marked **verified** were read from the device itself (see `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`); the rest are Google's published specification and are labelled as such, because a marketing figure is not a reading.
+This document outlines the hardware of the **Google Pixel 11 Pro** and how PixelKit reaches each layer. Figures marked **verified** were read from the device itself with `adb` and `dumpsys`; the rest are Google's published specification and are labelled as such, because a marketing figure is not a reading.
 
 ---
 

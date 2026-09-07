@@ -1,6 +1,6 @@
 {
   "name": "pixelkit",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "description": "The Google Pixel 11 Pro as React hooks: silicon telemetry, sensors, radios, security and Gemini on-device. Android only. Nothing is simulated.",
   "keywords": [
     "expo",
@@ -44,11 +44,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@pixelkit/native": "1.1.14"
+    "@pixelkit/native": "1.1.15"
   },
   "peerDependencies": {
     "@google/genai": "^2.21.0",
-    "@pixelkit/mlkit": "1.1.11",
+    "@pixelkit/mlkit": "1.1.15",
     "expo": "~57.0.20",
     "expo-audio": "~57.0.4",
     "expo-battery": "~57.0.2",

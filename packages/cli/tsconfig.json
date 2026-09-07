@@ -1,0 +1,18 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "outDir": "./build",
+    "rootDir": "./.",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": false,
+    "strict": true,
+    "skipLibCheck": true,
+    "module": "commonjs",
+    "types": ["node"],
+    "noEmit": false
+  },
+  "include": [
+    "./index.ts"
+  ]
+}

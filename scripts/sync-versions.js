@@ -20,6 +20,7 @@ const PACKAGES = {
   pixelkit: 'pixelkit',
   '@pixelkit/native': 'native',
   '@pixelkit/mlkit': 'mlkit',
+  '@pixelkit/cli': 'cli',
 };
 const NAMES = Object.keys(PACKAGES);
 
@@ -48,9 +49,13 @@ for (const name of NAMES) {
   const p = path.join(ROOT, 'packages', PACKAGES[name], 'package.json');
   const pkg = readJson(p);
   pkg.version = version;
-  // pixelkit pins its native modules exactly; they are published from this repo in lockstep.
+  // pixelkit pins its native modules exactly, in both dependencies and peerDependencies. Missing
+  // the peer block leaves a pin on a version that was never published, and npm then tries to fetch
+  // it from the registry instead of using the workspace symlink, so a plain npm install fails 404.
   for (const dep of NAMES) {
-    if (pkg.dependencies && pkg.dependencies[dep]) pkg.dependencies[dep] = version;
+    for (const field of ['dependencies', 'peerDependencies']) {
+      if (pkg[field] && pkg[field][dep]) pkg[field][dep] = version;
+    }
   }
   writeJson(p, pkg);
 }

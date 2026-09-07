@@ -7,7 +7,7 @@
  *
  * Ground truth (Sept 2026): Pixel 11 Pro / Pro XL / Pro Fold removed the IR thermometer and
  * replaced it with the HiLight LED array. Gemini Nano tiers: Pixel 11 = nano-v4, Pixel 9/10 = nano-v3,
- * Pixel 8 = nano-v2. See docs/research/PIXEL_11_PRO_DEEP_DIVE.md.
+ * Pixel 8 = nano-v2.
  */
 
 /** On-device Gemini Nano model tier served by AICore, inferred from device generation. */

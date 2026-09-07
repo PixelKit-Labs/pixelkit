@@ -220,7 +220,6 @@ Empirically measured and confirmed on the physical Google Pixel 11 Pro testbed o
 | **Not Declared** | `neural_processing_unit`, `hardware.ranging` (`hasNpuFeature` and `hasRangingFeature` are accurately `false`) |
 | **Object Thermometer** | **Absent.** Infrared thermopile from Pixel 8–10 Pro was retired. Sensor list contains no non-contact temperature sensor. |
 
-*Full adb shell captures are preserved in [`docs/research/`](./docs/research/).*
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -249,7 +248,7 @@ npm run hilight:daemon    # Pushes to device, starts as UID 2000, and forwards p
 | **Not Running** | `unavailable` | `unavailable` | The LEDs cannot be driven; the control functions refuse rather than pretending |
 | **Non-Pro Device** | `unsupported` | `unavailable` | Actuator controls automatically hide |
 
-Detailed architectural analysis is documented in [`docs/research/HILIGHT_LED_ARRAY.md`](./docs/research/HILIGHT_LED_ARRAY.md).
+The protocol is documented in the `useHiLight` JSDoc and in [docs/api/pro-exclusives.md](./docs/api/pro-exclusives.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -600,10 +599,6 @@ cd android && ./gradlew assembleRelease
   * [System & Media](./docs/api/system-media.md): `useAudio`, `useDisplay`, `useDevice`, `useNetwork`
   * [Complete Hardware API](./docs/HARDWARE_API.md): All modules consolidated
 * **Empirical Research & Captures**
-  * [Pixel 11 Pro Hardware Research](./docs/research/PIXEL_11_PRO_HARDWARE_RESEARCH.md)
-  * [Device Deep Dive](./docs/research/PIXEL_11_PRO_DEEP_DIVE.md)
-  * [ADB Device Profile](./docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md)
-  * [HiLight Hardware Protocol](./docs/research/HILIGHT_LED_ARRAY.md)
 * **Agent Guidelines**
   * [AGENTS.md](./AGENTS.md): Rules for autonomous coding agents (identical to `CLAUDE.md` and `GEMINI.md`)
   * [AI Primer](./docs/AI_PRIMER.md): Operational architecture and prompt contracts
