@@ -261,6 +261,14 @@ Under the no-mocks rule, any functionality without a physical HAL binding is exp
 * **JDK**: Version `17` (required for Kotlin compilation)
 * **Space-Free Build Path** (Windows): A directory path without whitespace (e.g. `C:\dev\pixel-delta\android`)
 
+#### For agents working in this repo
+
+The official Expo plugin gives Claude Code the Expo skills and slash commands this project's workflow assumes. `.claude/settings.json` already enables it for the repo; this installs it on your machine:
+
+```bash
+claude plugin install expo@claude-plugins-official
+```
+
 #### Optional: Google Android CLI
 
 Google's official `android` command-line utility provides rapid layout inspection, screenshot capture, and official documentation lookups:
@@ -510,7 +518,7 @@ export function DocumentProcessor() {
 <!-- RELEASE BUILD -->
 ## Release Build
 
-Current version: **1.1.0** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 29).
+Current version: **1.1.1** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 30).
 
 The full procedure — gates, versioning, the device walk, signing, EAS profiles, the GitHub release and the Play paperwork — is in [RELEASING.md](./RELEASING.md).
 

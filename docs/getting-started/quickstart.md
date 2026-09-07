@@ -36,6 +36,15 @@ The official Google Android CLI provides tools for SDK management, UI inspection
   android --version
   ```
 
+### 3. Claude Code Expo plugin (for agents)
+This repo is written to be worked on by coding agents, and `.claude/settings.json` enables the official Expo plugin — the Expo skills and slash commands that the SDK 57 workflow here depends on. Enabling it in the repo does not install it on your machine; install it once per workstation:
+
+```bash
+claude plugin install expo@claude-plugins-official
+```
+
+It installs at user scope, so it applies to every project you open. Skip it if you are not driving this repo with Claude Code.
+
 ---
 
 ## 🛠️ Installation & Setup
