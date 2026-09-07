@@ -245,7 +245,8 @@ Options map onto `GenerateContentRequest.Builder`: `systemInstruction` (a `Syste
 
 ### Example
 ```tsx
-import { useGeminiNano, HapticButton } from 'pixelkit';
+import { HapticButton } from 'pixelkit';
+import { useGeminiNano } from 'pixelkit/mlkit';
 
 export function OnDeviceAssistant() {
   const nano = useGeminiNano();
@@ -503,7 +504,8 @@ function useSpeech(): {
 
 ### Example
 ```tsx
-import { useGeminiNano, useSpeech, HapticButton } from 'pixelkit';
+import { useSpeech, HapticButton } from 'pixelkit';
+import { useGeminiNano } from 'pixelkit/mlkit';
 
 export function TalkBack() {
   const speech = useSpeech();

@@ -8,7 +8,8 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Colors, HapticButton, MetricCard, SectionHeader, StatChip, useHaptics, useNaturalLanguageAI } from 'pixelkit';
+import { Colors, HapticButton, MetricCard, SectionHeader, StatChip, useHaptics } from 'pixelkit';
+import { useNaturalLanguageAI } from 'pixelkit/mlkit';
 import { styles } from './styles';
 
 type NLPDemoKind = 'translate' | 'langid' | 'smartreply' | 'entities';

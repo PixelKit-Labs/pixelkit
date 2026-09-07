@@ -15,6 +15,7 @@ const config = getDefaultConfig(__dirname);
 
 const ALIASES = {
   pixelkit: path.resolve(__dirname, 'packages/pixelkit/src/index.ts'),
+  'pixelkit/mlkit': path.resolve(__dirname, 'packages/pixelkit/src/mlkit.ts'),
   '@pixelkit/native': path.resolve(__dirname, 'packages/native/index.ts'),
   '@pixelkit/mlkit': path.resolve(__dirname, 'packages/mlkit/index.ts'),
 };

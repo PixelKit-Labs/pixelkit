@@ -4,6 +4,46 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.12] - 2026-09-07
+
+The package split did not do the thing it was split for. This fixes that.
+
+### Fixed
+- **`pixelkit` forced `@pixelkit/mlkit` on every consumer.** It was a hard dependency, so
+  `npm i pixelkit` installed it, and Expo autolinking scans `node_modules` for
+  `expo-module.config.json` without caring whether any JavaScript imports the module. Merely being
+  installed put 19 ML Kit artifacts in the APK, applied `-Xskip-metadata-version-check` and pinned
+  every `kotlin-stdlib` in the consumer's Gradle build. Someone who wanted `useCPU()` paid all of
+  it, which is exactly the cost 1.1.10 claimed to have separated.
+
+### Changed
+- **Two entry points.** `pixelkit` needs only `@pixelkit/native`. The four hooks that need ML Kit
+  are exported from **`pixelkit/mlkit`**, and `@pixelkit/mlkit` is an *optional* peer dependency.
+  Do not install it and you never import the subpath, Metro never resolves it, autolinking never
+  sees it, and the APK never grows.
+
+  ```ts
+  import { useCPU } from 'pixelkit';               // @pixelkit/native only
+  import { useGeminiNano } from 'pixelkit/mlkit';  // requires @pixelkit/mlkit
+  ```
+
+  Moved: `useGeminiNano`, `useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI`, plus
+  `buildNanoTurn`, `NANO_SYSTEM_INSTRUCTION` and `TaskTone`. Done before the first publish; moving
+  an entry point afterwards is a breaking change.
+- `packages/pixelkit/mlkit.js` and `mlkit.d.ts` at the package root resolve the subpath on bundlers
+  that ignore the `exports` map, so it works on older Metro too.
+
+### Added
+- `npm run parity` gained a fifth check: **every hook file in the package is exported from one of
+  the two entries.** It is the reverse of the first check - that one catches a hook with no home,
+  this one catches a hook that quietly stopped being public, which splitting the barrel in two made
+  easy to do by accident and which no other check would notice, since nothing downstream can see an
+  unexported hook. Verified by mutation: removing `useVisionAI` from the barrel fails the build
+  naming it. Waivable under `"internal"` in `scripts/parity-waivers.json`.
+- The exported-hook scan now reads both entries and strips comments first. Without that, a hook
+  merely *named* in a note counted as exported - which it briefly did, and which made the check
+  pass for the wrong reason.
+
 ## [1.1.11] - 2026-09-07
 
 ### Fixed

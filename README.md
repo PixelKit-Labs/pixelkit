@@ -485,7 +485,7 @@ export default function ThermalMonitor() {
 Run local conversational inference without cloud dependencies:
 
 ```tsx
-import { useGeminiNano } from 'pixelkit';
+import { useGeminiNano } from 'pixelkit/mlkit';
 
 export function OnDeviceAssistant() {
   const nano = useGeminiNano();
@@ -508,7 +508,7 @@ export function OnDeviceAssistant() {
 ### 3. On-Device ML Kit Summarization & Rewriting
 
 ```tsx
-import { useGenAITasks } from 'pixelkit';
+import { useGenAITasks } from 'pixelkit/mlkit';
 
 export function DocumentProcessor() {
   const tasks = useGenAITasks();

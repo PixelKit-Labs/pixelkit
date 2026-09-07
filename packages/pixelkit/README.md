@@ -3,12 +3,22 @@
 The Google Pixel 11 Pro as React hooks: silicon telemetry, sensors, radios, security, and Gemini
 running on the device itself.
 
+Telemetry, sensors, radios, security and cloud Gemini:
+
 ```bash
-npx expo install pixelkit pixel-native pixel-nano
+npx expo install pixelkit @pixelkit/native
+```
+
+On-device ML - Gemini Nano, vision, natural language - is opt-in, because it puts 19 ML Kit
+artifacts in your APK. Install it only if you want those hooks:
+
+```bash
+npx expo install @pixelkit/mlkit
 ```
 
 ```tsx
 import { useCPU, useGemini, MetricCard } from 'pixelkit';
+import { useGeminiNano } from 'pixelkit/mlkit'; // only with @pixelkit/mlkit installed
 
 function Compute() {
   const cpu = useCPU();

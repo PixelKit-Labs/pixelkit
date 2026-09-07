@@ -14,8 +14,6 @@
  *   useHaptics,
  *   useSpeechAI,
  *   useGemini,
- *   useGeminiNano,
- *   useVisionAI,
  *   useDevice,
  *   useDisplay,
  *   useBiometrics,
@@ -76,10 +74,10 @@ export { useUWB } from './hardware/useUWB';
 // AI, Voice & Tensor TPU Hooks
 export { useTPU } from './ai/useTPU';
 export { useGemini, type SafetyThreshold, type GroundingSummary } from './ai/useGemini';
-export { useGeminiNano, buildNanoTurn, NANO_SYSTEM_INSTRUCTION } from './ai/useGeminiNano';
-export { useGenAITasks, type TaskTone } from './ai/useGenAITasks';
-export { useNaturalLanguageAI } from './ai/useNaturalLanguageAI';
-export { useVisionAI } from './ai/useVisionAI';
+
+// useGeminiNano, useGenAITasks, useVisionAI and useNaturalLanguageAI are exported from
+// 'pixelkit/mlkit'. They need @pixelkit/mlkit, whose 19 ML Kit artifacts are a build cost that
+// installing the package imposes whether or not anything imports it. See src/mlkit.ts.
 export { useSpeechAI } from './ai/useSpeechAI';
 export { useSpeech } from './ai/useSpeech';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';

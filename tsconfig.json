@@ -11,6 +11,9 @@
       ],
       "@pixelkit/mlkit": [
         "./packages/mlkit/index.ts"
+      ],
+      "pixelkit/mlkit": [
+        "./packages/pixelkit/src/mlkit.ts"
       ]
     }
   },

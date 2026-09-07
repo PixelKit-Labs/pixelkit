@@ -69,7 +69,13 @@ for (const m of surface.matchAll(/^ {2}(use\w+): \{ tab: '(\w+)', section: '(\w+
   homes[m[1]] = { tab: m[2], section: m[3] };
 }
 
-const indexSrc = read(path.join(LIB, 'src', 'index.ts'));
+// The package has two entry points: 'pixelkit' and 'pixelkit/mlkit'. A hook is public if either
+// exports it, so both are read. Comments are stripped first, or a hook merely *mentioned* in a note
+// would count as exported.
+const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+const indexSrc = [read(path.join(LIB, 'src', 'index.ts')), read(path.join(LIB, 'src', 'mlkit.ts'))]
+  .map(stripComments)
+  .join(String.fromCharCode(10));
 const exportedHooks = [...new Set([...indexSrc.matchAll(/\buse[A-Z]\w+/g)].map((m) => m[0]))];
 const screenSources = Object.fromEntries(Object.keys(TAB_SOURCES).map((tab) => [tab, tabSource(tab)]));
 const allScreens = Object.values(screenSources).join('\n');
@@ -175,6 +181,26 @@ for (const [name, src] of Object.entries(screenSources)) {
     const [, obj, fn] = m;
     if (/^(start|set|seek|save|load|write|select|trigger)[A-Z]/.test(fn)) {
       failures.push(name + ': onPress={' + obj + '.' + fn + '} passes the press event as the first argument — wrap it in an arrow function');
+    }
+  }
+}
+
+
+// 5. Every hook file in the package is exported from one of the two entries.
+//    The reverse of check 1: that one catches a hook with no home, this one catches a hook that
+//    quietly stopped being public. Splitting the barrel in two made this easy to do by accident,
+//    and an unexported hook fails no other check because nothing downstream can see it.
+for (const dir of HOOK_DIRS) {
+  const full = path.join(ROOT, LIB, 'src', dir);
+  for (const file of fs.readdirSync(full).filter((f) => /^use[A-Z]\w*\.tsx?$/.test(f))) {
+    const hook = file.replace(/\.tsx?$/, '');
+    if (WAIVED.internal && WAIVED.internal.includes(hook)) continue;
+    if (!mentions(indexSrc, hook)) {
+      failures.push(
+        `${hook} exists in ${LIB}/src/${dir} but is exported from neither 'pixelkit' nor ` +
+          `'pixelkit/mlkit', so nothing can import it. Export it, or list it under "internal" in ` +
+          `scripts/parity-waivers.json.`
+      );
     }
   }
 }

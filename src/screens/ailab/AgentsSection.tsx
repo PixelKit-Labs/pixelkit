@@ -10,7 +10,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import PixelNative, { type AppFunctionInfo } from '@pixelkit/native';
-import { Colors, Fonts, HapticButton, MetricCard, SectionHeader, StatChip, useGenAITasks, useHaptics, useHiLight } from 'pixelkit';
+import { Colors, Fonts, HapticButton, MetricCard, SectionHeader, StatChip, useHaptics, useHiLight } from 'pixelkit';
+import { useGenAITasks } from 'pixelkit/mlkit';
 import { styles } from './styles';
 
 export const AgentsSection: React.FC<{
