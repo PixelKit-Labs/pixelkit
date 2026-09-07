@@ -16,6 +16,16 @@ Layout polish for bottom navigation bar and README presentation following Best-R
 ### Fixed
 - Bottom bar clipping: docked navigation bar in normal flex flow with `backgroundColor: Colors.dark.background` and normalized scroll container padding across screens, ensuring content is never obscured behind the tab bar.
 
+## [1.1.3] - 2026-09-07
+
+### Fixed
+- **Gemini Nano had no system prompt control.** The hook has always exposed `systemInstruction`, `setSystemInstruction`, `candidateCount`, `setCandidateCount`, `maxOutputTokens` and `setMaxOutputTokens`; the parameter drawer offered temperature, top-K and the thinking toggle and nothing else, so the one thing that decides how the on-device model behaves could not be set. The Nano drawer now has the system instruction field, a max-output stepper bounded by `info.tokenLimit`, and a candidate-count stepper, and it says which way the instruction is delivered — a `SystemInstruction` part where AICore accepts one, prefixed to the prompt where it does not.
+
+### Added
+- The in-app documentation entry for `useGeminiNano` now lists its seven generation parameters and its setters. It had none of them, which is why nothing noticed the interface was missing two thirds of the model's controls.
+- Documentation for five more setters that hooks return and no entry mentioned: `useGemini.setSelectedModel`, `setTopP`, `setThinkingBudget`, `useAudio.setSilenceThresholdDbfs` and `useCamera.setLook`.
+- `npm run parity` gained a third check: **every setter a hook returns must be documented**. Verified by mutation — removing an entry fails the build naming the hook and the setter. The action-reachability check also now covers functions documented under `returns`, not only under `actions`, and matches whole words so a renamed entry cannot slip through as a substring.
+
 ## [1.1.2] - 2026-09-07
 
 PixelKit is a template, not an app that ships to a store. This release says so everywhere it

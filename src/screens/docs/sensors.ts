@@ -190,6 +190,13 @@ function Confirm() {
         output: 'Returns nothing; facing flips and viewProps carries it to the view.',
       },
       {
+        name: 'setLook(look)',
+        type: '(look: CameraLook) => void',
+        desc: 'Records a Look label in state. It does not change the image: Camera Looks belong to the Pixel Camera app and are not reachable from a third-party app.',
+        inputs: [{ name: 'look', type: 'CameraLook', desc: "One of Original, Natural, Shadows, Vanilla, Editorial, Velvet, Classic, Digi, Black Tie, Minimal." }],
+        output: 'Returns nothing; selectedLook updates so your own interface can show it.',
+      },
+      {
         name: 'setZoom(fraction)',
         type: '(fraction: number) => void',
         desc: 'Sets zoom as a fraction of the lens range, not an optical multiplier.',

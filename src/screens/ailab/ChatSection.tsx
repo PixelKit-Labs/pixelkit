@@ -319,6 +319,32 @@ export const ChatSection: React.FC<{
                       </View>
                     </View>
   
+                    <View style={styles.paramGrid}>
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Max output: {nano.maxOutputTokens}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => nano.setMaxOutputTokens(Math.max(128, nano.maxOutputTokens - 128))}>
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => nano.setMaxOutputTokens(Math.min(nano.info?.tokenLimit ?? 4096, nano.maxOutputTokens + 128))}>
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Candidates: {nano.candidateCount}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => nano.setCandidateCount(Math.max(1, nano.candidateCount - 1))}>
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => nano.setCandidateCount(Math.min(4, nano.candidateCount + 1))}>
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+
                     <View style={styles.toggleRow}>
                       <Text style={styles.paramLabel}>Thinking Mode (Nano Reasoner)</Text>
                       <TouchableOpacity
@@ -328,6 +354,21 @@ export const ChatSection: React.FC<{
                         <Text style={styles.togglePillText}>{nano.thinkingMode ? 'ENABLED' : 'DISABLED'}</Text>
                       </TouchableOpacity>
                     </View>
+
+                    <Text style={styles.paramLabel}>System instruction</Text>
+                    <TextInput
+                      style={styles.textInputFull}
+                      value={nano.systemInstruction}
+                      onChangeText={nano.setSystemInstruction}
+                      placeholder="How the model should behave"
+                      placeholderTextColor={Colors.dark.textMuted}
+                      multiline
+                    />
+                    <Text style={styles.cardDesc}>
+                      {nano.info?.systemPromptAvailable === false
+                        ? 'AICore does not accept a system part on this device, so this is prefixed to the prompt instead. It still counts against the token limit.'
+                        : 'Sent as a SystemInstruction part. AICore keeps no history, so it is re-sent with every turn and counts against the token limit.'}
+                    </Text>
                   </>
                 )}
               </View>

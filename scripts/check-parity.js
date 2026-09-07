@@ -44,6 +44,19 @@ function tabSource(tab) {
 
 const WAIVED = require('./parity-waivers.json');
 
+/** True when `name` appears in `text` as a whole word, not as part of a longer identifier. */
+function mentions(text, name) {
+  let from = 0;
+  for (;;) {
+    const at = text.indexOf(name, from);
+    if (at < 0) return false;
+    const after = text.charAt(at + name.length);
+    const isWordChar = after !== '' && (after === '_' || (after >= '0' && after <= '9') || (after >= 'a' && after <= 'z') || (after >= 'A' && after <= 'Z'));
+    if (!isWordChar) return true;
+    from = at + name.length;
+  }
+}
+
 const failures = [];
 const waivedSeen = [];
 
@@ -87,23 +100,73 @@ if (!docsData.includes('actions:')) {
 }
 let currentModule = null;
 let inActions = false;
-for (const line of docsData.split('\n')) {
-  const idMatch = line.match(/^ {4}id: '(\w+)',$/);
-  if (idMatch) { currentModule = idMatch[1]; inActions = false; continue; }
-  if (/^ {4}actions: \[/.test(line)) { inActions = true; continue; }
-  if (inActions && /^ {4}\],/.test(line)) { inActions = false; continue; }
-  if (!inActions || !currentModule) continue;
+let inReturns = false;
+for (const line of docsData.split(String.fromCharCode(10))) {
+  const quoted = (text) => {
+    const open = text.indexOf(String.fromCharCode(39));
+    if (open < 0) return null;
+    const close = text.indexOf(String.fromCharCode(39), open + 1);
+    return close < 0 ? null : text.slice(open + 1, close);
+  };
 
-  const nameMatch = line.match(/^\s+name: '([a-zA-Z]\w*)/);
-  if (!nameMatch) continue;
-  const key = currentModule + '.' + nameMatch[1];
+  if (line.startsWith('    id: ')) {
+    currentModule = quoted(line);
+    inActions = false;
+    inReturns = false;
+    continue;
+  }
+  if (line.trim() === 'actions: [') { inActions = true; inReturns = false; continue; }
+  if (line.trim() === 'returns: [') { inReturns = true; inActions = false; continue; }
+  if ((inActions || inReturns) && line === '    ],') { inActions = false; inReturns = false; continue; }
+  if (!currentModule || (!inActions && !inReturns)) continue;
+
+  // A setter documented under `returns` is still a function. An unreachable one is how the Gemini
+  // Nano system instruction stayed out of the interface while the hook had always exposed it.
+  if (inReturns && !line.includes('=>')) continue;
+
+  const isExpandedEntry = line.startsWith('        name: ');
+  const isInlineEntry = line.startsWith('      { name: ');
+  if (!isExpandedEntry && !isInlineEntry) continue;
+  const name = quoted(line);
+  if (!name) continue;
+
+  // A documented name may carry its call shape, e.g. "sendMessage(text)" or "a() / b()".
+  const called = name
+    .split('/')
+    .map((part) => part.trim().split('(')[0].trim())
+    .filter(Boolean);
+  if (called.length === 0) continue;
+
+  const key = currentModule + '.' + called[0];
   if (WAIVED[key]) { waivedSeen.push(key); continue; }
-  if (!allScreens.includes('.' + nameMatch[1])) {
+  if (!called.some((fn) => allScreens.includes('.' + fn))) {
     failures.push(key + ' is documented as a function but no screen calls it — wire a control, or add a reason to scripts/parity-waivers.json');
   }
 }
 
-// 3. A handler that takes arguments is never handed straight to onPress.
+// 3. Every setter a hook returns is documented. The Gemini Nano system instruction sat in the
+// hook, undocumented and therefore unnoticed, while the interface offered three of its twelve
+// parameters — this is the check that would have said so.
+const HOOK_DIRS = ['hardware', 'ai'];
+for (const dir of HOOK_DIRS) {
+  const full = path.join(ROOT, 'src', dir);
+  for (const file of fs.readdirSync(full).filter((f) => f.startsWith('use') && f.endsWith('.ts'))) {
+    const src = fs.readFileSync(path.join(full, file), 'utf8');
+    const start = src.lastIndexOf(String.fromCharCode(10) + '  return {');
+    if (start < 0) continue;
+    const returned = src.slice(start);
+    const setters = [...new Set([...returned.matchAll(new RegExp('\\bset[A-Z]\\w*', 'g'))].map((m) => m[0]))];
+    for (const setter of setters) {
+      if (!mentions(docsData, setter)) {
+        failures.push(
+          file.replace('.ts', '') + ' returns ' + setter + ' but no documentation entry mentions it — document it in src/screens/docs, or it will stay out of the interface unnoticed',
+        );
+      }
+    }
+  }
+}
+
+// 4. A handler that takes arguments is never handed straight to onPress.
 for (const [name, src] of Object.entries(screenSources)) {
   for (const m of src.matchAll(/onPress=\{(\w+)\.(\w+)\}/g)) {
     const [, obj, fn] = m;

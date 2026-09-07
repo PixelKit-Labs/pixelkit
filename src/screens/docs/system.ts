@@ -116,6 +116,13 @@ function ProFeatures() {
         output: 'Resolves with the recorded file URI, also stored in lastRecordingUri, or null when nothing was recording or the stop failed.',
       },
       {
+        name: 'setSilenceThresholdDbfs(dbfs)',
+        type: '(dbfs: number) => void',
+        desc: 'Moves the boundary between silence and speech that isSilent reports against.',
+        inputs: [{ name: 'dbfs', type: 'number', desc: 'Threshold in dBFS, -45 by default. A quiet room sits near -50, so raising it makes isSilent stricter.' }],
+        output: 'Returns nothing; isSilent re-evaluates on the next metering sample.',
+      },
+      {
         name: 'setQuality(quality)',
         type: "(quality: 'speech' | 'studio') => void",
         desc: 'Chooses the capture profile for the next recording, not the current one.',
