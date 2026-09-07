@@ -4,6 +4,30 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.2.1] - 2026-09-07
+
+### Removed
+- **`docs/` moved to [pixelkit-docs](https://github.com/PixelKit-Labs/pixelkit-docs).** This
+  repository is now packages and manifests, nothing else.
+
+  Stated plainly, because it is a real cost: documentation and the code it describes now live in
+  two repositories, so a hook rename and its documentation update cannot land in one commit. Rule 2
+  as previously written is no longer followable, and `CONTRIBUTING.md` says what is expected instead
+  - JSDoc on the export here, and the matching page in the docs repository, with a hook whose
+  documentation lands in a later pull request treated as unfinished.
+
+### Changed
+- `README.md` rewritten: **117 lines, down from 702.** The old one was a Best-README-Template
+  artifact that duplicated the API reference, the device facts, the project tree, three usage
+  examples and a roadmap, and pointed at fourteen files that had moved. Comparable libraries run
+  17 lines (shadcn/ui) to 190 (supabase-js); this one now leads with the install, the provenance
+  rule, the hook inventory grouped by area, and links out.
+- `CONTRIBUTING.md`'s documentation rule and add-a-hook loop reflect the split: the parity check
+  lives in the template repository and runs against the *published* package, so a hook exported here
+  with nowhere to try it fails a build there rather than here.
+- `RELEASING.md` points at the privacy and store-listing documents in the template, where an app
+  that actually ships to a store is assembled.
+
 ## [1.2.0] - 2026-09-07
 
 This repository is now only the SDK. The demo app, the design system and the template-specific

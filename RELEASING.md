@@ -115,9 +115,9 @@ it does not need rewriting.
 
 Needed once, then kept current:
 
-- **Privacy policy URL.** [`docs/PRIVACY.md`](./docs/PRIVACY.md) is the text; host it and give Play
+- **Privacy policy URL.** [`docs/PRIVACY.md`](https://github.com/PixelKit-Labs/pixelkit-template/blob/main/docs/PRIVACY.md) in the template is the text; host it and give Play
   the URL.
-- **Data safety form.** The answers are in [`docs/store-listing.md`](./docs/store-listing.md), with
+- **Data safety form.** The answers are in [`docs/store-listing.md`](https://github.com/PixelKit-Labs/pixelkit-template/blob/main/docs/store-listing.md) in the template, with
   the reasoning for each one.
 - **Permission declarations.** `READ_PHONE_STATE` and the location permissions need a stated
   purpose; the same file has the wording and what actually uses each permission.

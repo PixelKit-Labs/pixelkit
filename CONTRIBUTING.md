@@ -13,12 +13,14 @@ reports `unavailable` so the control refuses rather than pretending.
 If a feature cannot be driven for real, write the real path — a native module, a platform API — or
 report it unavailable. A plausible default is worse than a blank, because a blank is honest.
 
-**2. A function is not finished until it is documented in four places.** JSDoc on the export saying
-what it does and which platform API it uses; a structured entry in `src/screens/docs/*` with real
-types and a sentence per field; the matching `docs/api/*` and `docs/HARDWARE_API.md` sections; and
-the feature row in `README.md`.
+**2. A function is not finished until it is documented.** JSDoc on the export saying what it does
+and which platform API it uses, and the matching page in
+[pixelkit-docs](https://github.com/PixelKit-Labs/pixelkit-docs) with every input, every returned
+field and what failure looks like. A hook whose documentation lands in a later pull request is a
+hook nobody can use.
 
-`npm run parity` fails the build if you skip these, and it is specific about what is missing.
+The template repository runs a parity check against the published package: a hook this SDK exports
+with nowhere to try it fails its build. Documentation is reviewed here.
 
 ## Adding a hook
 
@@ -35,9 +37,9 @@ the feature row in `README.md`.
 ## Before you open a PR
 
 ```bash
-npm run verify     # typecheck + five parity checks
+npm run typecheck
 npm run build      # all three packages compile
-npx expo export -p android
+npm pack --dry-run -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit
 ```
 
 Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same commit. Run
