@@ -6,17 +6,6 @@
   <img src="./PixelKit_readme.jpg" alt="PixelKit SDK: a Google Pixel 11 Pro template, React hooks for hardware" width="100%" />
 </div>
 
-<!-- PROJECT SHIELDS -->
-<div align="center">
-
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
-</div>
-
 <!-- PROJECT HEADER -->
 <br />
 <div align="center">
@@ -89,8 +78,6 @@
 PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`modules/pixel-native` and `modules/pixel-nano`), eliminating fragmented native bridges.
 
 Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
-
-> **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'`. A value that cannot be read is `null` and renders as an em dash. Nothing is ever substituted with a plausible default.
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
 
