@@ -1,7 +1,7 @@
 {
-  "name": "pixel-native",
-  "version": "1.1.9",
-  "description": "Expo module for Google Pixel telemetry and actuators: SoC identity, CPU clusters, memory, thermal and ADPF headroom, display modes, GPU, torch, haptic envelopes. Android only.",
+  "name": "@pixelkit/native",
+  "version": "1.1.10",
+  "description": "Expo module for Google Pixel telemetry and actuators: SoC identity, CPU clusters, memory, thermal and ADPF headroom, display modes, GPU, torch, haptic envelopes. Zero third-party dependencies. Android only.",
   "keywords": [
     "expo",
     "expo-module",
@@ -14,7 +14,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PixelKit-Labs/pixelkit.git",
-    "directory": "packages/pixel-native"
+    "directory": "packages/native"
   },
   "homepage": "https://github.com/PixelKit-Labs/pixelkit#readme",
   "bugs": {
@@ -41,5 +41,8 @@
     "expo": "~57.0.20",
     "react": "19.2.3",
     "react-native": "0.86.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

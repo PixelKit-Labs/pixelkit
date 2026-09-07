@@ -93,7 +93,7 @@ Native AI modules cannot run in Expo Go. You need a **development build**.
 
 ```bash
 npm i expo-audio expo-speech expo-build-properties expo-dev-client
-npx create-expo-module@latest --local        # name it: pixel-nano
+npx create-expo-module@latest --local        # name it: mlkit
 npx expo prebuild --platform android --clean
 npx expo run:android                          # physical Pixel over USB
 ```

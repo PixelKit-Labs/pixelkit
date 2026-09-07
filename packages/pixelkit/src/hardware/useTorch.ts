@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import PixelNative, { type TorchInfo } from 'pixel-native';
+import PixelNative, { type TorchInfo } from '@pixelkit/native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useTorch';

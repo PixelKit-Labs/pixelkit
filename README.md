@@ -71,7 +71,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`packages/pixel-native` and `packages/pixel-nano`), eliminating fragmented native bridges.
+PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`packages/native` and `packages/mlkit`), eliminating fragmented native bridges.
 
 Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
 
@@ -319,7 +319,7 @@ curl -fsSL https://dl.google.com/android/cli/latest/linux_x86_64/install.sh | ba
    ```
 
 > [!NOTE]
-> **Expo Go is not supported.** PixelKit links two custom Kotlin Expo Modules (`pixel-native` and `pixel-nano`). Running in Expo Go will cause all native-backed telemetry to report `source: 'unavailable'`. Always use the development build (`expo-dev-client`).
+> **Expo Go is not supported.** PixelKit links two custom Kotlin Expo Modules (`@pixelkit/native` and `@pixelkit/mlkit`). Running in Expo Go will cause all native-backed telemetry to report `source: 'unavailable'`. Always use the development build (`expo-dev-client`).
 
 ### Wireless Debugging Workflow
 
@@ -583,7 +583,7 @@ cd android && ./gradlew assembleRelease
 ## Roadmap
 
 - [x] Expo SDK 57 and React Native 0.86 modular framework architecture
-- [x] Local Kotlin Expo Modules: `pixel-native` and `pixel-nano`
+- [x] Local Kotlin Expo Modules: `@pixelkit/native` and `@pixelkit/mlkit`
 - [x] Real-time CPU cluster frequency and governor telemetry via sysfs
 - [x] 120Hz LTPO display refresh rate listener and Choreographer frame pacing
 - [x] 8-LED HiLight rear halo control daemon over ADB (UID 2000)

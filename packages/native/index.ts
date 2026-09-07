@@ -1,5 +1,5 @@
 /**
- * @file modules/pixel-native/index.ts
+ * @file packages/native/index.ts
  * @description TypeScript bridge for the PixelNative Expo Module: real Android telemetry and actuators
  * (SoC identity, CPU, memory, thermal/ADPF headroom, display modes, GPU, torch, haptic envelopes).
  * Resolves to `null` on web or when the native module is not compiled in (Expo Go), so hooks can

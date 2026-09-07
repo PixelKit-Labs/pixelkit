@@ -4,7 +4,7 @@ This file is the single source of truth for any coding agent (Claude, Gemini, An
 
 ## Project
 
-PixelKit is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and two local Kotlin Expo Modules: `packages/pixel-native` (telemetry and actuators) and `packages/pixel-nano` (Gemini Nano via ML Kit GenAI on AICore). Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four tabs — Silicon, AI Lab, Sensors, Docs — each divided into the sections declared in `src/core/surface.ts`, which is also where every hook declares the one screen that demonstrates it.
+PixelKit is an Expo SDK 57 / React Native 0.86 hardware and AI framework for the Google Pixel 11 Pro (Android 17, Tensor G6). Hardware access goes through Expo modules and two local Kotlin Expo Modules: `packages/native` (telemetry and actuators) and `packages/mlkit` (Gemini Nano via ML Kit GenAI on AICore). Cloud AI uses `@google/genai` on `gemini-3.8-flash`. The app has four tabs — Silicon, AI Lab, Sensors, Docs — each divided into the sections declared in `src/core/surface.ts`, which is also where every hook declares the one screen that demonstrates it.
 
 Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do not restate marketing claims (process node, brightness figures, "post-quantum") as facts in code or comments.
 
@@ -53,8 +53,8 @@ packages/pixelkit/           the published SDK (npm: pixelkit)
   src/theme/                 colors (tokens), mode (state -> colour)
   src/components/            ScreenScaffold, HapticButton, MetricCard, SensorVisualizer, Decor
   src/index.ts               the public API; nothing is reachable unless exported here
-packages/pixel-native/       Kotlin Expo Module + TS bridge: telemetry, actuators
-packages/pixel-nano/         Kotlin Expo Module + TS bridge: Gemini Nano (ML Kit GenAI Prompt API)
+packages/native/       Kotlin Expo Module + TS bridge: telemetry, actuators
+packages/mlkit/         Kotlin Expo Module + TS bridge: Gemini Nano (ML Kit GenAI Prompt API)
 
 App.tsx                      demo shell: fonts, scrims, wordmark, tabs
 src/core/surface.ts          the demo's map of tabs, sections and hook homes

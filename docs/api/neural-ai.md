@@ -132,7 +132,7 @@ export function AssistantChat() {
 
 ## `useGeminiNano`
 
-Gemini Nano on-device through the local `packages/pixel-nano` Expo Module, which wraps `com.google.mlkit:genai-prompt` (the ML Kit GenAI Prompt API on AICore). Status, base model name, token limit and feature flags come from `GenerativeModel`; latency and time-to-first-token are measured around the native call; token counts come from the on-device tokenizer.
+Gemini Nano on-device through the local `packages/mlkit` Expo Module, which wraps `com.google.mlkit:genai-prompt` (the ML Kit GenAI Prompt API on AICore). Status, base model name, token limit and feature flags come from `GenerativeModel`; latency and time-to-first-token are measured around the native call; token counts come from the on-device tokenizer.
 
 AICore keeps no conversation state, so `buildNanoTurn()` re-sends a capped transcript (6,000 characters, newest turns first) with the system instruction. **There is no cloud fallback and no simulated reply**: when the model is not `available`, `sendMessage` appends a `system`-role error.
 
@@ -226,7 +226,7 @@ function useGeminiNano(): {
 | :--- | :--- | :--- | :--- |
 | `buildNanoTurn(history, user)` | `history: AIMessage[]` — the conversation so far; `system` entries are skipped. `user: string` — the new turn. | `string` — a `User:` / `Assistant:` transcript ending in `Assistant:` | Builds the prompt AICore actually receives, capped at 6,000 characters with the newest turns kept. Exported so a caller can count its tokens first. |
 
-### Native module (`packages/pixel-nano`)
+### Native module (`packages/mlkit`)
 | Function | Inputs | Returns | ML Kit call |
 | :--- | :--- | :--- | :--- |
 | `checkStatus()` | none | `Promise<NanoStatus>` | `GenerativeModel.checkStatus()`, the `FeatureStatus` int mapped to a string |
@@ -241,7 +241,7 @@ function useGeminiNano(): {
 
 Options map onto `GenerateContentRequest.Builder`: `systemInstruction` (a `SystemInstruction` part), `temperature`, `topK`, `candidateCount`, `maxOutputTokens`, `seed`, `thinking` (`enableThinking`), `imageBase64` (one `ImagePart`). Errors surface as `E_NANO_<ErrorCode>` (`NOT_AVAILABLE`, `BUSY`, `REQUEST_TOO_LARGE`, `BACKGROUND_USE_BLOCKED`, …).
 
-**Build note:** genai-prompt beta4 is compiled with Kotlin 2.3 while Expo 57 builds with Kotlin 2.1.20. The module passes `-Xskip-metadata-version-check` for its own compile and pins every `kotlin-stdlib` artifact to the project's Kotlin version (see `packages/pixel-nano/android/build.gradle`).
+**Build note:** genai-prompt beta4 is compiled with Kotlin 2.3 while Expo 57 builds with Kotlin 2.1.20. The module passes `-Xskip-metadata-version-check` for its own compile and pins every `kotlin-stdlib` artifact to the project's Kotlin version (see `packages/mlkit/android/build.gradle`).
 
 ### Example
 ```tsx

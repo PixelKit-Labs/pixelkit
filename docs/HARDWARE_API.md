@@ -57,7 +57,7 @@ import {
 
 ## 💻 Silicon & Compute Hooks
 
-> All silicon hooks read real device state through `PixelNative` (`packages/pixel-native`). Full field-by-field output tables live in [`docs/api/silicon-compute.md`](api/silicon-compute.md).
+> All silicon hooks read real device state through `PixelNative` (`packages/native`). Full field-by-field output tables live in [`docs/api/silicon-compute.md`](api/silicon-compute.md).
 
 ### `useCPU`
 * **File Path**: `packages/pixelkit/src/hardware/useCPU.ts`
@@ -267,7 +267,7 @@ error: string | null; source: TelemetrySource;
 ---
 
 ### `useGeminiNano`
-* **File Path**: `packages/pixelkit/src/ai/useGeminiNano.ts` + `packages/pixel-nano` (Kotlin)
+* **File Path**: `packages/pixelkit/src/ai/useGeminiNano.ts` + `packages/mlkit` (Kotlin)
 * **Target Hardware**: Gemini Nano on the Tensor G6 through **AICore**, reached with `com.google.mlkit:genai-prompt`. Verified with AICore `0.release.prod_aicore_20260723.00_RC11`.
 * **Description**: Status, base model name, token limit and feature flags from `GenerativeModel`; download with progress events; streaming generation; latency and first-token time measured natively; output tokens from the on-device tokenizer. No cloud fallback, no simulated reply.
 * **Inputs**: none as arguments. Generation parameters are held as state; per-call overrides go in `NanoOptions` (`systemInstruction`, `temperature`, `topK`, `candidateCount`, `maxOutputTokens`, `seed`, `thinking`, `imageBase64`).
@@ -304,7 +304,7 @@ thinkingMode: boolean; systemInstruction: string;
 ---
 
 ### `useGenAITasks`
-* **File Path**: `packages/pixelkit/src/ai/useGenAITasks.ts` + `packages/pixel-nano` (Kotlin)
+* **File Path**: `packages/pixelkit/src/ai/useGenAITasks.ts` + `packages/mlkit` (Kotlin)
 * **Target Hardware**: Tensor G6 via ML Kit GenAI task APIs on AICore.
 * **Description**: Dedicated on-device task clients — summarize, proofread, rewrite, describe an image — each measured and reported with hardware provenance. Unlike the `useGeminiNano` equivalents these resolve to `null` on failure instead of throwing, and keep the last result in state.
 * **Inputs**: none as arguments; each task takes its own text or image.
@@ -326,7 +326,7 @@ rewriteResult: RewriteResult | null; imageDescriptionResult: ImageDescriptionRes
 ---
 
 ### `useNaturalLanguageAI`
-* **File Path**: `packages/pixelkit/src/ai/useNaturalLanguageAI.ts` + `packages/pixel-nano` (Kotlin)
+* **File Path**: `packages/pixelkit/src/ai/useNaturalLanguageAI.ts` + `packages/mlkit` (Kotlin)
 * **Target Hardware**: ML Kit natural language models, entirely offline.
 * **Description**: 58-language translation, language identification across 50+ languages with confidences, context-aware smart replies, and structured entity extraction (dates, addresses, flight numbers, money, phone numbers, tracking codes).
 * **Inputs**: none as arguments. The first translation for a language pair downloads that model, so it is slower than the ones after it.
@@ -402,7 +402,7 @@ error: string | null; source: TelemetrySource;
 ---
 
 ### `useVisionAI`
-* **File Path**: `packages/pixelkit/src/ai/useVisionAI.ts` + `packages/pixel-nano` (Kotlin)
+* **File Path**: `packages/pixelkit/src/ai/useVisionAI.ts` + `packages/mlkit` (Kotlin)
 * **Target Hardware**: Camera stack plus the ML Kit on-device vision suite, and Gemini multimodal in the cloud.
 * **Description**: OCR v2, 1D/2D barcode and QR scanning, image labelling, face detection and 468-point 3D mesh, object detection and tracking, pose landmarks, selfie and subject segmentation, digital ink recognition — all on-device — plus cloud Gemini scene analysis with a JSON schema.
 * **Inputs**: none as arguments. Every on-device function takes `imageInput: string`, **a file URI or a base64 image**; the cloud path needs base64, which is why `pickImage` requests it.

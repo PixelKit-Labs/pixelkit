@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import PixelNative, { type UwbRangingResult } from 'pixel-native';
+import PixelNative, { type UwbRangingResult } from '@pixelkit/native';
 import { logEvent, logError, traced, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useUWB';

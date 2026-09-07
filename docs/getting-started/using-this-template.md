@@ -17,8 +17,8 @@ someone else's.
 | `app.json` | `expo.name`, `expo.slug` | The display name and the Expo project slug |
 | `app.json` | `expo.android.package` | `com.pixelkit.sdk` → your own reverse-domain id. This is permanent once published to Play |
 | `package.json` | `name` | Also `private: true` unless you intend to publish to npm |
-| `packages/pixel-native/android/build.gradle` | `group = 'com.pixelkit'` | Gradle coordinates for the local module |
-| `packages/pixel-nano/android/build.gradle` | `group = 'com.pixelkit'` | Same |
+| `packages/native/android/build.gradle` | `group = 'com.pixelkit'` | Gradle coordinates for the local module |
+| `packages/mlkit/android/build.gradle` | `group = 'com.pixelkit'` | Same |
 | `scripts/hilight-daemon/src/com/pixelkit/hilight/` | Java package and directory | Rename the folder and the `package` line together |
 | `scripts/hilight-daemon/run.ps1` | `pkill -f com.pixelkit.hilight.HiLightDaemon` | Must match the package above or the daemon will not stop |
 | `packages/pixelkit/src/ai/geminiClient.ts` | `PIXELKIT_GEMINI_API_KEY` | The SecureStore key. Changing it orphans any key a user already saved |
@@ -50,8 +50,8 @@ These are the parts worth taking, and the reason the template exists:
 
 | Remove | If you do not need | Also remove |
 | :--- | :--- | :--- |
-| `packages/pixel-nano/` | Gemini Nano, ML Kit vision or ML Kit language | `packages/pixelkit/src/ai/useGeminiNano.ts`, `useGenAITasks.ts`, `useNaturalLanguageAI.ts`, `useVisionAI.ts`, the AI Lab sections that use them |
-| `packages/pixel-native/` | CPU, GPU, memory, thermals, torch, haptics detail, radios | Most of `packages/pixelkit/src/hardware/`; the hooks then report `unavailable`, which is honest but empty |
+| `packages/mlkit/` | Gemini Nano, ML Kit vision or ML Kit language | `packages/pixelkit/src/ai/useGeminiNano.ts`, `useGenAITasks.ts`, `useNaturalLanguageAI.ts`, `useVisionAI.ts`, the AI Lab sections that use them |
+| `packages/native/` | CPU, GPU, memory, thermals, torch, haptics detail, radios | Most of `packages/pixelkit/src/hardware/`; the hooks then report `unavailable`, which is honest but empty |
 | `scripts/hilight-daemon/` | The camera-bar LEDs | `packages/pixelkit/src/hardware/useHiLight.ts` and its section |
 | `packages/pixelkit/src/ai/` cloud hooks | Cloud Gemini | `@google/genai` from `package.json` |
 

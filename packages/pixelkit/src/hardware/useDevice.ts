@@ -26,7 +26,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Device from 'expo-device';
 import * as Battery from 'expo-battery';
 import * as Network from 'expo-network';
-import PixelNative, { type BatteryTelemetry } from 'pixel-native';
+import PixelNative, { type BatteryTelemetry } from '@pixelkit/native';
 import { logEvent, logError, recordMetric, tracedSafe, type TelemetrySource } from '../core/observability';
 import { DeviceTelemetry } from '../core/types';
 

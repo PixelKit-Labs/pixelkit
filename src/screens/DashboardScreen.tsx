@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Chip, Colors, HapticButton, MetricCard, Reactor, ScreenScaffold, SectionHeader, TelemetryRow, Type, resetObservability, resolveMode, useADPF, useCPU, useCapabilities, useCellular, useDevice, useDisplay, useGPU, useMemory, useNetwork, useObservability, useTPU } from 'pixelkit';
-import { isPixelNativeAvailable } from 'pixel-native';
+import { isPixelNativeAvailable } from '@pixelkit/native';
 import { sectionsFor } from '../core/surface';
 
 const fmt = (v: number | null | undefined, digits = 0) => (v == null ? null : Number(v.toFixed(digits)));

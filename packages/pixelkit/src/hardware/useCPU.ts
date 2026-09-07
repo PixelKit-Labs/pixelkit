@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import PixelNative, { type CpuInfo, type CpuLoad } from 'pixel-native';
+import PixelNative, { type CpuInfo, type CpuLoad } from '@pixelkit/native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useCPU';

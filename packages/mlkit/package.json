@@ -1,7 +1,7 @@
 {
-  "name": "pixel-nano",
-  "version": "1.1.9",
-  "description": "Expo module for Gemini Nano on-device inference via the ML Kit GenAI Prompt API on AICore. Android only.",
+  "name": "@pixelkit/mlkit",
+  "version": "1.1.10",
+  "description": "Expo module for the on-device Google ML Kit surface: Gemini Nano through the GenAI Prompt API on AICore, plus vision and natural language. Android only.",
   "keywords": [
     "expo",
     "expo-module",
@@ -14,7 +14,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PixelKit-Labs/pixelkit.git",
-    "directory": "packages/pixel-nano"
+    "directory": "packages/mlkit"
   },
   "homepage": "https://github.com/PixelKit-Labs/pixelkit#readme",
   "bugs": {
@@ -41,5 +41,8 @@
     "expo": "~57.0.20",
     "react": "19.2.3",
     "react-native": "0.86.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

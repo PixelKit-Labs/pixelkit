@@ -1,7 +1,7 @@
 # Silicon & Compute API Reference 💻
 > **Tensor G6 CPU, PowerVR GPU, on-device AI stack, memory, and ADPF thermals, all read from the device**
 
-Every hook in this document reads real Android platform state through the local **PixelNative** Expo Module (`packages/pixel-native`). Nothing is fabricated: when a value cannot be read it is `null` and the hook's `source` reports `'unavailable'`. See [Observability](#observability--provenance) for the provenance model.
+Every hook in this document reads real Android platform state through the local **PixelNative** Expo Module (`packages/native`). Nothing is fabricated: when a value cannot be read it is `null` and the hook's `source` reports `'unavailable'`. See [Observability](#observability--provenance) for the provenance model.
 
 Each entry documents its **Inputs** (what you pass in, with defaults and units), its **Outputs** (every field it returns, with type and meaning) and its **Functions** (what each callable takes and what it resolves to).
 
@@ -123,7 +123,7 @@ function useGPU(): {
 
 ## `useTPU`
 
-The Tensor TPU is reachable through AICore (Gemini Nano via ML Kit Prompt API in `pixel-nano`) or LiteRT. This hook reports what is verifiably installed; real on-device inference metrics (latency, token counts, TTFT) live in `useGeminiNano()`. `benchmarkTPU()` runs a real 256×256 JS matmul and reports it as **CPU fallback**, clearly labelled.
+The Tensor TPU is reachable through AICore (Gemini Nano via ML Kit Prompt API in `@pixelkit/mlkit`) or LiteRT. This hook reports what is verifiably installed; real on-device inference metrics (latency, token counts, TTFT) live in `useGeminiNano()`. `benchmarkTPU()` runs a real 256×256 JS matmul and reports it as **CPU fallback**, clearly labelled.
 
 Verified on Pixel 11 Pro: AICore `0.release.prod_aicore_20260723.00_RC11`, Private Compute Services `1.0.release.962568596`. Requires the `<queries>` declaration in the module manifest (Android 11+ package visibility).
 
@@ -316,7 +316,7 @@ There is deliberately no `simulated` member: the type makes a fabricated reading
 
 ## PixelNative module
 
-`packages/pixel-native` (Kotlin, Expo Modules API, autolinked from `./modules`). Requires a development build; on web and in Expo Go the TS bridge resolves to `null` and hooks report `unavailable`.
+`packages/native` (Kotlin, Expo Modules API, autolinked from `./modules`). Requires a development build; on web and in Expo Go the TS bridge resolves to `null` and hooks report `unavailable`.
 
 ### Functions
 | Function | Inputs | Returns | Android API |

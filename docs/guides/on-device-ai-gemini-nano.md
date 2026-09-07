@@ -1,8 +1,8 @@
 # On-Device AI with Gemini Nano 4 (AICore + ML Kit GenAI) 🧠
 
-> The `pixel-nano` local Expo Module bridges the **ML Kit GenAI Prompt API** to React Native and `useGeminiNano` wraps it. Target: Pixel 11 / 11 Pro / 11 Pro XL / 11 Pro Fold (Gemini Nano tier `nano-v4`). Works on Pixel 9 and 10 with `nano-v3`.
+> The `@pixelkit/mlkit` local Expo Module bridges the **ML Kit GenAI Prompt API** to React Native and `useGeminiNano` wraps it. Target: Pixel 11 / 11 Pro / 11 Pro XL / 11 Pro Fold (Gemini Nano tier `nano-v4`). Works on Pixel 9 and 10 with `nano-v3`.
 
-**Status (1.0.2):** implemented in `packages/pixel-nano` and `packages/pixelkit/src/ai/useGeminiNano.ts`, wired into the AI Lab as a second conversation engine. The shipped code differs from the sketches below where the beta4 AAR disagrees with the docs:
+**Status (1.0.2):** implemented in `packages/mlkit` and `packages/pixelkit/src/ai/useGeminiNano.ts`, wired into the AI Lab as a second conversation engine. The shipped code differs from the sketches below where the beta4 AAR disagrees with the docs:
 
 | Guide sketch | What genai-prompt 1.0.0-beta4 actually exposes (from the AAR) |
 | :--- | :--- |
@@ -21,7 +21,7 @@ Structured output (`@Generable`, KSP) and the feature APIs (summarization, proof
 
 ```text
 React Native (Hermes)
-  useGeminiNano()  ───►  packages/pixel-nano/packages/pixelkit/src/index.ts   (requireNativeModule('PixelNano'))
+  useGeminiNano()  ───►  packages/mlkit/packages/pixelkit/src/index.ts   (requireNativeModule('PixelNano'))
                               │ JSI
                          PixelNanoModule.kt  (Expo Modules API, Kotlin coroutines)
                               │
@@ -52,14 +52,14 @@ Facts that drive the design:
 
 ```bash
 npm i expo-build-properties expo-dev-client
-npx create-expo-module@latest --local     # prompt: name "pixel-nano", Android package "expo.modules.pixelnano"
+npx create-expo-module@latest --local     # prompt: name "@pixelkit/mlkit", Android package "expo.modules.pixelnano"
 ```
 
 `app.json` additions (see [guides README](./README.md#3-build-prerequisites-shared-by-all-three-guides) for the full block): `compileSdkVersion` / `targetSdkVersion` **36**, `minSdkVersion` **26**. ML Kit GenAI needs only minSdk 26, so Android 17's `android-37.0` platform is not required for this module; raise compileSdk once Expo's AGP resolves minor-versioned SDKs.
 
 ### 2.2 Gradle dependencies for the module
 
-`packages/pixel-nano/android/build.gradle`:
+`packages/mlkit/android/build.gradle`:
 
 ```groovy
 plugins { id "com.google.devtools.ksp" }   // needed for the structured-output schema compiler
@@ -79,7 +79,7 @@ Version history that matters (from the [ML Kit release notes](https://developers
 
 ### 2.3 Manifest
 
-`packages/pixel-nano/android/src/main/AndroidManifest.xml`:
+`packages/mlkit/android/src/main/AndroidManifest.xml`:
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -90,7 +90,7 @@ Version history that matters (from the [ML Kit release notes](https://developers
 
 ### 2.4 ProGuard / R8 keep rules (required for structured output)
 
-`packages/pixel-nano/android/proguard-rules.pro` and reference it from the module's `build.gradle` via `consumerProguardFiles`:
+`packages/mlkit/android/proguard-rules.pro` and reference it from the module's `build.gradle` via `consumerProguardFiles`:
 
 ```proguard
 # Keep every class annotated for structured output and its members. The annotation package
@@ -103,7 +103,7 @@ Version history that matters (from the [ML Kit release notes](https://developers
 
 ## 3. The Kotlin module
 
-`packages/pixel-nano/android/src/main/java/expo/modules/pixelnano/PixelNanoModule.kt`
+`packages/mlkit/android/src/main/java/expo/modules/pixelnano/PixelNanoModule.kt`
 
 ```kotlin
 package expo.modules.pixelnano
@@ -290,7 +290,7 @@ Notes:
 
 ## 4. The TypeScript bridge
 
-`packages/pixel-nano/packages/pixelkit/src/index.ts`
+`packages/mlkit/packages/pixelkit/src/index.ts`
 
 ```ts
 import { NativeModule, requireNativeModule } from 'expo';
@@ -353,7 +353,7 @@ The result type is `NanoResult`: `text` (the reply), `finishReason` (`STOP` when
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
-import PixelNano, { type NanoOptions, type NanoStatus } from '../../packages/pixel-nano/src';
+import PixelNano, { type NanoOptions, type NanoStatus } from '../../packages/mlkit/src';
 
 export type NanoTier = 'nano-v4' | 'nano-v3' | 'unknown';
 
@@ -476,7 +476,7 @@ Google's guidance: keep system instructions under ~150 words, and do not combine
 Structured output is Kotlin-only and compile-time. Declare a **small library of reusable shapes** in the module and select one by name from JS.
 
 ```kotlin
-// packages/pixel-nano/android/src/main/java/expo/modules/pixelnano/Shapes.kt
+// packages/mlkit/android/src/main/java/expo/modules/pixelnano/Shapes.kt
 import com.google.mlkit.genai.prompt.Generable
 import com.google.mlkit.genai.prompt.Guide
 

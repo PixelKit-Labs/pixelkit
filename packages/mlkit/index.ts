@@ -1,5 +1,5 @@
 /**
- * @file modules/pixel-nano/index.ts
+ * @file packages/mlkit/index.ts
  * @description TypeScript bridge for the PixelNano Expo Module: Gemini Nano on-device inference through the
  * ML Kit GenAI Prompt API (AICore). Resolves to `null` on web, in Expo Go, or on builds without the module,
  * so `useGeminiNano` reports `source: 'unavailable'` instead of inventing a reply.

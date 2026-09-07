@@ -4,6 +4,26 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.10] - 2026-09-07
+
+### Changed
+- The two native modules are scoped and one of them is renamed: `pixel-native` is now
+  **`@pixelkit/native`** and `pixel-nano` is now **`@pixelkit/mlkit`**, in `packages/native` and
+  `packages/mlkit`. `pixelkit` itself stays unscoped, so the flagship install is still
+  `npm i pixelkit` while the satellites are namespaced. Done before the first publish, because an
+  npm name is effectively permanent once taken.
+- `pixel-nano` described a quarter of what the module does. Its 19 ML Kit artifacts are three
+  families: GenAI (Gemini Nano prompt, summarization, proofreading, rewriting), vision (barcode,
+  face, face mesh, text, labeling, object, ink, pose, two segmenters, document scanner) and natural
+  language (language id, translation, smart reply, entity extraction), backing `useGeminiNano`,
+  `useGenAITasks`, `useVisionAI` and `useNaturalLanguageAI`. `@pixelkit/mlkit` says what it is.
+- Each package README now states why the split exists rather than treating it as packaging trivia.
+  `@pixelkit/native` has zero third-party dependencies and reads framework APIs directly.
+  `@pixelkit/mlkit` compiles with `-Xskip-metadata-version-check` and pins every `kotlin-stdlib` in
+  the *consuming* build, because `genai-prompt` needs Kotlin 2.3.21 where Expo 57 uses 2.1.20. Kept
+  apart, someone who wants CPU clocks and battery temperature pays none of that.
+- `scripts/sync-versions.js` maps npm name to directory, since a scope is not a folder.
+
 ## [1.1.9] - 2026-09-07
 
 PixelKit becomes an npm workspace. `packages/` is what gets published; the root stays the demo app

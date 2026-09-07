@@ -6,11 +6,11 @@
       "pixelkit": [
         "./packages/pixelkit/src/index.ts"
       ],
-      "pixel-native": [
-        "./packages/pixel-native/index.ts"
+      "@pixelkit/native": [
+        "./packages/native/index.ts"
       ],
-      "pixel-nano": [
-        "./packages/pixel-nano/index.ts"
+      "@pixelkit/mlkit": [
+        "./packages/mlkit/index.ts"
       ]
     }
   },

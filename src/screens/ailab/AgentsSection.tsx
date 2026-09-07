@@ -9,7 +9,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import PixelNative, { type AppFunctionInfo } from 'pixel-native';
+import PixelNative, { type AppFunctionInfo } from '@pixelkit/native';
 import { Colors, Fonts, HapticButton, MetricCard, SectionHeader, StatChip, useGenAITasks, useHaptics, useHiLight } from 'pixelkit';
 import { styles } from './styles';
 

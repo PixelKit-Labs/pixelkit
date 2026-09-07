@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import PixelNative, { type NdefRecordInfo, type NfcTagEvent } from 'pixel-native';
+import PixelNative, { type NdefRecordInfo, type NfcTagEvent } from '@pixelkit/native';
 import { logEvent, logError, recordMetric, traced, type TelemetrySource } from '../core/observability';
 import { NFCTag } from '../core/types';
 

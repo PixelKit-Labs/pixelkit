@@ -155,7 +155,7 @@ import {
 
 ---
 
-> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`packages/pixel-native`, telemetry &amp; actuators), or the `PixelNano` module (`packages/pixel-nano`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `packages/pixelkit/src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), and live scan sessions run through the platform scanners. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and reports `source: 'unavailable'` without it; the controls refuse rather than pretending.
+> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`packages/native`, telemetry &amp; actuators), or the `PixelNano` module (`packages/mlkit`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `packages/pixelkit/src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), and live scan sessions run through the platform scanners. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and reports `source: 'unavailable'` without it; the controls refuse rather than pretending.
 
 ### 1. `useCPU()` — Real CPU topology and load
 
@@ -181,7 +181,7 @@ if (isStuttering) console.warn(`avg frame ${frameRenderTimeMs} ms exceeds ${targ
 
 ### 3. `useTPU()` — On-device AI stack detection
 
-The TPU is reachable through AICore (Gemini Nano via ML Kit Prompt API in `pixel-nano`) or LiteRT. On-device inference metrics (latency, token throughput, time-to-first-token) live in `useGeminiNano()`. `benchmarkTPU()` runs a real JS matmul labelled **CPU fallback**.
+The TPU is reachable through AICore (Gemini Nano via ML Kit Prompt API in `@pixelkit/mlkit`) or LiteRT. On-device inference metrics (latency, token throughput, time-to-first-token) live in `useGeminiNano()`. `benchmarkTPU()` runs a real JS matmul labelled **CPU fallback**.
 
 ```typescript
 const { aicoreVersion, isAICoreAvailable, benchmarkTPU } = useTPU();

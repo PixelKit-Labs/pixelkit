@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import PixelNative, { type RadioInfo, type BondedDevice } from 'pixel-native';
+import PixelNative, { type RadioInfo, type BondedDevice } from '@pixelkit/native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useRadios';

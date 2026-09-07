@@ -30,7 +30,7 @@ There is deliberately no `simulated` member, so a fabricated reading is not repr
 that cannot be read is `null` and `MetricCard` renders it as an em dash. Nothing is ever
 substituted with a plausible default.
 
-**Most of it is Pixel-specific.** 20 of the 33 hook modules read through `pixel-native`. On a
+**Most of it is Pixel-specific.** 20 of the 33 hook modules read through `@pixelkit/native`. On a
 Samsung or a OnePlus the generic ones still work, and the rest report `unavailable` rather than
 guessing. That is the design behaving correctly, not a bug: if you want a reading this package
 cannot take, the honest fix is a native path, not a default.

@@ -15,7 +15,13 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const PACKAGES = ['pixelkit', 'pixel-native', 'pixel-nano'];
+/** Published npm name -> directory under packages/. They differ: the scope is not a folder. */
+const PACKAGES = {
+  pixelkit: 'pixelkit',
+  '@pixelkit/native': 'native',
+  '@pixelkit/mlkit': 'mlkit',
+};
+const NAMES = Object.keys(PACKAGES);
 
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const writeJson = (p, o) => fs.writeFileSync(p, JSON.stringify(o, null, 2) + '\n');
@@ -33,17 +39,17 @@ if (requested) {
 }
 const version = root.version;
 
-for (const name of PACKAGES) {
+for (const name of NAMES) {
   root.dependencies[name] = version;
 }
 writeJson(rootPath, root);
 
-for (const name of PACKAGES) {
-  const p = path.join(ROOT, 'packages', name, 'package.json');
+for (const name of NAMES) {
+  const p = path.join(ROOT, 'packages', PACKAGES[name], 'package.json');
   const pkg = readJson(p);
   pkg.version = version;
   // pixelkit pins its native modules exactly; they are published from this repo in lockstep.
-  for (const dep of PACKAGES) {
+  for (const dep of NAMES) {
     if (pkg.dependencies && pkg.dependencies[dep]) pkg.dependencies[dep] = version;
   }
   writeJson(p, pkg);
@@ -57,6 +63,6 @@ if (previous !== version) app.expo.android.versionCode += 1;
 writeJson(appPath, app);
 
 console.log(
-  `version ${version} across root + ${PACKAGES.length} packages; ` +
+  `version ${version} across root + ${NAMES.length} packages; ` +
     `app.json versionCode ${app.expo.android.versionCode}`
 );

@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import PixelNative, { type MemoryInfo } from 'pixel-native';
+import PixelNative, { type MemoryInfo } from '@pixelkit/native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useMemory';

@@ -17,7 +17,7 @@
 import { useMemo } from 'react';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
-import PixelNative from 'pixel-native';
+import PixelNative from '@pixelkit/native';
 import { resolveCapabilities, verifyCapabilities, type DeviceCapabilities } from '../core/capabilities';
 import { logEvent, logError, type TelemetrySource } from '../core/observability';
 
