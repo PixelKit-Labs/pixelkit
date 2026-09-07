@@ -1,6 +1,11 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 
+<!-- PROJECT BANNER -->
+<div align="center">
+  <img src="./PixelKit_readme.jpg" alt="PixelKit SDK: a Google Pixel 11 Pro template, React hooks for hardware" width="100%" />
+</div>
+
 <!-- PROJECT SHIELDS -->
 <div align="center">
 
