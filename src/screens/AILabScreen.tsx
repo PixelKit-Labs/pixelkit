@@ -36,13 +36,16 @@ import { useCapabilities } from '../hardware/useCapabilities';
 import { saveApiKey } from '../ai/geminiClient';
 import { HapticButton } from '../components/HapticButton';
 import { MetricCard } from '../components/MetricCard';
+import { ScreenHeader, SectionTabs } from '../components/ScreenScaffold';
+import { sectionsFor } from '../core/surface';
+import { useSpeech } from '../ai/useSpeech';
 import { Colors, Type, Fonts, Radius } from '../theme/colors';
 import { SectionHeader, StatChip } from '../components/Decor';
 import PixelNative, { type AppFunctionInfo } from '../../modules/pixel-native';
 
-type AILabTab = 'chat' | 'tasks' | 'vision' | 'nlp' | 'voice' | 'agents';
+type AILabTab = 'chat' | 'tasks' | 'vision' | 'language' | 'voice' | 'agents';
 type GenAITaskKind = 'summarize' | 'proofread' | 'rewrite' | 'describe';
-type VisionDemoKind = 'ocr' | 'barcode' | 'label' | 'faces' | 'cloud';
+type VisionDemoKind = 'ocr' | 'barcode' | 'label' | 'faces' | 'objects' | 'pose' | 'subject' | 'cloud';
 type NLPDemoKind = 'translate' | 'langid' | 'smartreply' | 'entities';
 
 export const AILabScreen: React.FC = () => {
@@ -56,6 +59,7 @@ export const AILabScreen: React.FC = () => {
   const hilight = useHiLight();
   const haptics = useHaptics();
   const caps = useCapabilities();
+  const tts = useSpeech();
 
   // Navigation
   const [activeTab, setActiveTab] = useState<AILabTab>('chat');
@@ -64,6 +68,10 @@ export const AILabScreen: React.FC = () => {
   const [engine, setEngine] = useState<'cloud' | 'nano'>('cloud');
   const [showParams, setShowParams] = useState(false);
   const [inputPrompt, setInputPrompt] = useState('');
+  /** Token count for the prompt as it stands, from the on-device tokenizer. Null until asked. */
+  const [tokenEstimate, setTokenEstimate] = useState<number | null>(null);
+  const [nanoTrack, setNanoTrack] = useState<'stable' | 'preview'>('stable');
+  const [spokenNote, setSpokenNote] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [keySavedMessage, setKeySavedMessage] = useState<string | null>(null);
@@ -98,6 +106,31 @@ export const AILabScreen: React.FC = () => {
       }
     }
   }, []);
+
+  /** Measures the prompt against info.tokenLimit before it is sent, rather than after it is rejected. */
+  const countPromptTokens = async () => {
+    const count = await nano.countTokens(inputPrompt.trim());
+    setTokenEstimate(count);
+  };
+
+  /** Switches the AICore model track. Preview builds are slower and refuse more often. */
+  const toggleNanoTrack = async () => {
+    const next = nanoTrack === 'stable' ? 'preview' : 'stable';
+    setNanoTrack(next);
+    await nano.setModelConfig(next, 'full');
+  };
+
+  /** Reads the most recent model reply aloud on the platform speech engine. */
+  const speakLastReply = async () => {
+    const last = [...activeMessages].reverse().find(m => m.role === 'model');
+    if (!last) { setSpokenNote('Nothing to read yet.'); return; }
+    try {
+      setSpokenNote(null);
+      await tts.speak(last.content);
+    } catch (e: any) {
+      setSpokenNote(e?.message ?? 'The engine refused that text.');
+    }
+  };
 
   const activeMessages = engine === 'nano' ? nano.messages : gemini.messages;
   const isBusy = engine === 'nano' ? nano.isGenerating : gemini.isLoading;
@@ -182,6 +215,12 @@ export const AILabScreen: React.FC = () => {
     } else if (visionKind === 'faces') {
       await vision.detectFaces(input);
       await vision.detectFaceMesh(input);
+    } else if (visionKind === 'objects') {
+      await vision.detectObjects(input);
+    } else if (visionKind === 'pose') {
+      await vision.detectPose(input);
+    } else if (visionKind === 'subject') {
+      await vision.segmentSubject(input);
     }
     haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
   };
@@ -229,37 +268,18 @@ export const AILabScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {/* Studio Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Pixel AI Studio</Text>
-        <Text style={styles.subtitle}>
-          Cloud {gemini.model} · Gemini Nano {nano.status} · AICore {tpu.aicoreVersion?.split('_')[2] ?? 'Ready'}
-        </Text>
-      </View>
+      <ScreenHeader
+        title="AI Lab"
+        subtitle={`Cloud ${gemini.model} · Gemini Nano ${nano.status} · AICore ${tpu.aicoreVersion?.split('_')[2] ?? 'ready'}`}
+        style={styles.scaffoldHeader}
+      />
 
-      {/* Horizontally Scrollable Segmented Navigation Bar */}
-      <View style={styles.tabBarWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
-          {(['chat', 'tasks', 'vision', 'nlp', 'voice', 'agents'] as AILabTab[]).map(tab => {
-            const active = activeTab === tab;
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tabButton, active && styles.tabButtonActive]}
-                onPress={() => {
-                  haptics.playPrimitives([{ primitive: 'CLICK', scale: 0.7 }]);
-                  setActiveTab(tab);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.tabButtonText, active && styles.tabButtonTextActive]}>
-                  {tab === 'nlp' ? 'LANGUAGE' : tab.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <SectionTabs
+        sections={sectionsFor('ai')}
+        activeSection={activeTab}
+        onSelect={id => setActiveTab(id as AILabTab)}
+        style={styles.scaffoldTabs}
+      />
 
       {keySavedMessage && (
         <View style={styles.alertSuccess}><Text style={styles.alertSuccessText}>{keySavedMessage}</Text></View>
@@ -301,6 +321,18 @@ export const AILabScreen: React.FC = () => {
                   title={showParams ? 'Close Params' : 'Hyperparameters'}
                   onPress={() => setShowParams(!showParams)}
                   variant="outline"
+                  style={styles.actionPill}
+                  textStyle={{ fontSize: 11 }}
+                />
+                <HapticButton
+                  title="Clear"
+                  onPress={() => {
+                    if (engine === 'nano') nano.clearMessages();
+                    else gemini.clearMessages();
+                    setTokenEstimate(null);
+                  }}
+                  disabled={activeMessages.length === 0}
+                  variant="ghost"
                   style={styles.actionPill}
                   textStyle={{ fontSize: 11 }}
                 />
@@ -400,6 +432,58 @@ export const AILabScreen: React.FC = () => {
                         </View>
                       </View>
                     </View>
+                    <View style={styles.paramGrid}>
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Top-P: {gemini.topP.toFixed(2)}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => gemini.setTopP(Math.max(0, Number((gemini.topP - 0.05).toFixed(2))))}>
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => gemini.setTopP(Math.min(1, Number((gemini.topP + 0.05).toFixed(2))))}>
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>Max output: {gemini.maxOutputTokens}</Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => gemini.setMaxOutputTokens(Math.max(256, gemini.maxOutputTokens - 256))}>
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => gemini.setMaxOutputTokens(Math.min(8192, gemini.maxOutputTokens + 256))}>
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.paramItem}>
+                        <Text style={styles.paramItemLabel}>
+                          Thinking budget: {gemini.thinkingBudget === 0 ? 'off' : gemini.thinkingBudget}
+                        </Text>
+                        <View style={styles.paramStepper}>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => gemini.setThinkingBudget(Math.max(0, gemini.thinkingBudget - 512))}>
+                            <Text style={styles.stepBtnText}>-</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.stepBtn} onPress={() => gemini.setThinkingBudget(Math.min(8192, gemini.thinkingBudget + 512))}>
+                            <Text style={styles.stepBtnText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+
+                    <Text style={styles.paramLabel}>System instruction</Text>
+                    <TextInput
+                      style={styles.textInputFull}
+                      value={gemini.systemInstruction}
+                      onChangeText={gemini.setSystemInstruction}
+                      placeholder="How the model should behave"
+                      placeholderTextColor={Colors.dark.textMuted}
+                      multiline
+                    />
+                    <Text style={styles.cardDesc}>
+                      Model, key and every value here are fixed when the chat session is created, so changing one starts a fresh session.
+                    </Text>
                   </>
                 ) : (
                   <>
@@ -452,6 +536,63 @@ export const AILabScreen: React.FC = () => {
                     </View>
                   </>
                 )}
+              </View>
+            )}
+
+            {/* Model lifecycle: status, budget and the measured cost of the last turn. */}
+            {engine === 'nano' && (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Gemini Nano on AICore</Text>
+                <Text style={styles.cardDesc}>
+                  {nano.info?.baseModelName ?? 'model name not reported'} · token limit{' '}
+                  {nano.info?.tokenLimit ?? '—'} · thinking{' '}
+                  {nano.info?.thinkingModeAvailable == null ? '?' : nano.info.thinkingModeAvailable ? 'available' : 'unavailable'} ·
+                  system prompt{' '}
+                  {nano.info?.systemPromptAvailable == null ? '?' : nano.info.systemPromptAvailable ? 'available' : 'unavailable'}
+                </Text>
+                <View style={styles.nanoMetricRow}>
+                  <StatChip label="latency" value={nano.lastLatencyMs != null ? `${nano.lastLatencyMs} ms` : '—'} />
+                  <StatChip label="first token" value={nano.lastFirstTokenMs != null ? `${nano.lastFirstTokenMs} ms` : '—'} />
+                  <StatChip label="decode" value={nano.lastDecodeTokensPerSec != null ? `${nano.lastDecodeTokensPerSec} tok/s` : '—'} />
+                  <StatChip label="out tokens" value={nano.lastOutputTokens != null ? String(nano.lastOutputTokens) : '—'} />
+                </View>
+                <View style={styles.nanoActionRow}>
+                  {nano.status === 'downloadable' && (
+                    <HapticButton
+                      title={nano.isDownloading ? `Downloading ${nano.downloadedBytes != null ? `${Math.round(nano.downloadedBytes / 1_000_000)} MB` : '…'}` : 'Download model'}
+                      onPress={() => { void nano.download(); }}
+                      disabled={nano.isDownloading}
+                      variant="primary"
+                      style={styles.actionPill}
+                      textStyle={{ fontSize: 11 }}
+                    />
+                  )}
+                  <HapticButton
+                    title={nano.isWarmingUp ? 'Warming…' : nano.warmupMs != null ? `Warm (${nano.warmupMs} ms)` : 'Warm up'}
+                    onPress={() => { void nano.warmup(); }}
+                    disabled={nano.isWarmingUp || !nano.isAvailable}
+                    variant="secondary"
+                    style={styles.actionPill}
+                    textStyle={{ fontSize: 11 }}
+                  />
+                  <HapticButton
+                    title={tokenEstimate == null ? 'Count prompt tokens' : `${tokenEstimate} tokens`}
+                    onPress={() => { void countPromptTokens(); }}
+                    disabled={!nano.isAvailable || !inputPrompt.trim()}
+                    variant="outline"
+                    style={styles.actionPill}
+                    textStyle={{ fontSize: 11 }}
+                  />
+                  <HapticButton
+                    title={`Track: ${nanoTrack}`}
+                    onPress={() => { void toggleNanoTrack(); }}
+                    disabled={!nano.isAvailable}
+                    variant="outline"
+                    style={styles.actionPill}
+                    textStyle={{ fontSize: 11 }}
+                  />
+                </View>
+                {nano.error ? <Text style={styles.nanoError}>{nano.error}</Text> : null}
               </View>
             )}
 
@@ -727,7 +868,7 @@ export const AILabScreen: React.FC = () => {
 
           {/* Vision Demo Selector */}
           <View style={styles.taskSelector}>
-            {(['ocr', 'barcode', 'label', 'faces', 'cloud'] as VisionDemoKind[]).map(kind => (
+            {(['ocr', 'barcode', 'label', 'faces', 'objects', 'pose', 'subject', 'cloud'] as VisionDemoKind[]).map(kind => (
               <TouchableOpacity
                 key={kind}
                 style={[styles.taskPill, visionKind === kind && styles.taskPillActive]}
@@ -846,6 +987,50 @@ export const AILabScreen: React.FC = () => {
             )}
 
             {/* Cloud Gemini Multimodal Analysis */}
+            {visionKind === 'objects' && vision.objectsResult && (
+              <MetricCard
+                title="Objects"
+                value={vision.objectsResult.objects.length}
+                unit={vision.objectsResult.objects.length === 1 ? 'object' : 'objects'}
+                badge={`${vision.objectsResult.latencyMs} ms`}
+                badgeColor={Colors.dark.success}
+                subtitle={
+                  vision.objectsResult.objects
+                    .map(o => `${o.labels[0]?.text ?? 'unlabelled'}${o.trackingId != null ? ` #${o.trackingId}` : ''}`)
+                    .join(' · ') || 'nothing detected in this frame'
+                }
+                source={vision.objectsResult.source}
+              />
+            )}
+
+            {visionKind === 'pose' && vision.poseResult && (
+              <MetricCard
+                title="Pose landmarks"
+                value={vision.poseResult.landmarks.length}
+                unit="of 33"
+                badge={`${vision.poseResult.latencyMs} ms`}
+                badgeColor={Colors.dark.success}
+                subtitle={
+                  vision.poseResult.landmarks.length
+                    ? `mean in-frame likelihood ${(vision.poseResult.landmarks.reduce((a, l) => a + l.inFrameLikelihood, 0) / vision.poseResult.landmarks.length).toFixed(2)}`
+                    : 'no person detected in this frame'
+                }
+                source={vision.poseResult.source}
+              />
+            )}
+
+            {visionKind === 'subject' && vision.subjectResult && (
+              <MetricCard
+                title="Subject segmentation"
+                value={vision.subjectResult.subjectsCount}
+                unit={vision.subjectResult.subjectsCount === 1 ? 'subject' : 'subjects'}
+                badge={`${vision.subjectResult.latencyMs} ms`}
+                badgeColor={vision.subjectResult.foregroundConfidence ? Colors.dark.success : Colors.dark.warning}
+                subtitle={vision.subjectResult.foregroundConfidence ? 'foreground separated from the background' : 'no confident foreground in this frame'}
+                source={vision.subjectResult.source}
+              />
+            )}
+
             {visionKind === 'cloud' && vision.analysis && (
               <View style={styles.analysisBox}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -869,7 +1054,7 @@ export const AILabScreen: React.FC = () => {
       )}
 
       {/* ───────────────────────── TAB 4: NATURAL LANGUAGE INTELLIGENCE ───────────────────────── */}
-      {activeTab === 'nlp' && (
+      {activeTab === 'language' && (
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <MetricCard
             title="On-Device Natural Language"
@@ -1034,6 +1219,33 @@ export const AILabScreen: React.FC = () => {
       {/* ───────────────────────── TAB 5: VOICE & STT ───────────────────────── */}
       {activeTab === 'voice' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          <SectionHeader title="Speech out" hint={tts.voices.length ? `${tts.voices.length} voices installed` : 'no voices read yet'} />
+          <MetricCard
+            title="Platform speech engine"
+            value={tts.isSpeaking ? (tts.isPaused ? 'Paused' : 'Speaking') : 'Idle'}
+            badge={tts.voice ? 'VOICE SET' : 'SYSTEM DEFAULT'}
+            badgeColor={tts.isSpeaking ? Colors.dark.success : Colors.dark.textMuted}
+            subtitle={`rate ${tts.rate} · pitch ${tts.pitch} · accepts ${tts.maxInputLength} characters per call, longer text is rejected rather than cut`}
+            source={tts.source}
+          />
+          <View style={styles.ttsRow}>
+            <HapticButton
+              title="Read the last reply"
+              onPress={() => { void speakLastReply(); }}
+              disabled={tts.isSpeaking}
+              variant="primary"
+              style={styles.actionPill}
+              textStyle={{ fontSize: 11 }}
+            />
+            <HapticButton title="Stop" onPress={() => { void tts.stop(); }} disabled={!tts.isSpeaking} variant="outline" style={styles.actionPill} textStyle={{ fontSize: 11 }} />
+            <HapticButton title="Slower" onPress={() => tts.setRate(Number(Math.max(0.5, tts.rate - 0.1).toFixed(2)))} variant="outline" style={styles.actionPill} textStyle={{ fontSize: 11 }} />
+            <HapticButton title="Faster" onPress={() => tts.setRate(Number(Math.min(2, tts.rate + 0.1).toFixed(2)))} variant="outline" style={styles.actionPill} textStyle={{ fontSize: 11 }} />
+            <HapticButton title="Refresh voices" onPress={() => { void tts.refreshVoices(); }} variant="ghost" style={styles.actionPill} textStyle={{ fontSize: 11 }} />
+          </View>
+          {tts.lastSpokenText ? <Text style={styles.cardDesc}>Last spoken: {tts.lastSpokenText.slice(0, 120)}</Text> : null}
+          {spokenNote ? <Text style={styles.nanoError}>{spokenNote}</Text> : null}
+          {tts.error ? <Text style={styles.nanoError}>{tts.error}</Text> : null}
+
           <SectionHeader title="Speech Recognition Mode" />
           <View style={styles.taskSelector}>
             <TouchableOpacity
@@ -1163,42 +1375,15 @@ export const AILabScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  scaffoldHeader: { paddingHorizontal: 16, paddingTop: 8 },
+  nanoMetricRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  nanoActionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  nanoError: { color: Colors.dark.error, fontSize: 11, marginTop: 8 },
+  ttsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  scaffoldTabs: { paddingHorizontal: 16 },
   container: { flex: 1, backgroundColor: Colors.dark.background },
-  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  title: { ...Type.title, color: Colors.dark.text },
-  subtitle: { color: Colors.dark.textMuted, fontSize: 12, marginTop: 2, fontFamily: Fonts.mono },
-  tabBarWrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.cardBorder,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-    gap: 6,
-  },
-  tabButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: Radius.sm,
-  },
-  tabButtonActive: {
-    backgroundColor: Colors.dark.surfaceVariant,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.dark.primary,
-  },
-  tabButtonText: {
-    fontSize: 11,
-    fontFamily: Fonts.mono,
-    color: Colors.dark.textMuted,
-    fontWeight: '600',
-  },
-  tabButtonTextActive: {
-    color: Colors.dark.primary,
-  },
   chatScrollContent: { padding: 16, paddingBottom: 24 },
-  scrollContent: { padding: 16, paddingBottom: 140 },
+  scrollContent: { padding: 16, paddingBottom: 24 },
   controlRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1445,7 +1630,6 @@ const styles = StyleSheet.create({
   composer: {
     flexDirection: 'row',
     padding: 10,
-    paddingBottom: Platform.OS === 'ios' ? 88 : 80,
     backgroundColor: Colors.dark.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.dark.cardBorder,

@@ -1,7 +1,7 @@
 /**
  * @file App.tsx
- * @description Application shell: fonts, scrims, wordmark header with a status chip, the four
- * screens, and the bottom navigation. Selection is an underline so labels never move.
+ * @description Application shell: fonts, scrims, wordmark header, the four screens, and the
+ * bottom navigation. Selection is an underline so labels never move.
  * Insets come from react-native-safe-area-context (React Native's SafeAreaView is iOS-only).
  */
 
@@ -15,10 +15,9 @@ import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AILabScreen } from './src/screens/AILabScreen';
 import { SensorsLabScreen } from './src/screens/SensorsLabScreen';
 import { DocsScreen } from './src/screens/DocsScreen';
-import { Scrims, Wordmark, StatChip } from './src/components/Decor';
+import { Scrims, Wordmark } from './src/components/Decor';
 import { useHaptics } from './src/hardware/useHaptics';
 import { Colors, Fonts } from './src/theme/colors';
-import { isPixelNativeAvailable } from './modules/pixel-native';
 
 type Tab = 'dashboard' | 'ai' | 'sensors' | 'docs';
 
@@ -47,12 +46,6 @@ function Shell() {
 
       <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
         <Wordmark />
-        <StatChip
-          label={isPixelNativeAvailable ? 'native' : 'native'}
-          value={isPixelNativeAvailable ? 'live' : 'off'}
-          tone={isPixelNativeAvailable ? 'ok' : 'warn'}
-          dot
-        />
       </View>
 
       <View style={styles.screenContainer}>
@@ -129,7 +122,6 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 10,
   },
@@ -137,12 +129,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   navWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 6,
+    backgroundColor: Colors.dark.background,
     zIndex: 999,
     elevation: 20,
   },

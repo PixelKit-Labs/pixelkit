@@ -23,6 +23,8 @@ import { HapticButton } from '../components/HapticButton';
 import { SectionHeader } from '../components/Decor';
 import { Colors, Fonts, Radius, Type } from '../theme/colors';
 import { DOC_MODULES, type DocField, type DocModule } from './docsData';
+import { whereToTry } from '../core/surface';
+import { ScreenHeader } from '../components/ScreenScaffold';
 
 type CategoryFilter = 'all' | 'primer' | DocModule['category'];
 
@@ -137,12 +139,10 @@ export const DocsScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Documentation</Text>
-        <Text style={styles.headerSubtitle}>
-          {DOC_MODULES.length} hooks · Pixel 11 Pro · Android 17
-        </Text>
-      </View>
+      <ScreenHeader
+        title="Docs"
+        subtitle={`${DOC_MODULES.length} hooks · every input, output and function · each one says where to try it`}
+      />
 
       {copiedNotification && (
         <View style={styles.toast}>
@@ -290,8 +290,16 @@ export const DocsScreen: React.FC = () => {
 
                   {isExpanded && (
                     <View style={styles.expandedContent}>
+                      {/* Where the reader can actually try it, from the surface map. */}
+                      {whereToTry(mod.id) ? (
+                        <>
+                          <Text style={styles.blockLabel}>WHERE TO TRY IT</Text>
+                          <Text style={styles.whereText}>{whereToTry(mod.id)}</Text>
+                        </>
+                      ) : null}
+
                       {/* What it does, in plain language */}
-                      <Text style={styles.blockLabel}>WHAT IT DOES</Text>
+                      <Text style={[styles.blockLabel, styles.blockSpaced]}>WHAT IT DOES</Text>
                       <Text style={styles.plainText}>{mod.plain}</Text>
 
                       {/* How it works underneath */}
@@ -377,9 +385,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 130,
+    padding: 16,
+    paddingBottom: 24,
   },
 
   /** 1px top highlight that gives every panel its edge. */
@@ -669,6 +676,11 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.dark.cardBorder,
   },
   /** Plain-language explanation: larger and in body text, because it is read first. */
+  whereText: {
+    ...Type.caption,
+    color: Colors.dark.primary,
+    marginTop: 3,
+  },
   plainText: {
     ...Type.body,
     fontSize: 14,

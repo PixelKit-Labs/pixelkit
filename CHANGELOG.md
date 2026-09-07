@@ -4,6 +4,32 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.26] - 2026-09-07
+
+### Added
+- `src/core/surface.ts`: one home per hook. Every exported hook now declares the tab and section that demonstrates it, and the sub-tab rows on all four screens are generated from the same map, so the app's structure and the SDK's contents cannot drift apart.
+- `src/components/ScreenScaffold.tsx` with `ScreenHeader` and `SectionTabs`. Every screen now shares one header treatment and one navigation control instead of three; a screen that owns its own scrolling (AI Lab) composes the two pieces directly.
+- **Nine hooks that were documented but had no interface anywhere** are now demonstrated: `useCamera`, `useVideo` and `useMediaLibrary` in Sensors → Capture (preview, still, 15 s clip, playback with speed and poster frames, save to the gallery); `useNetwork` and `useCellular` in Silicon → Network; `useRadios` and `useLocation` in Sensors → Radios; `useSecurity` in Sensors → Security with a real write, read-back and delete; and `useSpeech` in AI Lab → Voice, which reads the last model reply aloud.
+- Gemini Nano model lifecycle in AI Lab: download when the status is `downloadable`, warm-up, prompt token count against `info.tokenLimit`, and a stable/preview track switch — none of which had a control before, so a device reporting `downloadable` had no way to fetch the model from the app. The measured latency, time to first token, decode rate and output tokens are now displayed rather than only recorded.
+- Silicon → Trace: slowest traced operations, per-module error counts and a diagnostics reset, from the observability readers added in 1.0.19.
+- `npm run parity` (`scripts/check-parity.js`, `scripts/parity-waivers.json`) and `npm run verify`. The check fails when an exported hook has no home, when a home screen never calls its hook, when a documented function has no control anywhere without a waived reason, and when a handler that takes arguments is passed straight to `onPress`.
+- Docs tab entries now show **where to try it**, e.g. "Sensors → Capture", read from the surface map.
+
+### Changed
+- Silicon is four sections (Compute · System · Network · Trace) instead of one twelve-section scroll, and it keeps the chip and the system: actuators, radios and biometrics moved to Sensors, where each now appears exactly once. Display, UWB, HiLight, the torch, the barometer and biometrics had each been rendered on two screens with different wording.
+- Sensors is six sections (Motion · Capture · Audio · Actuators · Radios · Security) and gained the missing controls: stop UWB ranging, stop a BLE scan, queue an NFC text write, seek within a recording, select a microphone.
+- AI Lab gained the rest of the generation parameters (`topP`, `maxOutputTokens`, `thinkingBudget`, system instruction) and a clear-chat control, and three more on-device detectors (objects, pose, subject segmentation) that the hook exposed but nothing called.
+- Agent guides gained rules 12 and 13: one home per hook, and screens share their frame. `npm run verify` replaces `npm run typecheck` as the validation gate.
+
+### Fixed
+- `DashboardScreen` passed `onPress={uwb.startRanging}` directly, so React Native handed the press event in as the `sessionId` argument. The parity check now fails on that shape anywhere in the app.
+- Neither screen offered a way to stop a UWB ranging session: both start buttons disabled themselves while ranging, leaving the session open until the app was killed.
+
+## [1.0.25] - 2026-09-07
+
+### Removed
+- The `native / live` status chip in the app header (`App.tsx`). The wordmark now stands alone in the top bar; the `topBar` style drops `justifyContent: 'space-between'`. Native-module availability is still reported per hook through `source` and on the Silicon screen.
+
 ## [1.0.24] - 2026-09-06
 
 ### Added

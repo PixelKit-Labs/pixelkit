@@ -51,7 +51,9 @@ pixel-delta/ (PixelKit Framework)
 ├── src/
 │   ├── index.ts                # Master barrel export for all hooks and primitives
 │   ├── core/
-│   │   └── types.ts            # Strongly-typed telemetry, silicon, and AI models
+│   │   ├── types.ts            # Strongly-typed telemetry, silicon, and AI models
+│   │   ├── surface.ts          # One home screen and section per hook; the parity check reads it
+│   │   └── observability.ts    # Provenance, traced operations, error counts, health summary
 │   │
 │   ├── hardware/               # Physical Silicon & Hardware Abstractions
 │   │   ├── useCPU.ts           # /proc/cpuinfo + cpufreq topology, frequencies, governor, load
@@ -101,10 +103,10 @@ pixel-delta/ (PixelKit Framework)
 │   │   └── Decor.tsx           # Scrims, wordmark, reactor, section labels, chips, telemetry rows
 │   │
 │   └── screens/
-│       ├── DashboardScreen.tsx # Silicon & compute HUD (CPU, GPU, TPU, Memory, Temp, UWB)
-│       ├── AILabScreen.tsx     # Gemini Chat, Vision Inspector, and Voice Speech-to-Text
-│       ├── SensorsLabScreen.tsx# Interactive laboratory: Motion, Haptics, Radios (NFC/BLE), Audio
-│       └── DocsScreen.tsx      # Interactive in-app API documentation & AI Primer viewer
+│       ├── DashboardScreen.tsx # Silicon: Compute · System · Network · Trace
+│       ├── AILabScreen.tsx     # AI Lab: Chat · Tasks · Vision · Language · Voice · Agents
+│       ├── SensorsLabScreen.tsx# Sensors: Motion · Capture · Audio · Actuators · Radios · Security
+│       └── DocsScreen.tsx      # Docs: all 32 hooks, each saying where in the app to try it
 ```
 
 ---

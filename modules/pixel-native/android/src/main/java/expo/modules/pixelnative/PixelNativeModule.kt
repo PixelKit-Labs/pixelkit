@@ -993,18 +993,26 @@ class PixelNativeModule : Module() {
     )
   }
 
-  private fun batteryTelemetry(): Map<String, Any?> {
+  private fun batteryTelemetry(): Map<String, Any?> = try {
     val ifilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-    val bIntent = context.registerReceiver(null, ifilter)
-    val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+    val bIntent = try {
+      if (Build.VERSION.SDK_INT >= 33) {
+        context.registerReceiver(null, ifilter, Context.RECEIVER_NOT_EXPORTED)
+      } else {
+        context.registerReceiver(null, ifilter)
+      }
+    } catch (_: Throwable) {
+      try { context.registerReceiver(null, ifilter) } catch (_: Throwable) { null }
+    }
+    val bm = try { context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager } catch (_: Throwable) { null }
 
-    val tempRaw = bIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
+    val tempRaw = try { bIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0 } catch (_: Throwable) { 0 }
     val tempC = if (tempRaw > 0) tempRaw / 10.0 else null
 
-    val voltageRaw = bIntent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) ?: 0
+    val voltageRaw = try { bIntent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) ?: 0 } catch (_: Throwable) { 0 }
     val voltageMv = if (voltageRaw > 0) voltageRaw else null
 
-    val healthCode = bIntent?.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN) ?: BatteryManager.BATTERY_HEALTH_UNKNOWN
+    val healthCode = try { bIntent?.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN) ?: BatteryManager.BATTERY_HEALTH_UNKNOWN } catch (_: Throwable) { BatteryManager.BATTERY_HEALTH_UNKNOWN }
     val healthStr = when (healthCode) {
       BatteryManager.BATTERY_HEALTH_GOOD -> "GOOD"
       BatteryManager.BATTERY_HEALTH_OVERHEAT -> "OVERHEAT"
@@ -1015,7 +1023,7 @@ class PixelNativeModule : Module() {
       else -> "UNKNOWN"
     }
 
-    val pluggedCode = bIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+    val pluggedCode = try { bIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0 } catch (_: Throwable) { 0 }
     val pluggedStr = when (pluggedCode) {
       BatteryManager.BATTERY_PLUGGED_AC -> "AC"
       BatteryManager.BATTERY_PLUGGED_USB -> "USB"
@@ -1024,7 +1032,7 @@ class PixelNativeModule : Module() {
       else -> "NONE"
     }
 
-    val statusCode = bIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN) ?: BatteryManager.BATTERY_STATUS_UNKNOWN
+    val statusCode = try { bIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN) ?: BatteryManager.BATTERY_STATUS_UNKNOWN } catch (_: Throwable) { BatteryManager.BATTERY_STATUS_UNKNOWN }
     val statusStr = when (statusCode) {
       BatteryManager.BATTERY_STATUS_CHARGING -> "CHARGING"
       BatteryManager.BATTERY_STATUS_DISCHARGING -> "DISCHARGING"
@@ -1033,38 +1041,48 @@ class PixelNativeModule : Module() {
       else -> "UNKNOWN"
     }
 
-    val technology = bIntent?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY)
+    val technology = try { bIntent?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) } catch (_: Throwable) { null }
 
     val cycleCount = if (Build.VERSION.SDK_INT >= 34 && bIntent != null) {
-      val cc = bIntent.getIntExtra(BatteryManager.EXTRA_CYCLE_COUNT, -1)
-      if (cc >= 0) cc else null
+      try {
+        val cc = bIntent.getIntExtra(BatteryManager.EXTRA_CYCLE_COUNT, -1)
+        if (cc >= 0) cc else null
+      } catch (_: Throwable) { null }
     } else null
 
-    val currentNowMicro = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)?.let {
-      if (it != Long.MIN_VALUE && it != 0L) it else null
-    }
+    val currentNowMicro = try {
+      bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)?.let {
+        if (it != Long.MIN_VALUE && it != 0L) it else null
+      }
+    } catch (_: Throwable) { null }
     val currentNowMa = currentNowMicro?.let { it.toDouble() / 1000.0 }
 
-    val currentAvgMicro = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)?.let {
-      if (it != Long.MIN_VALUE && it != 0L) it else null
-    }
+    val currentAvgMicro = try {
+      bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)?.let {
+        if (it != Long.MIN_VALUE && it != 0L) it else null
+      }
+    } catch (_: Throwable) { null }
     val currentAvgMa = currentAvgMicro?.let { it.toDouble() / 1000.0 }
 
-    val chargeCounterMicro = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)?.let {
-      if (it != Long.MIN_VALUE && it > 0) it else null
-    }
+    val chargeCounterMicro = try {
+      bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)?.let {
+        if (it != Long.MIN_VALUE && it > 0) it else null
+      }
+    } catch (_: Throwable) { null }
     val chargeCounterMah = chargeCounterMicro?.let { it.toDouble() / 1000.0 }
 
-    val energyCounterNano = bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)?.let {
-      if (it != Long.MIN_VALUE && it > 0) it else null
-    }
+    val energyCounterNano = try {
+      bm?.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)?.let {
+        if (it != Long.MIN_VALUE && it > 0) it else null
+      }
+    } catch (_: Throwable) { null }
     val energyCounterMwh = energyCounterNano?.let { it.toDouble() / 1_000_000.0 }
 
     val powerWatts = if (voltageMv != null && currentNowMa != null) {
       (voltageMv.toDouble() / 1000.0) * (kotlin.math.abs(currentNowMa) / 1000.0)
     } else null
 
-    return mapOf(
+    mapOf(
       "temperatureC" to tempC,
       "voltageMv" to voltageMv,
       "currentNowMa" to currentNowMa,
@@ -1078,6 +1096,23 @@ class PixelNativeModule : Module() {
       "chargeCounterMah" to chargeCounterMah,
       "energyCounterMwh" to energyCounterMwh,
       "thermalZones" to thermalZones()
+    )
+  } catch (e: Throwable) {
+    android.util.Log.e("PixelKit", "batteryTelemetry failed: ${e.message}", e)
+    mapOf(
+      "temperatureC" to null,
+      "voltageMv" to null,
+      "currentNowMa" to null,
+      "currentAvgMa" to null,
+      "powerWatts" to null,
+      "health" to "UNKNOWN",
+      "plugged" to "NONE",
+      "status" to "UNKNOWN",
+      "technology" to null,
+      "cycleCount" to null,
+      "chargeCounterMah" to null,
+      "energyCounterMwh" to null,
+      "thermalZones" to emptyList<Map<String, Any?>>()
     )
   }
 

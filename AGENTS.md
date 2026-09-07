@@ -22,9 +22,12 @@ Verified device facts live in `docs/research/DEVICE_PROFILE_PIXEL_11_PRO.md`. Do
 10. **Observability on every function.** Any function that touches hardware, the network, a native module or the file system must: wrap the call in `traced(MODULE, 'op', fn, data)` from `src/core/observability.ts` so it is timed and correlated; surface failure through `logError` and an `error` field on the hook's return, never an empty `catch`; and expose `source` so callers can tell where a value came from. A caught error is never discarded silently. Use `tracedSafe` where a failure is survivable; it still logs and counts.
 11. **Documented before it is done.** A function is not finished until it is documented in all four places: JSDoc on the export saying what it does and which platform API it uses; a structured entry in `src/screens/docsData.ts` with `plain`, `description`, `params`, `returns` and `actions` where every field carries a name, a real type and a sentence; the matching `docs/api/*` and `docs/HARDWARE_API.md` sections; and the feature row in `README.md`. Before committing, re-read the hook's return object and confirm every field appears in the docs entry with the type it actually has.
 
+12. **One home per hook.** Every exported hook is declared in `src/core/surface.ts` with the tab and section that demonstrates it, and that screen must actually call it. A hook may appear elsewhere as a supporting effect — AI Lab pulses HiLight — but it is *demonstrated* in exactly one place, and the Docs entry points the reader there. Adding a hook without a home fails `npm run parity`, as does a documented function with no control anywhere unless it is waived with a reason in `scripts/parity-waivers.json`.
+13. **Screens share their frame.** Titles, sub-tab rows and section blurbs come from `ScreenScaffold` (`ScreenHeader`, `SectionTabs`) and `sectionsFor(tab)`. Metrics are `MetricCard`, section titles are `SectionHeader`, buttons are `HapticButton`. Do not hand-roll a header or a tab row; a screen that looks different from the others is a bug, not a style.
+
 ## Validation
 
-- `npm run typecheck` must pass with 0 errors.
+- `npm run verify` must pass: `typecheck` with 0 errors, then `parity` with no unhomed hooks and no unreachable documented actions.
 - `npx expo export -p android` must bundle.
 - Native changes: build from the space-free junction `C:\dev\pixel-delta\android` with `.\gradlew.bat assembleDebug` (JDK 17, SDK at `%LOCALAPPDATA%\Android\Sdk`), then `adb install -r -g android/app/build/outputs/apk/debug/app-debug.apk`.
 - On-device checks: `adb logcat -s ReactNativeJS | grep PixelKit` for provenance events; `dumpsys` for independent confirmation (see `docs/research/DEVICE_TEST_REPORT_2026-09-06.md`).

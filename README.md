@@ -49,6 +49,7 @@
       </ul>
     </li>
     <li><a href="#project-structure">Project Structure</a></li>
+    <li><a href="#screens">Screens</a></li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#release-build">Release Build</a></li>
     <li><a href="#documentation">Documentation</a></li>
@@ -340,14 +341,17 @@ Pixel delta/ (PixelKit)
 │   └── pixel-nano/              # Kotlin Expo Module: Gemini Nano (AICore) + 18 ML Kit APIs
 │
 ├── scripts/
-│   └── hilight-daemon/          # Standalone Java daemon running as UID 2000 over ADB
+│   ├── hilight-daemon/          # Standalone Java daemon running as UID 2000 over ADB
+│   ├── check-parity.js          # Fails when a hook has no screen or an action has no control
+│   └── parity-waivers.json      # Actions deliberately not wired, each with a reason
 │
 ├── src/
 │   ├── index.ts                 # Master barrel export for all hooks, types, and UI primitives
 │   ├── core/
 │   │   ├── types.ts             # Strongly-typed hardware and AI interfaces
 │   │   ├── capabilities.ts      # Device capability resolver with PackageManager checks
-│   │   └── observability.ts     # TelemetrySource, structured event logging
+│   │   ├── surface.ts           # Where every hook lives: one home screen and section each
+│   │   └── observability.ts     # TelemetrySource, traces, structured event logging
 │   │
 │   ├── hardware/                # 24 Hardware hooks
 │   │   ├── useCPU.ts            # /proc/cpuinfo, sysfs cluster frequencies, app share
@@ -386,12 +390,30 @@ Pixel delta/ (PixelKit)
 │   │   ├── useSpeech.ts         # Platform text-to-speech engine with system voices
 │   │   └── geminiClient.ts      # Client factory with encrypted key persistence
 │   │
-│   ├── components/              # HapticButton, MetricCard, SensorVisualizer, Decor
+│   ├── components/              # ScreenScaffold, HapticButton, MetricCard, SensorVisualizer, Decor
 │   ├── theme/                   # colors.ts (design tokens), mode.ts (state -> colour)
-│   └── screens/                 # Dashboard, AILab, SensorsLab, Docs
+│   └── screens/                 # Silicon, AI Lab, Sensors, Docs — one home per hook
 │
 └── docs/                        # Subsystem references, guides, and empirical research
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+<!-- SCREENS -->
+## Screens
+
+Four tabs. Every hook has exactly one home, declared in `src/core/surface.ts`, and the Docs entry for a hook tells you which one — so what the SDK documents and what the app demonstrates cannot drift apart.
+
+| Tab | Sections | Hooks |
+| :--- | :--- | :--- |
+| **Silicon** | Compute · System · Network · Trace | `useCPU` `useGPU` `useTPU` `useMemory` `useADPF` · `useDevice` `useDisplay` `useCapabilities` · `useNetwork` `useCellular` · observability |
+| **AI Lab** | Chat · Tasks · Vision · Language · Voice · Agents | `useGemini` `useGeminiNano` · `useGenAITasks` · `useVisionAI` · `useNaturalLanguageAI` · `useSpeechAI` `useSpeech` |
+| **Sensors** | Motion · Capture · Audio · Actuators · Radios · Security | `useSensors` · `useCamera` `useVideo` `useMediaLibrary` · `useAudio` · `useHaptics` `useTorch` `useHiLight` · `useBLE` `useNFC` `useUWB` `useRadios` `useLocation` · `useBiometrics` `useSecurity` |
+| **Docs** | Search and category filter | All 32, each with its inputs, outputs, per-function contracts and a runnable example |
+
+`npm run parity` enforces it: a hook exported without a home fails, a home screen that never calls its hook fails, and a documented function with no control anywhere fails unless it is waived with a reason in `scripts/parity-waivers.json`.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -486,11 +508,11 @@ export function DocumentProcessor() {
 <!-- RELEASE BUILD -->
 ## Release Build
 
-Current version: **1.0.16** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 17).
+Current version: **1.0.25** (`package.json`, `app.json` `expo.version`, `expo.android.versionCode` 26).
 
 ```bash
-# 1. Type validation
-npm run typecheck
+# 1. Types and parity together
+npm run verify
 
 # 2. Bundle verification
 npx expo export -p android
