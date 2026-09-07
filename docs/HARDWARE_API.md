@@ -181,6 +181,10 @@ isHardwareSupported: boolean; isDaemonConnected: boolean;
 isActive: boolean; currentColor: string; mode: HiLightMode;
 brightness: number;                // 0.0 to 1.0, scales RGB
 isFaceDownMode: boolean; error: string | null; source: TelemetrySource;
+partial: string;                   // text streamed so far for the in-flight reply
+lastFirstChunkMs: number | null; lastPromptTokens: number | null;
+lastGrounding: { queries: string[]; sources: string[] } | null;
+safetyThreshold: 'default' | HarmBlockThreshold; searchGrounding: boolean;
 
 type HiLightMode = 'off' | 'glow' | 'breathing' | 'pulse' | 'gemini_thinking' | 'incoming_call' | 'notification';
 ```
@@ -233,7 +237,7 @@ error: string | null; source: TelemetrySource;
 ### `useGemini`
 * **File Path**: `src/ai/useGemini.ts`
 * **Backing Service**: Google Gen AI SDK (`@google/genai`) on `gemini-3.8-flash`.
-* **Description**: Multi-turn chat over `ai.chats` with a system instruction, API token counts and measured latency. There is no simulated fallback: without a key, `sendMessage` appends a `system`-role error. Changing the key, model or any generation parameter resets the session.
+* **Description**: Multi-turn chat over `ai.chats` with a system instruction, API token counts and measured latency. Replies stream through `sendMessageStream`, and the session can carry safety thresholds and the Google Search grounding tool. There is no simulated fallback: without a key, `sendMessage` appends a `system`-role error. Changing the key, model or any generation parameter resets the session.
 * **Inputs**: none as arguments; the setters below are the hook's inputs.
 * **Outputs**: [field table →](api/neural-ai.md#usegemini)
 
@@ -256,6 +260,9 @@ error: string | null; source: TelemetrySource;
 | `setMaxOutputTokens(n)` | `n: number` — reply length ceiling | `void` | Longer replies cost more and take longer. |
 | `setSystemInstruction(text)` | `text: string` — standing instruction; blank falls back to the default | `void` | Sets model behaviour for new sessions. |
 | `setThinkingBudget(tokens)` | `tokens: number` — thinking tokens; `0` disables | `void` | Only sent when above zero. |
+| `setSafety(threshold)` | `threshold: 'default' | HarmBlockThreshold` | `void` | One blocking threshold across all four harm categories; resets the session. |
+| `setSearchGroundingEnabled(enabled)` | `enabled: boolean` | `void` | Attaches the `googleSearch` tool so the model can search before answering; resets the session. |
+| `countTokens(text)` | `text: string` — prompt to measure | `Promise<number | null>` | Token cost of a prompt on the selected model, before sending. Writes `lastPromptTokens`. |
 
 ---
 

@@ -4,6 +4,32 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.1.4] - 2026-09-07
+
+Four capabilities the Gemini API has always offered and `useGemini` did not use: streaming,
+token counting, safety thresholds and Google Search grounding.
+
+### Added
+- **Cloud replies stream.** `sendMessage` now uses `sendMessageStream`, so `partial` fills in as
+  chunks arrive and the chat renders a live CLOUD STREAMING bubble beside the Nano one. `lastFirstChunkMs`
+  records time to the first chunk, which is the number that actually describes how responsive the model
+  feels; the round-trip total still lands on the finished message.
+- **`countTokens(text)`** asks the API what a prompt costs on the selected model before it is sent, and
+  writes the result to `lastPromptTokens`. The cloud parameter drawer has the control, matching the one
+  Nano already had.
+- **Safety thresholds.** `setSafety(threshold)` applies one `HarmBlockThreshold` across all four harm
+  categories — harassment, hate speech, sexually explicit, dangerous content. `'default'` sends no
+  `safetySettings` at all rather than guessing at the API defaults.
+- **Google Search grounding.** `setSearchGroundingEnabled(true)` attaches the `googleSearch` tool. When a
+  turn actually searches, `lastGrounding` carries the queries the model ran and the source URIs it used,
+  and the chat prints both under the reply. The model decides per turn whether to search, so an empty
+  `lastGrounding` means it answered from the model, not that grounding failed.
+
+### Changed
+- Every new member is documented in `docs/api/neural-ai.md`, `docs/HARDWARE_API.md` and the in-app
+  `useGemini` entry, with inputs and outputs, before it shipped — `npm run parity` fails the build on an
+  undocumented setter, so this is enforced rather than remembered.
+
 ## [1.1.3] - 2026-09-07
 
 Layout polish for bottom navigation bar and README presentation following Best-README-Template with genuine on-device screenshots.
@@ -12,19 +38,13 @@ Layout polish for bottom navigation bar and README presentation following Best-R
 - Embedded high-resolution hardware showcase gallery in `README.md` featuring 5 genuine captures from the physical Google Pixel 11 Pro (`grizzly`) testbed running Android 17 (Silicon HUD with live battery temp 37.2°C, Sensors & Actuators with 134.4Hz resonant LRA, Radios stack, Agent Guide architecture, and interactive in-app Docs contracts).
 - Project shields, logo header, and built-with badges following Best-README-Template specification.
 - Screenshot artifacts preserved in `docs/assets/screenshots/`.
-
-### Fixed
-- Bottom bar clipping: docked navigation bar in normal flex flow with `backgroundColor: Colors.dark.background` and normalized scroll container padding across screens, ensuring content is never obscured behind the tab bar.
-
-## [1.1.3] - 2026-09-07
-
-### Fixed
-- **Gemini Nano had no system prompt control.** The hook has always exposed `systemInstruction`, `setSystemInstruction`, `candidateCount`, `setCandidateCount`, `maxOutputTokens` and `setMaxOutputTokens`; the parameter drawer offered temperature, top-K and the thinking toggle and nothing else, so the one thing that decides how the on-device model behaves could not be set. The Nano drawer now has the system instruction field, a max-output stepper bounded by `info.tokenLimit`, and a candidate-count stepper, and it says which way the instruction is delivered — a `SystemInstruction` part where AICore accepts one, prefixed to the prompt where it does not.
-
-### Added
 - The in-app documentation entry for `useGeminiNano` now lists its seven generation parameters and its setters. It had none of them, which is why nothing noticed the interface was missing two thirds of the model's controls.
 - Documentation for five more setters that hooks return and no entry mentioned: `useGemini.setSelectedModel`, `setTopP`, `setThinkingBudget`, `useAudio.setSilenceThresholdDbfs` and `useCamera.setLook`.
 - `npm run parity` gained a third check: **every setter a hook returns must be documented**. Verified by mutation — removing an entry fails the build naming the hook and the setter. The action-reachability check also now covers functions documented under `returns`, not only under `actions`, and matches whole words so a renamed entry cannot slip through as a substring.
+
+### Fixed
+- Bottom bar clipping: docked navigation bar in normal flex flow with `backgroundColor: Colors.dark.background` and normalized scroll container padding across screens, ensuring content is never obscured behind the tab bar.
+- **Gemini Nano had no system prompt control.** The hook has always exposed `systemInstruction`, `setSystemInstruction`, `candidateCount`, `setCandidateCount`, `maxOutputTokens` and `setMaxOutputTokens`; the parameter drawer offered temperature, top-K and the thinking toggle and nothing else, so the one thing that decides how the on-device model behaves could not be set. The Nano drawer now has the system instruction field, a max-output stepper bounded by `info.tokenLimit`, and a candidate-count stepper, and it says which way the instruction is delivered — a `SystemInstruction` part where AICore accepts one, prefixed to the prompt where it does not.
 
 ## [1.1.2] - 2026-09-07
 

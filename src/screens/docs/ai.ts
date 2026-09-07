@@ -106,6 +106,27 @@ export const AI_MODULES: DocModule[] = [
         output: 'Resolves with the token count, or null when the tokenizer is unavailable. Compare it against info.tokenLimit.',
       },
       {
+        name: 'setSafety(threshold)',
+        type: "(threshold: 'default' | HarmBlockThreshold) => void",
+        desc: 'Sets one blocking threshold across all four harm categories (harassment, hate speech, sexually explicit, dangerous content) and resets the chat session.',
+        inputs: [{ name: 'threshold', type: "'default' | HarmBlockThreshold", desc: "'default' sends no safetySettings at all. Otherwise BLOCK_NONE, BLOCK_ONLY_HIGH, BLOCK_MEDIUM_AND_ABOVE or BLOCK_LOW_AND_ABOVE from @google/genai." }],
+        output: 'Returns nothing; the next turn starts a fresh session carrying that threshold.',
+      },
+      {
+        name: 'setSearchGroundingEnabled(enabled)',
+        type: '(enabled: boolean) => void',
+        desc: 'Attaches or removes the googleSearch tool, letting the model search the web before answering. Resets the chat session.',
+        inputs: [{ name: 'enabled', type: 'boolean', desc: 'True to ground replies in Google Search. The model decides per turn whether to actually search.' }],
+        output: 'Returns nothing. When a turn does search, lastGrounding carries the queries and source URIs.',
+      },
+      {
+        name: 'countTokens(text)',
+        type: '(text: string) => Promise<number | null>',
+        desc: 'Asks the API how many tokens a prompt costs on the selected model, before you send it.',
+        inputs: [{ name: 'text', type: 'string', desc: 'The prompt to measure. Blank input returns null without a network call.' }],
+        output: 'Resolves to the token count, or null without a key or when the call fails. Also written to lastPromptTokens.',
+      },
+      {
         name: 'clearMessages()',
         type: '() => void',
         desc: 'Empties the conversation and the thinking output.',
@@ -154,7 +175,7 @@ function OnDeviceChat() {
     plain:
       'Talks to the full Gemini model over the network. Much more capable than the on-device model, but it needs an API key and a connection. Replies carry real token counts and timings from the API.',
     description:
-      'Wraps ai.chats.create from @google/genai on gemini-3.8-flash with a system instruction, so history is maintained by the SDK rather than re-sent by hand. Token counts come from the response usageMetadata and latency is measured around the call. There is no simulated fallback: without a key, sendMessage appends a system-role message explaining how to configure one. The key is read from SecureStore, never from source.',
+      'Wraps ai.chats.create from @google/genai on gemini-3.8-flash with a system instruction, so history is maintained by the SDK rather than re-sent by hand. Token counts come from the response usageMetadata and latency is measured around the call. Replies stream through sendMessageStream, so partial fills in as chunks arrive and lastFirstChunkMs records time to first token. There is no simulated fallback: without a key, sendMessage appends a system-role message explaining how to configure one. The key is read from SecureStore, never from source.',
     signature: 'useGemini(): GeminiState',
     params: [],
     returns: [
@@ -162,6 +183,12 @@ function OnDeviceChat() {
       { name: 'isLoading', type: 'boolean', desc: 'True while a reply is in flight.' },
       { name: 'hasApiKey', type: 'boolean', desc: 'Whether a key is configured. Check this before offering cloud features.' },
       { name: 'model', type: 'string', desc: 'Model id in use, gemini-3.8-flash.' },
+      { name: 'partial', type: 'string', desc: 'Text streamed so far for the in-flight reply. Empty between turns; render it for a live typing effect.' },
+      { name: 'lastFirstChunkMs', type: 'number | null', desc: 'Time to the first streamed chunk of the last reply, in ms. Null before the first reply.' },
+      { name: 'lastPromptTokens', type: 'number | null', desc: 'Token count returned by the last countTokens() call. Null until you call it.' },
+      { name: 'lastGrounding', type: 'GroundingSummary | null', desc: 'What the last grounded reply searched for (queries) and which URIs it used (sources). Null when grounding was off or the model chose not to search.' },
+      { name: 'safetyThreshold', type: "'default' | HarmBlockThreshold", desc: 'Blocking threshold applied to all four harm categories. Default leaves the API defaults in place.' },
+      { name: 'searchGrounding', type: 'boolean', desc: 'Whether the googleSearch tool is attached to the session.' },
     ],
     actions: [
       {

@@ -9,7 +9,8 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useGemini } from '../../ai/useGemini';
+import { HarmBlockThreshold } from '@google/genai';
+import { useGemini, type SafetyThreshold } from '../../ai/useGemini';
 import { useGeminiNano } from '../../ai/useGeminiNano';
 import { useSpeechAI } from '../../ai/useSpeechAI';
 import { useHaptics } from '../../hardware/useHaptics';
@@ -19,6 +20,15 @@ import { HapticButton } from '../../components/HapticButton';
 import { StatChip } from '../../components/Decor';
 import { Colors } from '../../theme/colors';
 import { styles } from './styles';
+
+/** Threshold choices exposed for HarmCategory blocking; 'default' leaves the API defaults in place. */
+const SAFETY_CHOICES: { label: string; value: SafetyThreshold }[] = [
+  { label: 'DEFAULT', value: 'default' },
+  { label: 'NONE', value: HarmBlockThreshold.BLOCK_NONE },
+  { label: 'HIGH ONLY', value: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { label: 'MED+', value: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { label: 'LOW+', value: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
+];
 
 export const ChatSection: React.FC<{
   gemini: ReturnType<typeof useGemini>;
@@ -275,6 +285,42 @@ export const ChatSection: React.FC<{
                       placeholderTextColor={Colors.dark.textMuted}
                       multiline
                     />
+                    <View style={styles.toggleRow}>
+                      <Text style={styles.paramLabel}>Ground answers in Google Search</Text>
+                      <TouchableOpacity
+                        style={[styles.togglePill, gemini.searchGrounding && styles.togglePillActive]}
+                        onPress={() => gemini.setSearchGroundingEnabled(!gemini.searchGrounding)}
+                      >
+                        <Text style={styles.togglePillText}>{gemini.searchGrounding ? 'ENABLED' : 'DISABLED'}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.paramLabel}>Safety threshold</Text>
+                    <View style={styles.taskSelector}>
+                      {SAFETY_CHOICES.map(choice => (
+                        <TouchableOpacity
+                          key={choice.label}
+                          style={[styles.taskPill, gemini.safetyThreshold === choice.value && styles.taskPillActive]}
+                          onPress={() => gemini.setSafety(choice.value)}
+                        >
+                          <Text style={[styles.taskPillText, gemini.safetyThreshold === choice.value && styles.taskPillTextActive]}>
+                            {choice.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    <View style={styles.nanoActionRow}>
+                      <HapticButton
+                        title={gemini.lastPromptTokens == null ? 'Count prompt tokens' : `${gemini.lastPromptTokens} tokens`}
+                        onPress={() => { void gemini.countTokens(inputPrompt); }}
+                        disabled={!gemini.hasApiKey || !inputPrompt.trim()}
+                        variant="outline"
+                        style={styles.actionPill}
+                        textStyle={{ fontSize: 11 }}
+                      />
+                    </View>
+
                     <Text style={styles.cardDesc}>
                       Model, key and every value here are fixed when the chat session is created, so changing one starts a fresh session.
                     </Text>
@@ -464,6 +510,30 @@ export const ChatSection: React.FC<{
                   <Text style={styles.bubbleText}>{nano.partial}</Text>
                 </View>
               )}
+
+              {gemini.partial.length > 0 && (
+                <View style={[styles.messageBubble, styles.modelBubble]}>
+                  <View style={styles.bubbleHeader}>
+                    <Text style={styles.bubbleRole}>CLOUD STREAMING</Text>
+                    {gemini.lastFirstChunkMs != null && (
+                      <Text style={styles.bubbleLatency}>first chunk {gemini.lastFirstChunkMs} ms</Text>
+                    )}
+                  </View>
+                  <Text style={styles.bubbleText}>{gemini.partial}</Text>
+                </View>
+              )}
+
+              {gemini.lastGrounding && !gemini.partial && (
+                <View style={styles.thoughtBox}>
+                  <Text style={styles.thoughtTitle}>GROUNDED IN GOOGLE SEARCH</Text>
+                  {gemini.lastGrounding.queries.map((q, idx) => (
+                    <Text key={"q" + idx} style={styles.thoughtText}>search: {q}</Text>
+                  ))}
+                  {gemini.lastGrounding.sources.map((uri, idx) => (
+                    <Text key={"s" + idx} style={styles.thoughtText} numberOfLines={1}>{uri}</Text>
+                  ))}
+                </View>
+              )}
   
               {nano.thoughts.length > 0 && (
                 <View style={styles.thoughtBox}>
@@ -474,7 +544,7 @@ export const ChatSection: React.FC<{
                 </View>
               )}
   
-              {isBusy && !nano.partial && (
+              {isBusy && !nano.partial && !gemini.partial && (
                 <View style={styles.loadingBubble}>
                   <ActivityIndicator size="small" color={Colors.dark.primary} />
                   <Text style={styles.loadingBubbleText}>

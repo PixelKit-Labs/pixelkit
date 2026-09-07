@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { Chat } from '@google/genai';
+import { HarmBlockThreshold, HarmCategory, type Chat } from '@google/genai';
 import { AIMessage } from '../core/types';
 import {
   getStoredApiKey,
@@ -19,6 +19,25 @@ import {
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useGemini';
+
+/** Every category the Gemini API scores. One threshold is applied across all of them. */
+const HARM_CATEGORIES = [
+  HarmCategory.HARM_CATEGORY_HARASSMENT,
+  HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+  HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+  HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+];
+
+/** `default` sends no safetySettings at all, leaving the model's own defaults in place. */
+export type SafetyThreshold = 'default' | HarmBlockThreshold;
+
+/** What a grounded reply searched for, and which pages it used. */
+export interface GroundingSummary {
+  /** The queries the model actually ran. */
+  queries: string[];
+  /** URIs of the pages it drew on. Empty when it answered without using a result. */
+  sources: string[];
+}
 
 export const DEFAULT_GEMINI_SYSTEM_INSTRUCTION =
   'You are PixelKit, a concise hardware and AI assistant running on a Google Pixel 11 Pro. Answer in a few sentences unless asked for detail.';
@@ -37,6 +56,14 @@ export function useGemini() {
   const [maxOutputTokens, setMaxOutputTokens] = useState<number>(2048);
   const [systemInstruction, setSystemInstruction] = useState<string>(DEFAULT_GEMINI_SYSTEM_INSTRUCTION);
   const [thinkingBudget, setThinkingBudget] = useState<number>(0);
+  const [safetyThreshold, setSafetyThreshold] = useState<SafetyThreshold>('default');
+  const [searchGrounding, setSearchGrounding] = useState<boolean>(false);
+  /** Text of the reply currently streaming in. Empty between turns. */
+  const [partial, setPartial] = useState<string>('');
+  const [lastGrounding, setLastGrounding] = useState<GroundingSummary | null>(null);
+  /** Time to the first streamed chunk, which is what the wait actually feels like. */
+  const [lastFirstChunkMs, setLastFirstChunkMs] = useState<number | null>(null);
+  const [lastPromptTokens, setLastPromptTokens] = useState<number | null>(null);
 
   const chatRef = useRef<Chat | null>(null);
 
@@ -93,35 +120,103 @@ export function useGemini() {
         if (thinkingBudget > 0) {
           config.thinkingConfig = { thinkingBudget };
         }
+        if (safetyThreshold !== 'default') {
+          // One threshold across every category: a demo control, not a policy engine.
+          config.safetySettings = HARM_CATEGORIES.map(category => ({ category, threshold: safetyThreshold }));
+        }
+        if (searchGrounding) {
+          // Grounding makes the model search before answering, and the reply carries the queries
+          // it ran and the pages it used. Without it the model answers from training data alone.
+          config.tools = [{ googleSearch: {} }];
+        }
         chatRef.current = createGeminiClient(apiKey).chats.create({
           model,
           config,
         });
       }
-      const response = await chatRef.current.sendMessage({ message: prompt });
+
+      // Streaming, so the cloud reply appears as it arrives — the same behaviour Nano already had.
+      const stream = await chatRef.current.sendMessageStream({ message: prompt });
+      let text = '';
+      let usage: { totalTokenCount?: number } | undefined;
+      let grounding: GroundingSummary | null = null;
+      let firstChunkMs: number | null = null;
+
+      for await (const chunk of stream) {
+        if (chunk.text) {
+          if (firstChunkMs == null) firstChunkMs = Math.round(performance.now() - start);
+          text += chunk.text;
+          setPartial(text);
+        }
+        if (chunk.usageMetadata) usage = chunk.usageMetadata;
+        const meta = chunk.candidates?.[0]?.groundingMetadata;
+        if (meta) {
+          grounding = {
+            queries: meta.webSearchQueries ?? [],
+            sources: (meta.groundingChunks ?? [])
+              .map(c => c.web?.uri)
+              .filter((u): u is string => typeof u === 'string'),
+          };
+        }
+      }
+
       const elapsedMs = Math.round(performance.now() - start);
-      const tokens = response.usageMetadata?.totalTokenCount;
+      const tokens = usage?.totalTokenCount;
       setMessages(prev => [...prev, {
         id: `model_${Date.now()}`,
         role: 'model',
-        content: response.text ?? '(empty response)',
+        content: text || '(empty response)',
         timestamp: Date.now(),
         latencyMs: elapsedMs,
         tokenCount: tokens,
       }]);
+      setLastGrounding(grounding);
+      setLastFirstChunkMs(firstChunkMs);
       recordMetric(MODULE, 'latencyMs', elapsedMs, 'hardware');
-      logEvent(MODULE, 'reply', { model, latencyMs: elapsedMs, tokens });
+      if (firstChunkMs != null) recordMetric(MODULE, 'firstChunkMs', firstChunkMs, 'hardware');
+      logEvent(MODULE, 'reply', { model, latencyMs: elapsedMs, firstChunkMs, tokens, grounded: !!grounding });
     } catch (err: any) {
       const message = err?.message ?? 'Unknown error';
       setMessages(prev => [...prev, { id: `err_${Date.now()}`, role: 'system', content: `Gemini error: ${message}`, timestamp: Date.now() }]);
       logEvent(MODULE, 'error', { message }, 'error');
     } finally {
+      setPartial('');
       setIsLoading(false);
     }
-  }, [apiKey, model, temperature, topP, topK, maxOutputTokens, systemInstruction, thinkingBudget]);
+  }, [apiKey, model, temperature, topP, topK, maxOutputTokens, systemInstruction, thinkingBudget, safetyThreshold, searchGrounding]);
+
+  /**
+   * Counts a prompt against the model's tokenizer before sending it, so a caller can see the cost
+   * of a long prompt rather than discovering it in the bill.
+   */
+  const countTokens = useCallback(async (text: string): Promise<number | null> => {
+    if (!apiKey || !text.trim()) return null;
+    try {
+      const response = await createGeminiClient(apiKey).models.countTokens({ model, contents: text });
+      const total = response.totalTokens ?? null;
+      setLastPromptTokens(total);
+      return total;
+    } catch (e: any) {
+      logEvent(MODULE, 'countTokens error', { message: e?.message }, 'warn');
+      return null;
+    }
+  }, [apiKey, model]);
 
   const clearMessages = useCallback((): void => {
     setMessages([]);
+    setPartial('');
+    setLastGrounding(null);
+    chatRef.current = null;
+  }, []);
+
+  /** Safety and grounding are fixed when the session is created, so both start a fresh one. */
+  const setSafety = useCallback((threshold: SafetyThreshold) => {
+    setSafetyThreshold(threshold);
+    chatRef.current = null;
+  }, []);
+
+  const setSearchGroundingEnabled = useCallback((enabled: boolean) => {
+    setSearchGrounding(enabled);
     chatRef.current = null;
   }, []);
 
@@ -152,5 +247,18 @@ export function useGemini() {
     setSystemInstruction,
     thinkingBudget,
     setThinkingBudget,
+    /** Text streamed so far for the in-flight reply; empty between turns. */
+    partial,
+    /** Time to the first streamed chunk of the last reply, in ms. */
+    lastFirstChunkMs,
+    /** Token count from the last countTokens call. */
+    lastPromptTokens,
+    /** What the last grounded reply searched for and used, or null when grounding was off. */
+    lastGrounding,
+    safetyThreshold,
+    setSafety,
+    searchGrounding,
+    setSearchGroundingEnabled,
+    countTokens,
   };
 }
