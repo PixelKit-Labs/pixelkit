@@ -1,7 +1,14 @@
 /**
  * @file useSensors.ts
- * @description Real-time 6-axis IMU, Barometer, Magnetometer, and Light Sensor hook.
- * Streams physical hardware telemetry with configurable sampling rates and hypsometric altitude calculation.
+ * @description Motion, orientation, air pressure and ambient light, streamed from `expo-sensors`.
+ *
+ * Nothing is reported before the hardware has said it. Pressure and light are `null` until a first
+ * sample arrives rather than showing a plausible standing value, and `isAvailable` starts false
+ * until subscriptions are actually attached. Per-sensor availability is reported separately, because
+ * a device can have an IMU and no barometer.
+ *
+ * Altitude is derived from pressure with the international hypsometric formula, so it is relative
+ * and drifts with the weather. It is not a GNSS altitude and must not be presented as one.
  */
 
 import { useState, useEffect } from 'react';
@@ -12,38 +19,44 @@ import {
   Barometer,
   LightSensor,
 } from 'expo-sensors';
+import { logEvent, logError, type TelemetrySource } from '../core/observability';
 import { SensorTelemetry, Vector3D, BarometerData } from '../core/types';
 
+const MODULE = 'useSensors';
 const INITIAL_VECTOR: Vector3D = { x: 0, y: 0, z: 0 };
-const SEA_LEVEL_PRESSURE = 1013.25; // Standard atmospheric pressure in hPa
+/** Standard sea-level pressure, used only to derive relative altitude from a real reading. */
+const SEA_LEVEL_PRESSURE = 1013.25;
 
-/**
- * Hook to subscribe to and stream Google Pixel physical hardware sensors.
- *
- * @param updateIntervalMs Polling/streaming interval in milliseconds (default: 100ms = 10 Hz).
- *                         Lower values increase precision; higher values preserve battery.
- * @returns {SensorTelemetry} Real-time object containing accelerometer, gyroscope, magnetometer, barometer, and light.
- *
- * @example
- * ```typescript
- * const { accelerometer, gyroscope, barometer } = useSensors(50); // 20 Hz
- * console.log(`Current Altitude: ${barometer.relativeAltitude}m`);
- * ```
- */
-export function useSensors(updateIntervalMs: number = 100): SensorTelemetry {
+export function useSensors(updateIntervalMs: number = 100) {
   const [accelerometer, setAccelerometer] = useState<Vector3D>(INITIAL_VECTOR);
   const [gyroscope, setGyroscope] = useState<Vector3D>(INITIAL_VECTOR);
   const [magnetometer, setMagnetometer] = useState<Vector3D>(INITIAL_VECTOR);
-  const [barometer, setBarometer] = useState<BarometerData>({ pressure: 1013.25, relativeAltitude: 0 });
+  const [barometer, setBarometer] = useState<BarometerData>({ pressure: null, relativeAltitude: null });
   const [lightLux, setLightLux] = useState<number | undefined>(undefined);
-  const [isAvailable, setIsAvailable] = useState<boolean>(true);
+
+  const [isAvailable, setIsAvailable] = useState<boolean>(false);
+  const [hasMotionSample, setHasMotionSample] = useState<boolean>(false);
+  const [barometerAvailable, setBarometerAvailable] = useState<boolean | null>(null);
+  const [lightAvailable, setLightAvailable] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const source: TelemetrySource = hasMotionSample ? 'hardware' : 'unavailable';
 
   useEffect(() => {
+    let cancelled = false;
     let accelSub: { remove: () => void } | null = null;
     let gyroSub: { remove: () => void } | null = null;
     let magSub: { remove: () => void } | null = null;
     let barSub: { remove: () => void } | null = null;
     let lightSub: { remove: () => void } | null = null;
+    let sawSample = false;
+
+    const markSample = () => {
+      if (sawSample || cancelled) return;
+      sawSample = true;
+      setHasMotionSample(true);
+      logEvent(MODULE, 'first sample', { intervalMs: updateIntervalMs });
+    };
 
     const setupSensors = async () => {
       try {
@@ -52,34 +65,25 @@ export function useSensors(updateIntervalMs: number = 100): SensorTelemetry {
         Magnetometer.setUpdateInterval(updateIntervalMs);
         Barometer.setUpdateInterval(updateIntervalMs);
 
-        accelSub = Accelerometer.addListener((data) => {
-          setAccelerometer({
-            x: Number(data.x.toFixed(3)),
-            y: Number(data.y.toFixed(3)),
-            z: Number(data.z.toFixed(3)),
-          });
+        accelSub = Accelerometer.addListener((d) => {
+          markSample();
+          setAccelerometer({ x: Number(d.x.toFixed(3)), y: Number(d.y.toFixed(3)), z: Number(d.z.toFixed(3)) });
+        });
+        gyroSub = Gyroscope.addListener((d) => {
+          setGyroscope({ x: Number(d.x.toFixed(3)), y: Number(d.y.toFixed(3)), z: Number(d.z.toFixed(3)) });
+        });
+        magSub = Magnetometer.addListener((d) => {
+          setMagnetometer({ x: Number(d.x.toFixed(1)), y: Number(d.y.toFixed(1)), z: Number(d.z.toFixed(1)) });
         });
 
-        gyroSub = Gyroscope.addListener((data) => {
-          setGyroscope({
-            x: Number(data.x.toFixed(3)),
-            y: Number(data.y.toFixed(3)),
-            z: Number(data.z.toFixed(3)),
-          });
+        const hasBarometer = await Barometer.isAvailableAsync().catch((e) => {
+          logError(MODULE, 'barometer probe failed', e);
+          return false;
         });
-
-        magSub = Magnetometer.addListener((data) => {
-          setMagnetometer({
-            x: Number(data.x.toFixed(1)),
-            y: Number(data.y.toFixed(1)),
-            z: Number(data.z.toFixed(1)),
-          });
-        });
-
-        const isBarometerAvailable = await Barometer.isAvailableAsync().catch(() => false);
-        if (isBarometerAvailable) {
+        if (cancelled) return;
+        setBarometerAvailable(hasBarometer);
+        if (hasBarometer) {
           barSub = Barometer.addListener(({ pressure }) => {
-            // Hypsometric formula for international barometric altitude estimation
             const altitude = 44330 * (1 - Math.pow(pressure / SEA_LEVEL_PRESSURE, 0.1903));
             setBarometer({
               pressure: Number(pressure.toFixed(2)),
@@ -88,36 +92,66 @@ export function useSensors(updateIntervalMs: number = 100): SensorTelemetry {
           });
         }
 
-        const isLightAvailable = await LightSensor.isAvailableAsync().catch(() => false);
-        if (isLightAvailable) {
+        const hasLight = await LightSensor.isAvailableAsync().catch((e) => {
+          logError(MODULE, 'light probe failed', e);
+          return false;
+        });
+        if (cancelled) return;
+        setLightAvailable(hasLight);
+        if (hasLight) {
           LightSensor.setUpdateInterval(updateIntervalMs * 2);
           lightSub = LightSensor.addListener(({ illuminance }) => {
-            // Keep one decimal: a dark room legitimately reads 0.4–2 lux and must not display as 0.
+            // One decimal: a dark room legitimately reads 0.4-2 lux and must not display as 0.
             setLightLux(Number(illuminance.toFixed(1)));
           });
         }
-      } catch {
+
+        setIsAvailable(true);
+        setError(null);
+        logEvent(MODULE, 'subscribed', {
+          intervalMs: updateIntervalMs,
+          barometer: hasBarometer,
+          light: hasLight,
+        });
+      } catch (e) {
+        if (cancelled) return;
         setIsAvailable(false);
+        setError(logError(MODULE, 'subscribe failed', e, { intervalMs: updateIntervalMs }).message);
       }
     };
 
-    setupSensors();
+    void setupSensors();
 
     return () => {
+      cancelled = true;
       accelSub?.remove();
       gyroSub?.remove();
       magSub?.remove();
       barSub?.remove();
       lightSub?.remove();
+      logEvent(MODULE, 'unsubscribed');
     };
   }, [updateIntervalMs]);
 
-  return {
+  const telemetry: SensorTelemetry = {
     accelerometer,
     gyroscope,
     magnetometer,
     barometer,
     lightLux,
     isAvailable,
+  };
+
+  return {
+    ...telemetry,
+    /** True once a real motion sample has arrived; before that the vectors are still zeroed. */
+    hasMotionSample,
+    /** Whether this device has a barometer. Null until probed. */
+    barometerAvailable,
+    /** Whether this device has an ambient light sensor. Null until probed. */
+    lightAvailable,
+    /** Why subscribing failed, if it did. */
+    error,
+    source,
   };
 }

@@ -4,6 +4,44 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.0.19] - 2026-09-06
+
+### Added
+- Observability layer rebuilt in `src/core/observability.ts`. `traced` times an operation, gives it a correlation id, records the duration as a metric and logs success or failure; nested calls inherit the parent id, so a single user action can be followed end to end. `tracedSafe` does the same where a failure is survivable. `normalizeError` reduces native `CodedException`s, `Error`s and thrown strings to one shape, and `logError` records them and counts them per module. New readers: `getTraces`, `getSlowestTraces`, `getTrace(id)`, `getErrorCounts`, `getHealthSummary`, `resetObservability`. Operations slower than 1.5 s log at warn level.
+- Real NFC. `PixelNativeModule` gained `startNfcReader`, `stopNfcReader`, `writeNdefText` and `isNfcReaderActive`, driving `NfcAdapter` reader mode on the foreground Activity. Tags raise `onNfcTag` carrying the identifier, supported technologies, NDEF capacity, writability and decoded records; text records have their language prefix stripped and URI records are resolved. Writing formats an unformatted tag where the tag allows it.
+
+### Changed
+- **Nothing in the SDK is simulated, and the type system now enforces it.** `TelemetrySource` is `'hardware' | 'derived' | 'unavailable'` and `HardwareAvailability` is `'hardware' | 'unavailable' | 'estimated' | 'unsupported'`. The `simulated` member is gone from both, so a fabricated reading no longer compiles.
+- `useNFC` rewritten on the native reader: real tag reads and NDEF writes, tag count, pending write state and write outcome. It previously returned a hardcoded placeholder tag.
+- `useHiLight` no longer mirrors its state on screen when the daemon is absent. Availability is `unavailable` and the controls refuse rather than implying a colour was shown.
+- Ten hooks had no observability at all and now carry traces, surfaced errors and provenance: `useBiometrics`, `useSecurity`, `useLocation`, `useSensors`, `useNetwork` and `useNFC` among them.
+- `MetricCard` dropped its SIMULATED badge. The Silicon and Sensors screens no longer label anything as simulated.
+
+### Fixed
+- `useNetwork` claimed `isConnected: true` on WIFI before any read had happened. It now starts UNKNOWN and disconnected, and requires both an attached interface and a reachable route before reporting connected.
+- `useSensors` reported a standing 1013.25 hPa before the barometer produced a sample. Pressure and altitude are null until a real reading arrives, per-sensor availability is reported separately, and `isAvailable` starts false.
+- Empty `catch` blocks across the hooks discarded failures silently. Errors are now logged, counted and surfaced through an `error` field.
+- `useBiometrics` treated a user cancel and a genuine failure identically. It now distinguishes them and sets `error` only when the call itself failed.
+
+### Rules
+- `AGENTS.md`, `CLAUDE.md` and `GEMINI.md` (kept identical): rule 3 rewritten as **Nothing is simulated**; new rule 10 **Observability on every function**, requiring `traced`, a surfaced error and a `source` field with no empty catch; new rule 11 **Documented before it is done**, requiring JSDoc, a typed `docsData.ts` entry, the `docs/api/*` section and the README row before a function counts as finished.
+- Every project document scrubbed of simulation claims.
+
+## [1.0.18] - 2026-09-06
+
+### Added
+- Genuine physical Bluetooth Low Energy discovery in `useBLE` via Android `BluetoothLeScanner` (`PixelNative.startBleScan`, `stopBleScan`, `getDiscoveredBleDevices`). Discovers real nearby peripherals with MAC address, name, verified RSSI (dBm), and estimated distance derived from the log-distance path loss model, eliminating simulated placeholders.
+- Hardware UWB ranging session management in `useUWB` via `PixelNative.startUwbRanging` and `stopUwbRanging`, querying Android 14+ `RangingManager` and `UwbManager` with honest HAL state reporting.
+- Production release signing pipeline in `android/app/build.gradle` supporting `PIXELKIT_UPLOAD_STORE_FILE` gradle properties and `PIXELKIT_RELEASE_KEYSTORE_PATH` environment variables with debug fallback.
+- EAS Build configuration in `eas.json` with `development`, `preview` (standalone APK), and `production` (Google Play AAB) build profiles.
+- Release obfuscation and shrinkage keep rules in `android/app/proguard-rules.pro` for `expo.modules.pixelnative`, `expo.modules.pixelnano`, ML Kit, and Google Play Tasks.
+- Android 17 AppFunctions execution support via `PixelNative.executeAppFunction` wired directly into `AILabScreen.tsx` for real-time actuator testing across 10 system tools (haptic envelopes, rear torch levels, radio discovery, thermal diagnostics, and ML Kit models).
+
+### Changed
+- `useBLE` and `useUWB` report genuine hardware provenance (`source: 'hardware'`) when backed by `PixelNative`.
+- `SensorsLabScreen` now features real-time BLE spectrum discovery cards with signal strength badges and distance estimates, as well as live UWB session telemetry.
+- Updated in-app documentation in `src/screens/docsData.ts` and reference markdown (`docs/HARDWARE_API.md`, `docs/api/radios-security.md`, `docs/api/pro-exclusives.md`, `README.md`, `PIXELKIT.md`) to reflect active BLE scanning and UWB session handling.
+
 ## [1.0.17] - 2026-09-06
 
 ### Added

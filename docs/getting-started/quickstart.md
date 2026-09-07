@@ -106,7 +106,7 @@ To edit and preview UI components and layout immediately in your PC browser with
 3. **React Grab (`react-grab`)**:
    - Hold **`Ctrl+C`** (Windows) or **`Cmd+C`** (macOS) and click any visual element on screen to copy its exact component name, file path, line number, and props directly to your clipboard.
    - Paste the snippet into your AI coding agent (Antigravity, Claude, Cursor) for instant targeted edits.
-4. Use browser DevTools (F12) to inspect component layouts. All hardware hooks feature simulation fallbacks on Web.
+4. Use browser DevTools (F12) to inspect component layouts. On web, native-backed hooks report `source: 'unavailable'` and render `—`; nothing is substituted.
 
 ### Method D: With Local MCP Server for AI Agent Testing
 To enable AI agent visual verification, automated screenshotting, and `testID` element inspection:

@@ -26,6 +26,7 @@ const POLL_MS = 2000;
  */
 export function useDisplay() {
   const [isKeepAwake, setIsKeepAwake] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [brightness, setBrightness] = useState<number>(0);
   const [display, setDisplay] = useState<DisplayInfo | null>(null);
 
@@ -48,7 +49,8 @@ export function useDisplay() {
         setDisplay(d);
         recordMetric(MODULE, 'refreshRateHz', d.refreshRate, 'hardware');
       } catch (e: any) {
-        logEvent(MODULE, 'getDisplayInfo error', { message: e?.message }, 'error');
+        setError(e?.message ?? 'getDisplayInfo error');
+      logEvent(MODULE, 'getDisplayInfo error', { message: e?.message }, 'error');
       }
     };
     read();
@@ -61,6 +63,7 @@ export function useDisplay() {
       if (isKeepAwake) { deactivateKeepAwake(KEEP_AWAKE_TAG); setIsKeepAwake(false); }
       else { await activateKeepAwakeAsync(KEEP_AWAKE_TAG); setIsKeepAwake(true); }
     } catch (e: any) {
+      setError(e?.message ?? 'keep-awake error');
       logEvent(MODULE, 'keep-awake error', { message: e?.message }, 'error');
     }
   }, [isKeepAwake]);
@@ -103,6 +106,8 @@ export function useDisplay() {
     isHdr: display?.isHdr ?? false,
     maxLuminance: display?.maxLuminance ?? null,
     setPreferredRefreshRate,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     /** Telemetry provenance */
     source,
   };

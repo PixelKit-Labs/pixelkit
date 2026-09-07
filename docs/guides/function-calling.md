@@ -134,7 +134,7 @@ export function registerHardwareTools(h: { torch: Torch; haptics: Haptics; hilig
 
   defineTool({
     name: 'set_hilight',
-    description: 'Set the rear camera-bar HiLight LED ring colour and animation (simulated on-screen if unsupported).',
+    description: 'Set the rear camera-bar HiLight LED ring colour and animation. Requires the ADB daemon; refuses otherwise.',
     schema: z.object({
       mode: z.enum(['off', 'glow', 'breathing', 'pulse', 'gemini_thinking', 'incoming_call', 'notification']),
       color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),

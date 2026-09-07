@@ -1,64 +1,83 @@
 /**
  * @file useNetwork.ts
- * @description Detailed network connectivity, IP address, and airplane mode telemetry.
- * Connects to expo-network for real-time monitoring of Wi-Fi 7, 5G, and offline routing.
+ * @description Connectivity, address and metering from `expo-network`.
+ *
+ * Being attached to Wi-Fi is not the same as having internet, so `isConnected` requires both a
+ * connection and a reachable route. Nothing is assumed before the first read: the type is UNKNOWN
+ * and `isConnected` is false until the platform answers, rather than optimistically claiming
+ * a working connection the app has not verified.
+ *
+ * For what kind of cellular connection this is, and which carrier, see `useCellular`.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import * as Network from 'expo-network';
+import { logEvent, logError, tracedSafe, traced, type TelemetrySource } from '../core/observability';
 import { NetworkTelemetry } from '../core/types';
 
-/**
- * Hook to inspect IP address, active network type, and internet connectivity.
- *
- * @returns {NetworkTelemetry & { refreshNetwork: () => Promise<void> }}
- *
- * @example
- * ```typescript
- * const { ipAddress, networkType, isConnected, isAirplaneMode } = useNetwork();
- * console.log(`Connected via ${networkType}, IP: ${ipAddress}`);
- * ```
- */
+const MODULE = 'useNetwork';
+
 export function useNetwork() {
   const [network, setNetwork] = useState<NetworkTelemetry>({
     ipAddress: null,
-    networkType: 'WIFI',
-    isConnected: true,
+    networkType: 'UNKNOWN',
+    isConnected: false,
     isMetered: false,
     isAirplaneMode: false,
   });
+  const [hasRead, setHasRead] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const checkNetwork = async () => {
+  const source: TelemetrySource = hasRead ? 'hardware' : 'unavailable';
+
+  /** Re-reads connectivity. Each sub-read fails independently so one missing value does not blank the rest. */
+  const refreshNetwork = useCallback(async (): Promise<void> => {
+    setIsChecking(true);
     try {
-      const [ip, state, airplane] = await Promise.all([
-        Network.getIpAddressAsync().catch(() => null),
-        Network.getNetworkStateAsync().catch(() => ({
-          isConnected: true,
-          type: Network.NetworkStateType.WIFI,
-          isInternetReachable: true,
-        })),
-        Network.isAirplaneModeEnabledAsync().catch(() => false),
-      ]);
+      const [ip, state, airplane] = await traced(MODULE, 'read', () => Promise.all([
+        tracedSafe(MODULE, 'readIpAddress', () => Network.getIpAddressAsync(), null),
+        tracedSafe(MODULE, 'readState', () => Network.getNetworkStateAsync(), null),
+        tracedSafe(MODULE, 'readAirplaneMode', () => Network.isAirplaneModeEnabledAsync(), false),
+      ]));
 
-      setNetwork({
+      const next: NetworkTelemetry = {
         ipAddress: ip,
-        networkType: state.type || 'UNKNOWN',
-        isConnected: !!state.isConnected && !!state.isInternetReachable,
-        isMetered: state.type === Network.NetworkStateType.CELLULAR,
+        networkType: state?.type ?? 'UNKNOWN',
+        // Attached is not the same as reachable; require both.
+        isConnected: !!state?.isConnected && state?.isInternetReachable !== false,
+        isMetered: state?.type === Network.NetworkStateType.CELLULAR,
         isAirplaneMode: airplane,
+      };
+      setNetwork(next);
+      setHasRead(true);
+      setError(null);
+      logEvent(MODULE, 'state', {
+        type: next.networkType,
+        connected: next.isConnected,
+        metered: next.isMetered,
+        airplane: next.isAirplaneMode,
+        hasIp: next.ipAddress != null,
       });
-    } catch {
-      // Degrades gracefully on simulator
+    } catch (e) {
+      setError(logError(MODULE, 'read failed', e).message);
+    } finally {
+      setIsChecking(false);
     }
-  };
-
-  useEffect(() => {
-    checkNetwork();
   }, []);
+
+  useEffect(() => { void refreshNetwork(); }, [refreshNetwork]);
 
   return {
     ...network,
-    /** Manually trigger network diagnostic check */
-    refreshNetwork: checkNetwork,
+    /** Whether a read has completed. Before it, the values are defaults and `source` is unavailable. */
+    hasRead,
+    /** True while a check is running. */
+    isChecking,
+    /** Why the last read failed. */
+    error,
+    source,
+    /** Re-run the connectivity check. */
+    refreshNetwork,
   };
 }

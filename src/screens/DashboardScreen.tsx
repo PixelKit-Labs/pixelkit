@@ -2,7 +2,7 @@
  * @file DashboardScreen.tsx
  * @description Silicon and hardware telemetry HUD. Every value is either read from the device through
  * the PixelNative module / Expo modules or shown as "—". Cards carry a provenance tag (HW / DERIVED /
- * SIMULATED / N/A). Pro-exclusive features gated behind a privileged permission (HiLight) say so. A live observability panel lists the latest hook events.
+ * DERIVED / N/A). Nothing is simulated: a capability that cannot be driven reports N/A and its A live observability panel lists the latest hook events.
  */
 
 import React, { useState } from 'react';
@@ -213,7 +213,7 @@ export const DashboardScreen: React.FC = () => {
       <MetricCard
         title="HiLight camera ring"
         value={hilight.isActive ? `Active (${hilight.currentColor})` : 'Standby'}
-        badge={!hilight.isHardwareSupported ? 'NO SENSOR' : hilight.isDaemonConnected ? 'HARDWARE' : 'SIMULATED'}
+        badge={!hilight.isHardwareSupported ? 'NO ARRAY' : hilight.isDaemonConnected ? 'HARDWARE' : 'DAEMON OFF'}
         badgeColor={!hilight.isHardwareSupported ? Colors.dark.error : hilight.isDaemonConnected ? Colors.dark.success : Colors.dark.warning}
         subtitle={
           !hilight.isHardwareSupported
@@ -234,13 +234,13 @@ export const DashboardScreen: React.FC = () => {
       <MetricCard
         title="UWB ranging"
         value={caps.hasUWB ? (uwb.isEnabled ? 'Chip ready' : 'Radio present') : 'No radio'}
-        badge={uwb.source === 'hardware' ? 'HARDWARE' : 'SIMULATED'}
+        badge={uwb.source === 'hardware' ? 'HARDWARE' : 'N/A'}
         badgeColor={uwb.isEnabled ? Colors.dark.success : Colors.dark.warning}
         subtitle={caps.hasUWB ? `Chip ${uwb.chipId ?? 'default'} · ${uwb.isEnabled ? 'READY' : 'OFF'} · Android 17 RangingService active` : '—'}
         source={uwb.source}
       />
       {caps.hasUWB && (
-        <HapticButton title={uwb.isRanging ? 'Simulated ranging…' : 'Run simulated UWB ranging'} onPress={uwb.startRanging} disabled={uwb.isRanging} variant="secondary" style={styles.actionButton} />
+        <HapticButton title={uwb.isRanging ? 'Ranging…' : 'Start UWB ranging'} onPress={uwb.startRanging} disabled={uwb.isRanging} variant="secondary" style={styles.actionButton} />
       )}
 
       {/* Torch */}
@@ -324,7 +324,7 @@ export const DashboardScreen: React.FC = () => {
         <Text style={styles.obsTitle}>Sources by module</Text>
         <View style={styles.chipRow}>
           {Object.entries(obs.sources).map(([mod, srcs]) => (
-            <View key={mod} style={[styles.chip, { borderColor: srcs.includes('simulated') ? Colors.dark.warning : srcs.includes('unavailable') && srcs.length === 1 ? Colors.dark.error : Colors.dark.success }]}>
+            <View key={mod} style={[styles.chip, { borderColor: srcs.includes('unavailable') ? Colors.dark.warning : srcs.includes('unavailable') && srcs.length === 1 ? Colors.dark.error : Colors.dark.success }]}>
               <Text style={styles.chipText}>{mod.replace(/^use/, '')}: {srcs.join('/')}</Text>
             </View>
           ))}

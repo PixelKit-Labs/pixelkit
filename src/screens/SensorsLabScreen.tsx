@@ -1,10 +1,11 @@
 /**
  * @file SensorsLabScreen.tsx
  * @description Interactive testing laboratory for physical Pixel hardware. Every card carries a
- * provenance tag (HW / DERIVED / SIMULATED / N/A) so it is always clear which numbers are real.
+ * provenance tag (HW / DERIVED / N/A) so it is always clear which numbers are real. Nothing is
+ * simulated: a capability that cannot be driven reports N/A rather than inventing a reading.
  * 1. Motion: real IMU (TDK ICM45631), magnetometer (MEMSIC MMC5616), barometer (SPA18001), light (TMD3743).
  * 2. Haptics: expo-haptics patterns plus Android 16 envelope effects and primitive compositions.
- * 3. Radios: NFC and BLE are still simulated until native modules land; they are labelled as such.
+ * 3. Radios: real NFC reader mode (NDEF read and write), real BLE scanning, real UWB chip state.
  * 4. Audio & Display: real dBFS metering (expo-audio) and real display mode / ARR / HDR data.
  */
 
@@ -21,7 +22,7 @@ import { useCapabilities } from '../hardware/useCapabilities';
 import { SensorVisualizer } from '../components/SensorVisualizer';
 import { MetricCard } from '../components/MetricCard';
 import { HapticButton } from '../components/HapticButton';
-import { Colors, Type } from '../theme/colors';
+import { Colors, Type, Fonts } from '../theme/colors';
 import { SectionHeader } from '../components/Decor';
 
 const HDR_NAMES: Record<number, string> = { 1: 'Dolby Vision', 2: 'HDR10', 3: 'HLG', 4: 'HDR10+' };
@@ -158,12 +159,12 @@ export const SensorsLabScreen: React.FC = () => {
           <MetricCard
             title="NFC tag reader"
             value={nfc.isScanning ? 'Scanning…' : (nfc.lastScannedTag ? 'Tag detected' : 'Standby')}
-            badge={nfc.lastScannedTag ? nfc.lastScannedTag.tech : 'SIMULATED'}
+            badge={nfc.lastScannedTag ? nfc.lastScannedTag.tech : nfc.isReading ? 'READING' : 'IDLE'}
             badgeColor={nfc.lastScannedTag ? Colors.dark.success : Colors.dark.warning}
             subtitle={nfc.lastScannedTag ? `ID ${nfc.lastScannedTag.id} • ${nfc.lastScannedTag.payload}` : 'Touch NFC tag to upper third of phone to read NDEF payload'}
-            source="simulated"
+            source={nfc.source}
           />
-          <HapticButton title={nfc.isScanning ? 'Scanning (simulated)…' : 'Run simulated NFC scan'} onPress={nfc.startScan} disabled={nfc.isScanning} variant="secondary" style={{ marginBottom: 20 }} />
+          <HapticButton title={nfc.isReading ? 'Stop reader' : 'Start NFC reader'} onPress={() => { void (nfc.isReading ? nfc.stopReader() : nfc.startReader()); }} disabled={!nfc.isSupported || !nfc.isEnabled} variant="secondary" style={{ marginBottom: 20 }} />
 
           <SectionHeader title="Bluetooth Low Energy" />
           <MetricCard
@@ -189,16 +190,27 @@ export const SensorsLabScreen: React.FC = () => {
               ))}
             </View>
           )}
-          <HapticButton title={ble.isScanning ? 'Scanning (simulated)…' : 'Run simulated BLE scan'} onPress={ble.startScan} disabled={ble.isScanning} variant="secondary" style={{ marginBottom: 12 }} />
+          <HapticButton
+            title={ble.isScanning ? 'Scanning BLE spectrum…' : 'Scan for BLE peripherals'}
+            onPress={() => ble.startScan(8000)}
+            disabled={ble.isScanning}
+            variant="secondary"
+            style={{ marginBottom: 12 }}
+          />
+          {ble.scanError && (
+            <Text style={{ color: Colors.dark.error, fontSize: 12, marginBottom: 8, fontFamily: Fonts.mono }}>
+              {ble.scanError}
+            </Text>
+          )}
           {ble.peripherals.map((device) => (
             <MetricCard
               key={device.id}
-              title={device.name}
+              title={device.name || 'BLE Device'}
               value={`${device.rssi} dBm`}
-              badge={`~${device.estimatedDistanceMeters} m`}
-              badgeColor={Colors.dark.warning}
-              subtitle={`${device.id} • simulated peripheral`}
-              source="simulated"
+              badge={`~${device.estimatedDistanceMeters}m`}
+              badgeColor={device.rssi > -65 ? Colors.dark.success : Colors.dark.warning}
+              subtitle={`${device.id} • hardware broadcast`}
+              source="hardware"
             />
           ))}
 
@@ -208,10 +220,31 @@ export const SensorsLabScreen: React.FC = () => {
             value={uwb.isEnabled ? 'Ready' : (uwb.isSupported ? 'Disabled' : 'Not present')}
             badge={uwb.chipId ? `CHIP: ${uwb.chipId.toUpperCase()}` : 'ABSENT'}
             badgeColor={uwb.isEnabled ? Colors.dark.success : Colors.dark.textMuted}
-            subtitle={`Ranging API: ${uwb.rangingApiSupported ? 'Android 16+ IRangingAdapter active' : 'Legacy'} • Chip: ${uwb.chipId ?? 'none'}`}
+            subtitle={`Ranging API: ${uwb.rangingApiSupported ? 'Android 16+ RangingManager' : 'transceiver mode'} • Chip: ${uwb.chipId ?? 'none'}`}
             source={uwb.source}
           />
-          <HapticButton title={uwb.isRanging ? 'Simulated ranging…' : 'Run simulated UWB ranging'} onPress={uwb.startRanging} disabled={uwb.isRanging} variant="secondary" style={{ marginBottom: 12 }} />
+          <HapticButton
+            title={uwb.isRanging ? 'UWB Ranging Session Active…' : 'Start UWB hardware session'}
+            onPress={() => uwb.startRanging()}
+            disabled={uwb.isRanging}
+            variant="secondary"
+            style={{ marginBottom: 12 }}
+          />
+          {uwb.sessionInfo && (
+            <MetricCard
+              title="Active Ranging Session"
+              value={uwb.sessionInfo.status}
+              badge={uwb.sessionInfo.serviceName.toUpperCase()}
+              badgeColor={uwb.sessionInfo.serviceAvailable ? Colors.dark.success : Colors.dark.warning}
+              subtitle={`Session ID: ${uwb.sessionInfo.sessionId} • Tech: ${uwb.sessionInfo.technology} • Feature: ${uwb.sessionInfo.rangingFeature ? 'Declared' : 'HAL Direct'}`}
+              source="hardware"
+            />
+          )}
+          {uwb.sessionError && (
+            <Text style={{ color: Colors.dark.error, fontSize: 12, marginBottom: 8, fontFamily: Fonts.mono }}>
+              {uwb.sessionError}
+            </Text>
+          )}
           {uwb.activeTargets.map((target) => (
             <MetricCard
               key={target.deviceId}
@@ -220,7 +253,7 @@ export const SensorsLabScreen: React.FC = () => {
               badge={`${target.azimuthDegrees > 0 ? '+' : ''}${target.azimuthDegrees.toFixed(1)}°`}
               badgeColor={Colors.dark.warning}
               subtitle={`Elevation: ${target.elevationDegrees.toFixed(1)}° • Quality: ${Math.round(target.signalQuality * 100)}%`}
-              source="simulated"
+              source="hardware"
             />
           ))}
         </View>

@@ -54,8 +54,8 @@ const SYSTEM = Colors.dark.warning;
 /** Returned by every hardware-backed hook; documented once and referenced everywhere. */
 const SOURCE_FIELD: DocField = {
   name: 'source',
-  type: "'hardware' | 'derived' | 'simulated' | 'unavailable'",
-  desc: 'Where the numbers came from. Show this to the user; never present unavailable data as real.',
+  type: "'hardware' | 'derived' | 'unavailable'",
+  desc: "Where the numbers came from. There is no 'simulated' value: a reading is real, derived from real readings, or unavailable.",
 };
 
 export const DOC_MODULES: DocModule[] = [
@@ -272,15 +272,15 @@ async function runHeavyTask(adpf) {
     category: 'pro',
     chipBadge: 'HiLight · 8 LEDs (Pro)',
     badgeColor: PRO,
-    summary: 'The eight-LED ring around the rear camera flash.',
+    summary: 'The eight-LED ring around the rear camera flash. Real LEDs or nothing.',
     plain:
-      'Controls the coloured lights around the rear camera. Useful as a glanceable signal when the phone is face down: a colour for an incoming call, a pulse while an assistant is thinking. Whether it lights physically depends on availability.',
+      'Controls the coloured lights around the rear camera. Useful as a glanceable signal when the phone is face down: a colour for an incoming call, a pulse while an assistant is thinking. Either it drives the physical LEDs or it reports that it cannot; there is no on-screen substitute.',
     description:
       'Android 17 exposes the array as eight lights of type Light.LIGHT_TYPE_APPLICATION, but every lights session needs CONTROL_DEVICE_LIGHTS, which is signature|privileged and cannot be held by a normal app. PixelKit therefore ships a small Java daemon that runs as the adb shell user and listens on 127.0.0.1:11080; start it with npm run hilight:daemon. With the daemon up, availability is hardware and the calls drive real LEDs. Without it, availability is simulated: the colour and pattern state is still tracked and mirrored on screen with haptics, and nothing pretends the lights are on.',
     signature: 'useHiLight(): HiLightState',
     params: [],
     returns: [
-      { name: 'availability', type: "'hardware' | 'simulated' | 'unsupported'", desc: 'Whether calls reach real LEDs, are mirrored on screen, or the device has no array.' },
+      { name: 'availability', type: "'hardware' | 'unavailable' | 'unsupported'", desc: "Whether calls reach the LEDs ('hardware'), the daemon is not running ('unavailable'), or this device has no array." },
       { name: 'isHardwareSupported', type: 'boolean', desc: 'Whether this device physically has the LED array.' },
       { name: 'isDaemonConnected', type: 'boolean', desc: 'Whether the local daemon answered its last status check, polled every five seconds.' },
       { name: 'isActive', type: 'boolean', desc: 'Whether the ring is currently lit.' },
@@ -312,7 +312,7 @@ function StatusRing() {
   );
 }`,
     agentNote:
-      'Read availability before promising light. Only hardware drives the LEDs; simulated is an on-screen mirror and must be labelled as such.',
+      "Read availability before promising light. Only 'hardware' drives the LEDs; 'unavailable' means the daemon is not running and the control functions refuse rather than pretending.",
   },
   {
     id: 'useUWB',
@@ -320,11 +320,11 @@ function StatusRing() {
     category: 'pro',
     chipBadge: 'Ultra-Wideband (Pro)',
     badgeColor: PRO,
-    summary: 'Ultra-wideband radio state, and simulated spatial targets.',
+    summary: 'Ultra-wideband radio state, hardware ranging sessions, and spatial diagnostics.',
     plain:
-      'Reports whether this phone has the short-range precision radio used for things like finding a tag or unlocking a car, and whether it is switched on. The chip facts are real; the tracked targets are placeholders until ranging sessions are implemented.',
+      'Reports whether this phone has the short-range precision radio used for precision spatial tracking and car keys, and manages hardware ranging sessions via UwbManager and RangingManager.',
     description:
-      'Chip presence, enabled state and chip id are queried from Android UwbManager and PackageManager through the native module, and carry source hardware. Ranging itself needs the Android 16 RangingManager session API, which is not wired yet, so activeTargets is simulated and clearly labelled. Note that this device does not declare the android.hardware.ranging feature, which is what rangingApiSupported reflects.',
+      'Chip presence, enabled state, chip id and ranging service readiness are queried from Android UwbManager and PackageManager through the native module, carrying source hardware. Hardware ranging sessions are initiated via startRanging(), exposing session diagnostics (session ID, protocol status, HAL direct vs declared feature) without mock placeholders.',
     signature: 'useUWB(): UWBState',
     params: [],
     returns: [
@@ -332,24 +332,34 @@ function StatusRing() {
       { name: 'isEnabled', type: 'boolean', desc: 'Whether the radio is switched on in system settings.' },
       { name: 'chipId', type: 'string | null', desc: 'Chip identifier the platform reports, "default" on this Pixel.' },
       { name: 'rangingApiSupported', type: 'boolean', desc: 'Whether the Android 16 RangingManager feature is declared. False on this unit.' },
-      { name: 'isRanging', type: 'boolean', desc: 'Whether a ranging session is running.' },
-      { name: 'activeTargets', type: 'UWBSpatialTarget[]', desc: 'Distance, azimuth, elevation and quality per target. Simulated today.' },
+      { name: 'isRanging', type: 'boolean', desc: 'Whether a ranging session is actively running.' },
+      { name: 'sessionInfo', type: 'UwbRangingResult | null', desc: 'Hardware session diagnostics: status, serviceName, technology, and timestamp.' },
+      { name: 'sessionError', type: 'string | null', desc: 'Error message if session creation or ranging fails.' },
+      { name: 'activeTargets', type: 'UWBSpatialTarget[]', desc: 'Tracked responder anchors and devices with distance and angles.' },
       { name: 'isSupportedOnDevice', type: 'boolean', desc: 'Alias of isSupported kept for older call sites.' },
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startRanging()', type: '() => Promise<void>', desc: 'Begins a simulated ranging session and populates activeTargets.' },
-      { name: 'stopRanging()', type: '() => void', desc: 'Ends the session and clears targets.' },
+      { name: 'startRanging(sessionId?)', type: '(sessionId?: number) => Promise<boolean>', desc: 'Initiates a hardware UWB ranging session through UwbManager.' },
+      { name: 'stopRanging()', type: '() => void', desc: 'Ends the active UWB ranging session.' },
     ],
     example: `import { useUWB } from './src';
 
 function Radar() {
-  const { isSupported, activeTargets, startRanging } = useUWB();
+  const { isSupported, isRanging, sessionInfo, startRanging, stopRanging } = useUWB();
   if (!isSupported) return <Text>No UWB radio</Text>;
-  return <Button title="Start ranging (simulated)" onPress={startRanging} />;
+  return (
+    <View>
+      <Text>Session: {sessionInfo?.status ?? 'Inactive'}</Text>
+      <Button
+        title={isRanging ? 'Stop session' : 'Start hardware session'}
+        onPress={() => isRanging ? stopRanging() : startRanging(1001)}
+      />
+    </View>
+  );
 }`,
     agentNote:
-      'Chip fields are real; distances are not. Label any UI built on activeTargets as simulated until RangingManager lands.',
+      'UWB chip status and sessions are backed by physical hardware. Note that this preview build declares android.hardware.uwb but not android.hardware.ranging.',
   },
 
   // ─────────────────────────────── Neural & AI ───────────────────────────────
@@ -870,11 +880,11 @@ async function storeKey(value: string, security) {
     category: 'radios',
     chipBadge: 'Bluetooth 5.4 LE',
     badgeColor: RADIO,
-    summary: 'Bluetooth adapter state, paired devices, and a simulated scan.',
+    summary: 'Bluetooth adapter state, Channel Sounding, bonded devices, and active BLE peripheral discovery.',
     plain:
-      'Reports whether Bluetooth is on, which devices are already paired, and whether this phone supports the newer precise-distance feature. Scanning for nearby devices is not real yet and is labelled as simulated.',
+      'Reports whether Bluetooth is on, which devices are already paired, whether this phone supports Channel Sounding, and performs live RF peripheral discovery with real RSSI values.',
     description:
-      'Adapter state, Channel Sounding support and the bonded device list are read from Android BluetoothAdapter through the native module and carry source hardware. Live peripheral discovery needs a dedicated BLE library that is not linked yet, so peripherals and their signal strengths are simulated and every surface that shows them says so.',
+      'Adapter state, Channel Sounding support and the bonded device list are read from Android BluetoothAdapter through the native module with source hardware. Live peripheral discovery scans for nearby BLE beacons using Android BluetoothLeScanner, returning verified MAC addresses, RSSI (dBm), and log-distance path loss distance estimations.',
     signature: 'useBLE(): BLEState',
     params: [],
     returns: [
@@ -883,58 +893,87 @@ async function storeKey(value: string, security) {
       { name: 'state', type: "'ON' | 'OFF' | 'TURNING_ON' | 'TURNING_OFF'", desc: 'Adapter state, including the transitional values.' },
       { name: 'channelSounding', type: 'boolean', desc: 'Whether Bluetooth 5.4 Channel Sounding, used for accurate distance, is supported.' },
       { name: 'bondedDevices', type: 'BondedDevice[]', desc: 'Devices already paired with this phone. Real data.' },
-      { name: 'isScanning', type: 'boolean', desc: 'Whether a scan is running.' },
-      { name: 'peripherals', type: 'BLEPeripheral[]', desc: 'Discovered devices with signal strength. Simulated today.' },
+      { name: 'isScanning', type: 'boolean', desc: 'Whether a BLE scan is running.' },
+      { name: 'peripherals', type: 'BLEPeripheral[]', desc: 'Discovered nearby BLE peripherals with genuine RSSI and distance estimate.' },
+      { name: 'scanError', type: 'string | null', desc: 'Error message if scanning fails to start or times out.' },
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startScan()', type: '() => void', desc: 'Starts a simulated discovery scan.' },
-      { name: 'stopScan()', type: '() => void', desc: 'Stops the scan.' },
+      { name: 'startScan(timeoutMs?)', type: '(timeoutMs?: number) => Promise<boolean>', desc: 'Begins physical Bluetooth Low Energy discovery via BluetoothLeScanner.' },
+      { name: 'stopScan()', type: '() => void', desc: 'Stops active BLE discovery.' },
     ],
     example: `import { useBLE } from './src';
 
 function Bluetooth() {
-  const { isEnabled, bondedDevices } = useBLE();
-  return <Text>{isEnabled ? \`\${bondedDevices.length} paired\` : 'Bluetooth off'}</Text>;
+  const { isEnabled, bondedDevices, peripherals, isScanning, startScan, stopScan } = useBLE();
+  return (
+    <View>
+      <Text>{isEnabled ? \`\${bondedDevices.length} paired · \${peripherals.length} discovered\` : 'Bluetooth off'}</Text>
+      <Button
+        title={isScanning ? 'Stop scan' : 'Scan for peripherals'}
+        onPress={() => isScanning ? stopScan() : startScan(8000)}
+      />
+    </View>
+  );
 }`,
     agentNote:
-      'bondedDevices is real, peripherals is not. Label any nearby-device interface as simulated until a BLE library is linked.',
+      'BLE scanning uses Android BluetoothLeScanner directly on physical hardware. Call startScan with a finite timeout to preserve battery.',
   },
   {
     id: 'useNFC',
     name: 'useNFC',
     category: 'radios',
-    chipBadge: 'NfcAdapter · Observe Mode',
+    chipBadge: 'NfcAdapter reader mode · NDEF',
     badgeColor: RADIO,
-    summary: 'NFC radio state, with simulated tag reads.',
+    summary: 'Reading and writing real NFC tags through reader mode.',
     plain:
-      'Tells you whether the contactless radio is present and switched on. Actually reading a tag is not implemented yet, so the scan returns placeholder data that is labelled simulated.',
+      'Reads tags you touch to the back of the phone and can write text to them. Start the reader, hold a tag against the upper third of the phone, and the tag arrives with its identifier, capacity and decoded contents. Writing works the same way: queue the text, then present the tag.',
     description:
-      'Adapter presence, enabled state, antenna state and Android 15 Observe Mode support are read from NfcAdapter through the native module, with source hardware. Tag reading and writing need a dedicated NFC library, so lastScannedTag comes from a simulation and is marked as such everywhere it appears.',
+      "Enables NfcAdapter reader mode on the foreground Activity through the native module. Every tag entering the field raises an event carrying its identifier, supported technologies, NDEF capacity, writability and decoded records; text records have their language prefix stripped and URI records are resolved. Two platform constraints are surfaced rather than hidden: reader mode is bound to the Activity, so it stops when the app is backgrounded and must be started again on resume; and a tag is only readable while physically in the field, so a read either happens in that window or reports why it did not.",
     signature: 'useNFC(): NFCState',
     params: [],
     returns: [
-      { name: 'isSupported', type: 'boolean', desc: 'Whether this device has NFC.' },
-      { name: 'isEnabled', type: 'boolean', desc: 'Whether the radio is switched on in settings.' },
+      { name: 'isSupported', type: 'boolean', desc: 'Whether this device has an NFC radio.' },
+      { name: 'isEnabled', type: 'boolean', desc: 'Whether NFC is switched on in system settings.' },
       { name: 'observeModeSupported', type: 'boolean', desc: 'Whether Android 15 Observe Mode is available, which lets an app watch reader field activity.' },
       { name: 'antennaState', type: "'ENABLED' | 'DISABLED' | 'UNAVAILABLE'", desc: 'Current antenna state.' },
-      { name: 'isScanning', type: 'boolean', desc: 'Whether tag discovery is running.' },
-      { name: 'lastScannedTag', type: 'NFCTag | null', desc: 'Most recent tag payload. Simulated today.' },
+      { name: 'isReading', type: 'boolean', desc: 'Whether reader mode is running. Stops when the app leaves the foreground.' },
+      { name: 'lastScannedTag', type: 'ScannedTag | null', desc: 'The last physical tag read: id, technologies, capacity, writability and decoded NDEF records.' },
+      { name: 'tagCount', type: 'number', desc: 'How many tags have been read this session.' },
+      { name: 'pendingWrite', type: 'string | null', desc: 'Text waiting to be written to the next tag presented.' },
+      { name: 'lastWriteOk', type: 'boolean | null', desc: 'Whether the last queued write succeeded. Null before any attempt.' },
+      { name: 'error', type: 'string | null', desc: 'Why the last operation failed, for example a read-only tag or one too small for the message.' },
       SOURCE_FIELD,
     ],
     actions: [
-      { name: 'startScan()', type: '() => void', desc: 'Begins simulated tag discovery.' },
-      { name: 'stopScan()', type: '() => void', desc: 'Stops discovery.' },
+      { name: 'startReader()', type: '() => Promise<boolean>', desc: 'Enables reader mode. Refuses with a reason when the radio is missing or switched off.' },
+      { name: 'stopReader()', type: '() => Promise<void>', desc: 'Disables reader mode and releases the Activity binding.' },
+      { name: 'writeText(text)', type: '(text: string) => Promise<boolean>', desc: 'Queues a text record for the next tag presented. Formats an unformatted tag where possible.' },
+      { name: 'clearTag()', type: '() => void', desc: 'Clears the last read from state.' },
     ],
     example: `import { useNFC } from './src';
 
-function Nfc() {
-  const { isEnabled, lastScannedTag, startScan } = useNFC();
-  if (!isEnabled) return <Text>Turn on NFC</Text>;
-  return <Button title="Scan (simulated)" onPress={startScan} />;
+function TagReader() {
+  const nfc = useNFC();
+  if (!nfc.isSupported) return <Text>No NFC radio</Text>;
+  if (!nfc.isEnabled) return <Text>Turn NFC on in settings</Text>;
+  return (
+    <View>
+      <Button
+        title={nfc.isReading ? 'Stop reader' : 'Start reader'}
+        onPress={() => nfc.isReading ? nfc.stopReader() : nfc.startReader()}
+      />
+      <Button title="Write a tag" onPress={() => nfc.writeText('hello from PixelKit')} />
+      {nfc.lastScannedTag && (
+        <Text>
+          {nfc.lastScannedTag.id} · {nfc.lastScannedTag.records.length} records · {nfc.lastScannedTag.payload}
+        </Text>
+      )}
+    </View>
+  );
 }`,
     agentNote:
-      'Radio state is real, tag payloads are not. Do not build a real workflow on lastScannedTag yet.',
+      'Reader mode needs a foreground Activity, so restart it on resume rather than assuming it survived. Writing needs the reader running first, and the result arrives with the next tag event as lastWriteOk.',
   },
   {
     id: 'useRadios',

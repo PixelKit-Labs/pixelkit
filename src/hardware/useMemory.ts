@@ -24,6 +24,7 @@ const MB = 1024 * 1024;
  */
 export function useMemory() {
   const [mem, setMem] = useState<MemoryInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const source: TelemetrySource = PixelNative ? 'hardware' : 'unavailable';
 
   useEffect(() => {
@@ -35,7 +36,8 @@ export function useMemory() {
         setMem(m);
         recordMetric(MODULE, 'availableMB', Math.round(m.availableBytes / MB), 'hardware');
         recordMetric(MODULE, 'isLowMemory', m.isLowMemory, 'hardware');
-      } catch (e: any) { logEvent(MODULE, 'getMemoryInfo error', { message: e?.message }, 'error'); }
+      } catch (e: any) { setError(e?.message ?? 'getMemoryInfo error');
+      logEvent(MODULE, 'getMemoryInfo error', { message: e?.message }, 'error'); }
     };
     read();
     const t = setInterval(read, POLL_MS);
@@ -50,7 +52,8 @@ export function useMemory() {
       const m = PixelNative.requestGc();
       setMem(m);
       logEvent(MODULE, 'gc', { freedMB: Number(((before - m.appJavaHeapUsedBytes) / MB).toFixed(1)) });
-    } catch (e: any) { logEvent(MODULE, 'requestGc error', { message: e?.message }, 'error'); }
+    } catch (e: any) { setError(e?.message ?? 'requestGc error');
+      logEvent(MODULE, 'requestGc error', { message: e?.message }, 'error'); }
   }, [mem]);
 
   const totalRAMMB = mem ? Math.round(mem.totalBytes / MB) : 0;
@@ -70,6 +73,8 @@ export function useMemory() {
     /** This app's native heap (Hermes, images, JSI) */
     appNativeHeapMB: mem ? Number((mem.appNativeHeapBytes / MB).toFixed(1)) : 0,
     purgeCaches,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     /** Telemetry provenance */
     source,
   };

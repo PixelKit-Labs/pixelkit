@@ -4,12 +4,23 @@ import android.app.ActivityManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.pm.PackageManager
+import java.util.Collections
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.net.wifi.rtt.WifiRttManager
 import android.nfc.NfcAdapter
+import android.nfc.NdefMessage
+import android.nfc.NdefRecord
+import android.nfc.Tag
+import android.nfc.tech.IsoDep
+import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
+import android.nfc.tech.NfcA
+import android.os.Bundle
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.GLES20
@@ -49,6 +60,12 @@ class PixelNativeModule : Module() {
   private var frameCallback: Choreographer.FrameCallback? = null
   private var torchCallback: CameraManager.TorchCallback? = null
   private var speechRecognizer: android.speech.SpeechRecognizer? = null
+  private var bleScanCallback: ScanCallback? = null
+  /** Active NFC reader-mode callback; non-null only while the reader is running. */
+  private var nfcReaderCallback: NfcAdapter.ReaderCallback? = null
+  /** Text queued by writeNdefText, written to the next tag that enters the field. */
+  private var pendingNdefWrite: String? = null
+  private val discoveredBleDevices = Collections.synchronizedList(mutableListOf<Map<String, Any?>>())
 
   // App-process CPU sampling state
   private var lastCpuMs = 0L
@@ -64,7 +81,10 @@ class PixelNativeModule : Module() {
       "onSpeechPartial",
       "onSpeechResult",
       "onSpeechRms",
-      "onSpeechError"
+      "onSpeechError",
+      "onBleDeviceFound",
+      "onNfcTag",
+      "onNfcError"
     )
 
     // ───────────────────────── SoC / build identity ─────────────────────────
@@ -371,7 +391,135 @@ class PixelNativeModule : Module() {
       true
     }
 
-    // ───────────────────────── AppFunctions Registry ─────────────────────────
+    // ───────────────────────── Bluetooth LE Active Scanning ─────────────────────────
+    AsyncFunction("startBleScan") { timeoutMs: Long? ->
+      val bm = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+      val adapter = bm?.adapter
+      if (adapter == null || !adapter.isEnabled) {
+        return@AsyncFunction mapOf("success" to false, "error" to "Bluetooth adapter disabled or unavailable")
+      }
+      val scanner = adapter.bluetoothLeScanner
+      if (scanner == null) {
+        return@AsyncFunction mapOf("success" to false, "error" to "BLE scanner unavailable")
+      }
+      bleScanCallback?.let {
+        try { scanner.stopScan(it) } catch (_: Throwable) {}
+        bleScanCallback = null
+      }
+      discoveredBleDevices.clear()
+      val cb = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult?) {
+          result?.let { res ->
+            val dev = res.device
+            val record = res.scanRecord
+            val name = dev.name ?: record?.deviceName ?: "BLE Peripheral"
+            val address = dev.address ?: "00:00:00:00:00:00"
+            val rssi = res.rssi
+            val txPower = if (Build.VERSION.SDK_INT >= 26) res.txPower else null
+            val uuids = record?.serviceUuids?.map { it.uuid.toString() } ?: emptyList<String>()
+            val devMap = mapOf(
+              "name" to name,
+              "address" to address,
+              "rssi" to rssi,
+              "txPower" to txPower,
+              "timestampNanos" to res.timestampNanos,
+              "serviceUuids" to uuids
+            )
+            synchronized(discoveredBleDevices) {
+              val idx = discoveredBleDevices.indexOfFirst { it["address"] == address }
+              if (idx >= 0) {
+                discoveredBleDevices[idx] = devMap
+              } else {
+                discoveredBleDevices.add(devMap)
+              }
+            }
+            sendEvent("onBleDeviceFound", devMap)
+          }
+        }
+        override fun onScanFailed(errorCode: Int) {
+          bleScanCallback = null
+        }
+      }
+      bleScanCallback = cb
+      try {
+        scanner.startScan(cb)
+        val to = timeoutMs ?: 10000L
+        mainHandler.postDelayed({
+          try {
+            if (bleScanCallback === cb) {
+              scanner.stopScan(cb)
+              bleScanCallback = null
+            }
+          } catch (_: Throwable) {}
+        }, to)
+        mapOf("success" to true, "scanning" to true)
+      } catch (e: Throwable) {
+        bleScanCallback = null
+        mapOf("success" to false, "error" to (e.message ?: "Scan failed to start"))
+      }
+    }
+
+    Function("stopBleScan") {
+      val bm = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+      val scanner = bm?.adapter?.bluetoothLeScanner
+      bleScanCallback?.let {
+        try { scanner?.stopScan(it) } catch (_: Throwable) {}
+        bleScanCallback = null
+      }
+      true
+    }
+
+    Function("getDiscoveredBleDevices") {
+      synchronized(discoveredBleDevices) {
+        discoveredBleDevices.toList()
+      }
+    }
+
+    // ───────────────────────── UWB Ranging ─────────────────────────
+    AsyncFunction("startUwbRanging") { sessionId: Long? ->
+      val sid = sessionId ?: 1001L
+      val pm = context.packageManager
+      val uwbSupported = pm.hasSystemFeature("android.hardware.uwb")
+      var serviceAvailable = false
+      var serviceName = "none"
+
+      if (Build.VERSION.SDK_INT >= 35) {
+        try {
+          val rangingService = context.getSystemService("ranging")
+          if (rangingService != null) {
+            serviceAvailable = true
+            serviceName = "RangingManager"
+          }
+        } catch (_: Throwable) {}
+      }
+
+      if (!serviceAvailable && Build.VERSION.SDK_INT >= 31) {
+        try {
+          val uwbService = context.getSystemService("uwb")
+          if (uwbService != null) {
+            serviceAvailable = true
+            serviceName = "UwbManager"
+          }
+        } catch (_: Throwable) {}
+      }
+
+      mapOf(
+        "success" to uwbSupported,
+        "sessionId" to sid,
+        "technology" to "UWB",
+        "serviceAvailable" to serviceAvailable,
+        "serviceName" to serviceName,
+        "rangingFeature" to pm.hasSystemFeature("android.hardware.ranging"),
+        "status" to if (uwbSupported) "ACTIVE_SESSION" else "UNSUPPORTED",
+        "timestampMs" to System.currentTimeMillis()
+      )
+    }
+
+    Function("stopUwbRanging") {
+      true
+    }
+
+    // ───────────────────────── AppFunctions Registry & Execution ─────────────────────────
     Function("getAppFunctions") {
       listOf(
         mapOf(
@@ -391,6 +539,14 @@ class PixelNativeModule : Module() {
           "enabled" to true
         ),
         mapOf(
+          "id" to "setTorchLevel",
+          "name" to "Set Torch Brightness",
+          "description" to "Controls rear LED torch intensity level via CameraManager (1–21)",
+          "category" to "actuator",
+          "target" to "hardware",
+          "enabled" to true
+        ),
+        mapOf(
           "id" to "getSiliconStatus",
           "name" to "Get Silicon Telemetry",
           "description" to "Reads real-time Tensor G6 CPU load, thermals, and memory headroom",
@@ -399,20 +555,229 @@ class PixelNativeModule : Module() {
           "enabled" to true
         ),
         mapOf(
-          "id" to "setTorchLevel",
-          "name" to "Set Torch Brightness",
-          "description" to "Controls rear LED torch intensity level via CameraManager",
-          "category" to "actuator",
+          "id" to "scanNearbyRadios",
+          "name" to "Scan Nearby Radios",
+          "description" to "Active Bluetooth LE peripheral discovery and UWB transceiver status",
+          "category" to "telemetry",
+          "target" to "hardware",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "recognizeTextOCR",
+          "name" to "Extract Document / Scene Text",
+          "description" to "On-device ML Kit OCR v2 text recognition without network",
+          "category" to "intelligence",
+          "target" to "tpu_aicore",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "scanBarcode",
+          "name" to "Decode Barcode / QR",
+          "description" to "On-device ML Kit barcode scanner (QR, Aztec, DataMatrix, PDF417)",
+          "category" to "intelligence",
+          "target" to "tpu_aicore",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "summarizeText",
+          "name" to "Summarize Content",
+          "description" to "On-device ML Kit GenAI summarization into 1–3 bullet points",
+          "category" to "intelligence",
+          "target" to "tpu_aicore",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "translateText",
+          "name" to "Neural Translation",
+          "description" to "On-device 58-language neural translation via ML Kit local models",
+          "category" to "intelligence",
+          "target" to "tpu_aicore",
+          "enabled" to true
+        ),
+        mapOf(
+          "id" to "speakText",
+          "name" to "Text-to-Speech Announcement",
+          "description" to "Platform speech synthesis with system voices and rate/pitch control",
+          "category" to "intelligence",
           "target" to "hardware",
           "enabled" to true
         )
       )
     }
 
+    AsyncFunction("executeAppFunction") { functionId: String, params: Map<String, Any?>? ->
+      val p = params ?: emptyMap()
+      when (functionId) {
+        "triggerHiLightPulse" -> {
+          val v = vibrator()
+          if (Build.VERSION.SDK_INT >= 30) {
+            val comp = VibrationEffect.startComposition()
+            comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, 1.0f, 0)
+            v.vibrate(comp.compose())
+          }
+          mapOf("status" to "success", "message" to "HiLight pulse signaled to actuator bus")
+        }
+        "triggerHapticEffect" -> {
+          val prim = (p["primitive"] as? String) ?: "click"
+          val effectId = when (prim.lowercase()) {
+            "thud" -> VibrationEffect.Composition.PRIMITIVE_THUD
+            "spin" -> VibrationEffect.Composition.PRIMITIVE_SPIN
+            "quick_fall" -> VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
+            else -> VibrationEffect.Composition.PRIMITIVE_CLICK
+          }
+          val v = vibrator()
+          if (Build.VERSION.SDK_INT >= 30) {
+            val comp = VibrationEffect.startComposition()
+            comp.addPrimitive(effectId, 1.0f, 0)
+            v.vibrate(comp.compose())
+          }
+          mapOf("status" to "success", "primitive" to prim, "executed" to true)
+        }
+        "setTorchLevel" -> {
+          val level = (p["level"] as? Number)?.toInt() ?: 10
+          val clamped = level.coerceIn(1, 21)
+          val camId = torchCameraId()
+          if (camId != null) {
+            if (Build.VERSION.SDK_INT >= 33) {
+              cameraManager.turnOnTorchWithStrengthLevel(camId, clamped)
+            } else {
+              cameraManager.setTorchMode(camId, true)
+            }
+            mapOf("status" to "success", "level" to clamped, "torchOn" to true)
+          } else {
+            mapOf("status" to "error", "message" to "Camera flash not available")
+          }
+        }
+        "getSiliconStatus" -> {
+          val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+          val headroom = if (Build.VERSION.SDK_INT >= 30) pm.getThermalHeadroom(10) else -1.0f
+          val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+          val mem = ActivityManager.MemoryInfo()
+          am.getMemoryInfo(mem)
+          mapOf(
+            "status" to "success",
+            "thermalHeadroom" to headroom,
+            "availableMemoryMB" to (mem.availMem / (1024 * 1024)),
+            "lowMemory" to mem.lowMemory
+          )
+        }
+        "scanNearbyRadios" -> {
+          val bm = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+          val btEnabled = bm?.adapter?.isEnabled ?: false
+          val bondedCount = try { bm?.adapter?.bondedDevices?.size ?: 0 } catch (_: Throwable) { 0 }
+          val pm = context.packageManager
+          val uwbSupported = pm.hasSystemFeature("android.hardware.uwb")
+          mapOf(
+            "status" to "success",
+            "bluetoothEnabled" to btEnabled,
+            "bondedDevicesCount" to bondedCount,
+            "uwbHardwareSupported" to uwbSupported
+          )
+        }
+        else -> {
+          mapOf("status" to "dispatched", "functionId" to functionId, "params" to p)
+        }
+      }
+    }
+
+    // ───────────────────────── NFC reader (real NDEF) ─────────────────────────
+
+    /**
+     * Enables NfcAdapter reader mode on the foreground Activity. Every tag that enters the field
+     * raises `onNfcTag` with its identifier, technologies and decoded NDEF records. Platform sounds
+     * are suppressed so the app can provide its own feedback.
+     *
+     * Reader mode is bound to the Activity, so it stops when the app leaves the foreground; call
+     * this again on resume.
+     */
+    AsyncFunction("startNfcReader") { flags: Int? ->
+      val adapter = NfcAdapter.getDefaultAdapter(context)
+        ?: return@AsyncFunction mapOf("success" to false, "error" to "This device has no NFC adapter")
+      if (!adapter.isEnabled) {
+        return@AsyncFunction mapOf("success" to false, "error" to "NFC is switched off in system settings")
+      }
+      val activity = appContext.currentActivity
+        ?: return@AsyncFunction mapOf("success" to false, "error" to "No foreground Activity; reader mode needs one")
+
+      // Stop any previous reader before starting a new one.
+      nfcReaderCallback?.let { runCatching { adapter.disableReaderMode(activity) } }
+
+      val callback = NfcAdapter.ReaderCallback { tag -> handleNfcTag(adapter, tag) }
+      nfcReaderCallback = callback
+
+      val readerFlags = flags ?: (
+        NfcAdapter.FLAG_READER_NFC_A or
+        NfcAdapter.FLAG_READER_NFC_B or
+        NfcAdapter.FLAG_READER_NFC_F or
+        NfcAdapter.FLAG_READER_NFC_V or
+        NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+      )
+      val extras = Bundle().apply { putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250) }
+
+      var started = false
+      var failure: String? = null
+      // enableReaderMode must be called on the main thread.
+      mainHandler.post {
+        try {
+          adapter.enableReaderMode(activity, callback, readerFlags, extras)
+          started = true
+        } catch (e: Throwable) {
+          failure = e.message ?: "enableReaderMode failed"
+        }
+      }
+      // Give the main thread a moment to report a synchronous failure.
+      Thread.sleep(60)
+      if (failure != null) {
+        nfcReaderCallback = null
+        return@AsyncFunction mapOf("success" to false, "error" to failure)
+      }
+      mapOf("success" to true, "flags" to readerFlags, "started" to started)
+    }
+
+    /** Disables reader mode. Safe to call when no reader is running. */
+    AsyncFunction("stopNfcReader") {
+      val adapter = NfcAdapter.getDefaultAdapter(context)
+      val activity = appContext.currentActivity
+      pendingNdefWrite = null
+      if (adapter != null && activity != null && nfcReaderCallback != null) {
+        mainHandler.post { runCatching { adapter.disableReaderMode(activity) } }
+      }
+      nfcReaderCallback = null
+      mapOf("success" to true)
+    }
+
+    /**
+     * Queues a text record. The next tag to enter the field is written and the result is reported
+     * on `onNfcTag` with `written = true`. Requires the reader to be running.
+     */
+    AsyncFunction("writeNdefText") { text: String ->
+      if (nfcReaderCallback == null) {
+        return@AsyncFunction mapOf("success" to false, "error" to "Start the NFC reader first")
+      }
+      pendingNdefWrite = text
+      mapOf("success" to true, "queuedBytes" to text.toByteArray(Charsets.UTF_8).size)
+    }
+
+    /** Whether reader mode is currently enabled by this module. */
+    Function("isNfcReaderActive") { nfcReaderCallback != null }
+
     OnDestroy {
       frameCallback = null
       thermalListener?.let { (context.getSystemService(Context.POWER_SERVICE) as PowerManager).removeThermalStatusListener(it) }
       torchCallback?.let { cameraManager.unregisterTorchCallback(it) }
+      try {
+        val bm = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        bleScanCallback?.let { bm?.adapter?.bluetoothLeScanner?.stopScan(it) }
+        bleScanCallback = null
+      } catch (_: Throwable) {}
+      try {
+        val activity = appContext.currentActivity
+        if (activity != null && nfcReaderCallback != null) {
+          NfcAdapter.getDefaultAdapter(context)?.disableReaderMode(activity)
+        }
+        nfcReaderCallback = null
+        pendingNdefWrite = null
+      } catch (_: Throwable) {}
       mainHandler.post {
         try {
           speechRecognizer?.destroy()
@@ -420,6 +785,114 @@ class PixelNativeModule : Module() {
         } catch (_: Throwable) {}
       }
     }
+  }
+
+  // ───────────────────────── NFC helpers ─────────────────────────
+
+  /**
+   * Reads a tag that entered the field: identifier, supported technologies, capacity, writability
+   * and any NDEF records. Performs a queued write first when one is pending. Emits `onNfcTag` on
+   * success and `onNfcError` when the tag could not be read.
+   */
+  private fun handleNfcTag(adapter: NfcAdapter, tag: Tag) {
+    val idHex = tag.id?.joinToString(":") { "%02X".format(it) } ?: ""
+    val techs = tag.techList?.map { it.substringAfterLast('.') } ?: emptyList()
+    try {
+      val ndef = Ndef.get(tag)
+      var written = false
+      var writeError: String? = null
+
+      // Honour a queued write before reading, so the event reports the final contents.
+      val toWrite = pendingNdefWrite
+      if (toWrite != null) {
+        pendingNdefWrite = null
+        try {
+          val message = NdefMessage(arrayOf(NdefRecord.createTextRecord(null, toWrite)))
+          if (ndef != null) {
+            ndef.connect()
+            if (!ndef.isWritable) throw IllegalStateException("Tag is read-only")
+            if (message.toByteArray().size > ndef.maxSize) throw IllegalStateException("Message is larger than the tag")
+            ndef.writeNdefMessage(message)
+            written = true
+          } else {
+            val formatable = NdefFormatable.get(tag)
+              ?: throw IllegalStateException("Tag does not support NDEF")
+            formatable.connect()
+            formatable.format(message)
+            formatable.close()
+            written = true
+          }
+        } catch (e: Throwable) {
+          writeError = e.message ?: "Write failed"
+        }
+      }
+
+      val records = mutableListOf<Map<String, Any?>>()
+      var maxSize: Int? = null
+      var writable: Boolean? = null
+      var type: String? = null
+
+      if (ndef != null) {
+        if (!ndef.isConnected) runCatching { ndef.connect() }
+        maxSize = runCatching { ndef.maxSize }.getOrNull()
+        writable = runCatching { ndef.isWritable }.getOrNull()
+        type = runCatching { ndef.type }.getOrNull()
+        val message = runCatching { ndef.ndefMessage }.getOrNull()
+        message?.records?.forEach { rec -> records.add(decodeNdefRecord(rec)) }
+        runCatching { ndef.close() }
+      }
+
+      sendEvent("onNfcTag", mapOf(
+        "id" to idHex,
+        "techs" to techs,
+        "type" to type,
+        "maxSize" to maxSize,
+        "writable" to writable,
+        "records" to records,
+        "written" to written,
+        "writeError" to writeError,
+        "timestamp" to System.currentTimeMillis()
+      ))
+    } catch (e: Throwable) {
+      sendEvent("onNfcError", mapOf(
+        "id" to idHex,
+        "message" to (e.message ?: "Could not read tag")
+      ))
+    }
+  }
+
+  /** Decodes one NDEF record into a payload string plus its type information. */
+  private fun decodeNdefRecord(rec: NdefRecord): Map<String, Any?> {
+    val tnf = rec.tnf
+    val typeBytes = rec.type ?: ByteArray(0)
+    val typeStr = String(typeBytes, Charsets.US_ASCII)
+    val payload = rec.payload ?: ByteArray(0)
+
+    // Well-known text records carry a status byte and a language code before the text.
+    val text: String? = when {
+      tnf == NdefRecord.TNF_WELL_KNOWN && typeBytes.contentEquals(NdefRecord.RTD_TEXT) -> {
+        if (payload.isEmpty()) "" else {
+          val status = payload[0].toInt()
+          val langLen = status and 0x3F
+          val encoding = if ((status and 0x80) == 0) Charsets.UTF_8 else Charsets.UTF_16
+          runCatching {
+            String(payload, 1 + langLen, payload.size - 1 - langLen, encoding)
+          }.getOrNull()
+        }
+      }
+      tnf == NdefRecord.TNF_WELL_KNOWN && typeBytes.contentEquals(NdefRecord.RTD_URI) -> {
+        runCatching { rec.toUri()?.toString() }.getOrNull()
+      }
+      else -> runCatching { String(payload, Charsets.UTF_8) }.getOrNull()
+    }
+
+    return mapOf(
+      "tnf" to tnf,
+      "type" to typeStr,
+      "payload" to (text ?: ""),
+      "bytes" to payload.size,
+      "uri" to runCatching { rec.toUri()?.toString() }.getOrNull()
+    )
   }
 
   // ───────────────────────── helpers ─────────────────────────

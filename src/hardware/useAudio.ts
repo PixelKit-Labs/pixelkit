@@ -27,7 +27,7 @@ import {
   type RecordingInput,
   type RecordingOptions,
 } from 'expo-audio';
-import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
+import { logEvent, recordMetric, type TelemetrySource, noteExpected } from '../core/observability';
 
 const MODULE = 'useAudio';
 
@@ -353,7 +353,7 @@ export function useAudio() {
       player.pause();
       setIsPlaying(false);
       stopPlaybackPolling();
-    } catch { /* player already released */ }
+    } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   const stopPlayback = useCallback(async () => {
@@ -363,7 +363,7 @@ export function useAudio() {
       setIsPlaying(false);
       setPlaybackPositionSeconds(0);
       stopPlaybackPolling();
-    } catch { /* player already released */ }
+    } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   const seekPlayback = useCallback(async (seconds: number) => {

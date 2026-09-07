@@ -188,7 +188,7 @@ export function CredentialVault() {
 
 ## Recipe 5: UWB Spatial Target Tracker
 
-Renders distance and angle to UWB targets. Ranging is simulated until the RangingManager path lands; the radio itself is verified by `useCapabilities`:
+Renders distance and angle to UWB targets. Ranging runs through the platform service; the radio itself is verified by `useCapabilities`:
 
 ```tsx
 import React from 'react';

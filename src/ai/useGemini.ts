@@ -16,7 +16,7 @@ import {
   GEMINI_MODEL,
   NO_API_KEY_MESSAGE,
 } from './geminiClient';
-import { logEvent, recordMetric } from '../core/observability';
+import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useGemini';
 
@@ -25,8 +25,10 @@ export const DEFAULT_GEMINI_SYSTEM_INSTRUCTION =
 
 export function useGemini() {
   const [messages, setMessages] = useState<AIMessage[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiKey, setApiKeyState] = useState<string | null>(null);
+  const source: TelemetrySource = apiKey ? 'hardware' : 'unavailable';
   const [model, setModel] = useState<string>(GEMINI_MODEL);
   const [availableModels, setAvailableModels] = useState<string[]>(DEFAULT_MODELS);
   const [temperature, setTemperature] = useState<number>(0.4);
@@ -134,6 +136,10 @@ export function useGemini() {
     model,
     setSelectedModel,
     availableModels,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
+    /** Cloud model: reachable only with a key and a network route. */
+    source,
     temperature,
     setTemperature,
     topP,

@@ -143,6 +143,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 6,
+    zIndex: 999,
+    elevation: 20,
   },
   navBar: {
     flexDirection: 'row',

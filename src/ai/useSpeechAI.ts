@@ -11,7 +11,7 @@ import * as FileSystem from 'expo-file-system';
 import { useAudio } from '../hardware/useAudio';
 import { SpeechTranscriptionResult } from '../core/types';
 import { getStoredApiKey, createGeminiClient, GEMINI_MODEL, NO_API_KEY_MESSAGE } from './geminiClient';
-import { logEvent, recordMetric } from '../core/observability';
+import { logEvent, recordMetric, noteExpected, type TelemetrySource } from '../core/observability';
 import PixelNative from '../../modules/pixel-native';
 
 const MODULE = 'useSpeechAI';
@@ -28,6 +28,9 @@ export function useSpeechAI() {
   const [recordingStartedAt, setRecordingStartedAt] = useState<number | null>(null);
   const [voiceRms, setVoiceRms] = useState<number | null>(null);
   const [isOfflineAvailable, setIsOfflineAvailable] = useState<boolean>(false);
+
+  /** On-device recognition being installed is what makes a transcript possible without a network. */
+  const source: TelemetrySource = isOfflineAvailable ? 'hardware' : 'unavailable';
 
   const currentRequestIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -124,7 +127,7 @@ export function useSpeechAI() {
     if (recognitionMode === 'on-device' && PixelNative) {
       try {
         PixelNative.stopSpeechRecognition();
-      } catch { /* ignored */ }
+      } catch { noteExpected(MODULE, 'recognizer already stopped'); }
       setIsListening(false);
       return lastTranscript;
     }
@@ -191,6 +194,8 @@ export function useSpeechAI() {
     lastTranscript,
     lastRecordingUri,
     error,
+    /** Provenance of the transcript: on-device or cloud, unavailable before either is ready. */
+    source,
     startListening,
     stopListeningAndTranscribe,
     model: recognitionMode === 'on-device' ? 'Android System Intelligence (On-Device)' : GEMINI_MODEL,

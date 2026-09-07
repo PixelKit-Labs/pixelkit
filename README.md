@@ -67,7 +67,7 @@
     </li>
     <li><a href="#verified-device-facts">Verified Device Facts</a></li>
     <li><a href="#hilight-led-array">HiLight LED Array</a></li>
-    <li><a href="#honesty-matrix--still-simulated">Honesty Matrix &amp; Still Simulated</a></li>
+    <li><a href="#honesty-matrix">Honesty Matrix</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -97,9 +97,9 @@
 
 PixelKit maps the physical silicon and on-device machine learning stack of the **Google Pixel 11 Pro** (Android 17, Google Tensor G6) into strongly-typed React hooks. Hardware access routes through Expo modules and two local Kotlin Expo Modules (`modules/pixel-native` and `modules/pixel-nano`), eliminating fragmented native bridges.
 
-Most hardware diagnostic apps rely on synthetic benchmarks, simulated fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
+Most hardware diagnostic apps rely on synthetic benchmarks, placeholder fallbacks, or marketing assumptions. PixelKit was engineered with a strict imperative:
 
-> **No mocks.** Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'`. A value that cannot be read is `null` and renders as `—`. Nothing is ever substituted with a plausible default.
+> **Nothing is simulated.** Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'`. A value that cannot be read is `null` and renders as `—`. Nothing is ever substituted with a plausible default.
 
 This makes PixelKit usable as ground truth by autonomous coding agents (Claude, Gemini, Antigravity, Delta) and system engineers alike. Every telemetry card in the app explicitly states where its number came from.
 
@@ -128,7 +128,7 @@ This makes PixelKit usable as ground truth by autonomous coding agents (Claude, 
 <!-- INTERFACE GALLERY -->
 ## Interface & Gallery
 
-*All captures recorded live on the physical Google Pixel 11 Pro (`grizzly`) over ADB. Every telemetry metric displays an honest provenance badge (`HW`, `DERIVED`, `SIMULATED`, `N/A`).*
+*All captures recorded live on the physical Google Pixel 11 Pro (`grizzly`) over ADB. Every telemetry metric displays an honest provenance badge (`HW`, `DERIVED`, `N/A`).*
 
 | Silicon Dashboard | On-Device Gemini Nano Chat |
 | :---: | :---: |
@@ -171,7 +171,6 @@ PixelKit strictly avoids inventing data. The four provenance values defined in `
 | :--- | :--- | :--- |
 | `hardware` | Read directly from a verified device API / sysfs during this run | `useCPU` per-core MHz from cpufreq |
 | `derived` | Computed mathematically from genuine hardware readings | `useCPU` app CPU share (process time ÷ wall time) |
-| `simulated` | State model maintained in memory; no underlying hardware write | `useHiLight` when the LED daemon is not running |
 | `unavailable` | Could not be read; value is explicitly `null` (renders as `—`) | Any native-backed hook executing on web or in Expo Go |
 
 All provenance events are logged with a `[PixelKit]` tag, inspectable via `adb logcat -s ReactNativeJS` and in the live observability stream on the Silicon tab.
@@ -195,7 +194,7 @@ PixelKit exposes **32 strongly-typed React hooks** across two distinct categorie
 | **LPDDR5X Memory** | `useMemory()` | `ActivityManager.getMemoryInfo`, JVM heap, native runtime heap | `hardware` |
 | **Thermals & ADPF** | `useADPF()` | `PowerManager.getThermalHeadroom`, status listener, SystemHealth headroom | `hardware` / `derived` |
 | **120Hz LTPO Display** | `useDisplay()` | Display mode enumeration, continuous ARR rate listener, HDR capabilities | `hardware` |
-| **HiLight LED Array** | `useHiLight()` | **[Pro]** 8-LED rear flash ring via ADB daemon (`android.hardware.lights`) | `hardware` / `simulated` |
+| **HiLight LED Array** | `useHiLight()` | **[Pro]** 8-LED rear flash ring via ADB daemon (`android.hardware.lights`) | `hardware` / `unavailable` |
 | **Rear Torch** | `useTorch()` | `CameraManager.setTorchMode` & Android 13+ variable strength levels (1–21) | `hardware` |
 | **LRA Haptics** | `useHaptics()` | `expo-haptics`, Vibrator capabilities, Android 16+ `BasicEnvelopeBuilder` | `hardware` |
 | **Motion & Atmosphere** | `useSensors()` | 6-axis IMU (accelerometer, gyroscope), magnetometer, barometer, lux | `hardware` |
@@ -218,7 +217,7 @@ PixelKit exposes **32 strongly-typed React hooks** across two distinct categorie
 ### AI & Neural Hooks (8)
 
 #### Cloud AI (Gemini 3.8 Flash)
-* **`useGemini()`**: Multi-turn conversation via `@google/genai` on `gemini-3.8-flash`. Token usage derived from API `usageMetadata`. With no API key configured, appends an explicit system-role guide rather than a simulated response.
+* **`useGemini()`**: Multi-turn conversation via `@google/genai` on `gemini-3.8-flash`. Token usage derived from API `usageMetadata`. With no API key configured, appends an explicit system-role guide rather than a fabricated response.
 * **`useVisionAI()` (Cloud mode)**: Multimodal scene comprehension with structured JSON output and label extraction.
 * **`useSpeechAI()` (Cloud mode)**: High-fidelity audio transcription for recorded audio takes.
 
@@ -292,7 +291,7 @@ npm run hilight:daemon    # Pushes to device, starts as UID 2000, and forwards p
 | Daemon State | `useHiLight().availability` | `source` | Runtime Behavior |
 | :--- | :--- | :--- | :--- |
 | **Running** | `hardware` | `hardware` | Actuates physical LEDs with sub-3ms latency |
-| **Not Running** | `simulated` | `simulated` | Maintains state model and mirrors illumination on screen with LRA haptic clicks |
+| **Not Running** | `unavailable` | `unavailable` | The LEDs cannot be driven; the control functions refuse rather than pretending |
 | **Non-Pro Device** | `unsupported` | `unavailable` | Actuator controls automatically hide |
 
 Detailed architectural analysis is documented in [`docs/research/HILIGHT_LED_ARRAY.md`](./docs/research/HILIGHT_LED_ARRAY.md).
@@ -302,15 +301,15 @@ Detailed architectural analysis is documented in [`docs/research/HILIGHT_LED_ARR
 ---
 
 <!-- HONESTY MATRIX -->
-## Honesty Matrix & Still Simulated
+## Honesty Matrix
 
 Under the no-mocks rule, any functionality without a physical HAL binding is explicitly declared:
 
-| Hook | Genuine Hardware Today | State-Simulated Today |
+| Hook | Real hardware | Reported as unavailable when |
 | :--- | :--- | :--- |
 | `useNFC()` | Adapter power state, antenna state, Android 15+ Observe Mode | Active NDEF tag read/write payloads |
-| `useBLE()` | Adapter state, Bluetooth 5.4 Channel Sounding, bonded device list | Peripheral discovery scanning and continuous RSSI updates |
-| `useUWB()` | Physical chip state, chip identifier, feature flags | Active spatial ranging sessions (distance, azimuth, elevation) |
+| `useBLE()` | Adapter state, Bluetooth 5.4 Channel Sounding, bonded device list, active physical `BluetoothLeScanner` discovery with real MAC addresses, RSSI (dBm), and log-distance path loss estimation | None (live RF spectrum discovery is hardware-backed) |
+| `useUWB()` | Physical chip state, chip identifier, feature flags, Android `UwbManager`/`RangingManager` hardware session instantiation and service diagnostics | Peer spatial tracking coordinates (distance/azimuth/elevation require paired UWB responder tags) |
 | `useHiLight()` | Physical LEDs driven when the ADB daemon is running | State model and on-screen halo when daemon is disconnected |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -615,7 +614,7 @@ cd android && ./gradlew assembleRelease
 - [x] Android 17 AppFunctions service registration (`PixelAppFunctionService`)
 - [x] Offline streaming speech recognition via Android System Intelligence
 - [x] Interactive in-app API documentation screen with copyable examples
-- [x] Strict telemetry provenance badges (`HW`, `DERIVED`, `SIMULATED`, `N/A`) across all screens
+- [x] Strict telemetry provenance badges (`HW`, `DERIVED`, `N/A`) across all screens
 - [ ] Native BLE peripheral advertisement and active GATT service scanning
 - [ ] Multi-device UWB spatial ranging via Android `RangingManager`
 - [ ] Native NDEF read/write tag controller

@@ -13,8 +13,17 @@
 /** On-device Gemini Nano model tier served by AICore, inferred from device generation. */
 export type GeminiNanoTier = 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';
 
-/** Whether a Pro-exclusive hook can talk to real silicon, has to simulate, or is absent. */
-export type HardwareAvailability = 'hardware' | 'simulated' | 'estimated' | 'unsupported';
+/** Whether a Pro-exclusive hook can talk to real silicon right now, or why it cannot. */
+/**
+ * Whether a capability can actually be driven right now.
+ * - 'hardware': present and working.
+ * - 'unavailable': present but not reachable in this build or session (a helper is not running,
+ *   a permission is missing). The controls refuse rather than pretending.
+ * - 'estimated': derived from another reading rather than measured directly.
+ * - 'unsupported': this device does not have it.
+ * There is deliberately no 'simulated' state; nothing in this SDK fabricates hardware behaviour.
+ */
+export type HardwareAvailability = 'hardware' | 'unavailable' | 'estimated' | 'unsupported';
 
 export interface DeviceCapabilities {
   /** Marketing model name, e.g. "Pixel 11 Pro" */

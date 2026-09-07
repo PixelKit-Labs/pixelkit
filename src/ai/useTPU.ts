@@ -18,6 +18,7 @@ const PCS = 'com.google.android.as.oss';
 
 export function useTPU() {
   const [aicore, setAicore] = useState<PackageVersion | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [pcs, setPcs] = useState<PackageVersion | null>(null);
   const [hasNpuFeature, setHasNpuFeature] = useState<boolean | null>(null);
   const [isBenchmarking, setIsBenchmarking] = useState<boolean>(false);
@@ -33,7 +34,8 @@ export function useTPU() {
       setAicore(a); setPcs(p);
       setHasNpuFeature(PixelNative.hasSystemFeature('android.hardware.neural_processing_unit'));
       logEvent(MODULE, 'ai stack', { aicore: a.versionName, pcs: p.versionName });
-    } catch (e: any) { logEvent(MODULE, 'detect error', { message: e?.message }, 'error'); }
+    } catch (e: any) { setError(e?.message ?? 'detect error');
+      logEvent(MODULE, 'detect error', { message: e?.message }, 'error'); }
   }, []);
 
   /** Real 256×256 float matmul on the JS thread. Measures CPU fallback, not the TPU. */
@@ -77,6 +79,8 @@ export function useTPU() {
     cpuFallbackLatencyMs,
     isBenchmarking,
     benchmarkTPU,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     source,
   };
 }

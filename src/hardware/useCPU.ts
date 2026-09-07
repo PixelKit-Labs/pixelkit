@@ -32,6 +32,7 @@ function topologyString(info: CpuInfo | null): string {
  */
 export function useCPU() {
   const [info, setInfo] = useState<CpuInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [load, setLoad] = useState<CpuLoad | null>(null);
   const [isBenchmarking, setIsBenchmarking] = useState<boolean>(false);
   const [lastBenchmarkDurationMs, setLastBenchmarkDurationMs] = useState<number | null>(null);
@@ -45,14 +46,16 @@ export function useCPU() {
       const i = native.getCpuInfo();
       setInfo(i);
       logEvent(MODULE, 'topology', { coreCount: i.coreCount, clusters: i.clusters, governor: i.governor });
-    } catch (e: any) { logEvent(MODULE, 'getCpuInfo error', { message: e?.message }, 'error'); }
+    } catch (e: any) { setError(e?.message ?? 'getCpuInfo error');
+      logEvent(MODULE, 'getCpuInfo error', { message: e?.message }, 'error'); }
     const poll = () => {
       try {
         const l = native.getCpuLoad();
         setLoad(l);
         recordMetric(MODULE, 'frequencyUtilizationPercent', l.frequencyUtilizationPercent, l.frequencyUtilizationPercent == null ? 'unavailable' : 'hardware');
         recordMetric(MODULE, 'appCpuPercent', l.appCpuPercent, l.appCpuPercent == null ? 'unavailable' : 'derived');
-      } catch (e: any) { logEvent(MODULE, 'getCpuLoad error', { message: e?.message }, 'error'); }
+      } catch (e: any) { setError(e?.message ?? 'getCpuLoad error');
+      logEvent(MODULE, 'getCpuLoad error', { message: e?.message }, 'error'); }
     };
     poll();
     const t = setInterval(poll, POLL_MS);
@@ -95,6 +98,8 @@ export function useCPU() {
     lastBenchmarkDurationMs,
     isBenchmarking,
     benchmarkCPU,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     /** Telemetry provenance */
     source,
   };

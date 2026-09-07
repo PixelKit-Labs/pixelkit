@@ -69,7 +69,7 @@ When iterating on UI components:
 ---
 
 ### 7. The Telemetry Provenance Rule (No Mocks)
-Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Radio adapter states (NFC antenna, Bluetooth controller, UWB chip) report `source: 'hardware'`; RF scan discoveries remain `simulated` until dedicated background scan services land. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and acts as an on-screen mirror when untethered (`source: 'simulated'`). Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
+Every hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `src/core/observability.ts`). There is no `simulated` value. Never substitute a plausible default for a value that could not be read: render `null` as "—" and pass `source` to `MetricCard` so the tag is visible. Radio adapter states (NFC antenna, Bluetooth controller, UWB chip) report `source: 'hardware'`; RF scan discoveries remain `simulated` until dedicated background scan services land. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and acts as an on-screen mirror when untethered (`source: 'simulated'`). Log lifecycle and errors with `logEvent(module, event, data)`; they surface in the Observability panel and in `adb logcat -s ReactNativeJS | grep PixelKit`.
 
 ---
 
@@ -81,7 +81,7 @@ Every hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'
 | **PowerVR GPU** | `useGPU()` | `frameRenderTimeMs, droppedFrameCount, isStuttering` | Monitor 8.33ms 120 FPS frame budget |
 | **Tensor TPU** | `useTPU()` | `activeDelegate, lastInferenceLatencyMs, throughputTokensPerSec` | Benchmark local neural inference |
 | **LPDDR5X RAM** | `useMemory()` | `totalRAMMB, usedRAMMB, freeRAMMB, purgeCaches()` | Prevent Low Memory Killer (LMK) crashes |
-| **HiLight LED Ring**| `useHiLight()` | `availability, isDaemonConnected, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array (`hardware` with ADB daemon, `simulated` when untethered) |
+| **HiLight LED Ring**| `useHiLight()` | `availability, isDaemonConnected, triggerGeminiPulse(), triggerContactAlert()` | [Pixel 11 Pro] Rear LED array (`hardware` with the ADB daemon, `unavailable` without it) |
 | **UWB Radar** | `useUWB()` | `isEnabled, chipId, activeTargets, isRanging, startRanging()` | [Pixel Pro] Hardware chip state (`hardware`), distance & AoA |
 | **Camera & capture** | `useCamera()` | `cameraRef, takePicture(), startRecording(), stopRecording(), zoomFactor (0..1), isTorchOn` | Photo and video capture. Zoom is a 0..1 fraction, not a multiplier. Looks are UI state only |
 | **Video playback** | `useVideo()` | `player, positionSeconds, durationSeconds, load(), play(), seekTo()` | Plays back what useCamera recorded; render `<VideoView player={player} />` |

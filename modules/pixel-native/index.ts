@@ -96,9 +96,63 @@ export type AppFunctionInfo = {
   id: string;
   name: string;
   description: string;
-  category: 'actuator' | 'telemetry' | 'system';
-  target: 'hardware' | 'daemon' | 'service';
+  category: 'actuator' | 'telemetry' | 'system' | 'intelligence';
+  target: 'hardware' | 'daemon' | 'service' | 'tpu_aicore';
   enabled: boolean;
+};
+
+export type DiscoveredBleDevice = {
+  name: string;
+  address: string;
+  rssi: number;
+  txPower?: number | null;
+  timestampNanos: number;
+  serviceUuids: string[];
+};
+
+export type UwbRangingResult = {
+  success: boolean;
+  sessionId: number;
+  technology: string;
+  serviceAvailable: boolean;
+  serviceName: string;
+  rangingFeature: boolean;
+  status: string;
+  timestampMs: number;
+};
+
+/** One decoded NDEF record from a tag. */
+export type NdefRecordInfo = {
+  /** Type Name Format: 1 well-known, 2 MIME, 3 absolute URI, 4 external. */
+  tnf: number;
+  /** Record type, for example 'T' for text or 'U' for URI. */
+  type: string;
+  /** Decoded text. Text records have their language prefix stripped. */
+  payload: string;
+  /** Raw payload length in bytes. */
+  bytes: number;
+  /** Resolved URI when the record carries one. */
+  uri: string | null;
+};
+
+/** A tag that entered the reader field. Every field is read from the tag. */
+export type NfcTagEvent = {
+  /** Hardware identifier as colon-separated hex. */
+  id: string;
+  /** Technologies the tag supports, for example ['Ndef', 'NfcA']. */
+  techs: string[];
+  /** NDEF specification the tag conforms to, when it is NDEF. */
+  type: string | null;
+  /** Capacity in bytes for NDEF tags. */
+  maxSize: number | null;
+  /** Whether the tag can be written. */
+  writable: boolean | null;
+  records: NdefRecordInfo[];
+  /** True when a queued write was applied to this tag. */
+  written: boolean;
+  /** Why a queued write failed, if it did. */
+  writeError: string | null;
+  timestamp: number;
 };
 
 type Events = {
@@ -109,6 +163,9 @@ type Events = {
   onSpeechResult(e: { requestId: string; text: string; isFinal: boolean }): void;
   onSpeechRms(e: { requestId: string; rmsdB: number }): void;
   onSpeechError(e: { requestId: string; error: string; code?: number }): void;
+  onBleDeviceFound(e: DiscoveredBleDevice): void;
+  onNfcTag(e: NfcTagEvent): void;
+  onNfcError(e: { id: string; message: string }): void;
 };
 
 declare class PixelNativeModule extends NativeModule<Events> {
@@ -130,11 +187,24 @@ declare class PixelNativeModule extends NativeModule<Events> {
   playPrimitives(steps: PrimitiveStep[]): boolean;
   cancelVibration(): boolean;
   getRadioInfo(): RadioInfo;
+  startBleScan(timeoutMs?: number): Promise<{ success: boolean; scanning: boolean; error?: string }>;
+  stopBleScan(): boolean;
+  getDiscoveredBleDevices(): DiscoveredBleDevice[];
+  /** Enables NfcAdapter reader mode on the foreground Activity; tags arrive on . */
+  startNfcReader(flags?: number): Promise<{ success: boolean; flags?: number; started?: boolean; error?: string }>;
+  /** Disables reader mode. Safe when no reader is running. */
+  stopNfcReader(): Promise<{ success: boolean }>;
+  /** Queues a text record written to the next tag that enters the field. */
+  writeNdefText(text: string): Promise<{ success: boolean; queuedBytes?: number; error?: string }>;
+  isNfcReaderActive(): boolean;
+  startUwbRanging(sessionId?: number): Promise<UwbRangingResult>;
+  stopUwbRanging(): boolean;
   isOfflineSpeechAvailable(): boolean;
   startSpeechRecognition(requestId: string, onDevice: boolean): Promise<boolean>;
   stopSpeechRecognition(): boolean;
   cancelSpeechRecognition(): boolean;
   getAppFunctions(): AppFunctionInfo[];
+  executeAppFunction(functionId: string, params?: Record<string, any>): Promise<any>;
 }
 
 /** `null` when the native module is absent (web, Expo Go, or not yet built). */

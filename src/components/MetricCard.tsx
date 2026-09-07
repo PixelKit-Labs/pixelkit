@@ -2,7 +2,7 @@
  * @file MetricCard.tsx
  * @description A headline number on a panel. Panel material: white wash, hairline border, 1 px
  * specular top edge. Label and badge in mono; value in sans. The optional provenance tag
- * (HW / DERIVED / SIMULATED / N/A) is how the UI stays honest about where a number came from.
+ * (HW / DERIVED / N/A) is how the UI stays honest about where a number came from.
  */
 
 import React from 'react';
@@ -27,7 +27,6 @@ export interface MetricCardProps {
 const SOURCE_STYLE: Record<TelemetrySource, { label: string; color: string }> = {
   hardware: { label: 'HW', color: Colors.dark.success },
   derived: { label: 'DERIVED', color: Colors.dark.primary },
-  simulated: { label: 'SIMULATED', color: Colors.dark.warning },
   unavailable: { label: 'N/A', color: Colors.dark.error },
 };
 

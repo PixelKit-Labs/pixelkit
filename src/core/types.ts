@@ -21,9 +21,9 @@ export interface Vector3D {
  */
 export interface BarometerData {
   /** Atmospheric air pressure in hectopascals (hPa) */
-  pressure: number;
+  pressure: number | null;
   /** Estimated relative altitude in meters calculated via hypsometric equation */
-  relativeAltitude?: number;
+  relativeAltitude?: number | null;
 }
 
 /**

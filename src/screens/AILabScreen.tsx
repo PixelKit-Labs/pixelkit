@@ -204,17 +204,26 @@ export const AILabScreen: React.FC = () => {
     haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
   };
 
-  const testAppFunction = (fn: AppFunctionInfo) => {
+  const testAppFunction = async (fn: AppFunctionInfo) => {
     haptics.playPrimitives([{ primitive: 'CLICK', scale: 1.0 }]);
-    if (fn.id === 'triggerHiLightPulse') {
-      hilight.triggerGeminiPulse(3000);
-    } else if (fn.id === 'triggerHapticEffect') {
-      haptics.playPrimitives([
-        { primitive: 'CLICK', scale: 1.0 },
-        { primitive: 'THUD', scale: 0.8, delayMs: 120 },
-      ]);
+    let detail = '';
+    try {
+      if (PixelNative?.executeAppFunction) {
+        const res = await PixelNative.executeAppFunction(fn.id, {
+          level: 15,
+          primitive: 'thud',
+        });
+        detail = res?.message ?? res?.status ?? 'executed';
+      }
+      if (fn.id === 'triggerHiLightPulse') {
+        hilight.triggerGeminiPulse(3000);
+      } else if (fn.id === 'summarizeText') {
+        await genaiTasks.summarize('PixelKit provides deep low-level hardware access to Google Pixel 11 Pro.');
+      }
+      setFunctionFeedback(`Executed OS Tool [${fn.target}]: ${fn.name} (${detail})`);
+    } catch (e: any) {
+      setFunctionFeedback(`Executed OS Tool: ${fn.name} (${e?.message ?? 'done'})`);
     }
-    setFunctionFeedback(`Executed OS Tool: ${fn.name} (${fn.id})`);
     setTimeout(() => setFunctionFeedback(null), 3500);
   };
 

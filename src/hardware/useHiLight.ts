@@ -9,14 +9,16 @@
  * Operation modes:
  * 1. Hardware mode: When the PixelKit ADB daemon is running (scripts/hilight-daemon, started via
  *    `npm run hilight:daemon`), this hook talks to 127.0.0.1:11080 to drive the physical LEDs (source: 'hardware').
- * 2. Simulated mode: When untethered or daemon is off, maintains the state model and mirrors on-screen
- *    with linear resonant actuator (LRA) haptics (source: 'simulated').
+ * 2. Unavailable: with no daemon the LEDs cannot be driven, so availability is 'unavailable' and
+ *    the control functions refuse. Nothing is mirrored on screen as though it were the hardware.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { HardwareAvailability } from '../core/capabilities';
 import { useCapabilities } from './useCapabilities';
-import type { TelemetrySource } from '../core/observability';
+import { logEvent, logError, traced, type TelemetrySource } from '../core/observability';
+
+const MODULE = 'useHiLight';
 
 export type HiLightMode =
   | 'off'
@@ -28,11 +30,13 @@ export type HiLightMode =
   | 'notification';
 
 export interface HiLightState {
-  /** 'hardware' when ADB daemon is driving physical LEDs; 'simulated' on screen; 'unsupported' if no array */
+  /** Latest failure message, or null. Failures are also logged and counted. */
+  error: string | null;
+  /** 'hardware' when the daemon drives the LEDs, 'unavailable' without it, 'unsupported' if no array */
   availability: HardwareAvailability;
   /** True when the device physically has the HiLight LED array */
   isHardwareSupported: boolean;
-  /** Telemetry provenance: 'hardware' when daemon is connected, 'simulated' otherwise */
+  /** Telemetry provenance: 'hardware' only when the daemon is connected */
   source: TelemetrySource;
   /** True when the local PixelKit ADB daemon is actively connected */
   isDaemonConnected: boolean;
@@ -80,7 +84,10 @@ async function sendDaemonCommand(path: string, payload?: object): Promise<boolea
     });
     clearTimeout(timeoutId);
     return res.ok;
-  } catch {
+  } catch (e) {
+    // The status poll runs every 5 s, so a missing daemon is expected and must not spam the log.
+    // Only real command failures are recorded; the caller reports the state change.
+    if (path !== '/status') logError(MODULE, 'daemon command failed', e, { path });
     return false;
   }
 }
@@ -98,6 +105,7 @@ async function sendDaemonCommand(path: string, payload?: object): Promise<boolea
 export function useHiLight(): HiLightState {
   const { hasHiLight } = useCapabilities();
   const [isDaemonConnected, setIsDaemonConnected] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [currentColor, setCurrentColor] = useState<string>(GEMINI_CYAN);
   const [mode, setModeState] = useState<HiLightMode>('off');
@@ -106,22 +114,25 @@ export function useHiLight(): HiLightState {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // The LEDs are either driven for real or they are not. When the daemon is not running there is
+  // no on-screen substitute: availability is 'unavailable' and the controls refuse rather than
+  // pretending a colour was shown.
   const availability: HardwareAvailability = !hasHiLight
     ? 'unsupported'
     : isDaemonConnected
     ? 'hardware'
-    : 'simulated';
+    : 'unavailable';
 
-  const source: TelemetrySource = !hasHiLight
-    ? 'unavailable'
-    : isDaemonConnected
-    ? 'hardware'
-    : 'simulated';
+  const source: TelemetrySource = isDaemonConnected && hasHiLight ? 'hardware' : 'unavailable';
 
   const checkDaemon = useCallback(async () => {
     if (!hasHiLight) return false;
     const ok = await sendDaemonCommand('/status');
-    setIsDaemonConnected(ok);
+    // Log transitions only: this polls every 5 s and a steady state is not news.
+    setIsDaemonConnected(prev => {
+      if (prev !== ok) logEvent(MODULE, ok ? 'daemon connected' : 'daemon lost', undefined, ok ? 'info' : 'warn');
+      return ok;
+    });
     return ok;
   }, [hasHiLight]);
 
@@ -272,6 +283,8 @@ export function useHiLight(): HiLightState {
   return {
     availability,
     isHardwareSupported: hasHiLight,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     source,
     isDaemonConnected,
     isActive,

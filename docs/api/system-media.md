@@ -106,7 +106,7 @@ interface DeviceCapabilities {
   modelName: string; isPhysicalDevice: boolean; isPixel: boolean;
   pixelGeneration: number | null; isProModel: boolean; isFoldable: boolean;
   androidApiLevel: number | null;
-  hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold (no public API; simulated)
+  hasHiLight: boolean;              // Pixel 11 Pro / Pro XL / Pro Fold (driven via the ADB daemon)
   hasUWB: boolean;                  // Pro models since Pixel 6 Pro, all Folds
   hasTitanM3: boolean;              // Pixel 11 family
   geminiNanoTier: 'nano-v4' | 'nano-v3' | 'nano-v2' | 'none';

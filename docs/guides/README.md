@@ -59,7 +59,7 @@ Every AI feature in PixelKit should be routed through **one decision**, made onc
 - **Tensor G6 TPU**: +50% TPU compute over G5; Google quotes on-device AI "3.5x faster, 3.5x less energy". Only reachable from apps via **AICore** (ML Kit GenAI, Firebase AI Logic hybrid, or the AICore Developer Preview with Gemma 4). There is no direct TPU handle.
 - **Gemini Nano 4** ships on Pixel 11 (tier `nano-v4`). Pixel 9/10 get `nano-v3`. Nano 4 adds 140+ languages, better multimodal understanding, structured output and thinking. Two variants: E2B (fast) and E4B (full, better reasoning).
 - **Android 17**: apps that touch the NPU directly must declare `android.hardware.neural_processing_unit`. ML Kit does not need it, but declare it `required="false"` if you also ship LiteRT models.
-- **HiLight** (rear LED array) is what Google's own Gemini uses to show listening / thinking / responding when the phone is face down. There is **no third-party API**; PixelKit mirrors the same state machine on-screen via `useHiLight` (simulated) plus `useHaptics`.
+- **HiLight** (rear LED array) is what Google's own Gemini uses to show listening / thinking / responding when the phone is face down. There is **no third-party API**; PixelKit drives the same LEDs through the ADB daemon via `useHiLight`, and reports `unavailable` when the daemon is not running.
 - **Mics**: multi-mic array with `VOICE_RECOGNITION` audio source giving hardware noise suppression. Use it, not `MIC`, for speech.
 - **Titan M3**: store the Gemini API key and ephemeral token secrets only through `useSecurity().saveSecureItem()`.
 

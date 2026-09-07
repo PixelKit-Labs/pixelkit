@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, CameraView, type CameraRecordingOptions } from 'expo-camera';
-import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
+import { logEvent, recordMetric, type TelemetrySource, noteExpected } from '../core/observability';
 import type { CameraLook, CameraTelemetry } from '../core/types';
 
 const MODULE = 'useCamera';
@@ -252,11 +252,11 @@ export function useCamera() {
   }, [isRecording]);
 
   const pausePreview = useCallback(async () => {
-    try { await cameraRef.current?.pausePreview(); } catch { /* view unmounted */ }
+    try { await cameraRef.current?.pausePreview(); } catch { noteExpected(MODULE, 'preview view unmounted'); }
   }, []);
 
   const resumePreview = useCallback(async () => {
-    try { await cameraRef.current?.resumePreview(); } catch { /* view unmounted */ }
+    try { await cameraRef.current?.resumePreview(); } catch { noteExpected(MODULE, 'preview view unmounted'); }
   }, []);
 
   return {

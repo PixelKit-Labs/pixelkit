@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import PixelNative, { type EnvelopePoint, type HapticsInfo, type PrimitiveStep } from '../../modules/pixel-native';
-import { logEvent, type TelemetrySource } from '../core/observability';
+import { logEvent, type TelemetrySource, noteExpected } from '../core/observability';
 import { HapticType } from '../core/types';
 
 const MODULE = 'useHaptics';
@@ -92,7 +92,7 @@ export function useHaptics() {
     catch (e: any) { logEvent(MODULE, 'playPrimitives error', { message: e?.message }, 'warn'); return false; }
   }, []);
 
-  const cancel = useCallback(() => { try { PixelNative?.cancelVibration(); } catch { /* ignore */ } }, []);
+  const cancel = useCallback(() => { try { PixelNative?.cancelVibration(); } catch { noteExpected(MODULE, 'vibrator already idle'); } }, []);
 
   return {
     triggerHaptic,

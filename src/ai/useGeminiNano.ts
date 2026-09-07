@@ -17,7 +17,7 @@ import PixelNano, {
   type ProofreadResult,
   type RewriteResult,
 } from '../../modules/pixel-nano';
-import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
+import { logEvent, recordMetric, type TelemetrySource, noteExpected } from '../core/observability';
 import type { AIMessage } from '../core/types';
 
 const MODULE = 'useGeminiNano';
@@ -222,7 +222,7 @@ export function useGeminiNano() {
         tokenCount = await PixelNano.countTokens(res.text || ' ');
         const decodeMs = res.firstTokenMs != null ? res.latencyMs - res.firstTokenMs : null;
         if (decodeMs != null && decodeMs > 0 && tokenCount > 0) decodeTps = Number((tokenCount / (decodeMs / 1000)).toFixed(1));
-      } catch { /* tokenizer unavailable; leave null */ }
+      } catch { noteExpected(MODULE, 'tokenizer unavailable; token count left null'); }
 
       setMessages(prev => [...prev, {
         id: `model_${Date.now()}`, role: 'model', content: res.text || '(empty response)',

@@ -66,7 +66,7 @@ PixelKit exposes Pixel 11 Pro hardware to React Native through Expo modules and 
 +---------------+  +---------------+  +------------------+  +---------------+
 |  CPU / GPU    |  |  Tensor TPU   |  | Pro Exclusives   |  | Titan M3      |
 |  Tensor G6    |  |  NNAPI/LiteRT |  | HiLight LED Ring |  | StrongBox     |
-|  real cpufreq |  |  Gemini 3.8   |  | UWB (simulated)  |  | Biometrics    |
+|  real cpufreq |  |  Gemini 3.8   |  | UWB ranging      |  | Biometrics    |
 +---------------+  +---------------+  +------------------+  +---------------+
 ```
 
@@ -95,7 +95,7 @@ import {
 
 ## 💻 Silicon & Compute Hooks
 
-> **All silicon hooks read real device state through the `PixelNative` module (`modules/pixel-native`). Values that cannot be read are `null` and every hook exposes `source: TelemetrySource` (`hardware | derived | simulated | unavailable`). See `docs/api/silicon-compute.md` for full signatures.**
+> **All silicon hooks read real device state through the `PixelNative` module (`modules/pixel-native`). Values that cannot be read are `null` and every hook exposes `source: TelemetrySource` (`hardware | derived | unavailable`). See `docs/api/silicon-compute.md` for full signatures.**
 
 ### `useCPU`
 * **File Path**: `src/hardware/useCPU.ts`
@@ -158,16 +158,16 @@ isStuttering: boolean; gpuMemoryUsageMB: null; source: TelemetrySource;
 ### `useHiLight`
 * **File Path**: `src/hardware/useHiLight.ts`
 * **Target Hardware**: Eight `Light.LIGHT_TYPE_APPLICATION` RGB LEDs around the flash (ids 1-8, 33 ms update period) on Pixel 11 Pro-class devices.
-* **Description**: Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. `useHiLight` drives the real physical LEDs when the native PixelKit ADB daemon is active (`npm run hilight:daemon`, `availability: 'hardware'`, `source: 'hardware'`) and falls back to honest on-screen simulation and LRA haptics when untethered (`'simulated'`).
+* **Description**: Android restricts `CONTROL_DEVICE_LIGHTS` to signature/system permissions with no public third-party API. `useHiLight` drives the real physical LEDs when the native PixelKit ADB daemon is active (`npm run hilight:daemon`, `availability: 'hardware'`, `source: 'hardware'`) Without the daemon the LEDs cannot be driven and availability is `'unavailable'`.
 
 #### Interface
 ```typescript
 type HiLightMode = 'off' | 'glow' | 'breathing' | 'pulse' | 'gemini_thinking' | 'incoming_call' | 'notification';
 
 interface HiLightState {
-  availability: 'hardware' | 'simulated' | 'unsupported';
+  availability: 'hardware' | 'unavailable' | 'unsupported';
   isHardwareSupported: boolean;
-  source: 'hardware' | 'simulated' | 'unavailable';
+  source: 'hardware' | 'unavailable';
   isDaemonConnected: boolean;
   isActive: boolean;
   currentColor: string;
@@ -206,7 +206,7 @@ function NotificationRing() {
 ### `useUWB`
 * **File Path**: `src/hardware/useUWB.ts`
 * **Target Hardware**: Ultra-Wideband (UWB) Spatial Radar Transceiver (`UwbManager`, chip ID `default`).
-* **Description**: Hardware chip state (`default`, `READY`), enabled status, and distance, azimuth and elevation to UWB targets. Physical UWB transceiver state is verified from hardware (`source: 'hardware'`); ranging sessions are simulated until Android 16 RangingManager sessions land.
+* **Description**: Hardware chip state (`default`, `READY`), enabled status, and hardware ranging session management via Android `UwbManager`/`RangingManager` (`source: 'hardware'`). Reports live session status and honest HAL direct vs declared feature status. Targets remain empty until paired UWB responders are attached.
 
 ---
 
@@ -374,8 +374,8 @@ interface SecurityState {
 
 ### `useBLE`
 * **File Path**: `src/hardware/useBLE.ts`
-* **Target Hardware**: Bluetooth 5.4 Low Energy Radio (`BluetoothAdapter`, `BluetoothManager`).
-* **Description**: Real hardware adapter status (`ON`/`OFF`), Bluetooth 5.4 Channel Sounding hardware feature verification, real bonded/paired devices, and discovery of nearby BLE peripherals.
+* **Target Hardware**: Bluetooth 5.4 Low Energy Radio (`BluetoothAdapter`, `BluetoothManager`, `BluetoothLeScanner`).
+* **Description**: Real hardware adapter status (`ON`/`OFF`), Bluetooth 5.4 Channel Sounding hardware feature verification, real bonded/paired devices, and active physical RF peripheral discovery via Android `BluetoothLeScanner` with RSSI (dBm) and log-distance path loss distance estimation (`source: 'hardware'`).
 
 ---
 

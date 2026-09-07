@@ -20,7 +20,7 @@ This document outlines the silicon engineering and hardware subsystem design of 
 | **Actuators**| Linear Resonant Actuator (LRA) | Precision mechanical tactile click profiles |
 | **Visual Bar**| HiLight LED Ring | Rear camera bar multi-color notification & Gemini AI status ring |
 | **Camera** | Triple Optical System | 50MP Wide, 48MP Ultrawide, 48MP 5x Periscope |
-| **Spatial** | Ultra-Wideband (UWB) | Ranging & Angle-of-Arrival (simulated until RangingManager) |
+| **Spatial** | Ultra-Wideband (UWB) | Ranging & Angle-of-Arrival through the platform ranging service |
 | **Power** | Pixelsnap Qi2.2 | 25W magnetic wireless charging (MagSafe accessory compatible) |
 
 ---

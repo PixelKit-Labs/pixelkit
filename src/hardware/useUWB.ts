@@ -1,72 +1,84 @@
 /**
  * @file useUWB.ts
- * @description Ultra-Wideband (UWB) radio controller and spatial ranging targets (distance, azimuth, elevation).
- * Real chip state ('default', READY) is queried directly from Android UwbManager and PackageManager.
+ * @description Ultra-Wideband (UWB) radio controller and spatial ranging sessions.
+ * Queries physical UWB transceiver status, Android 14+ RangingManager / UwbManager service,
+ * and tracks spatial distance and orientation without simulated placeholders.
  */
 
-import { useState } from 'react';
-import PixelNative from '../../modules/pixel-native';
-import { type TelemetrySource } from '../core/observability';
+import { useCallback, useState } from 'react';
+import PixelNative, { type UwbRangingResult } from '../../modules/pixel-native';
+import { logEvent, logError, traced, type TelemetrySource } from '../core/observability';
+
+const MODULE = 'useUWB';
 import { UWBSpatialTarget } from '../core/types';
 
 /**
- * Hook to inspect hardware UWB transceiver state and track spatial distance and orientation.
+ * Hook to inspect hardware UWB transceiver state and manage spatial ranging sessions.
  *
- * @returns Object providing hardware chip status, tracked targets, radar status, and ranging controls.
+ * @returns Object providing hardware chip status, session diagnostics, tracked targets, and ranging controls.
  *
  * @example
  * ```typescript
- * const { isEnabled, chipId, activeTargets, isRanging, startRanging } = useUWB();
+ * const { isEnabled, chipId, isRanging, startRanging, stopRanging, rangingApiSupported } = useUWB();
  * await startRanging();
- * activeTargets.forEach(t => console.log(`${t.deviceId}: ${t.distanceMeters}m at ${t.azimuthDegrees}°`));
  * ```
  */
 export function useUWB() {
   const [isRanging, setIsRanging] = useState<boolean>(false);
-  const [activeTargets, setActiveTargets] = useState<UWBSpatialTarget[]>([
-    {
-      deviceId: 'UWB_TAG_CAR_KEY',
-      distanceMeters: 0.85, // 85 cm
-      azimuthDegrees: 12.4, // 12.4 degrees to right
-      elevationDegrees: 2.1,
-      signalQuality: 0.96,
-    }
-  ]);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTargets, setActiveTargets] = useState<UWBSpatialTarget[]>([]);
+  const [sessionInfo, setSessionInfo] = useState<UwbRangingResult | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   const nativeInfo = PixelNative?.getRadioInfo?.()?.uwb;
-  const isSupported = nativeInfo?.supported ?? true;
-  const isEnabled = nativeInfo?.enabled ?? true;
-  const chipId = nativeInfo?.chipId ?? 'default';
-  const rangingApiSupported = nativeInfo?.rangingApiSupported ?? true;
-  const source: TelemetrySource = PixelNative ? 'hardware' : 'simulated';
+  const isSupported = nativeInfo?.supported ?? false;
+  const isEnabled = nativeInfo?.enabled ?? false;
+  const chipId = nativeInfo?.chipId ?? (isSupported ? 'default' : null);
+  const rangingApiSupported = nativeInfo?.rangingApiSupported ?? false;
+
+  // Genuine hardware provenance
+  const source: TelemetrySource = PixelNative && isSupported ? 'hardware' : 'unavailable';
 
   /**
-   * Starts a simulated ranging session (Android 16 RangingManager session).
+   * Starts a hardware UWB ranging session through Android RangingManager / UwbManager.
    */
-  const startRanging = async (): Promise<void> => {
-    setIsRanging(true);
+  const startRanging = useCallback(async (sessionId: number = 1001): Promise<boolean> => {
+    setSessionError(null);
+    if (!PixelNative?.startUwbRanging) {
+      setSessionError('Native UWB ranging service not available');
+      return false;
+    }
 
-    // Resilient UWB simulation & hook for androidx.core.uwb / android.ranging
-    setTimeout(() => {
-      setActiveTargets(prev => [
-        ...prev,
-        {
-          deviceId: 'PIXEL_TABLET_HUB',
-          distanceMeters: 2.14,
-          azimuthDegrees: -38.2,
-          elevationDegrees: 8.5,
-          signalQuality: 0.89,
-        }
-      ]);
-    }, 1200);
-  };
+    try {
+      const res = await traced(MODULE, 'startRanging', () => PixelNative!.startUwbRanging(sessionId), { sessionId });
+      setSessionInfo(res);
+      if (res?.success) {
+        setIsRanging(true);
+        return true;
+      } else {
+        setSessionError('UWB hardware not supported on this device');
+        setIsRanging(false);
+        return false;
+      }
+    } catch (e) {
+      setSessionError(logError(MODULE, 'startRanging failed', e, { sessionId }).message);
+      setIsRanging(false);
+      return false;
+    }
+  }, []);
 
   /**
-   * Stops active UWB RF ranging.
+   * Stops the active UWB RF ranging session.
    */
-  const stopRanging = (): void => {
+  const stopRanging = useCallback((): void => {
+    try {
+      PixelNative?.stopUwbRanging?.();
+      logEvent(MODULE, 'ranging stopped');
+    } catch (e) {
+      logError(MODULE, 'stopRanging failed', e);
+    }
     setIsRanging(false);
-  };
+  }, []);
 
   return {
     /** Whether UWB chip is present on device */
@@ -77,18 +89,23 @@ export function useUWB() {
     chipId,
     /** Whether Android 16+ RangingManager service is available */
     rangingApiSupported,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     /** Hardware provenance of the radio telemetry */
     source,
     /** Whether UWB radar ranging is actively transmitting */
     isRanging,
     /** List of spatially tracked anchors and devices */
     activeTargets,
-    /** Begin spatial ranging */
+    /** Active ranging session diagnostics */
+    sessionInfo,
+    /** Last session error message */
+    sessionError,
+    /** Begin spatial ranging session */
     startRanging,
-    /** Stop spatial ranging */
+    /** Stop spatial ranging session */
     stopRanging,
     /** Whether device hardware has dedicated UWB chip (Pixel Pro exclusive) */
     isSupportedOnDevice: isSupported,
   };
 }
-

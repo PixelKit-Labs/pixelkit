@@ -39,7 +39,7 @@ This document serves as the **canonical API Reference and Blueprint for AI agent
 | ![Physical UWB & Torch](./docs/assets/screenshots/07_sensors_radios.png) | ![Interactive In-App API Docs](./docs/assets/screenshots/08_docs_screen.png) |
 
 
-*All views captured from the live Google Pixel 11 Pro testbed. Strict provenance tagging (`HW`, `DERIVED`, `SIMULATED`, `N/A`) is enforced on every card.*
+*All views captured from the live Google Pixel 11 Pro testbed. Strict provenance tagging (`HW`, `DERIVED`, `N/A`) is enforced on every card.*
 
 ---
 
@@ -179,7 +179,7 @@ import {
 
 ---
 
-> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`modules/pixel-native`, telemetry &amp; actuators), or the `PixelNano` module (`modules/pixel-nano`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'simulated' | 'unavailable'` (see `src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), while live scan sessions remain simulated until dedicated scan services land. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and acts as an on-screen mirror when untethered (`source: 'simulated'`).
+> **No mocks rule.** Every hook reads real device state through Expo modules, the local `PixelNative` module (`modules/pixel-native`, telemetry &amp; actuators), or the `PixelNano` module (`modules/pixel-nano`, ML Kit GenAI, Vision, and NLP). Values that cannot be read are `null` and each hook exposes `source: 'hardware' | 'derived' | 'unavailable'` (see `src/core/observability.ts`). Radio controllers (NFC antenna, BLE adapter &amp; bonded devices, UWB chip state) report real hardware from `PixelNative` (`source: 'hardware'`), and live scan sessions run through the platform scanners. HiLight drives physical hardware when the native ADB daemon is running (`npm run hilight:daemon`, `source: 'hardware'`) and reports `source: 'unavailable'` without it; the controls refuse rather than pretending.
 
 ### 1. `useCPU()` — Real CPU topology and load
 
@@ -210,7 +210,7 @@ The TPU is reachable through AICore (Gemini Nano via ML Kit Prompt API in `pixel
 ```typescript
 const { aicoreVersion, isAICoreAvailable, benchmarkTPU } = useTPU();
 // aicoreVersion on Pixel 11 Pro: "0.release.prod_aicore_20260723.00_RC11"
-const result = await benchmarkTPU(); // 256×256 matmul, source: 'simulated' (CPU fallback)
+const result = await benchmarkTPU(); // 256x256 matmul on the JS thread, labelled CPU fallback
 ```
 
 ---
@@ -244,27 +244,25 @@ console.log(`Transcribed voice: "${result?.transcript}" (${result?.latencyMs}ms)
 
 ### 6. `useUWB()` — [Pixel Pro Exclusive] Ultra-Wideband Spatial Radar
 
-Hardware UWB chip state (default, READY) and spatial targets (ranging simulated until RangingManager):
+Hardware UWB chip state (default, READY), RangingManager session management, and spatial diagnostics:
 
 ```typescript
-const { isEnabled, chipId, activeTargets, isRanging, startRanging } = useUWB();
+const { isEnabled, chipId, sessionInfo, isRanging, startRanging, stopRanging } = useUWB();
 console.log(`UWB Chip: ${chipId} (${isEnabled ? 'READY' : 'OFF'})`);
-await startRanging();
-activeTargets.forEach(target => {
-  console.log(`${target.deviceId}: ${target.distanceMeters}m at ${target.azimuthDegrees}° azimuth`);
-});
+await startRanging(1001);
+console.log(`Session: ${sessionInfo?.status}, Service: ${sessionInfo?.serviceName}`);
 ```
 
 ---
 
-### 7. `useBLE()` — Bluetooth Low Energy Adapter &amp; Bonded Devices
+### 7. `useBLE()` — Bluetooth Low Energy Adapter & Bonded Devices
 
-Reads physical adapter state, Bluetooth 5.4 Channel Sounding support, and bonded devices:
+Reads physical adapter state, Bluetooth 5.4 Channel Sounding support, bonded devices, and active BluetoothLeScanner discovery:
 
 ```typescript
-const { state, channelSounding, bondedDevices, isScanning, peripherals, startScan } = useBLE();
+const { state, channelSounding, bondedDevices, isScanning, peripherals, startScan, stopScan } = useBLE();
 console.log(`Bluetooth: ${state}, Channel Sounding: ${channelSounding}, Bonded: ${bondedDevices.length}`);
-await startScan();
+await startScan(8000);
 peripherals.forEach(p => console.log(`${p.name}: ${p.rssi} dBm (~${p.estimatedDistanceMeters}m)`));
 ```
 

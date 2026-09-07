@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import PixelNative, { type ThermalInfo } from '../../modules/pixel-native';
-import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
+import { logEvent, recordMetric, type TelemetrySource, noteExpected } from '../core/observability';
 import type { PerformanceHeadroom } from '../core/types';
 
 const MODULE = 'useADPF';
@@ -38,6 +38,7 @@ export function thermalStatusLabel(status: number): PerformanceHeadroom['thermal
  */
 export function useADPF() {
   const [thermal, setThermal] = useState<ThermalInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number>(0);
   const [currentFps, setCurrentFps] = useState<number | null>(null);
   const [targetFps, setTargetFps] = useState<number | null>(null);
@@ -55,10 +56,11 @@ export function useADPF() {
         recordMetric(MODULE, 'thermalHeadroom', t.thermalHeadroom, t.thermalHeadroom == null ? 'unavailable' : 'hardware');
         recordMetric(MODULE, 'cpuHeadroom', t.cpuHeadroom, t.cpuHeadroom == null ? 'unavailable' : 'hardware');
         recordMetric(MODULE, 'gpuHeadroom', t.gpuHeadroom, t.gpuHeadroom == null ? 'unavailable' : 'hardware');
-      } catch (e: any) { logEvent(MODULE, 'getThermal error', { message: e?.message }, 'error'); }
+      } catch (e: any) { setError(e?.message ?? 'getThermal error');
+      logEvent(MODULE, 'getThermal error', { message: e?.message }, 'error'); }
     };
     readThermal();
-    try { setTargetFps(Math.round(native.getDisplayInfo().refreshRate)); } catch { /* handled by useDisplay */ }
+    try { setTargetFps(Math.round(native.getDisplayInfo().refreshRate)); } catch { noteExpected(MODULE, 'display info unavailable; useDisplay owns it'); }
     const t = setInterval(readThermal, HEADROOM_POLL_MS);
     const s1 = native.addListener('onThermalStatus', e => {
       setStatus(e.status);
@@ -90,6 +92,8 @@ export function useADPF() {
     /** Choreographer-measured frames per second */
     currentFps,
     reportWorkDuration,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     /** Telemetry provenance */
     source,
   };

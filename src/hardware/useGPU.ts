@@ -23,6 +23,7 @@ const MODULE = 'useGPU';
  */
 export function useGPU() {
   const [gpu, setGpu] = useState<GpuInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<FrameStats | null>(null);
   const [droppedFrameCount, setDroppedFrameCount] = useState<number>(0);
 
@@ -34,7 +35,8 @@ export function useGPU() {
       const g = PixelNative.getGpuInfo();
       setGpu(g);
       logEvent(MODULE, 'gpu', g as unknown as Record<string, unknown>);
-    } catch (e: any) { logEvent(MODULE, 'getGpuInfo error', { message: e?.message }, 'error'); }
+    } catch (e: any) { setError(e?.message ?? 'getGpuInfo error');
+      logEvent(MODULE, 'getGpuInfo error', { message: e?.message }, 'error'); }
     const sub = PixelNative.addListener('onFrameStats', s => {
       setStats(s);
       setDroppedFrameCount(c => c + s.jankFrames);
@@ -65,6 +67,8 @@ export function useGPU() {
     isStuttering: stats ? stats.avgFrameMs > expected * 1.5 : false,
     /** Not exposed by Android to apps */
     gpuMemoryUsageMB: null as number | null,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     /** Telemetry provenance */
     source,
   };

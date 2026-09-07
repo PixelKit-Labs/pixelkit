@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVideoPlayer, type VideoPlayer, type VideoSource } from 'expo-video';
-import { logEvent, type TelemetrySource } from '../core/observability';
+import { logEvent, type TelemetrySource, noteExpected } from '../core/observability';
 
 const MODULE = 'useVideo';
 const POLL_MS = 250;
@@ -56,7 +56,7 @@ export function useVideo(initialSource: VideoSource = null) {
         setBufferedSeconds(Number((player.bufferedPosition ?? 0).toFixed(2)));
         setStatus(String(player.status ?? 'idle'));
       } catch {
-        // Player released while the interval was in flight.
+        noteExpected(MODULE, 'player released mid-poll');
       }
     }, POLL_MS);
     return () => {
@@ -87,7 +87,7 @@ export function useVideo(initialSource: VideoSource = null) {
   }, [player]);
 
   const pause = useCallback(() => {
-    try { player.pause(); setIsPlaying(false); } catch { /* released */ }
+    try { player.pause(); setIsPlaying(false); } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   const togglePlay = useCallback(() => {
@@ -111,15 +111,15 @@ export function useVideo(initialSource: VideoSource = null) {
   }, [player]);
 
   const replay = useCallback(() => {
-    try { player.replay(); setIsPlaying(true); } catch { /* released */ }
+    try { player.replay(); setIsPlaying(true); } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   const setMuted = useCallback((muted: boolean) => {
-    try { player.muted = muted; setIsMuted(muted); } catch { /* released */ }
+    try { player.muted = muted; setIsMuted(muted); } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   const setLoop = useCallback((loop: boolean) => {
-    try { player.loop = loop; setIsLooping(loop); } catch { /* released */ }
+    try { player.loop = loop; setIsLooping(loop); } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   /** 1 is normal speed. Pitch is preserved by the player. */
@@ -128,7 +128,7 @@ export function useVideo(initialSource: VideoSource = null) {
       const clamped = Math.max(0.25, Math.min(4, rate));
       player.playbackRate = clamped;
       setPlaybackRateState(clamped);
-    } catch { /* released */ }
+    } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   const setVolume = useCallback((value: number) => {
@@ -136,12 +136,12 @@ export function useVideo(initialSource: VideoSource = null) {
       const clamped = Math.max(0, Math.min(1, value));
       player.volume = clamped;
       setVolumeState(clamped);
-    } catch { /* released */ }
+    } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   /** Keeps the screen awake while a video plays, so it does not dim mid-clip. */
   const setKeepScreenOn = useCallback((keep: boolean) => {
-    try { player.keepScreenOnWhilePlaying = keep; } catch { /* released */ }
+    try { player.keepScreenOnWhilePlaying = keep; } catch { noteExpected(MODULE, 'player released'); }
   }, [player]);
 
   /** Extracts frames as images at the given times, for a filmstrip or a poster. */

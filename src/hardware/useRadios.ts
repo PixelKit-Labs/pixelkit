@@ -13,6 +13,8 @@ const MODULE = 'useRadios';
 const POLL_MS = 5000;
 
 export interface RadioTelemetry {
+  /** Latest failure message, or null. Failures are also logged and counted. */
+  error: string | null;
   nfc: {
     supported: boolean;
     enabled: boolean;
@@ -85,6 +87,7 @@ const DEFAULT_RADIO_INFO: RadioInfo = {
  */
 export function useRadios(): RadioTelemetry {
   const [radioInfo, setRadioInfo] = useState<RadioInfo>(DEFAULT_RADIO_INFO);
+  const [error, setError] = useState<string | null>(null);
   const source: TelemetrySource = PixelNative ? 'hardware' : 'unavailable';
 
   const read = useCallback(() => {
@@ -96,6 +99,7 @@ export function useRadios(): RadioTelemetry {
       recordMetric(MODULE, 'bluetoothState', info.bluetooth.state, 'hardware');
       recordMetric(MODULE, 'uwbEnabled', info.uwb.enabled, 'hardware');
     } catch (e: any) {
+      setError(e?.message ?? 'getRadioInfo error');
       logEvent(MODULE, 'getRadioInfo error', { message: e?.message }, 'error');
     }
   }, []);
@@ -112,6 +116,8 @@ export function useRadios(): RadioTelemetry {
 
   return {
     ...radioInfo,
+    /** Latest failure message, or null. Failures are also logged and counted. */
+    error,
     source,
     refresh: read,
   };
