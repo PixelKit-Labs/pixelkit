@@ -1,136 +1,102 @@
-# Releasing PixelKit
+# Releasing the PixelKit SDK
 
-PixelKit itself is a template and is released as source: a tag and a GitHub release, no binary.
-This runbook is for **shipping an app built from it** — and for the tagged source releases here,
-whose gates are the same.
+This repository publishes three npm packages. It contains no app, so there is no build, no
+keystore and no store listing here — that runbook lives in
+[pixelkit-template](https://github.com/PixelKit-Labs/pixelkit-template), which is the repo that
+actually ships an app.
 
-What has to be true before a build goes out, in the order it has to be true. Every command here
-runs from the repo root on Windows with the Android SDK at `%LOCALAPPDATA%\Android\Sdk`.
+The whole release is one push of one tag. Everything below either happens automatically or explains
+why a step exists, so that a failure is diagnosable rather than mysterious.
+
+See [`docs/release-pipeline.html`](docs/release-pipeline.html) for the same flow as a diagram.
 
 ---
 
-## 1. Gates
+## What gets published
 
-None of these are advisory. A release that fails one is not a release.
+| Package | Contents | Why it is separate |
+| :--- | :--- | :--- |
+| `@pixelkit/native` | Kotlin Expo Module: telemetry, actuators | Zero third-party dependencies |
+| `@pixelkit/mlkit` | Kotlin Expo Module: Gemini Nano, vision, natural language | 19 ML Kit artifacts, and it rewrites the consumer's Gradle build |
+| `pixelkit` | The 32 hooks, the design system, observability | The package people install |
 
-```bash
-npm run verify          # tsc --noEmit, then the parity check
-npx expo-doctor         # 21 checks, including peer dependencies a release build needs
-npx expo export -p android
-```
+`pixelkit` depends on `@pixelkit/native` only. `@pixelkit/mlkit` is an **optional peer
+dependency**, reached through the `pixelkit/mlkit` subpath, so a project that only wants telemetry
+never installs it and never pays for it in APK size or Gradle configuration.
 
-`npm run verify` fails when a hook has no home screen, when a home screen never calls its hook,
-when a documented function has no control anywhere without a waiver, or when a handler that takes
-arguments is passed straight to `onPress`. `expo-doctor` is the one that catches the class of
-problem you cannot see locally — a missing native peer dependency works in Expo Go and crashes in
-a standalone build.
-
-## 2. Version
-
-Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same commit. A release
-decides whether that becomes a minor or a major, and that call is the maintainer's.
-
-Three values move together:
-
-| File | Field |
-| :--- | :--- |
-| `package.json` | `version` |
-| `app.json` | `expo.version` |
-| `app.json` | `expo.android.versionCode` — integer, +1 every build that could be installed |
-
-`eas.json` sets `appVersionSource: "local"`, so these checked-in values are what ships. Do not turn
-on `autoIncrement`: EAS would assign its own version code and the repo would stop describing what
-is on the device.
-
-## 3. On the device
-
-The gates prove the code compiles and bundles. They do not prove the hardware paths work, and this
-app is almost entirely hardware paths.
+## 1. Set the version
 
 ```bash
-adb reverse tcp:8081 tcp:8081
-npx expo start
+node scripts/sync-versions.js <version>
 ```
 
-Walk every section once, on a real Pixel, unlocked: Silicon (Compute · System · Network · Trace),
-Sensors (Motion · Capture · Audio · Actuators · Radios · Security), AI Lab (Chat · Tasks · Vision ·
-Language · Voice · Agents), Docs. Watch the provenance tags: a card that reads `HW` on a value the
-device cannot actually produce is the bug this project exists to avoid.
+This is not optional and it is not the same as editing `package.json`. Four manifests move
+together, because `pixelkit` pins its two native modules by **exact** version — a mismatch would
+publish a package that cannot resolve its own dependencies. The release workflow refuses a tag that
+disagrees with any of them.
+
+Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same commit. Whether a
+release becomes a minor or a major is the maintainer's call, not an agent's.
+
+## 2. Gates
 
 ```bash
-adb logcat -s ReactNativeJS | grep PixelKit
+npm run verify     # typecheck, build all three packages, then the documentation contract
 ```
 
-## 4. Signing
+`check-docs` clones `pixelkit-docs` and fails when an exported hook has no page, when a documented
+hook no longer exists, or when a documented return field is not on the declared type. The
+documentation is the contract, so a rename that makes a page wrong stops the release here.
 
-**`android/` is generated and is not tracked.** `npx expo prebuild --clean` rewrites it, so nothing
-you edit in `android/app/build.gradle` survives. Two consequences:
+CI runs the same gates plus two more on every push:
 
-- For an **EAS build**, credentials live with EAS (`eas credentials`), which is the supported path
-  and the one this repo is set up for.
-- For a **local `assembleRelease`**, the generated Gradle config falls back to the debug keystore
-  when no release keystore is configured. It will produce an APK, it will install, and it is
-  **debug-signed** — never ship that. Pass a real keystore:
+- `npm pack --dry-run` on all three, because a packaging mistake is invisible until someone
+  installs it.
+- A **consumer install**: both tarballs into a scratch project, then `require.resolve` on
+  `pixelkit` and `pixelkit/mlkit`. Resolution is what the `exports` map has to get right, and a
+  file being present in the tarball does not prove it resolves.
 
-```bash
-export PIXELKIT_RELEASE_KEYSTORE_PATH=/abs/path/to/upload.jks
-export PIXELKIT_RELEASE_STORE_PASSWORD=…
-export PIXELKIT_RELEASE_KEY_ALIAS=upload
-export PIXELKIT_RELEASE_KEY_PASSWORD=…
-cd android && ./gradlew assembleRelease
-```
-
-Verify what you built before you upload it:
-
-```bash
-"$LOCALAPPDATA/Android/Sdk/build-tools/<version>/apksigner" verify --print-certs \
-  android/app/build/outputs/apk/release/app-release.apk
-```
-
-If the certificate says `CN=Android Debug`, stop.
-
-## 5. Build
-
-```bash
-eas login
-eas build -p android --profile preview      # APK, for a GitHub release or direct install
-eas build -p android --profile production   # app bundle, for Play
-```
-
-`preview` and `production` differ only in artifact type; both are release builds.
-
-## 6. GitHub release
+## 3. Tag
 
 ```bash
 git tag -a v<version> -m "PixelKit v<version>"
 git push origin v<version>
-gh release create v<version> --title "PixelKit v<version>" --notes-file <notes>
-gh release upload v<version> path/to/app-release.apk
 ```
 
-Release notes come from the `CHANGELOG.md` entry for that version — it is written for a reader, so
-it does not need rewriting.
+`release.yml` takes over: it re-runs the gates, verifies the tag matches all four manifests, then
+publishes **in dependency order** — `@pixelkit/native`, then `@pixelkit/mlkit`, then `pixelkit` —
+each with `--provenance --access public`. The order is not stylistic. `pixelkit` pins the other two
+exactly, so publishing it first would put a package on the registry that cannot install.
 
-## 7. Play
+To rehearse without publishing, run the workflow manually with `dry_run: true`. Note that this
+skips both the publish step and the tag-match check, since the latter only runs on a tag push.
 
-Needed once, then kept current:
+## 4. What happens next, without you
 
-- **Privacy policy URL.** [`docs/PRIVACY.md`](https://github.com/PixelKit-Labs/pixelkit-template/blob/main/docs/PRIVACY.md) in the template is the text; host it and give Play
-  the URL.
-- **Data safety form.** The answers are in [`docs/store-listing.md`](https://github.com/PixelKit-Labs/pixelkit-template/blob/main/docs/store-listing.md) in the template, with
-  the reasoning for each one.
-- **Permission declarations.** `READ_PHONE_STATE` and the location permissions need a stated
-  purpose; the same file has the wording and what actually uses each permission.
-- **Listing copy and screenshots.** Copy is in the same file. Play requires screenshots; capture
-  them from the device at release time rather than committing them, so they cannot go stale in the
-  repository.
+`pixelkit-template` depends on all three. Dependabot checks daily and opens **one** pull request
+with the three grouped together — grouped because they move in lockstep, and ungrouped it would
+open three pull requests of which two could not resolve.
 
-```bash
-eas submit -p android --latest --profile production   # internal track
-```
+That pull request's CI is the real gate. The template's parity check runs against
+`node_modules/pixelkit`, so a hook the new SDK exports with nowhere to try it in the app **fails the
+pull request and names the hook**. A new capability cannot land undemonstrated.
 
-## 8. After
+## Prerequisites
 
-- Confirm the tag, the release and the installed `versionName` agree.
-- `adb shell dumpsys package com.pixelkit.sdk | grep versionName`
-- Open an issue for anything the device walk surfaced that did not block the release.
+One-time setup, without which `release.yml` cannot publish:
+
+- An npm organisation named `pixelkit`, which owns the `@pixelkit` scope.
+- An npm **automation** access token from that organisation, stored as the repository secret
+  `NPM_TOKEN` on `PixelKit-Labs/pixelkit-sdk`.
+
+Provenance requires `id-token: write`, which the workflow already declares.
+
+## If a release goes wrong
+
+npm unpublish is restricted after 72 hours and a version number can never be reused. The recovery
+is always forward: fix, `node scripts/sync-versions.js <next>`, tag again. Do not attempt to
+republish a version.
+
+If a publish half-succeeds — say `@pixelkit/native` lands and `pixelkit` fails — the registry is
+consistent but incomplete. Fix the cause, bump, and tag again; the already-published version is
+harmless because nothing references it yet.
