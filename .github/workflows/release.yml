@@ -41,7 +41,7 @@ jobs:
           tag="${GITHUB_REF#refs/tags/v}"
           pkg=$(node -p "require('./package.json').version")
           test "$tag" = "$pkg" || { echo "tag v$tag does not match package version $pkg"; exit 1; }
-          for p in pixelkit native mlkit; do
+          for p in sdk native mlkit; do
             v=$(node -p "require('./packages/$p/package.json').version")
             test "$v" = "$pkg" || { echo "packages/$p is $v, expected $pkg — run npm run sync-versions"; exit 1; }
           done

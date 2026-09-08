@@ -17,6 +17,10 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
   `@pixelkit-labs/sdk/mlkit`. Install is `npx expo install @pixelkit-labs/sdk @pixelkit-labs/native`.
 
 ### Fixed
+- The tag-match guard in `release.yml` iterated `for p in pixelkit native mlkit`, which is a list of
+  directory names, and `packages/pixelkit` had become `packages/sdk`. The first `v1.4.3` run failed
+  there with `Cannot find module ./packages/pixelkit/package.json` - the guard stopping the release
+  rather than letting a rename ship half-checked, which is what it is for.
 - The CI consumer-install step still expected `/tmp/pixelkit-$version.tgz`. A scoped tarball is
   named after the full name, so it is `pixelkit-labs-sdk-$version.tgz`. Second time this exact trap
   appeared today, so the comment above the step now names the rule rather than the instance.
