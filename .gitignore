@@ -55,3 +55,6 @@ packages/*/build/
 
 # docs/ that scripts/sync-docs.mjs writes before every dev/build run (docs/ stays the source
 # of truth; this copy must never be committed).
+
+# Cloned by scripts/check-docs-contract.js to verify the docs repo against this source
+.pixelkit-docs/
