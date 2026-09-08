@@ -4,6 +4,20 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.3.3] - 2026-09-08
+
+### Added
+- `docs/release-pipeline.html`, a diagram of how a version tag becomes three published packages and
+  reaches the template, kept in this repo so it versions with the workflows it describes.
+  `docs/release-pipeline.workflow.json` is its source. It records the parts that are easy to get
+  wrong: publish order is `@pixelkit/native`, then `@pixelkit/mlkit`, then `pixelkit`, because
+  `pixelkit` pins the other two exactly; Dependabot groups the three for the same reason, since
+  ungrouped it would open three pull requests and two could not resolve; and the template parity
+  check runs against the installed package, so a hook the new SDK exports with nowhere to try it
+  fails the pull request by name.
+- The diagram marks the current blocking state honestly: `NPM_TOKEN` is not configured, so
+  `release.yml` cannot publish, and nothing is on the registry yet.
+
 ## [1.3.2] - 2026-09-08
 
 ### Fixed

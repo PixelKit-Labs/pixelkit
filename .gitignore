@@ -58,3 +58,6 @@ packages/*/build/
 
 # Cloned by scripts/check-docs-contract.js to verify the docs repo against this source
 .pixelkit-docs/
+
+# archify visual-check evidence: screenshots and receipts, regenerated on demand
+docs/*.visual-check.*
