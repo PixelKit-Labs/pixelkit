@@ -4,6 +4,15 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.9] - 2026-09-08
+
+### Changed
+- New banner: portrait, 662x806, and 104 kB rather than 2.0 MB - a twentieth of the old file, which
+  was most of the repository weight and loaded on every visit to the page.
+- The README rendered it at `width="640"`, sized for the old landscape image. At the new aspect that
+  is a 779 px tall header, so every word of the description sat below the fold. Now `width="300"`,
+  about 365 px tall.
+
 ## [1.4.8] - 2026-09-08
 
 ### Changed
