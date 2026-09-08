@@ -6,8 +6,7 @@
 
 <p align="center">
   A development kit for the <b>Google Pixel 11 Pro, Pro Fold and Pro XL</b>. Hardware and on-device
-  AI as typed React hooks, so TypeScript, React Native and Expo developers can build on the Pixel
-  without writing a line of Kotlin.
+  AI as typed React hooks for TypeScript, React Native and Expo developers.
   <br><br>
   32 hooks over the silicon, the sensors, the radios, the camera and microphone, biometrics and the
   keystore, and Gemini running on the device itself.

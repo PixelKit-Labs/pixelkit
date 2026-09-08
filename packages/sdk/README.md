@@ -1,8 +1,7 @@
 # @pixelkit-labs/sdk
 
 A development kit for the **Google Pixel 11 Pro, Pro Fold and Pro XL**. Hardware and on-device AI
-as typed React hooks, so TypeScript, React Native and Expo developers can build on the Pixel
-without writing a line of Kotlin.
+as typed React hooks for TypeScript, React Native and Expo developers.
 
 Telemetry, sensors, radios, security and cloud Gemini:
 

@@ -1,6 +1,6 @@
 {
   "name": "@pixelkit-labs/mlkit",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "On-device AI for Expo apps on the Pixel: Gemini Nano through the GenAI Prompt API on AICore, plus ML Kit vision and natural language. Android only.",
   "keywords": [
     "expo",
