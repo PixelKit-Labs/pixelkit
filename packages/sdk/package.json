@@ -1,20 +1,22 @@
 {
   "name": "@pixelkit-labs/sdk",
-  "version": "1.4.9",
-  "description": "A development kit for the Google Pixel 11 Pro, Pro Fold and Pro XL. Hardware and AI as typed React hooks for TypeScript, React Native and Expo developers: silicon, sensors, radios, biometrics, cloud Gemini, on-device Gemini Nano, vision, translation and speech.",
+  "version": "1.5.0",
+  "description": "An on-device AI development kit for the Google Pixel. Gemini Nano, ML Kit vision and document scanning, offline translation and speech as typed React hooks for TypeScript, Expo and React Native - with the thermal, TPU and capability signals that tell you when to run locally and when to fall back to cloud.",
   "keywords": [
     "expo",
     "react-native",
     "android",
     "pixel",
-    "gemini-nano",
     "on-device-ai",
+    "gemini-nano",
+    "mlkit",
+    "offline-translation",
+    "document-scanner",
+    "speech-to-text",
     "hardware",
-    "sensors",
     "telemetry",
     "uwb",
-    "nfc",
-    "ble"
+    "nfc"
   ],
   "license": "MIT",
   "author": "Traves Theberge",
@@ -44,11 +46,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@pixelkit-labs/native": "1.4.9"
+    "@pixelkit-labs/native": "1.5.0"
   },
   "peerDependencies": {
     "@google/genai": "^2.21.0",
-    "@pixelkit-labs/mlkit": "1.4.9",
+    "@pixelkit-labs/mlkit": "1.5.0",
     "expo": "~57.0.20",
     "expo-audio": "~57.0.4",
     "expo-battery": "~57.0.2",

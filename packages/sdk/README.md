@@ -1,7 +1,9 @@
 # @pixelkit-labs/sdk
 
-A development kit for the **Google Pixel 11 Pro, Pro Fold and Pro XL**. Hardware and AI as typed
-React hooks for TypeScript, React Native and Expo developers.
+An **on-device AI development kit** for the Google Pixel. Gemini Nano, ML Kit vision and document
+scanning, offline translation across 58 languages, and speech both directions — as typed React
+hooks for TypeScript, Expo and React Native, with the thermal and capability signals to know when
+to run locally and when to fall back to cloud.
 
 Telemetry, sensors, radios, security and cloud Gemini:
 

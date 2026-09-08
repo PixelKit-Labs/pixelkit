@@ -5,13 +5,16 @@
 <h1 align="center">PixelKit</h1>
 
 <p align="center">
-  A development kit for the <b>Google Pixel 11 Pro, Pro Fold and Pro XL</b>. Hardware and AI as typed
-  React hooks for TypeScript, React Native and Expo developers.
+  An <b>on-device AI development kit</b> for the Google Pixel. Gemini Nano, ML Kit vision and
+  document scanning, offline translation across 58 languages, and speech both directions — as typed
+  React hooks for TypeScript, Expo and React Native.
   <br><br>
-  32 hooks across the silicon, the sensors, the radios, the camera and microphone, biometrics and
-  the keystore — and an AI stack that runs both in the cloud and on the Tensor chip: Gemini and
-  Gemini Nano, vision and document scanning, offline translation across 58 languages, entity
-  extraction, and speech in both directions.
+  On-device inference is thermally expensive and capability-gated, so the kit also gives you the
+  signals to use it responsibly: what AICore actually exposes, which Gemini Nano tier this device
+  serves, and how much thermal headroom is left before you should fall back to cloud.
+  <br><br>
+  32 hooks in total, over the silicon, the sensors, every radio from NFC to ultra-wideband, the
+  camera and microphone, biometrics and the hardware keystore.
 </p>
 
 <p align="center">
@@ -48,6 +51,11 @@ function Compute() {
 **Android only**, and you need to build it onto the device with `npx expo run:android`. It cannot
 run in Expo Go: reading a thermal sensor takes native code compiled into the app, and Expo Go only
 contains the native code Expo put in it.
+
+It degrades rather than fails on other hardware. **13 of the 32 hooks are pure Expo and JavaScript**
+— camera, audio, sensors, location, biometrics, the keystore, cloud Gemini — and work on any Android
+device. The other 19 talk to the Kotlin modules and report `unsupported` where the silicon is not
+there. `npx @pixelkit-labs/cli doctor` tells you which case you are in.
 
 ## Provenance
 

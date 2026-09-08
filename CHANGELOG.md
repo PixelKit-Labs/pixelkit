@@ -4,6 +4,24 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.5.0] - 2026-09-08
+
+The positioning was backwards. This corrects it.
+
+### Changed
+- **PixelKit leads with on-device AI, not telemetry.** The hardware layer is not a parallel feature
+  set - it is the instrumentation that makes on-device inference usable. `useTPU` reports what
+  AICore exposes, `useADPF` gives thermal headroom, `capabilities.ts` maps Gemini Nano tiers per
+  generation, precisely because inference is thermally expensive and capability-gated and you need
+  to know when to fall back to cloud. Describing hardware first and AI as an afterthought sold the
+  weaker product.
+- The README says the kit **degrades rather than fails** on other hardware: 13 of the 32 hooks are
+  pure Expo and JavaScript and work on any Android device; the other 19 need the Kotlin modules and
+  report `unsupported` where the silicon is absent. That is a wider and more honest audience than
+  "Pixel 11 Pro only", which was never true - `capabilities.ts` covers Pixel 6, 8, 9 and 11.
+- npm keywords now name what people search for: `on-device-ai`, `gemini-nano`, `mlkit`,
+  `offline-translation`, `document-scanner`, `speech-to-text`.
+
 ## [1.4.9] - 2026-09-08
 
 ### Changed
