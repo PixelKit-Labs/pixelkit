@@ -1,6 +1,6 @@
 # @pixelkit-labs/sdk
 
-The Google Pixel 11 Pro as React hooks: silicon telemetry, sensors, radios, security, and Gemini
+Google Pixel hardware as React hooks: silicon telemetry, sensors, radios, security, and Gemini
 running on the device itself.
 
 Telemetry, sensors, radios, security and cloud Gemini:

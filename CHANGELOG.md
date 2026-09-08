@@ -4,6 +4,17 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.5] - 2026-09-08
+
+### Changed
+- The descriptions said two different things about what hardware this supports. npm claimed "The
+  Google Pixel **11 Pro** as React hooks"; GitHub claimed "The Google Pixel". The narrow one was
+  wrong: only `useHiLight` is 11 Pro specific, and CPU, thermals, sensors, radios, biometrics and
+  Nano work across Pixels, with the generic hooks working on any Android. Both now say Google Pixel
+  hardware, and the package README opener matches.
+- The `pixelkit-docs` repository description was "Documentation site for PixelKit", which hid the
+  part that matters: it is the contract the SDK is validated against in CI.
+
 ## [1.4.4] - 2026-09-08
 
 ### Fixed

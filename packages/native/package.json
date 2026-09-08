@@ -1,6 +1,6 @@
 {
   "name": "@pixelkit-labs/native",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Expo module for Google Pixel telemetry and actuators: SoC identity, CPU clusters, memory, thermal and ADPF headroom, display modes, GPU, torch, haptic envelopes. Zero third-party dependencies. Android only.",
   "keywords": [
     "expo",
