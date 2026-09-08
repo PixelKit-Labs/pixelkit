@@ -1,7 +1,7 @@
 {
   "name": "@pixelkit-labs/sdk",
-  "version": "1.4.5",
-  "description": "Google Pixel hardware as React hooks: CPU and thermals, sensors, camera and audio, every radio, biometrics and the keystore, and Gemini Nano on-device. Android only. Nothing is simulated.",
+  "version": "1.4.6",
+  "description": "A development kit for the Google Pixel 11 Pro, Pro Fold and Pro XL. Hardware and on-device AI as typed React hooks, so TypeScript, React Native and Expo developers can build on the Pixel without writing Kotlin.",
   "keywords": [
     "expo",
     "react-native",
@@ -44,11 +44,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@pixelkit-labs/native": "1.4.5"
+    "@pixelkit-labs/native": "1.4.6"
   },
   "peerDependencies": {
     "@google/genai": "^2.21.0",
-    "@pixelkit-labs/mlkit": "1.4.5",
+    "@pixelkit-labs/mlkit": "1.4.6",
     "expo": "~57.0.20",
     "expo-audio": "~57.0.4",
     "expo-battery": "~57.0.2",

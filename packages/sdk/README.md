@@ -1,7 +1,8 @@
 # @pixelkit-labs/sdk
 
-Google Pixel hardware as React hooks: silicon telemetry, sensors, radios, security, and Gemini
-running on the device itself.
+A development kit for the **Google Pixel 11 Pro, Pro Fold and Pro XL**. Hardware and on-device AI
+as typed React hooks, so TypeScript, React Native and Expo developers can build on the Pixel
+without writing a line of Kotlin.
 
 Telemetry, sensors, radios, security and cloud Gemini:
 

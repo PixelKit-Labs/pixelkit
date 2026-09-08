@@ -5,12 +5,12 @@
 <h1 align="center">PixelKit</h1>
 
 <p align="center">
-  Google Pixel hardware as React hooks. Per-core CPU frequencies from cpufreq, battery temperature
-  from the fuel gauge, the camera and microphone, every radio from NFC to ultra-wideband, biometrics
-  and the hardware keystore, and Gemini Nano on-device.
+  A development kit for the <b>Google Pixel 11 Pro, Pro Fold and Pro XL</b>. Hardware and on-device
+  AI as typed React hooks, so TypeScript, React Native and Expo developers can build on the Pixel
+  without writing a line of Kotlin.
   <br><br>
-  Every value tells you where it came from. A reading the hardware cannot give you comes back
-  <code>null</code> instead of a guess, so you always know whether a number is real.
+  32 hooks over the silicon, the sensors, the radios, the camera and microphone, biometrics and the
+  keystore, and Gemini running on the device itself.
 </p>
 
 <p align="center">

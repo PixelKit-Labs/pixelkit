@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.6] - 2026-09-08
+
+### Changed
+- The descriptions led with the provenance model, which is an implementation detail, not the
+  product. PixelKit is a **development kit for the Google Pixel 11 Pro, Pro Fold and Pro XL**:
+  hardware and on-device AI as typed React hooks, so TypeScript, React Native and Expo developers
+  can build on the Pixel without writing Kotlin. That is what the npm descriptions, the repository
+  descriptions and both README heroes now say.
+- 1.4.5 widened the device claim to "Google Pixel hardware" on the reasoning that naming the Pro
+  line excluded users. That was wrong about the product: it is built for the Pro line, and the
+  descriptions name it again.
+
 ## [1.4.5] - 2026-09-08
 
 ### Changed
