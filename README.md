@@ -89,11 +89,11 @@ Inputs, outputs and a contract for every function are in the
 
 | | |
 | :--- | :--- |
-| `pixelkit` | The hooks, types and observability layer |
+| `@pixelkit-labs/sdk` | The hooks, types, design system and observability layer |
 | `@pixelkit-labs/native` | Kotlin Expo Module for telemetry and actuators. No third-party dependencies. |
 | `@pixelkit-labs/mlkit` | Kotlin Expo Module for on-device ML Kit and Gemini Nano. Opt-in. |
 
-They version in lockstep, and `pixelkit` pins the other two exactly.
+They version in lockstep, and `@pixelkit-labs/sdk` pins the other two exactly.
 
 ## Repositories
 

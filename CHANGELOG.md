@@ -4,6 +4,19 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.4] - 2026-09-08
+
+### Fixed
+- The published README for `@pixelkit-labs/sdk` was titled `# pixelkit`, so npm rendered the wrong
+  name at the top of the package page.
+- `@pixelkit-labs/native` and `@pixelkit-labs/mlkit` both linked to
+  `npmjs.com/package/pixelkit`, which 404s - that name was never published. Both now point at
+  `@pixelkit-labs/sdk`.
+- The repository README still listed `pixelkit` in the packages table.
+- The package README listed all seven AI hooks in one row, implying they all import from the main
+  entry. Four of them are only reachable through `@pixelkit-labs/sdk/mlkit`, so the row is split and
+  says which is which. Someone following the old table would have hit an unresolved import.
+
 ## [1.4.3] - 2026-09-08
 
 ### Changed

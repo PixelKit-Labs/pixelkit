@@ -12,7 +12,7 @@ is a separate package precisely so that telemetry does not drag ML Kit in behind
 work in Expo Go. The TypeScript bridge uses `requireOptionalNativeModule`, so it resolves to `null`
 rather than throwing when the native side is absent, letting callers report `unavailable`.
 
-Normally installed as a dependency of [`pixelkit`](https://www.npmjs.com/package/pixelkit), which
+Normally installed as a dependency of [`@pixelkit-labs/sdk`](https://www.npmjs.com/package/@pixelkit-labs/sdk), which
 wraps it in typed React hooks. Install it directly if you want the raw module.
 
 ```bash

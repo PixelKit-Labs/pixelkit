@@ -19,7 +19,7 @@ AICore and the model downloaded. The TypeScript bridge uses `requireOptionalNati
 resolves to `null` rather than throwing when the native side is absent, letting callers report
 `unavailable`.
 
-Normally installed as a dependency of [`pixelkit`](https://www.npmjs.com/package/pixelkit), which
+Normally installed as a dependency of [`@pixelkit-labs/sdk`](https://www.npmjs.com/package/@pixelkit-labs/sdk), which
 wraps it in `useGeminiNano`, `useGenAITasks`, `useVisionAI` and `useNaturalLanguageAI`.
 
 ```bash

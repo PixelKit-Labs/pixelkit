@@ -1,4 +1,4 @@
-# pixelkit
+# @pixelkit-labs/sdk
 
 The Google Pixel 11 Pro as React hooks: silicon telemetry, sensors, radios, security, and Gemini
 running on the device itself.
@@ -55,7 +55,8 @@ cannot take, the honest fix is a native path, not a default.
 | Actuators | `useHaptics`, `useTorch`, `useHiLight` |
 | Radios | `useBLE`, `useNFC`, `useUWB`, `useRadios` |
 | Security | `useBiometrics`, `useSecurity` |
-| AI | `useGemini`, `useGeminiNano`, `useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI`, `useSpeechAI`, `useSpeech` |
+| AI (main entry) | `useGemini`, `useSpeechAI`, `useSpeech` |
+| AI (`@pixelkit-labs/sdk/mlkit`) | `useGeminiNano`, `useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI` |
 
 Plus the design system (`Colors`, `Type`, `MetricCard`, `HapticButton`, `ScreenScaffold`, `Decor`
 primitives) and the observability layer (`traced`, `logError`, `useObservability`) that every hook
