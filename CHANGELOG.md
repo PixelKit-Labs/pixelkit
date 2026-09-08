@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.2] - 2026-09-08
+
+### Fixed
+- The `v1.4.1` release failed at `npm publish` with `EOTP`: the access token enforced two-factor
+  authentication on publish, which no CI can satisfy because there is nobody to enter a code. A
+  granular access token replaced it. Nothing reached the registry - the failure was on the first of
+  the three publishes - so there was no partial release to unwind, and this is a clean first
+  publish rather than a repair.
+
+  Everything before the publish step passed on that run, including the tag-match check, which only
+  executes on a real tag push and had until then only been exercised locally.
+
 ## [1.4.1] - 2026-09-08
 
 ### Fixed
