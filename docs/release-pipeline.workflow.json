@@ -195,7 +195,7 @@
       "lane": "registry",
       "col": 3,
       "type": "security",
-      "label": "NPM_TOKEN unset",
+      "label": "PIXELKIT secret",
       "sublabel": "nothing published",
       "width": 98
     }
@@ -253,7 +253,7 @@
       "dot": "amber",
       "title": "Where it stops today",
       "items": [
-        "NPM_TOKEN is not set on pixelkit-sdk, so release.yml cannot publish",
+        "The PIXELKIT secret was not set on pixelkit-sdk, so release.yml cannot publish",
         "None of the three packages exist on the registry yet"
       ]
     },

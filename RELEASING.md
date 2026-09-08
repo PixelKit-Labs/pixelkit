@@ -87,7 +87,7 @@ One-time setup, without which `release.yml` cannot publish:
 
 - An npm organisation named `pixelkit-labs`, which owns the `@pixelkit-labs` scope.
 - An npm **granular access token** with read and write on the `@pixelkit-labs` scope and on the
-  unscoped `pixelkit` package, stored as the repository secret `NPM_TOKEN` on
+  unscoped `pixelkit` package, stored as the repository secret `PIXELKIT` on
   `PixelKit-Labs/pixelkit-sdk`. npm is restricting classic tokens that bypass 2FA, so a granular
   token is the durable choice. On a first publish the unscoped package does not exist yet and
   cannot be selected by name, so the token has to cover all packages until it does.

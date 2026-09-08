@@ -1,6 +1,6 @@
 {
   "name": "@pixelkit-labs/mlkit",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Expo module for the on-device Google ML Kit surface: Gemini Nano through the GenAI Prompt API on AICore, plus vision and natural language. Android only.",
   "keywords": [
     "expo",

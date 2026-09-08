@@ -58,4 +58,7 @@ jobs:
           npm publish -w @pixelkit-labs/mlkit  --provenance --access public
           npm publish -w pixelkit         --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Repository secret PIXELKIT: an npm granular access token with read and write on the
+          # @pixelkit-labs scope and the unscoped pixelkit package. Named PIXELKIT rather than
+          # NPM_TOKEN because that is how it was created; the value is what matters, not the name.
+          NODE_AUTH_TOKEN: ${{ secrets.PIXELKIT }}
