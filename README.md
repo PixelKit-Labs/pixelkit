@@ -24,13 +24,13 @@
 ## Install
 
 ```bash
-npx expo install pixelkit @pixelkit/native
+npx expo install pixelkit @pixelkit-labs/native
 ```
 
 On-device ML is a separate install, because it adds 19 ML Kit artifacts to your APK:
 
 ```bash
-npx expo install @pixelkit/mlkit
+npx expo install @pixelkit-labs/mlkit
 ```
 
 ```tsx
@@ -63,7 +63,7 @@ which is the whole design: if a value cannot be measured you get a blank, and a 
 on it refuses rather than pretending.
 
 On hardware that is not a Pixel, the generic hooks work and the rest report `unavailable`. That is
-correct behaviour, not a fault — `npx @pixelkit/cli doctor` will tell you which case you are in.
+correct behaviour, not a fault — `npx @pixelkit-labs/cli doctor` will tell you which case you are in.
 
 ## Hooks
 
@@ -90,8 +90,8 @@ Inputs, outputs and a contract for every function are in the
 | | |
 | :--- | :--- |
 | `pixelkit` | The hooks, types and observability layer |
-| `@pixelkit/native` | Kotlin Expo Module for telemetry and actuators. No third-party dependencies. |
-| `@pixelkit/mlkit` | Kotlin Expo Module for on-device ML Kit and Gemini Nano. Opt-in. |
+| `@pixelkit-labs/native` | Kotlin Expo Module for telemetry and actuators. No third-party dependencies. |
+| `@pixelkit-labs/mlkit` | Kotlin Expo Module for on-device ML Kit and Gemini Nano. Opt-in. |
 
 They version in lockstep, and `pixelkit` pins the other two exactly.
 

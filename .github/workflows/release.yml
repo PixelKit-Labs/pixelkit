@@ -47,15 +47,15 @@ jobs:
           done
           echo "all four manifests at $pkg"
 
-      - run: npm pack --dry-run -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit
+      - run: npm pack --dry-run -w pixelkit -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
 
       # Order matters: pixelkit pins the other two by exact version, so they must exist on the
       # registry first or its own install resolves against nothing.
       - name: Publish
         if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
         run: |
-          npm publish -w @pixelkit/native --provenance --access public
-          npm publish -w @pixelkit/mlkit  --provenance --access public
+          npm publish -w @pixelkit-labs/native --provenance --access public
+          npm publish -w @pixelkit-labs/mlkit  --provenance --access public
           npm publish -w pixelkit         --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

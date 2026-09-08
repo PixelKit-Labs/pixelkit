@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import PixelNative, { type PackageVersion } from '@pixelkit/native';
+import PixelNative, { type PackageVersion } from '@pixelkit-labs/native';
 import { logEvent, type TelemetrySource } from '../core/observability';
 import type { TPUAcceleration } from '../core/types';
 

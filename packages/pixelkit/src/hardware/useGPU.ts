@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import PixelNative, { type FrameStats, type GpuInfo } from '@pixelkit/native';
+import PixelNative, { type FrameStats, type GpuInfo } from '@pixelkit-labs/native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useGPU';

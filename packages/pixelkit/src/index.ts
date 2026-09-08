@@ -73,7 +73,7 @@ export { useTPU } from './ai/useTPU';
 export { useGemini, type SafetyThreshold, type GroundingSummary } from './ai/useGemini';
 
 // useGeminiNano, useGenAITasks, useVisionAI and useNaturalLanguageAI are exported from
-// 'pixelkit/mlkit'. They need @pixelkit/mlkit, whose 19 ML Kit artifacts are a build cost that
+// 'pixelkit/mlkit'. They need @pixelkit-labs/mlkit, whose 19 ML Kit artifacts are a build cost that
 // installing the package imposes whether or not anything imports it. See src/mlkit.ts.
 export { useSpeechAI } from './ai/useSpeechAI';
 export { useSpeech } from './ai/useSpeech';

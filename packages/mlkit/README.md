@@ -1,4 +1,4 @@
-# @pixelkit/mlkit
+# @pixelkit-labs/mlkit
 
 Expo module (Kotlin) for the on-device Google ML Kit surface:
 
@@ -11,7 +11,7 @@ Expo module (Kotlin) for the on-device Google ML Kit surface:
 **This is the expensive one.** It pulls in 19 ML Kit artifacts, compiles with
 `-Xskip-metadata-version-check`, and pins every `kotlin-stdlib` in the consuming build, because
 `genai-prompt` requires Kotlin 2.3.21 while Expo 57 compiles with 2.1.20. That is why it is a
-separate package from [`@pixelkit/native`](https://www.npmjs.com/package/@pixelkit/native): if you
+separate package from [`@pixelkit-labs/native`](https://www.npmjs.com/package/@pixelkit-labs/native): if you
 only want CPU clocks and battery temperature, you should not pay for any of this.
 
 **Android only. Requires a development build**, and Gemini Nano additionally requires a device with
@@ -23,7 +23,7 @@ Normally installed as a dependency of [`pixelkit`](https://www.npmjs.com/package
 wraps it in `useGeminiNano`, `useGenAITasks`, `useVisionAI` and `useNaturalLanguageAI`.
 
 ```bash
-npx expo install @pixelkit/mlkit
+npx expo install @pixelkit-labs/mlkit
 ```
 
 MIT

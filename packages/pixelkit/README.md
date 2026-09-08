@@ -6,19 +6,19 @@ running on the device itself.
 Telemetry, sensors, radios, security and cloud Gemini:
 
 ```bash
-npx expo install pixelkit @pixelkit/native
+npx expo install pixelkit @pixelkit-labs/native
 ```
 
 On-device ML - Gemini Nano, vision, natural language - is opt-in, because it puts 19 ML Kit
 artifacts in your APK. Install it only if you want those hooks:
 
 ```bash
-npx expo install @pixelkit/mlkit
+npx expo install @pixelkit-labs/mlkit
 ```
 
 ```tsx
 import { useCPU, useGemini, MetricCard } from 'pixelkit';
-import { useGeminiNano } from 'pixelkit/mlkit'; // only with @pixelkit/mlkit installed
+import { useGeminiNano } from 'pixelkit/mlkit'; // only with @pixelkit-labs/mlkit installed
 
 function Compute() {
   const cpu = useCPU();
@@ -40,7 +40,7 @@ There is deliberately no `simulated` member, so a fabricated reading is not repr
 that cannot be read is `null` and `MetricCard` renders it as an em dash. Nothing is ever
 substituted with a plausible default.
 
-**Most of it is Pixel-specific.** 20 of the 33 hook modules read through `@pixelkit/native`. On a
+**Most of it is Pixel-specific.** 20 of the 33 hook modules read through `@pixelkit-labs/native`. On a
 Samsung or a OnePlus the generic ones still work, and the rest report `unavailable` rather than
 guessing. That is the design behaving correctly, not a bug: if you want a reading this package
 cannot take, the honest fix is a native path, not a default.

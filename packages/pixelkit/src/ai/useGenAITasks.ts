@@ -17,7 +17,7 @@ import PixelNano, {
   type ProofreadResult,
   type RewriteResult,
   type ImageDescriptionResult,
-} from '@pixelkit/mlkit';
+} from '@pixelkit-labs/mlkit';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useGenAITasks';

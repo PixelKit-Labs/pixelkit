@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Brightness from 'expo-brightness';
-import PixelNative, { type DisplayInfo } from '@pixelkit/native';
+import PixelNative, { type DisplayInfo } from '@pixelkit-labs/native';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useDisplay';

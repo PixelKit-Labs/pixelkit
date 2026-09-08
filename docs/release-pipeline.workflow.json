@@ -264,7 +264,7 @@
         "verify.yml resolves both entries from a packed tarball, so the exports map is checked, not assumed",
         "check-docs clones pixelkit-docs: an undocumented export fails the build",
         "release.yml refuses a tag that disagrees with any of the four manifests",
-        "pixelkit-cli releases @pixelkit/cli from its own repo, on its own schedule"
+        "pixelkit-cli releases @pixelkit-labs/cli from its own repo, on its own schedule"
       ]
     }
   ]

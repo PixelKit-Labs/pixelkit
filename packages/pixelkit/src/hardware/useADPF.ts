@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import PixelNative, { type ThermalInfo } from '@pixelkit/native';
+import PixelNative, { type ThermalInfo } from '@pixelkit-labs/native';
 import { logEvent, recordMetric, type TelemetrySource, noteExpected } from '../core/observability';
 import type { PerformanceHeadroom } from '../core/types';
 

@@ -18,8 +18,8 @@ const ROOT = path.join(__dirname, '..');
 /** Published npm name -> directory under packages/. They differ: the scope is not a folder. */
 const PACKAGES = {
   pixelkit: 'pixelkit',
-  '@pixelkit/native': 'native',
-  '@pixelkit/mlkit': 'mlkit',
+  '@pixelkit-labs/native': 'native',
+  '@pixelkit-labs/mlkit': 'mlkit',
 };
 const NAMES = Object.keys(PACKAGES);
 

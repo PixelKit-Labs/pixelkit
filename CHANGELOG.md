@@ -4,6 +4,32 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.0] - 2026-09-08
+
+The npm organisation is `pixelkit-labs`, so the scope is too. Minor rather than patch because the
+package names change, and this is the version intended for the first publish.
+
+### Changed
+- **`@pixelkit/native` and `@pixelkit/mlkit` are now `@pixelkit-labs/native` and
+  `@pixelkit-labs/mlkit`.** A scope is owned by an npm organisation of the same name, and the
+  organisation is `pixelkit-labs`, matching the GitHub org. 72 occurrences across 36 files, plus
+  the `peerDependenciesMeta` optional flag, the `sync-versions` name-to-directory map, both
+  workflows, the tsconfig paths and the diagram. `pixelkit` stays unscoped, so the install anyone
+  types is unchanged.
+- `RELEASING.md` names the real prerequisite: a **granular access token** with read and write on
+  the `@pixelkit-labs` scope and on the unscoped `pixelkit` package. npm is restricting classic
+  tokens that bypass 2FA. On a first publish the unscoped package does not exist and cannot be
+  selected by name, so the token has to cover all packages until it does.
+
+### Fixed
+- The CI consumer-install step referenced `/tmp/pixelkit-native-$version.tgz`. `npm pack` names a
+  scoped tarball after the full name, so it is `pixelkit-labs-native-$version.tgz` now; the old
+  path would have failed the step. Caught by packing locally rather than by pushing and waiting.
+
+### Verified
+- Both tarballs install into a scratch project and `pixelkit` and `pixelkit/mlkit` both resolve,
+  with `pixelkit` depending on `@pixelkit-labs/native@1.4.0`.
+
 ## [1.3.4] - 2026-09-08
 
 ### Fixed

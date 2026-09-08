@@ -39,7 +39,7 @@ with nowhere to try it fails its build. Documentation is reviewed here.
 ```bash
 npm run typecheck
 npm run build      # all three packages compile
-npm pack --dry-run -w pixelkit -w @pixelkit/native -w @pixelkit/mlkit
+npm pack --dry-run -w pixelkit -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
 ```
 
 Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same commit. Run

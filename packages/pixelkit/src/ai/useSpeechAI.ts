@@ -12,7 +12,7 @@ import { useAudio } from '../hardware/useAudio';
 import { SpeechTranscriptionResult } from '../core/types';
 import { getStoredApiKey, createGeminiClient, GEMINI_MODEL, NO_API_KEY_MESSAGE } from './geminiClient';
 import { logEvent, recordMetric, noteExpected, type TelemetrySource } from '../core/observability';
-import PixelNative from '@pixelkit/native';
+import PixelNative from '@pixelkit-labs/native';
 
 const MODULE = 'useSpeechAI';
 

@@ -32,7 +32,7 @@ import PixelNano, {
   type SelfieSegmentationResult,
   type SubjectSegmentationResult,
   type DigitalInkResult,
-} from '@pixelkit/mlkit';
+} from '@pixelkit-labs/mlkit';
 
 const MODULE = 'useVisionAI';
 

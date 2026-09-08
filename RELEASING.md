@@ -16,11 +16,11 @@ See [`docs/release-pipeline.html`](docs/release-pipeline.html) for the same flow
 
 | Package | Contents | Why it is separate |
 | :--- | :--- | :--- |
-| `@pixelkit/native` | Kotlin Expo Module: telemetry, actuators | Zero third-party dependencies |
-| `@pixelkit/mlkit` | Kotlin Expo Module: Gemini Nano, vision, natural language | 19 ML Kit artifacts, and it rewrites the consumer's Gradle build |
+| `@pixelkit-labs/native` | Kotlin Expo Module: telemetry, actuators | Zero third-party dependencies |
+| `@pixelkit-labs/mlkit` | Kotlin Expo Module: Gemini Nano, vision, natural language | 19 ML Kit artifacts, and it rewrites the consumer's Gradle build |
 | `pixelkit` | The 32 hooks, the design system, observability | The package people install |
 
-`pixelkit` depends on `@pixelkit/native` only. `@pixelkit/mlkit` is an **optional peer
+`pixelkit` depends on `@pixelkit-labs/native` only. `@pixelkit-labs/mlkit` is an **optional peer
 dependency**, reached through the `pixelkit/mlkit` subpath, so a project that only wants telemetry
 never installs it and never pays for it in APK size or Gradle configuration.
 
@@ -64,7 +64,7 @@ git push origin v<version>
 ```
 
 `release.yml` takes over: it re-runs the gates, verifies the tag matches all four manifests, then
-publishes **in dependency order** — `@pixelkit/native`, then `@pixelkit/mlkit`, then `pixelkit` —
+publishes **in dependency order** — `@pixelkit-labs/native`, then `@pixelkit-labs/mlkit`, then `pixelkit` —
 each with `--provenance --access public`. The order is not stylistic. `pixelkit` pins the other two
 exactly, so publishing it first would put a package on the registry that cannot install.
 
@@ -85,9 +85,12 @@ pull request and names the hook**. A new capability cannot land undemonstrated.
 
 One-time setup, without which `release.yml` cannot publish:
 
-- An npm organisation named `pixelkit`, which owns the `@pixelkit` scope.
-- An npm **automation** access token from that organisation, stored as the repository secret
-  `NPM_TOKEN` on `PixelKit-Labs/pixelkit-sdk`.
+- An npm organisation named `pixelkit-labs`, which owns the `@pixelkit-labs` scope.
+- An npm **granular access token** with read and write on the `@pixelkit-labs` scope and on the
+  unscoped `pixelkit` package, stored as the repository secret `NPM_TOKEN` on
+  `PixelKit-Labs/pixelkit-sdk`. npm is restricting classic tokens that bypass 2FA, so a granular
+  token is the durable choice. On a first publish the unscoped package does not exist yet and
+  cannot be selected by name, so the token has to cover all packages until it does.
 
 Provenance requires `id-token: write`, which the workflow already declares.
 
@@ -97,6 +100,6 @@ npm unpublish is restricted after 72 hours and a version number can never be reu
 is always forward: fix, `node scripts/sync-versions.js <next>`, tag again. Do not attempt to
 republish a version.
 
-If a publish half-succeeds — say `@pixelkit/native` lands and `pixelkit` fails — the registry is
+If a publish half-succeeds — say `@pixelkit-labs/native` lands and `pixelkit` fails — the registry is
 consistent but incomplete. Fix the cause, bump, and tag again; the already-published version is
 harmless because nothing references it yet.

@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
-import PixelNative, { type EnvelopePoint, type HapticsInfo, type PrimitiveStep } from '@pixelkit/native';
+import PixelNative, { type EnvelopePoint, type HapticsInfo, type PrimitiveStep } from '@pixelkit-labs/native';
 import { logEvent, type TelemetrySource, noteExpected } from '../core/observability';
 import { HapticType } from '../core/types';
 

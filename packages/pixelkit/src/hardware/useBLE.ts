@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import PixelNative, { type BondedDevice, type DiscoveredBleDevice } from '@pixelkit/native';
+import PixelNative, { type BondedDevice, type DiscoveredBleDevice } from '@pixelkit-labs/native';
 import { logEvent, logError, recordMetric, traced, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useBLE';

@@ -6,10 +6,10 @@
       "pixelkit": [
         "./packages/pixelkit/src/index.ts"
       ],
-      "@pixelkit/native": [
+      "@pixelkit-labs/native": [
         "./packages/native/index.ts"
       ],
-      "@pixelkit/mlkit": [
+      "@pixelkit-labs/mlkit": [
         "./packages/mlkit/index.ts"
       ],
       "pixelkit/mlkit": [

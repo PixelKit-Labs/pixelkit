@@ -18,7 +18,7 @@ import PixelNano, {
   type TranslationResult,
   type SmartReplyResult,
   type EntityExtractionResult,
-} from '@pixelkit/mlkit';
+} from '@pixelkit-labs/mlkit';
 import { logEvent, recordMetric, type TelemetrySource } from '../core/observability';
 
 const MODULE = 'useNaturalLanguageAI';

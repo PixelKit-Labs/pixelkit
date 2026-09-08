@@ -16,7 +16,7 @@ import PixelNano, {
   type SummarizeResult,
   type ProofreadResult,
   type RewriteResult,
-} from '@pixelkit/mlkit';
+} from '@pixelkit-labs/mlkit';
 import { logEvent, recordMetric, type TelemetrySource, noteExpected } from '../core/observability';
 import type { AIMessage } from '../core/types';
 
