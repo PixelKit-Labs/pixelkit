@@ -4,6 +4,20 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.8] - 2026-09-08
+
+### Changed
+- "Gemini running on the device itself" described a fraction of the AI surface. It is cloud Gemini
+  *and* Gemini Nano, summarize/proofread/rewrite, vision and document scanning, language
+  identification, offline translation across 58 languages, smart reply, entity extraction, and
+  speech in both directions. The hero and the `@pixelkit-labs/mlkit` description say so.
+- The hooks list groups AI by **entry point** rather than by cloud versus on-device, because two
+  hooks are both: `useVisionAI` combines cloud Gemini multimodal with on-device ML Kit, and
+  `useSpeechAI` uses on-device streaming recognition or cloud Gemini audio. Splitting them by where
+  they run would have been wrong about both; splitting by entry point is also what decides your
+  import.
+- "Hardware and on-device AI" became "Hardware and AI", since half of it is not on-device.
+
 ## [1.4.7] - 2026-09-08
 
 ### Changed

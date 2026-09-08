@@ -5,11 +5,13 @@
 <h1 align="center">PixelKit</h1>
 
 <p align="center">
-  A development kit for the <b>Google Pixel 11 Pro, Pro Fold and Pro XL</b>. Hardware and on-device
-  AI as typed React hooks for TypeScript, React Native and Expo developers.
+  A development kit for the <b>Google Pixel 11 Pro, Pro Fold and Pro XL</b>. Hardware and AI as typed
+  React hooks for TypeScript, React Native and Expo developers.
   <br><br>
-  32 hooks over the silicon, the sensors, the radios, the camera and microphone, biometrics and the
-  keystore, and Gemini running on the device itself.
+  32 hooks across the silicon, the sensors, the radios, the camera and microphone, biometrics and
+  the keystore — and an AI stack that runs both in the cloud and on the Tensor chip: Gemini and
+  Gemini Nano, vision and document scanning, offline translation across 58 languages, entity
+  extraction, and speech in both directions.
 </p>
 
 <p align="center">
@@ -78,8 +80,15 @@ correct behaviour, not a fault — `npx @pixelkit-labs/cli doctor` will tell you
 
 **Security** — `useBiometrics`, `useSecurity`
 
-**AI** — `useGemini`, `useSpeechAI`, `useSpeech`, and from `@pixelkit-labs/sdk/mlkit`: `useGeminiNano`,
-`useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI`
+**AI** — `useGemini` (multi-turn chat, streaming, safety thresholds, Google Search grounding, token
+counting), `useSpeechAI` (voice capture and transcription, on-device streaming or cloud),
+`useSpeech` (text to speech), `useTPU` (what the AICore stack actually exposes)
+
+**AI, from `@pixelkit-labs/sdk/mlkit`** — `useGeminiNano` (Gemini Nano through AICore),
+`useGenAITasks` (summarize, proofread, rewrite), `useVisionAI` (cloud Gemini multimodal plus
+on-device barcode, face, text, labels, objects, pose, segmentation, document scanning and digital
+ink), `useNaturalLanguageAI` (language ID, offline translation across 58 languages, smart reply,
+entity extraction)
 
 Inputs, outputs and a contract for every function are in the
 [documentation](https://github.com/PixelKit-Labs/pixelkit-docs).
