@@ -17,7 +17,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 /** Published npm name -> directory under packages/. They differ: the scope is not a folder. */
 const PACKAGES = {
-  pixelkit: 'pixelkit',
+  '@pixelkit-labs/sdk': 'sdk',
   '@pixelkit-labs/native': 'native',
   '@pixelkit-labs/mlkit': 'mlkit',
 };

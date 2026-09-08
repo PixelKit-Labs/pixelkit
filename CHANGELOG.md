@@ -4,6 +4,28 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.4.3] - 2026-09-08
+
+### Changed
+- **The flagship package is `@pixelkit-labs/sdk`, not `pixelkit`.** npm refused the unscoped name
+  with `403 Package name too similar to existing package pixel-kit` - an abandoned Angular component
+  library last touched in 2022. A registry 404 means unregistered, not publishable: the similarity
+  rule only runs at publish time, so the name was never actually available and checking for a 404
+  was never sufficient.
+
+  `packages/pixelkit` is now `packages/sdk`, matching `native` and `mlkit`. The subpath is
+  `@pixelkit-labs/sdk/mlkit`. Install is `npx expo install @pixelkit-labs/sdk @pixelkit-labs/native`.
+
+### Fixed
+- The CI consumer-install step still expected `/tmp/pixelkit-$version.tgz`. A scoped tarball is
+  named after the full name, so it is `pixelkit-labs-sdk-$version.tgz`. Second time this exact trap
+  appeared today, so the comment above the step now names the rule rather than the instance.
+
+### Published
+- `@pixelkit-labs/native@1.4.2` and `@pixelkit-labs/mlkit@1.4.2` are live with provenance. They
+  succeeded before the third publish failed, so the registry holds two of three; this release moves
+  all of them to the same version rather than publishing the SDK alone.
+
 ## [1.4.2] - 2026-09-08
 
 ### Fixed

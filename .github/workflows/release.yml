@@ -47,7 +47,7 @@ jobs:
           done
           echo "all four manifests at $pkg"
 
-      - run: npm pack --dry-run -w pixelkit -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
+      - run: npm pack --dry-run -w @pixelkit-labs/sdk -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
 
       # Order matters: pixelkit pins the other two by exact version, so they must exist on the
       # registry first or its own install resolves against nothing.
@@ -56,7 +56,7 @@ jobs:
         run: |
           npm publish -w @pixelkit-labs/native --provenance --access public
           npm publish -w @pixelkit-labs/mlkit  --provenance --access public
-          npm publish -w pixelkit         --provenance --access public
+          npm publish -w @pixelkit-labs/sdk         --provenance --access public
         env:
           # Repository secret PIXELKIT: an npm granular access token with read and write on the
           # @pixelkit-labs scope and the unscoped pixelkit package. Named PIXELKIT rather than

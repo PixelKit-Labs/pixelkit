@@ -24,7 +24,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const LIB = path.join(ROOT, 'packages', 'pixelkit');
+const LIB = path.join(ROOT, 'packages', 'sdk');
 const DOCS_REPO = process.env.PIXELKIT_DOCS_REPO ?? 'https://github.com/PixelKit-Labs/pixelkit-docs.git';
 
 function resolveHooksDir() {

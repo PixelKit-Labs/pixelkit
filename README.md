@@ -24,7 +24,7 @@
 ## Install
 
 ```bash
-npx expo install pixelkit @pixelkit-labs/native
+npx expo install @pixelkit-labs/sdk @pixelkit-labs/native
 ```
 
 On-device ML is a separate install, because it adds 19 ML Kit artifacts to your APK:
@@ -34,8 +34,8 @@ npx expo install @pixelkit-labs/mlkit
 ```
 
 ```tsx
-import { useCPU } from 'pixelkit';
-import { useGeminiNano } from 'pixelkit/mlkit';
+import { useCPU } from '@pixelkit-labs/sdk';
+import { useGeminiNano } from '@pixelkit-labs/sdk/mlkit';
 
 function Compute() {
   const cpu = useCPU();
@@ -79,7 +79,7 @@ correct behaviour, not a fault — `npx @pixelkit-labs/cli doctor` will tell you
 
 **Security** — `useBiometrics`, `useSecurity`
 
-**AI** — `useGemini`, `useSpeechAI`, `useSpeech`, and from `pixelkit/mlkit`: `useGeminiNano`,
+**AI** — `useGemini`, `useSpeechAI`, `useSpeech`, and from `@pixelkit-labs/sdk/mlkit`: `useGeminiNano`,
 `useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI`
 
 Inputs, outputs and a contract for every function are in the

@@ -30,7 +30,7 @@ jobs:
       # pixelkit-docs, so a rename here that makes a page wrong fails this build.
       - run: npm run check-docs
 
-      - run: npm pack --dry-run -w pixelkit -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
+      - run: npm pack --dry-run -w @pixelkit-labs/sdk -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
 
       # The subpath entry only pays off if it resolves. Pack, install into a scratch project, and
       # resolve both entries through the exports map.
@@ -38,7 +38,8 @@ jobs:
       # Three things this step has to get right, each of which broke it before:
       #   - pixelkit pins @pixelkit-labs/native by exact version, and that version is not on the registry
       #     until the release workflow runs, so the local tarball has to satisfy the dependency.
-      #   - `pixelkit-*.tgz` also matches `pixelkit-labs-native-*.tgz`; the filenames must be exact.
+      #   - npm pack names a scoped tarball after the full name, so it is pixelkit-labs-sdk-*.tgz
+      #     and pixelkit-labs-native-*.tgz; the filenames must be exact.
       #   - the scratch project has no react/react-native/expo, so full peer resolution cannot
       #     succeed. --legacy-peer-deps skips it, which is right here: this checks packaging, not
       #     whether an app builds. Scripts are skipped for the same reason.
@@ -50,15 +51,15 @@ jobs:
           set -euo pipefail
           version=$(node -p "require('./package.json').version")
           npm pack -w @pixelkit-labs/native --pack-destination /tmp
-          npm pack -w pixelkit --pack-destination /tmp
+          npm pack -w @pixelkit-labs/sdk --pack-destination /tmp
           mkdir -p /tmp/consumer && cd /tmp/consumer && npm init -y >/dev/null
-          npm install "/tmp/pixelkit-labs-native-$version.tgz" "/tmp/pixelkit-$version.tgz" \
+          npm install "/tmp/pixelkit-labs-native-$version.tgz" "/tmp/pixelkit-labs-sdk-$version.tgz" \
             --legacy-peer-deps --ignore-scripts
           node -e "
-            for (const id of ['pixelkit', 'pixelkit/mlkit']) {
+            for (const id of ['@pixelkit-labs/sdk', '@pixelkit-labs/sdk/mlkit']) {
               require.resolve(id);
               console.log(id, 'resolves');
             }
           "
-          test -f node_modules/pixelkit/mlkit.js || { echo "mlkit shim missing"; exit 1; }
+          test -f node_modules/@pixelkit-labs/sdk/mlkit.js || { echo "mlkit shim missing"; exit 1; }
           echo "both entries resolve, and the shim for bundlers without exports support is present"

@@ -21,7 +21,7 @@ See [`docs/release-pipeline.html`](docs/release-pipeline.html) for the same flow
 | `pixelkit` | The 32 hooks, the design system, observability | The package people install |
 
 `pixelkit` depends on `@pixelkit-labs/native` only. `@pixelkit-labs/mlkit` is an **optional peer
-dependency**, reached through the `pixelkit/mlkit` subpath, so a project that only wants telemetry
+dependency**, reached through the `@pixelkit-labs/sdk/mlkit` subpath, so a project that only wants telemetry
 never installs it and never pays for it in APK size or Gradle configuration.
 
 ## 1. Set the version
@@ -53,7 +53,7 @@ CI runs the same gates plus two more on every push:
 - `npm pack --dry-run` on all three, because a packaging mistake is invisible until someone
   installs it.
 - A **consumer install**: both tarballs into a scratch project, then `require.resolve` on
-  `pixelkit` and `pixelkit/mlkit`. Resolution is what the `exports` map has to get right, and a
+  `pixelkit` and `@pixelkit-labs/sdk/mlkit`. Resolution is what the `exports` map has to get right, and a
   file being present in the tarball does not prove it resolves.
 
 ## 3. Tag
@@ -78,7 +78,7 @@ with the three grouped together — grouped because they move in lockstep, and u
 open three pull requests of which two could not resolve.
 
 That pull request's CI is the real gate. The template's parity check runs against
-`node_modules/pixelkit`, so a hook the new SDK exports with nowhere to try it in the app **fails the
+`node_modules/@pixelkit-labs/sdk`, so a hook the new SDK exports with nowhere to try it in the app **fails the
 pull request and names the hook**. A new capability cannot land undemonstrated.
 
 ## Prerequisites

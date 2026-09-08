@@ -167,7 +167,7 @@
       "col": 4,
       "type": "cloud",
       "label": "npm publish",
-      "sublabel": "native, mlkit, pixelkit",
+      "sublabel": "native, mlkit, sdk",
       "tag": "--provenance",
       "width": 108
     },
@@ -251,10 +251,10 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Where it stops today",
+      "title": "Where it stands",
       "items": [
-        "The PIXELKIT secret was not set on pixelkit-sdk, so release.yml cannot publish",
-        "None of the three packages exist on the registry yet"
+        "@pixelkit-labs/native and @pixelkit-labs/mlkit are published with provenance",
+        "npm rejected the unscoped name pixelkit as too similar to pixel-kit, so the SDK is @pixelkit-labs/sdk"
       ]
     },
     {

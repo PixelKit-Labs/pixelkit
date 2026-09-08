@@ -24,11 +24,11 @@ with nowhere to try it fails its build. Documentation is reviewed here.
 
 ## Adding a hook
 
-1. Write it in `packages/pixelkit/src/hardware/` or `src/ai/`, wrapping every call that touches
+1. Write it in `packages/sdk/src/hardware/` or `src/ai/`, wrapping every call that touches
    hardware, the network, a native module or the file system in `traced()` from
-   `packages/pixelkit/src/core/observability.ts`. Surface failure through an `error` field. Never an
+   `packages/sdk/src/core/observability.ts`. Surface failure through an `error` field. Never an
    empty catch.
-2. Export it from `packages/pixelkit/src/index.ts`, or from `src/mlkit.ts` if it needs ML Kit.
+2. Export it from `packages/sdk/src/index.ts`, or from `src/mlkit.ts` if it needs ML Kit.
 3. Give it a home in `src/core/surface.ts`: the tab and section that demonstrates it.
 4. Call it from that screen. The parity check verifies the screen actually does.
 5. Document it in the four places above.
@@ -39,7 +39,7 @@ with nowhere to try it fails its build. Documentation is reviewed here.
 ```bash
 npm run typecheck
 npm run build      # all three packages compile
-npm pack --dry-run -w pixelkit -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
+npm pack --dry-run -w @pixelkit-labs/sdk -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
 ```
 
 Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same commit. Run

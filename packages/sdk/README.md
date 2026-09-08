@@ -6,7 +6,7 @@ running on the device itself.
 Telemetry, sensors, radios, security and cloud Gemini:
 
 ```bash
-npx expo install pixelkit @pixelkit-labs/native
+npx expo install @pixelkit-labs/sdk @pixelkit-labs/native
 ```
 
 On-device ML - Gemini Nano, vision, natural language - is opt-in, because it puts 19 ML Kit
@@ -17,8 +17,8 @@ npx expo install @pixelkit-labs/mlkit
 ```
 
 ```tsx
-import { useCPU, useGemini, MetricCard } from 'pixelkit';
-import { useGeminiNano } from 'pixelkit/mlkit'; // only with @pixelkit-labs/mlkit installed
+import { useCPU, useGemini, MetricCard } from '@pixelkit-labs/sdk';
+import { useGeminiNano } from '@pixelkit-labs/sdk/mlkit'; // only with @pixelkit-labs/mlkit installed
 
 function Compute() {
   const cpu = useCPU();

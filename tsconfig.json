@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "pixelkit": [
-        "./packages/pixelkit/src/index.ts"
+      "@pixelkit-labs/sdk": [
+        "./packages/sdk/src/index.ts"
       ],
       "@pixelkit-labs/native": [
         "./packages/native/index.ts"
@@ -12,8 +12,8 @@
       "@pixelkit-labs/mlkit": [
         "./packages/mlkit/index.ts"
       ],
-      "pixelkit/mlkit": [
-        "./packages/pixelkit/src/mlkit.ts"
+      "@pixelkit-labs/sdk/mlkit": [
+        "./packages/sdk/src/mlkit.ts"
       ]
     }
   },
