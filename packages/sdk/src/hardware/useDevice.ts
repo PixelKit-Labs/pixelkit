@@ -23,6 +23,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Battery from 'expo-battery';
 import * as Network from 'expo-network';
@@ -120,21 +121,23 @@ export function useDevice() {
     void refresh();
 
     // Listeners are attached separately: a failure here must not prevent the one-off read above.
-    try {
-      levelSub = Battery.addBatteryLevelListener(({ batteryLevel: lvl }) => {
-        const pct = Math.round(lvl * 100);
-        setBatteryLevel(pct);
-        recordMetric(MODULE, 'batteryPercent', pct, 'hardware');
-      });
-      stateSub = Battery.addBatteryStateListener(({ batteryState }) => {
-        const charging = batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL;
-        setIsCharging(charging);
-        logEvent(MODULE, 'charging changed', { charging });
-        void refresh();
-      });
-      logEvent(MODULE, 'battery listeners attached');
-    } catch (e) {
-      setError(logError(MODULE, 'battery listeners failed', e).message);
+    if (Platform.OS !== 'web') {
+      try {
+        levelSub = Battery.addBatteryLevelListener(({ batteryLevel: lvl }) => {
+          const pct = Math.round(lvl * 100);
+          setBatteryLevel(pct);
+          recordMetric(MODULE, 'batteryPercent', pct, 'hardware');
+        });
+        stateSub = Battery.addBatteryStateListener(({ batteryState }) => {
+          const charging = batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL;
+          setIsCharging(charging);
+          logEvent(MODULE, 'charging changed', { charging });
+          void refresh();
+        });
+        logEvent(MODULE, 'battery listeners attached');
+      } catch (e) {
+        setError(logError(MODULE, 'battery listeners failed', e).message);
+      }
     }
 
     return () => {

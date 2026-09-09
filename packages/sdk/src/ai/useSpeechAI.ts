@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { useAudio } from '../hardware/useAudio';
 import { SpeechTranscriptionResult } from '../core/types';
@@ -34,6 +35,8 @@ export function useSpeechAI() {
 
   const currentRequestIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const webRecognitionRef = useRef<any>(null);
+  const webTranscriptRef = useRef<string>('');
 
   useEffect(() => {
     if (PixelNative) {
@@ -96,6 +99,56 @@ export function useSpeechAI() {
     setError(null);
     setStreamingPartial('');
 
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+          webTranscriptRef.current = '';
+          startTimeRef.current = Date.now();
+
+          recognition.onresult = (event: any) => {
+            let interim = '';
+            let final = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                final += event.results[i][0].transcript;
+              } else {
+                interim += event.results[i][0].transcript;
+              }
+            }
+            if (final) {
+              webTranscriptRef.current = (webTranscriptRef.current ? webTranscriptRef.current + ' ' : '') + final;
+            }
+            const currentFull = (webTranscriptRef.current + (interim ? ' ' + interim : '')).trim();
+            setStreamingPartial(currentFull);
+          };
+
+          recognition.onerror = (event: any) => {
+            setError(`Web Speech error: ${event.error}`);
+            setIsListening(false);
+          };
+
+          recognition.onend = () => {
+            // Native speech recognition session ended
+          };
+
+          recognition.start();
+          webRecognitionRef.current = recognition;
+          setIsListening(true);
+          logEvent(MODULE, 'startWebSpeech');
+          return true;
+        } catch (e: any) {
+          setError(e?.message ?? 'Could not start browser speech recognition');
+          setIsListening(false);
+          return false;
+        }
+      }
+    }
+
     if (recognitionMode === 'on-device' && PixelNative) {
       const reqId = `speech_${Date.now()}`;
       currentRequestIdRef.current = reqId;
@@ -124,6 +177,28 @@ export function useSpeechAI() {
   };
 
   const stopListeningAndTranscribe = async (): Promise<SpeechTranscriptionResult | null> => {
+    if (Platform.OS === 'web' && webRecognitionRef.current) {
+      try {
+        webRecognitionRef.current.stop();
+      } catch {}
+      webRecognitionRef.current = null;
+      setIsListening(false);
+      const text = (webTranscriptRef.current || streamingPartial).trim();
+      const durationSeconds = startTimeRef.current ? Number(((Date.now() - startTimeRef.current) / 1000).toFixed(1)) : 0;
+      const latencyMs = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+      const result: SpeechTranscriptionResult = {
+        transcript: text,
+        confidence: 0.95,
+        durationSeconds,
+        latencyMs,
+        language: 'Web Speech API',
+      };
+      setLastTranscript(result);
+      setStreamingPartial('');
+      logEvent(MODULE, 'webSpeechResult', { chars: text.length, latencyMs });
+      return result;
+    }
+
     if (recognitionMode === 'on-device' && PixelNative) {
       try {
         PixelNative.stopSpeechRecognition();
