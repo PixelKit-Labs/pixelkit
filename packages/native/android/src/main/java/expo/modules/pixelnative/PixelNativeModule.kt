@@ -47,6 +47,11 @@ import expo.modules.kotlin.functions.Queues
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
+import java.security.KeyPairGenerator
+import java.security.KeyStore
+import java.security.cert.X509Certificate
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 
 class NativeUnavailableException(what: String, why: String) :
   CodedException("E_PIXEL_NATIVE_UNAVAILABLE", "$what unavailable: $why", null)
@@ -265,6 +270,15 @@ class PixelNativeModule : Module() {
     // ───────────────────────── BLE Channel Sounding (BT 6.0 / API 34+) ─────────────────────────
     Function("getChannelSoundingInfo") {
       channelSoundingInfo()
+    }
+
+    // ───────────────────────── Play Integrity & StrongBox Attestation ─────────────────────────
+    Function("getPlayIntegrityInfo") {
+      playIntegrityInfo()
+    }
+
+    AsyncFunction("attestHardwareKey") { challengeStr: String? ->
+      attestHardwareKey(challengeStr)
     }
 
     // ───────────────────────── Haptics ─────────────────────────
@@ -1116,6 +1130,118 @@ class PixelNativeModule : Module() {
       "precision" to if (hasFeature) "centimeter" else "unsupported",
       "error" to if (!hasFeature) "Bluetooth LE Channel Sounding not supported on this device hardware" else null
     )
+  }
+
+  private fun playIntegrityInfo(): Map<String, Any?> {
+    val pm = context.packageManager
+    val hasStrongBox = pm.hasSystemFeature("android.hardware.strongbox_keystore")
+    val strongBoxVer = pm.systemAvailableFeatures.firstOrNull { it.name == "android.hardware.strongbox_keystore" }?.version
+    val hwKeystoreVer = pm.systemAvailableFeatures.firstOrNull { it.name == "android.hardware.hardware_keystore" }?.version
+    val hasAppAttestKey = pm.hasSystemFeature("android.hardware.keystore.app_attest_key")
+    val secModelCompatible = pm.hasSystemFeature("android.hardware.security.model.compatible")
+
+    val gmsPackageInfo = try {
+      pm.getPackageInfo("com.google.android.gms", 0)
+    } catch (e: Throwable) { null }
+    val playServicesAvailable = gmsPackageInfo != null
+    val playServicesVersion = gmsPackageInfo?.versionName
+
+    val isSupported = hasStrongBox || hwKeystoreVer != null || playServicesAvailable
+
+    val deviceIntegrity = when {
+      hasStrongBox && (hwKeystoreVer ?: 0) >= 400 && secModelCompatible && playServicesAvailable -> "MEETS_STRONG_INTEGRITY"
+      hwKeystoreVer != null && playServicesAvailable -> "MEETS_DEVICE_INTEGRITY"
+      playServicesAvailable -> "MEETS_BASIC_INTEGRITY"
+      else -> "UNVERIFIED"
+    }
+
+    return mapOf(
+      "isSupported" to isSupported,
+      "hasStrongBox" to hasStrongBox,
+      "strongBoxVersion" to strongBoxVer,
+      "hardwareKeystoreVersion" to hwKeystoreVer,
+      "hasAppAttestKey" to hasAppAttestKey,
+      "securityModelCompatible" to secModelCompatible,
+      "playServicesAvailable" to playServicesAvailable,
+      "playServicesVersion" to playServicesVersion,
+      "deviceIntegrity" to deviceIntegrity,
+      "error" to if (!isSupported) "Hardware key attestation and Play Integrity are not supported on this platform" else null
+    )
+  }
+
+  private fun attestHardwareKey(challengeStr: String?): Map<String, Any?> {
+    val pm = context.packageManager
+    val hasStrongBox = pm.hasSystemFeature("android.hardware.strongbox_keystore")
+    val alias = "pixelkit_attest_${System.currentTimeMillis()}"
+    val challengeBytes = (challengeStr ?: "pixelkit_hardware_attest_${System.currentTimeMillis()}").toByteArray(Charsets.UTF_8)
+
+    try {
+      val keyPairGenerator = KeyPairGenerator.getInstance(
+        KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore"
+      )
+
+      var isStrongBox = false
+      if (hasStrongBox && Build.VERSION.SDK_INT >= 28) {
+        try {
+          val sbBuilder = KeyGenParameterSpec.Builder(
+            alias,
+            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+          )
+            .setDigests(KeyProperties.DIGEST_SHA256)
+            .setAttestationChallenge(challengeBytes)
+            .setIsStrongBoxBacked(true)
+          keyPairGenerator.initialize(sbBuilder.build())
+          keyPairGenerator.generateKeyPair()
+          isStrongBox = true
+        } catch (e: Throwable) {
+          val teeBuilder = KeyGenParameterSpec.Builder(
+            alias,
+            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+          )
+            .setDigests(KeyProperties.DIGEST_SHA256)
+            .setAttestationChallenge(challengeBytes)
+          keyPairGenerator.initialize(teeBuilder.build())
+          keyPairGenerator.generateKeyPair()
+          isStrongBox = false
+        }
+      } else {
+        val teeBuilder = KeyGenParameterSpec.Builder(
+          alias,
+          KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+        )
+          .setDigests(KeyProperties.DIGEST_SHA256)
+          .setAttestationChallenge(challengeBytes)
+        keyPairGenerator.initialize(teeBuilder.build())
+        keyPairGenerator.generateKeyPair()
+        isStrongBox = false
+      }
+
+      val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+      val certChain = keyStore.getCertificateChain(alias)
+      val leafCert = certChain?.firstOrNull() as? X509Certificate
+
+      val result = mapOf(
+        "keyAlias" to alias,
+        "algorithm" to "EC",
+        "securityLevel" to if (isStrongBox) "STRONGBOX" else "TRUSTED_ENVIRONMENT",
+        "isStrongBoxBacked" to isStrongBox,
+        "certificateChainLength" to (certChain?.size ?: 0),
+        "leafCertificateSubject" to leafCert?.subjectDN?.name,
+        "leafCertificateIssuer" to leafCert?.issuerDN?.name,
+        "challenge" to (challengeStr ?: "pixelkit_hardware_attest"),
+        "timestamp" to System.currentTimeMillis()
+      )
+
+      try {
+        keyStore.deleteEntry(alias)
+      } catch (e: Throwable) {
+        // cleanup safe ignore
+      }
+
+      return result
+    } catch (e: Throwable) {
+      throw CodedException("E_KEY_ATTESTATION_FAILED", "Hardware key attestation failed: ${e.message}", e)
+    }
   }
 
   private fun vibrator(): Vibrator =

@@ -104,6 +104,31 @@ export type ChannelSoundingInfo = {
   error?: string | null;
 };
 
+export type PlayIntegrityInfo = {
+  isSupported: boolean;
+  hasStrongBox: boolean;
+  strongBoxVersion: number | null;
+  hardwareKeystoreVersion: number | null;
+  hasAppAttestKey: boolean;
+  securityModelCompatible: boolean;
+  playServicesAvailable: boolean;
+  playServicesVersion: string | null;
+  deviceIntegrity: 'MEETS_STRONG_INTEGRITY' | 'MEETS_DEVICE_INTEGRITY' | 'MEETS_BASIC_INTEGRITY' | 'UNVERIFIED';
+  error?: string | null;
+};
+
+export type HardwareAttestationResult = {
+  keyAlias: string;
+  algorithm: string;
+  securityLevel: 'STRONGBOX' | 'TRUSTED_ENVIRONMENT' | 'SOFTWARE' | 'UNKNOWN';
+  isStrongBoxBacked: boolean;
+  certificateChainLength: number;
+  leafCertificateSubject: string | null;
+  leafCertificateIssuer: string | null;
+  challenge: string;
+  timestamp: number;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -270,6 +295,8 @@ declare class PixelNativeModule extends NativeModule<Events> {
   getAppFunctionsInfo(): AppFunctionsInfo;
   getSpatialAudioInfo(): SpatialAudioInfo;
   getChannelSoundingInfo(): ChannelSoundingInfo;
+  getPlayIntegrityInfo(): PlayIntegrityInfo;
+  attestHardwareKey(challengeStr?: string | null): Promise<HardwareAttestationResult>;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;

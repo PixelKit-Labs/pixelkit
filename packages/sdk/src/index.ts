@@ -47,6 +47,7 @@ export { useADPF } from './hardware/useADPF';
 export { useDevice } from './hardware/useDevice';
 export { useDisplay } from './hardware/useDisplay';
 export { useSecurity } from './hardware/useSecurity';
+export { usePlayIntegrity, type PlayIntegrityInfo, type HardwareAttestationResult, type PlayIntegrityState } from './hardware/usePlayIntegrity';
 
 // Sensor & Radio Hardware Hooks
 export { useSensors } from './hardware/useSensors';
