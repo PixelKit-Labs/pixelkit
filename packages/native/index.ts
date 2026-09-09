@@ -196,8 +196,15 @@ export type RadioInfo = {
     supported: boolean;
     available: boolean;
   };
+  thread: {
+    supported: boolean;
+    serviceFound: boolean;
+    chipId: string | null;
+  };
   satellite: {
     supported: boolean;
+    sosSupported?: boolean;
+    provider?: string | null;
   };
 };
 

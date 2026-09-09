@@ -1688,10 +1688,27 @@ class PixelNativeModule : Module() {
       "available" to (rttManager?.isAvailable ?: false)
     )
 
+    // Thread (802.15.4 / Matter mesh radio)
+    val threadSupported = pm.hasSystemFeature("android.hardware.thread_network")
+    val threadServiceFound = try {
+      val serviceManagerClass = Class.forName("android.os.ServiceManager")
+      val getServiceMethod = serviceManagerClass.getMethod("getService", String::class.java)
+      getServiceMethod.invoke(null, "thread_network") != null ||
+        getServiceMethod.invoke(null, "android.hardware.threadnetwork.IThreadChip/chip0") != null
+    } catch (e: Throwable) { false }
+    val threadMap = mapOf(
+      "supported" to threadSupported,
+      "serviceFound" to threadServiceFound,
+      "chipId" to if (threadSupported) "chip0" else null
+    )
+
     // Satellite
     val satelliteSupported = pm.hasSystemFeature("android.hardware.telephony.satellite")
+    val satelliteSosSupported = pm.hasSystemFeature("com.google.android.feature.SATELLITE_SOS_PROVIDER_1")
     val satelliteMap = mapOf(
-      "supported" to satelliteSupported
+      "supported" to satelliteSupported,
+      "sosSupported" to satelliteSosSupported,
+      "provider" to if (satelliteSosSupported) "Google Satellite SOS" else null
     )
 
     return mapOf(
@@ -1699,6 +1716,7 @@ class PixelNativeModule : Module() {
       "bluetooth" to btMap,
       "uwb" to uwbMap,
       "wifiRtt" to wifiRttMap,
+      "thread" to threadMap,
       "satellite" to satelliteMap
     )
   }

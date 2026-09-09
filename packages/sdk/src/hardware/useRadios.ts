@@ -39,8 +39,15 @@ export interface RadioTelemetry {
     supported: boolean;
     available: boolean;
   };
+  thread: {
+    supported: boolean;
+    serviceFound: boolean;
+    chipId: string | null;
+  };
   satellite: {
     supported: boolean;
+    sosSupported?: boolean;
+    provider?: string | null;
   };
   source: TelemetrySource;
   refresh: () => void;
@@ -71,8 +78,15 @@ const DEFAULT_RADIO_INFO: RadioInfo = {
     supported: false,
     available: false,
   },
+  thread: {
+    supported: false,
+    serviceFound: false,
+    chipId: null,
+  },
   satellite: {
     supported: false,
+    sosSupported: false,
+    provider: null,
   },
 };
 
