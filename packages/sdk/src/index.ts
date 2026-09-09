@@ -44,6 +44,7 @@ export { useCPU } from './hardware/useCPU';
 export { useGPU } from './hardware/useGPU';
 export { useMemory } from './hardware/useMemory';
 export { useADPF } from './hardware/useADPF';
+export { usePerfetto, type PerfettoInfo, type PerfettoState } from './hardware/usePerfetto';
 export { useDevice } from './hardware/useDevice';
 export { useDisplay } from './hardware/useDisplay';
 export { useSecurity } from './hardware/useSecurity';

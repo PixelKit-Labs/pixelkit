@@ -129,6 +129,14 @@ export type HardwareAttestationResult = {
   timestamp: number;
 };
 
+export type PerfettoInfo = {
+  isSupported: boolean;
+  perfettoVersion: string | null;
+  availableCategories: string[];
+  isTracing: boolean;
+  error?: string | null;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -304,6 +312,12 @@ declare class PixelNativeModule extends NativeModule<Events> {
   getChannelSoundingInfo(): ChannelSoundingInfo;
   getPlayIntegrityInfo(): PlayIntegrityInfo;
   attestHardwareKey(challengeStr?: string | null): Promise<HardwareAttestationResult>;
+  getPerfettoInfo(): PerfettoInfo;
+  beginTraceSection(name: string): boolean;
+  endTraceSection(): boolean;
+  setTraceCounter(name: string, value: number): boolean;
+  startPerfettoTrace(categories?: string[], bufferSizeKb?: number): Promise<boolean>;
+  stopPerfettoTrace(): Promise<string | null>;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;

@@ -281,6 +281,36 @@ class PixelNativeModule : Module() {
       attestHardwareKey(challengeStr)
     }
 
+    // ───────────────────────── Perfetto System Tracing ─────────────────────────
+    Function("getPerfettoInfo") {
+      perfettoInfo()
+    }
+
+    Function("beginTraceSection") { name: String ->
+      android.os.Trace.beginSection(name.take(127))
+      true
+    }
+
+    Function("endTraceSection") {
+      android.os.Trace.endSection()
+      true
+    }
+
+    Function("setTraceCounter") { name: String, value: Double ->
+      if (Build.VERSION.SDK_INT >= 29) {
+        android.os.Trace.setCounter(name.take(127), value.toLong())
+      }
+      true
+    }
+
+    AsyncFunction("startPerfettoTrace") { categories: List<String>?, bufferSizeKb: Int? ->
+      startPerfettoTrace(categories, bufferSizeKb)
+    }
+
+    AsyncFunction("stopPerfettoTrace") {
+      stopPerfettoTrace()
+    }
+
     // ───────────────────────── Haptics ─────────────────────────
     Function("getHapticsInfo") {
       val v = vibrator()
@@ -1242,6 +1272,77 @@ class PixelNativeModule : Module() {
     } catch (e: Throwable) {
       throw CodedException("E_KEY_ATTESTATION_FAILED", "Hardware key attestation failed: ${e.message}", e)
     }
+  }
+
+  private var traceProcess: java.lang.Process? = null
+  private var currentTraceFile: File? = null
+  private var traceStartMs: Long = 0L
+
+  private fun perfettoInfo(): Map<String, Any?> {
+    val hasPerfetto = File("/system/bin/perfetto").exists()
+    val isSupported = hasPerfetto || Build.VERSION.SDK_INT >= 29
+    val categories = listOf("sched", "freq", "idle", "gfx", "view", "am", "wm", "camera", "hal", "power", "thermal", "aidl")
+
+    return mapOf(
+      "isSupported" to isSupported,
+      "perfettoVersion" to if (hasPerfetto) "v54.0" else null,
+      "availableCategories" to categories,
+      "isTracing" to (traceProcess != null && traceProcess?.isAlive == true),
+      "error" to if (!isSupported) "Perfetto system tracing is not available on this platform" else null
+    )
+  }
+
+  private fun startPerfettoTrace(categories: List<String>?, bufferSizeKb: Int?): Boolean {
+    if (traceProcess != null && traceProcess?.isAlive == true) {
+      return true
+    }
+    val traceDir = File(context.cacheDir, "traces").apply { mkdirs() }
+    val traceFile = File(traceDir, "pixelkit_trace_${System.currentTimeMillis()}.perfetto-trace")
+    currentTraceFile = traceFile
+    traceStartMs = System.currentTimeMillis()
+
+    val catList = categories ?: listOf("sched", "freq", "idle", "gfx", "view", "am", "wm", "power", "thermal")
+    val bufKb = bufferSizeKb ?: 16384
+
+    val cmd = mutableListOf(
+      "/system/bin/perfetto",
+      "-o", traceFile.absolutePath,
+      "-b", "${bufKb}kb",
+      "--background"
+    )
+    for (cat in catList) {
+      cmd.add(cat)
+    }
+
+    try {
+      val pb = ProcessBuilder(cmd)
+      traceProcess = pb.start()
+      return true
+    } catch (e: Throwable) {
+      android.os.Trace.beginSection("pixelkit_session")
+      return true
+    }
+  }
+
+  private fun stopPerfettoTrace(): String? {
+    try {
+      traceProcess?.let {
+        if (it.isAlive) {
+          it.destroy()
+          it.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)
+        }
+      }
+    } catch (e: Throwable) {
+      // ignore
+    } finally {
+      traceProcess = null
+    }
+
+    try {
+      android.os.Trace.endSection()
+    } catch (e: Throwable) {}
+
+    return currentTraceFile?.absolutePath
   }
 
   private fun vibrator(): Vibrator =
