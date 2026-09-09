@@ -57,8 +57,8 @@ into the app, and Expo Go contains only the native code Expo shipped.
 ## Supported devices
 
 Built for the Google Pixel 11 Pro, Pro Fold and Pro XL. It degrades rather than fails elsewhere:
-**13 of the 32 hooks are pure Expo and JavaScript** — camera, audio, sensors, location, biometrics,
-the keystore, cloud Gemini — and work on any Android device. The other 19 call the Kotlin modules
+**13 of the 39 hooks are pure Expo and JavaScript** — camera, audio, sensors, location, biometrics,
+the keystore, cloud Gemini — and work on any Android device. The other 26 call the Kotlin modules
 and report `unsupported` where the silicon is not there.
 
 ```bash
@@ -100,7 +100,7 @@ and returns `null` rather than a substitute when a reading cannot be taken. The 
 
 | | |
 | :--- | :--- |
-| `@pixelkit-labs/sdk` | The 32 hooks, the types they return, and the observability layer |
+| `@pixelkit-labs/sdk` | The 39 hooks, the types they return, and the observability layer |
 | `@pixelkit-labs/native` | Kotlin Expo Module for telemetry and actuators. No third-party dependencies. |
 | `@pixelkit-labs/mlkit` | Kotlin Expo Module for on-device ML Kit and Gemini Nano. Opt-in. |
 

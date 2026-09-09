@@ -9,8 +9,8 @@
  *
  * `capabilities.ts` is where that gap costs most. It is hand-maintained hardware knowledge — which
  * Pixel generation gained UWB, which gained the HiLight array, which Gemini Nano tier AICore serves
- * — derived from research rather than from anything the compiler can check. Its output gates 19 of
- * the 32 hooks: it is what decides `unsupported` rather than a reading. Change `generation >= 11`
+ * — derived from research rather than from anything the compiler can check. Its output gates 26 of
+ * the 39 hooks: it is what decides `unsupported` rather than a reading. Change `generation >= 11`
  * to `>= 12` and every static check still passes while `useHiLight` goes dark on every Pixel 11 Pro.
  *
  * These are pure functions, so this needs no device, no emulator, no React and no mocks. Run with

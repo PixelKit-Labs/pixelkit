@@ -44,7 +44,7 @@ the app, and Expo Go contains only the native code Expo shipped.
 ## Supported devices
 
 Built for the Google Pixel 11 Pro, Pro Fold and Pro XL. It degrades rather than fails elsewhere:
-13 of the 32 hooks are pure Expo and JavaScript and work on any Android device; the other 19 call
+13 of the 39 hooks are pure Expo and JavaScript and work on any Android device; the other 26 call
 the Kotlin modules and report `unsupported` where the silicon is not there.
 
 ```bash
@@ -55,17 +55,17 @@ npx @pixelkit-labs/cli doctor   # tells you which case you are in
 
 | Area | Hooks |
 | :--- | :--- |
-| Silicon | `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF` |
-| System | `useDevice`, `useDisplay`, `useNetwork`, `useCellular`, `useCapabilities` |
-| Sensors | `useSensors`, `useLocation`, `useCamera`, `useVideo`, `useMediaLibrary`, `useAudio` |
+| Silicon | `useCPU`, `useGPU`, `useTPU`, `useMemory`, `useADPF`, `usePerfetto` |
+| System | `useDevice`, `useDisplay`, `useNetwork`, `useCellular`, `useCapabilities`, `useSpatialAudio` |
+| Sensors | `useSensors`, `useLocation`, `useCamera`, `useCameraExtensions`, `useHealthConnect`, `useVideo`, `useMediaLibrary`, `useAudio` |
 | Actuators | `useHaptics`, `useTorch`, `useHiLight` |
-| Radios | `useBLE`, `useNFC`, `useUWB`, `useRadios` |
-| Security | `useBiometrics`, `useSecurity` |
-| AI (main entry) | `useGemini`, `useSpeechAI`, `useSpeech` |
+| Radios | `useBLE`, `useChannelSounding`, `useNFC`, `useUWB`, `useRadios` |
+| Security | `useBiometrics`, `useSecurity`, `usePlayIntegrity` |
+| AI (main entry) | `useGemini`, `useAppFunctions`, `useSpeechAI`, `useSpeech` |
 | AI (`@pixelkit-labs/sdk/mlkit`) | `useGeminiNano`, `useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI` |
 
 Plus the observability layer (`traced`, `logError`, `useObservability`) that every hook
-reports through.
+reports through, and `<PixelKitDevTools />` in-app HUD.
 
 Every hook also reports where its value came from — `source: 'hardware' | 'derived' | 'unavailable'` —
 and returns `null` rather than a substitute when a reading cannot be taken.
@@ -79,7 +79,7 @@ counts at runtime.
 
 ## Documentation
 
-Full input and output tables for all 32 hooks, with a contract for every function:
+Full input and output tables for all 39 hooks, with a contract for every function:
 [the documentation](https://pixelkit-labs.github.io/pixelkit-docs/).
 
 ## Licence
