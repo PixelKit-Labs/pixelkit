@@ -1,11 +1,11 @@
-﻿# Recipe 06: Pixel 11 Pro & Android 17 Hardware Extensions
+# Recipe 06: Pixel 11 Pro & Android 17 Hardware Extensions
 
 ## Objective
 Verify all Pixel 11 Pro (Tensor G6, grizzly) and Android 17 hardware extensions: In-App DevTools HUD, CameraX ISP extensions, Android 17 AppFunctions, Spatial Audio, BLE 6.0 Channel Sounding, Titan M2 Key Attestation, Perfetto Silicon Tracing, and Health Connect.
 
 ## Target Application
 - App Name: `PixelKit` or `PixelKit Template`
-- Package: `com.pixelkit.template`
+- Package: `com.pixelkit.sdk` (or `com.pixelkit.template`)
 
 ---
 
