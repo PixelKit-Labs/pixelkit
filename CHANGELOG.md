@@ -4,6 +4,24 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.5.2] - 2026-09-08
+
+### Changed
+- The README stated constraints as argument rather than fact. "Android only" and the provenance
+  model each ran several paragraphs defending the design, the sentence about `pixelkit doctor`
+  appeared twice verbatim in consecutive sections, and the whole `Provenance` table explained a
+  concept the documentation already covers - on a page a reader reaches while writing code rather
+  than while deciding whether to install.
+
+  Replaced with **Requirements** and **Supported devices**: the same information as a table, said
+  once. The provenance model is one line under the hook list, pointing at the documentation.
+
+### Added
+- **The README never stated its peer compatibility.** It pins `expo ~57.0.20`, `react-native
+  0.86.3` and `react 19.2.3` exactly, so anyone on a different Expo SDK hits a resolution failure
+  with nothing to explain it. That is what a Requirements section is for, and it was the one thing
+  the removed prose was crowding out.
+
 ## [1.5.1] - 2026-09-08
 
 ### Changed

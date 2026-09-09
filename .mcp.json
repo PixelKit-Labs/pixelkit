@@ -3,6 +3,16 @@
     "expo": {
       "type": "http",
       "url": "https://mcp.expo.dev/mcp"
+    },
+    "artemis": {
+      "command": "C:\\Users\\trave\\.local\\bin\\uv.exe",
+      "args": [
+        "run",
+        "--directory",
+        "C:\\Users\\trave\\Documents\\Projects\\artemis",
+        "artemis",
+        "mcp"
+      ]
     }
   }
 }

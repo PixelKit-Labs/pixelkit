@@ -27,24 +27,28 @@ function Compute() {
 }
 ```
 
-## Read this before you install
+## Requirements
 
-**Android only.** Both native modules declare `platforms: ["android"]`. On iOS and web every
-native-backed hook reports `unavailable`.
+| | |
+| :--- | :--- |
+| Platform | Android only |
+| Expo SDK | `~57.0.20` |
+| React Native | `0.86.3` |
+| React | `19.2.3` |
+| Build | A development build — `npx expo run:android`, or an EAS development profile |
 
-**It cannot run in Expo Go.** The hooks talk to two Kotlin Expo Modules that must be compiled in,
-so you need a development build (`npx expo run:android`, or an EAS development profile). This is
-not a limitation to work around; there is no JavaScript path to a thermal sensor.
+This cannot run in Expo Go. The hooks call two Kotlin Expo Modules that have to be compiled into
+the app, and Expo Go contains only the native code Expo shipped.
 
-**Nothing is simulated.** Every hook returns `source: 'hardware' | 'derived' | 'unavailable'`.
-There is deliberately no `simulated` member, so a fabricated reading is not representable. A value
-that cannot be read is `null` and `MetricCard` renders it as an em dash. Nothing is ever
-substituted with a plausible default.
+## Supported devices
 
-**Most of it is Pixel-specific.** 20 of the 33 hook modules read through `@pixelkit-labs/native`. On a
-Samsung or a OnePlus the generic ones still work, and the rest report `unavailable` rather than
-guessing. That is the design behaving correctly, not a bug: if you want a reading this package
-cannot take, the honest fix is a native path, not a default.
+Built for the Google Pixel 11 Pro, Pro Fold and Pro XL. It degrades rather than fails elsewhere:
+13 of the 32 hooks are pure Expo and JavaScript and work on any Android device; the other 19 call
+the Kotlin modules and report `unsupported` where the silicon is not there.
+
+```bash
+npx @pixelkit-labs/cli doctor   # tells you which case you are in
+```
 
 ## What is in it
 
@@ -62,6 +66,9 @@ cannot take, the honest fix is a native path, not a default.
 Plus the design system (`Colors`, `Type`, `MetricCard`, `HapticButton`, `ScreenScaffold`, `Decor`
 primitives) and the observability layer (`traced`, `logError`, `useObservability`) that every hook
 reports through.
+
+Every hook also reports where its value came from — `source: 'hardware' | 'derived' | 'unavailable'` —
+and returns `null` rather than a substitute when a reading cannot be taken.
 
 ## Observability
 

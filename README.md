@@ -41,31 +41,29 @@ function Compute() {
 }
 ```
 
-**Android only**, and you need to build it onto the device with `npx expo run:android`. It cannot
-run in Expo Go: reading a thermal sensor takes native code compiled into the app, and Expo Go only
-contains the native code Expo put in it.
+## Requirements
 
-It degrades rather than fails on other hardware. **13 of the 32 hooks are pure Expo and JavaScript**
-— camera, audio, sensors, location, biometrics, the keystore, cloud Gemini — and work on any Android
-device. The other 19 talk to the Kotlin modules and report `unsupported` where the silicon is not
-there. `npx @pixelkit-labs/cli doctor` tells you which case you are in.
-
-## Provenance
-
-Every hook returns a `source`:
-
-| Value | Meaning |
+| | |
 | :--- | :--- |
-| `hardware` | Read from a device API or sysfs during this run |
-| `derived` | Computed from genuine readings, such as CPU share from process time over wall time |
-| `unavailable` | Could not be read. The value is `null`. |
+| Platform | Android only |
+| Expo SDK | `~57.0.20` |
+| React Native | `0.86.3` |
+| React | `19.2.3` |
+| Build | A development build — `npx expo run:android`, or an EAS development profile |
 
-There is deliberately no `simulated` member. The type makes a fabricated reading unrepresentable,
-which is the whole design: if a value cannot be measured you get a blank, and a control that depends
-on it refuses rather than pretending.
+PixelKit cannot run in Expo Go. The hooks call two Kotlin Expo Modules that have to be compiled
+into the app, and Expo Go contains only the native code Expo shipped.
 
-On hardware that is not a Pixel, the generic hooks work and the rest report `unavailable`. That is
-correct behaviour, not a fault — `npx @pixelkit-labs/cli doctor` will tell you which case you are in.
+## Supported devices
+
+Built for the Google Pixel 11 Pro, Pro Fold and Pro XL. It degrades rather than fails elsewhere:
+**13 of the 32 hooks are pure Expo and JavaScript** — camera, audio, sensors, location, biometrics,
+the keystore, cloud Gemini — and work on any Android device. The other 19 call the Kotlin modules
+and report `unsupported` where the silicon is not there.
+
+```bash
+npx @pixelkit-labs/cli doctor   # tells you which case you are in
+```
 
 ## Hooks
 
@@ -93,6 +91,10 @@ entity extraction)
 
 Inputs, outputs and a contract for every function are in the
 [documentation](https://pixelkit-labs.github.io/pixelkit-docs/).
+
+Every hook also reports where its value came from — `source: 'hardware' | 'derived' | 'unavailable'` —
+and returns `null` rather than a substitute when a reading cannot be taken. The reasoning is in
+[Provenance](https://pixelkit-labs.github.io/pixelkit-docs/api/silicon-compute/#observability--provenance).
 
 ## Packages
 
