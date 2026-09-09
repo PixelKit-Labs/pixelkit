@@ -148,7 +148,13 @@ export function verifyCapabilities(base: DeviceCapabilities, probe: FeatureProbe
     hasWifiRtt: f('android.hardware.wifi.rtt'),
     hasSatelliteTelephony: f('android.hardware.telephony.satellite'),
     hasStrongBox: f('android.hardware.strongbox_keystore'),
-    hasNpuFeature: f('android.hardware.neural_processing_unit'),
+    hasNpuFeature: (() => {
+      const npu = f('android.hardware.npu');
+      const standard = f('android.hardware.neural_processing_unit');
+      if (npu === true || standard === true) return true;
+      if (npu === false && standard === false) return false;
+      return npu ?? standard ?? null;
+    })(),
     aicoreVersion: aicore?.installed ? aicore.versionName : null,
   };
 }

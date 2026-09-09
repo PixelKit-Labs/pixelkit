@@ -32,7 +32,10 @@ export function useTPU() {
       const a = PixelNative.getPackageVersion(AICORE);
       const p = PixelNative.getPackageVersion(PCS);
       setAicore(a); setPcs(p);
-      setHasNpuFeature(PixelNative.hasSystemFeature('android.hardware.neural_processing_unit'));
+      setHasNpuFeature(
+        PixelNative.hasSystemFeature('android.hardware.npu') ||
+        PixelNative.hasSystemFeature('android.hardware.neural_processing_unit')
+      );
       logEvent(MODULE, 'ai stack', { aicore: a.versionName, pcs: p.versionName });
     } catch (e: any) { setError(e?.message ?? 'detect error');
       logEvent(MODULE, 'detect error', { message: e?.message }, 'error'); }
