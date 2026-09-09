@@ -4,6 +4,26 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.5.4] - 2026-09-08
+
+### Added
+- 23 behavioural tests for the observability layer, bringing the suite to 39. This is the layer
+  rule 10 is enforced by, and its doc comments make promises nothing was executing: that
+  `tracedSafe` returning a fallback still counts and logs the failure rather than swallowing it,
+  that `noteExpected` is counted but deliberately not logged so a teardown path cannot flood the
+  event log, and that anything thrown - a string, an object with no message, `null` - becomes a
+  usable message rather than "undefined".
+
+  Mutation-verified: stopping `tracedSafe` from routing through `traced` fails the "never
+  swallowed" test, making `noteExpected` log fails one, sorting `getSlowestTraces` ascending fails
+  one, and returning `String(null)` from `normalizeError` fails one.
+
+### Fixed
+- One test asserted on a field that does not exist. A failure event carries the operation in
+  `event` and the message in `data.message`; the test read `message` off the event and compared
+  `undefined` against a pattern. It now checks the module, the event name and the message where
+  each actually lives.
+
 ## [1.5.3] - 2026-09-08
 
 ### Added
