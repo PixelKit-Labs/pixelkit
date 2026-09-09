@@ -4,6 +4,25 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.6.0] - 2026-09-09
+
+### Added
+- **Full Pixel 11 Pro and Android 17 Hardware Suite (32 → 39 hooks)**:
+  Expanded the SDK from 32 to 39 hardware hooks with 7 major native features sitting on Google Tensor G6, Android 17 (API 37), and physical Pixel 11 Pro silicon:
+  - `<PixelKitDevTools />`: floating, draggable in-app developer HUD for live monitoring of Choreographer display FPS, ADPF thermal headroom states, and Tensor G6 CPU cluster load.
+  - `useCameraExtensions`: direct vendor CameraX HAL extensions providing hardware Night Sight, Ultra HDR 10-bit gainmaps, Portrait Bokeh, and Face Retouch.
+  - `useAppFunctions`: Android 17 `IAppFunctionManager` dynamic function registry bridge for system Gemini Assistant execution and tool calling.
+  - `useSpatialAudio`: `android.media.Spatializer` API integration and 6-DOF dynamic head tracking with Pixel Buds Pro / Pro 2 via BLE Audio/A2DP.
+  - `useChannelSounding`: Bluetooth Core Specification 6.0 Phase-Based Ranging (PBR) and RTT tone exchanges delivering centimeter-accurate proximity and distance anti-spoofing.
+  - `usePlayIntegrity`: Google Play Integrity API integration coupled with StrongBox Keystore 400 EC keypair attestation inside the isolated Titan M2 security enclave.
+  - `useRadios`: expanded to detect Thread 802.15.4 mesh (`chip0`) and physical Satellite SOS provider availability (`SATELLITE_SOS_PROVIDER_1`).
+  - `usePerfetto`: low-overhead system profiling with the Android 17 Perfetto tracing service (`traced` v54.0+) and kernel ftrace ring buffer markers via `android.os.Trace`.
+  - `useHealthConnect`: unified Android Health Connect encrypted SQLite data queries paired with direct hardware step counter and PPG heart rate sensor interrupts.
+- **ARTEMIS Recipe 06**: automated end-to-end hardware verification recipe (`test/artemis/recipes/06-pixel-11-pro-hardware.md`) covering all newly added hardware extensions with zero native exceptions.
+- **Hardware Probing & Capabilities Refinement**:
+  - `verifyCapabilities` and `useTPU` now verify both `android.hardware.npu` and `android.hardware.neural_processing_unit`, ensuring true hardware provenance on Pixel 11 Pro.
+  - Added 12 comprehensive production guides and 11 interactive Archify vector diagrams across the documentation portal.
+
 ## [1.5.5] - 2026-09-08
 
 ### Fixed
