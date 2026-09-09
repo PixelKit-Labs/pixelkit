@@ -137,6 +137,17 @@ export type PerfettoInfo = {
   error?: string | null;
 };
 
+export type HealthConnectInfo = {
+  isAvailable: boolean;
+  sdkStatus: 'SDK_AVAILABLE' | 'SDK_UNAVAILABLE' | 'SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED';
+  hasStepCounter: boolean;
+  hasHeartRateSensor: boolean;
+  stepSensorName: string | null;
+  heartRateSensorName: string | null;
+  isFrameworkIntegrated: boolean;
+  error?: string | null;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -318,6 +329,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   setTraceCounter(name: string, value: number): boolean;
   startPerfettoTrace(categories?: string[], bufferSizeKb?: number): Promise<boolean>;
   stopPerfettoTrace(): Promise<string | null>;
+  getHealthConnectInfo(): HealthConnectInfo;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;

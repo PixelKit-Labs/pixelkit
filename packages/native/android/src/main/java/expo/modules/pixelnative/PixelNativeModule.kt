@@ -311,6 +311,11 @@ class PixelNativeModule : Module() {
       stopPerfettoTrace()
     }
 
+    // ───────────────────────── Health Connect & Vitals ─────────────────────────
+    Function("getHealthConnectInfo") {
+      healthConnectInfo()
+    }
+
     // ───────────────────────── Haptics ─────────────────────────
     Function("getHapticsInfo") {
       val v = vibrator()
@@ -1343,6 +1348,37 @@ class PixelNativeModule : Module() {
     } catch (e: Throwable) {}
 
     return currentTraceFile?.absolutePath
+  }
+
+  private fun healthConnectInfo(): Map<String, Any?> {
+    val pm = context.packageManager
+    val hasStepFeature = pm.hasSystemFeature("android.hardware.sensor.stepcounter")
+    val isAndroid14Plus = Build.VERSION.SDK_INT >= 34
+    val isPackageInstalled = try {
+      pm.getPackageInfo("com.google.android.apps.healthdata", 0) != null
+    } catch (e: Throwable) { false }
+
+    val isAvailable = isAndroid14Plus || isPackageInstalled
+    val status = when {
+      isAvailable -> "SDK_AVAILABLE"
+      isPackageInstalled -> "SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED"
+      else -> "SDK_UNAVAILABLE"
+    }
+
+    val sm = context.getSystemService(Context.SENSOR_SERVICE) as? android.hardware.SensorManager
+    val stepSensor = sm?.getDefaultSensor(android.hardware.Sensor.TYPE_STEP_COUNTER)
+    val heartRateSensor = sm?.getDefaultSensor(android.hardware.Sensor.TYPE_HEART_RATE)
+
+    return mapOf(
+      "isAvailable" to isAvailable,
+      "sdkStatus" to status,
+      "hasStepCounter" to (hasStepFeature || stepSensor != null),
+      "hasHeartRateSensor" to (heartRateSensor != null),
+      "stepSensorName" to stepSensor?.name,
+      "heartRateSensorName" to heartRateSensor?.name,
+      "isFrameworkIntegrated" to isAndroid14Plus,
+      "error" to if (!isAvailable) "Health Connect is not available on this device" else null
+    )
   }
 
   private fun vibrator(): Vibrator =

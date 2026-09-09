@@ -52,6 +52,7 @@ export { usePlayIntegrity, type PlayIntegrityInfo, type HardwareAttestationResul
 
 // Sensor & Radio Hardware Hooks
 export { useSensors } from './hardware/useSensors';
+export { useHealthConnect, type HealthConnectInfo, type HealthConnectState } from './hardware/useHealthConnect';
 export { useHaptics, HapticEnvelopes } from './hardware/useHaptics';
 export { useCamera } from './hardware/useCamera';
 export { useCameraExtensions } from './hardware/useCameraExtensions';
