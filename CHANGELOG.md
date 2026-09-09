@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.5.1] - 2026-09-08
+
+### Changed
+- Every "Documentation" link pointed at the `pixelkit-docs` **repository** rather than the rendered
+  site, which now exists at <https://pixelkit-labs.github.io/pixelkit-docs/>. A reader following one
+  landed on a source tree instead of the reference. Updated in the repository README hero, the API
+  pointer, and `@pixelkit-labs/sdk`'s README; the entry in the repositories table still links the
+  repository, because that row is about repositories, and now names the site alongside it.
+- `@pixelkit-labs/native` and `@pixelkit-labs/mlkit` had no documentation link at all. Both now
+  carry one, which matters most for them: their npm pages are where someone lands after seeing an
+  unfamiliar dependency and wanting to know what it is.
+
 ## [1.5.0] - 2026-09-08
 
 The positioning was backwards. This corrects it.

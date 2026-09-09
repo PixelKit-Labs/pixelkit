@@ -26,4 +26,11 @@ wraps it in `useGeminiNano`, `useGenAITasks`, `useVisionAI` and `useNaturalLangu
 npx expo install @pixelkit-labs/mlkit
 ```
 
+## Documentation
+
+[https://pixelkit-labs.github.io/pixelkit-docs/](https://pixelkit-labs.github.io/pixelkit-docs/) — every hook with its inputs, outputs and
+a contract for each function it exposes.
+
+## Licence
+
 MIT

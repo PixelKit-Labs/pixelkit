@@ -1,9 +1,8 @@
 # @pixelkit-labs/sdk
 
-An **on-device AI development kit** for the Google Pixel. Gemini Nano, ML Kit vision and document
-scanning, offline translation across 58 languages, and speech both directions — as typed React
-hooks for TypeScript, Expo and React Native, with the thermal and capability signals to know when
-to run locally and when to fall back to cloud.
+PixelKit is an SDK for building Expo and React Native applications on Google Pixel devices. It
+provides typed React hooks for device sensors, radios, secure hardware, camera and audio, display
+and power telemetry, haptics, on-device AI, and Cloud AI.
 
 Telemetry, sensors, radios, security and cloud Gemini:
 
@@ -74,7 +73,7 @@ counts at runtime.
 ## Documentation
 
 Full input and output tables for all 32 hooks, with a contract for every function:
-[the documentation](https://github.com/PixelKit-Labs/pixelkit-docs).
+[the documentation](https://pixelkit-labs.github.io/pixelkit-docs/).
 
 ## Licence
 

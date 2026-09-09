@@ -5,20 +5,13 @@
 <h1 align="center">PixelKit</h1>
 
 <p align="center">
-  An <b>on-device AI development kit</b> for the Google Pixel. Gemini Nano, ML Kit vision and
-  document scanning, offline translation across 58 languages, and speech both directions — as typed
-  React hooks for TypeScript, Expo and React Native.
-  <br><br>
-  On-device inference is thermally expensive and capability-gated, so the kit also gives you the
-  signals to use it responsibly: what AICore actually exposes, which Gemini Nano tier this device
-  serves, and how much thermal headroom is left before you should fall back to cloud.
-  <br><br>
-  32 hooks in total, over the silicon, the sensors, every radio from NFC to ultra-wideband, the
-  camera and microphone, biometrics and the hardware keystore.
+  PixelKit is an SDK for building Expo and React Native applications on Google Pixel devices.
+  It provides typed React hooks for device sensors, radios, secure hardware, camera and audio,
+  display and power telemetry, haptics, on-device AI, and Cloud AI.
 </p>
 
 <p align="center">
-  <a href="https://github.com/PixelKit-Labs/pixelkit-docs">Documentation</a>
+  <a href="https://pixelkit-labs.github.io/pixelkit-docs/">Documentation</a>
   &middot;
   <a href="https://github.com/PixelKit-Labs/pixelkit-template">Template</a>
   &middot;
@@ -99,7 +92,7 @@ ink), `useNaturalLanguageAI` (language ID, offline translation across 58 languag
 entity extraction)
 
 Inputs, outputs and a contract for every function are in the
-[documentation](https://github.com/PixelKit-Labs/pixelkit-docs).
+[documentation](https://pixelkit-labs.github.io/pixelkit-docs/).
 
 ## Packages
 
@@ -115,7 +108,8 @@ They version in lockstep, and `@pixelkit-labs/sdk` pins the other two exactly.
 
 - **[pixelkit-template](https://github.com/PixelKit-Labs/pixelkit-template)** — a working four-tab
   app demonstrating every hook on a real device. Press **Use this template** to start from it.
-- **[pixelkit-docs](https://github.com/PixelKit-Labs/pixelkit-docs)** — the documentation site.
+- **[pixelkit-docs](https://github.com/PixelKit-Labs/pixelkit-docs)** — the source of the
+  [documentation site](https://pixelkit-labs.github.io/pixelkit-docs/).
 - **[pixelkit-cli](https://github.com/PixelKit-Labs/pixelkit-cli)** — `pixelkit doctor`.
 
 ## Developing

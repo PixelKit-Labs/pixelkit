@@ -19,4 +19,11 @@ wraps it in typed React hooks. Install it directly if you want the raw module.
 npx expo install @pixelkit-labs/native
 ```
 
+## Documentation
+
+[https://pixelkit-labs.github.io/pixelkit-docs/](https://pixelkit-labs.github.io/pixelkit-docs/) — every hook with its inputs, outputs and
+a contract for each function it exposes.
+
+## Licence
+
 MIT
