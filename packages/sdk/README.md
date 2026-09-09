@@ -18,12 +18,13 @@ npx expo install @pixelkit-labs/mlkit
 ```
 
 ```tsx
-import { useCPU, useGemini, MetricCard } from '@pixelkit-labs/sdk';
+import { useCPU, useGemini } from '@pixelkit-labs/sdk';
 import { useGeminiNano } from '@pixelkit-labs/sdk/mlkit'; // only with @pixelkit-labs/mlkit installed
 
 function Compute() {
   const cpu = useCPU();
-  return <MetricCard label="Big core" value={cpu.cores[0]?.curMHz} unit="MHz" source={cpu.source} />;
+  // cpu.source is 'hardware' | 'derived' | 'unavailable'; curMHz is null when it cannot be read
+  return <Text>{cpu.cores[0]?.curMHz ?? '—'} MHz</Text>;
 }
 ```
 
@@ -63,8 +64,7 @@ npx @pixelkit-labs/cli doctor   # tells you which case you are in
 | AI (main entry) | `useGemini`, `useSpeechAI`, `useSpeech` |
 | AI (`@pixelkit-labs/sdk/mlkit`) | `useGeminiNano`, `useGenAITasks`, `useVisionAI`, `useNaturalLanguageAI` |
 
-Plus the design system (`Colors`, `Type`, `MetricCard`, `HapticButton`, `ScreenScaffold`, `Decor`
-primitives) and the observability layer (`traced`, `logError`, `useObservability`) that every hook
+Plus the observability layer (`traced`, `logError`, `useObservability`) that every hook
 reports through.
 
 Every hook also reports where its value came from — `source: 'hardware' | 'derived' | 'unavailable'` —

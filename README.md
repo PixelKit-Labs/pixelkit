@@ -100,7 +100,7 @@ and returns `null` rather than a substitute when a reading cannot be taken. The 
 
 | | |
 | :--- | :--- |
-| `@pixelkit-labs/sdk` | The hooks, types, design system and observability layer |
+| `@pixelkit-labs/sdk` | The 32 hooks, the types they return, and the observability layer |
 | `@pixelkit-labs/native` | Kotlin Expo Module for telemetry and actuators. No third-party dependencies. |
 | `@pixelkit-labs/mlkit` | Kotlin Expo Module for on-device ML Kit and Gemini Nano. Opt-in. |
 

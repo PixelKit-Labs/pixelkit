@@ -4,6 +4,22 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.5.5] - 2026-09-08
+
+### Fixed
+- **The README described components the SDK does not export.** `packages/sdk/src` contains `ai`,
+  `core` and `hardware` and nothing else - the components and the theme went when this repository
+  became packages-only at 1.2.0. The package table said "design system", the feature list named
+  `Colors`, `Type`, `MetricCard`, `HapticButton`, `ScreenScaffold` and `Decor`, and the quickstart
+  imported `MetricCard` from `@pixelkit-labs/sdk`.
+
+  That last one is the one that matters: it is the first code a reader copies, and it would not
+  compile. The quickstart now renders the reading directly and shows the em dash a `null` produces.
+
+  Caught while looking for the next thing to test, by listing `src/` rather than trusting an earlier
+  reading of it. Nothing else would have caught it: the docs contract checks hooks against their
+  types, and a README code sample is checked by nobody.
+
 ## [1.5.4] - 2026-09-08
 
 ### Added
