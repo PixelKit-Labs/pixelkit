@@ -4,6 +4,33 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.5.3] - 2026-09-08
+
+### Added
+- **The first behavioural tests.** Every guard in this repository was static: the type checker
+  proves the code is well-formed, the parity check proves each exported hook has somewhere to try
+  it, and the documentation contract proves each documented field exists on its type. None of them
+  execute a line of logic, so none would notice a wrong answer.
+
+  16 tests over `resolveCapabilities` and `verifyCapabilities` in `test/capabilities.test.ts`.
+  That file is hand-maintained hardware knowledge - which Pixel generation gained UWB, which gained
+  the HiLight array, which Gemini Nano tier AICore serves - and its output decides `unsupported`
+  rather than a reading for 19 of the 32 hooks. It is both the most likely thing to be wrong and the
+  most consequential when it is, and it is a pure function, so it needs no device or emulator.
+
+  Verified by mutation rather than by passing: changing the HiLight gate from `generation >= 11` to
+  `>= 12` fails two tests, moving the Nano v3 boundary fails one, and removing the `?? base.hasUWB`
+  fallback in `verifyCapabilities` fails one. Before this, all three changes left CI green while
+  `useHiLight` went dark on every Pixel 11 Pro.
+
+- `npm test`, run by both workflows. It adds no dependency: Node runs the TypeScript directly and
+  its own test runner reports it, which suits a repository whose devDependencies are two entries.
+
+### Changed
+- `npm run verify` runs the tests between the type check and the build. Both CI workflows call the
+  individual scripts rather than `verify`, so the step was added to each explicitly - adding it only
+  to `verify` would have left CI unchanged.
+
 ## [1.5.2] - 2026-09-08
 
 ### Changed

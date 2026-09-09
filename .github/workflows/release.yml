@@ -31,6 +31,9 @@ jobs:
 
       - run: npm ci
       - run: npm run typecheck
+
+      # A release must not ship logic that has not been run.
+      - run: npm test
       - run: npm run build
 
       # The tag and the manifests must agree. A tag that does not match ships a version nobody

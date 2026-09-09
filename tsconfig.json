@@ -15,10 +15,12 @@
       "@pixelkit-labs/sdk/mlkit": [
         "./packages/sdk/src/mlkit.ts"
       ]
-    }
+    },
+    "allowImportingTsExtensions": true
   },
   "include": [
     "packages/*/src/**/*",
-    "packages/*/index.ts"
+    "packages/*/index.ts",
+    "test/**/*"
   ]
 }

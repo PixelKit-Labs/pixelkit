@@ -20,6 +20,10 @@ jobs:
 
       - run: npm run typecheck
 
+      # Behavioural: executes the capability logic that gates 19 of the 32 hooks. Everything else
+      # here is static and would stay green on a wrong answer.
+      - run: npm test
+
       # The three packages must compile to build/ with declarations before they can be published.
       - run: npm run build
 
