@@ -40,7 +40,10 @@ with nowhere to try it fails its build. Documentation is reviewed here.
 npm run typecheck
 npm run build      # all three packages compile
 npm pack --dry-run -w @pixelkit-labs/sdk -w @pixelkit-labs/native -w @pixelkit-labs/mlkit
+npm run test:e2e   # verify hardware integration via ARTEMIS
 ```
+
+If you have a connected Pixel device or emulator running `pixelkit-template`, running `npm run test:e2e` autonomously exercises the UI and verifies that hooks return `source: 'hardware'` without throwing native exceptions. See [Automated E2E Testing with ARTEMIS](./test/artemis/README.md) for full details.
 
 Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same commit. Run
 `node scripts/sync-versions.js <version>` — it moves all four manifests and the Android
@@ -50,6 +53,8 @@ Every change bumps the patch version and adds a `CHANGELOG.md` entry in the same
 
 An Android device. **PixelKit cannot run in Expo Go** — the hooks talk to two Kotlin Expo Modules
 that have to be compiled in, so you need a development build (`npx expo run:android`).
+
+For automated end-to-end hardware testing, Google's [ARTEMIS](https://github.com/google/artemis) framework can drive tests autonomously on a connected device or emulator (`npm run test:e2e`).
 
 Most of it is Pixel-specific. On other hardware the generic hooks work and the rest report
 `unavailable`. That is the design working, not a bug.

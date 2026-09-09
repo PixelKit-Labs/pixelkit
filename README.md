@@ -120,10 +120,12 @@ They version in lockstep, and `@pixelkit-labs/sdk` pins the other two exactly.
 npm install
 npm run typecheck
 npm run build      # compiles all three packages to build/ with declarations
+npm run test:e2e   # runs autonomous hardware verification via ARTEMIS
 ```
 
-[CONTRIBUTING.md](./CONTRIBUTING.md) covers the two rules that fail a build rather than a review.
+See [Automated E2E Testing with ARTEMIS](./test/artemis/README.md) for running hardware test recipes on a physical Pixel or emulator. [CONTRIBUTING.md](./CONTRIBUTING.md) covers the two rules that fail a build rather than a review.
 
 ## Licence
 
 MIT.
+
