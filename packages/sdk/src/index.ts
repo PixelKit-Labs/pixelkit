@@ -57,6 +57,7 @@ export { useBiometrics } from './hardware/useBiometrics';
 export { useLocation } from './hardware/useLocation';
 export { useNetwork } from './hardware/useNetwork';
 export { useAudio } from './hardware/useAudio';
+export { useSpatialAudio, type HeadTrackingMode, type SpatialAudioInfo, type SpatialAudioState } from './hardware/useSpatialAudio';
 export { useVideo } from './hardware/useVideo';
 export { useMediaLibrary, type SavedMedia } from './hardware/useMediaLibrary';
 export { useCellular, type CellularGenerationLabel } from './hardware/useCellular';

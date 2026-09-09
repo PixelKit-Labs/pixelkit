@@ -15,6 +15,7 @@ import java.util.Collections
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraExtensionCharacteristics
 import android.hardware.camera2.CameraManager
+import android.media.AudioManager
 import android.net.wifi.rtt.WifiRttManager
 import android.nfc.NfcAdapter
 import android.nfc.NdefMessage
@@ -254,6 +255,11 @@ class PixelNativeModule : Module() {
     // ───────────────────────── AppFunctions (Android 16/17+) ─────────────────────────
     Function("getAppFunctionsInfo") {
       appFunctionsInfo()
+    }
+
+    // ───────────────────────── Spatial Audio & Head Tracking (Android 13+) ─────────────────────────
+    Function("getSpatialAudioInfo") {
+      spatialAudioInfo()
     }
 
     // ───────────────────────── Haptics ─────────────────────────
@@ -1017,6 +1023,65 @@ class PixelNativeModule : Module() {
         "serviceName" to "app_function",
         "interfaceDescriptor" to "android.app.appfunctions.IAppFunctionManager",
         "error" to (e.message ?: "Failed to query app_function service")
+      )
+    }
+  }
+
+  private fun spatialAudioInfo(): Map<String, Any?> {
+    if (Build.VERSION.SDK_INT < 32) {
+      return mapOf(
+        "isSupported" to false,
+        "isAvailable" to false,
+        "isEnabled" to false,
+        "hasHeadTracker" to false,
+        "headTrackingMode" to "unsupported",
+        "immersiveAudioLevel" to 0,
+        "hasDynamicHeadTrackerFeature" to false,
+        "error" to "Spatializer requires Android 13+ (API 32+)"
+      )
+    }
+    return try {
+      val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+      val spatializer = audioManager.spatializer
+      val isAvailable = spatializer.isAvailable
+      val isEnabled = spatializer.isEnabled
+      val hasHeadTracker = runCatching { spatializer.isHeadTrackerAvailable }.getOrDefault(false)
+      val level = runCatching { spatializer.immersiveAudioLevel }.getOrDefault(0)
+
+      val modeInt = runCatching {
+        val method = spatializer.javaClass.getMethod("getHeadTrackingMode")
+        method.invoke(spatializer) as? Int ?: 0
+      }.getOrDefault(0)
+
+      val modeStr = when (modeInt) {
+        1 -> "disabled"
+        2 -> "relative_world"
+        3 -> "relative_device"
+        else -> "unsupported"
+      }
+
+      val hasFeature = context.packageManager.hasSystemFeature("android.hardware.sensor.dynamic.head_tracker")
+
+      mapOf(
+        "isSupported" to true,
+        "isAvailable" to isAvailable,
+        "isEnabled" to isEnabled,
+        "hasHeadTracker" to hasHeadTracker,
+        "headTrackingMode" to modeStr,
+        "immersiveAudioLevel" to level,
+        "hasDynamicHeadTrackerFeature" to hasFeature,
+        "error" to null
+      )
+    } catch (e: Throwable) {
+      mapOf(
+        "isSupported" to false,
+        "isAvailable" to false,
+        "isEnabled" to false,
+        "hasHeadTracker" to false,
+        "headTrackingMode" to "unsupported",
+        "immersiveAudioLevel" to 0,
+        "hasDynamicHeadTrackerFeature" to false,
+        "error" to (e.message ?: "Failed to query Spatializer")
       )
     }
   }

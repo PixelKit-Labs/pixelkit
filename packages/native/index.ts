@@ -79,6 +79,19 @@ export type AppFunctionsInfo = {
   error?: string | null;
 };
 
+export type HeadTrackingMode = 'unsupported' | 'disabled' | 'relative_world' | 'relative_device';
+
+export type SpatialAudioInfo = {
+  isSupported: boolean;
+  isAvailable: boolean;
+  isEnabled: boolean;
+  hasHeadTracker: boolean;
+  headTrackingMode: HeadTrackingMode;
+  immersiveAudioLevel: number;
+  hasDynamicHeadTrackerFeature: boolean;
+  error?: string | null;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -243,6 +256,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   setTorch(on: boolean, strengthLevel?: number | null): Promise<boolean>;
   getCameraExtensions(): CameraExtensionsResult;
   getAppFunctionsInfo(): AppFunctionsInfo;
+  getSpatialAudioInfo(): SpatialAudioInfo;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;
