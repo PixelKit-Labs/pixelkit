@@ -5,14 +5,14 @@
       "url": "https://mcp.expo.dev/mcp"
     },
     "artemis": {
-      "command": "C:\\Users\\trave\\.local\\bin\\uv.exe",
+      "command": "artemis",
       "args": [
-        "run",
-        "--directory",
-        "C:\\Users\\trave\\Documents\\Projects\\artemis",
-        "artemis",
         "mcp"
-      ]
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "ARTEMIS_DESKTOP_NOTIFY": "true"
+      }
     }
   }
 }
