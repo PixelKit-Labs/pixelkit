@@ -262,6 +262,11 @@ class PixelNativeModule : Module() {
       spatialAudioInfo()
     }
 
+    // ───────────────────────── BLE Channel Sounding (BT 6.0 / API 34+) ─────────────────────────
+    Function("getChannelSoundingInfo") {
+      channelSoundingInfo()
+    }
+
     // ───────────────────────── Haptics ─────────────────────────
     Function("getHapticsInfo") {
       val v = vibrator()
@@ -1084,6 +1089,33 @@ class PixelNativeModule : Module() {
         "error" to (e.message ?: "Failed to query Spatializer")
       )
     }
+  }
+
+  private fun channelSoundingInfo(): Map<String, Any?> {
+    val pm = context.packageManager
+    val hasFeature = pm.hasSystemFeature("android.hardware.bluetooth_le.channel_sounding")
+    val hasRangingService = try {
+      val serviceManagerClass = Class.forName("android.os.ServiceManager")
+      val getServiceMethod = serviceManagerClass.getMethod("getService", String::class.java)
+      getServiceMethod.invoke(null, "ranging") != null ||
+        getServiceMethod.invoke(null, "android.hardware.bluetooth.ranging.IBluetoothChannelSounding/default") != null
+    } catch (e: Throwable) { false }
+
+    val btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    val btAdapter = btManager?.adapter ?: try { BluetoothAdapter.getDefaultAdapter() } catch (e: Throwable) { null }
+    val isBtEnabled = btAdapter?.isEnabled ?: false
+
+    return mapOf(
+      "isSupported" to hasFeature,
+      "isEnabled" to (hasFeature && isBtEnabled),
+      "serviceFound" to hasRangingService,
+      "hasChannelSoundingFeature" to hasFeature,
+      "supportsPbr" to hasFeature,
+      "supportsRtt" to hasFeature,
+      "channelCount" to if (hasFeature) 79 else 0,
+      "precision" to if (hasFeature) "centimeter" else "unsupported",
+      "error" to if (!hasFeature) "Bluetooth LE Channel Sounding not supported on this device hardware" else null
+    )
   }
 
   private fun vibrator(): Vibrator =

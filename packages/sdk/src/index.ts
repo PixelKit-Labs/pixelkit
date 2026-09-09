@@ -63,6 +63,7 @@ export { useMediaLibrary, type SavedMedia } from './hardware/useMediaLibrary';
 export { useCellular, type CellularGenerationLabel } from './hardware/useCellular';
 export { useTorch } from './hardware/useTorch';
 export { useBLE } from './hardware/useBLE';
+export { useChannelSounding, type ChannelSoundingInfo, type ChannelSoundingTarget, type ChannelSoundingState } from './hardware/useChannelSounding';
 export { useNFC } from './hardware/useNFC';
 export { useRadios, type RadioTelemetry } from './hardware/useRadios';
 

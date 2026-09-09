@@ -92,6 +92,18 @@ export type SpatialAudioInfo = {
   error?: string | null;
 };
 
+export type ChannelSoundingInfo = {
+  isSupported: boolean;
+  isEnabled: boolean;
+  serviceFound: boolean;
+  hasChannelSoundingFeature: boolean;
+  supportsPbr: boolean;
+  supportsRtt: boolean;
+  channelCount: number;
+  precision: 'centimeter' | 'decimeter' | 'unsupported';
+  error?: string | null;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -257,6 +269,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   getCameraExtensions(): CameraExtensionsResult;
   getAppFunctionsInfo(): AppFunctionsInfo;
   getSpatialAudioInfo(): SpatialAudioInfo;
+  getChannelSoundingInfo(): ChannelSoundingInfo;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;
