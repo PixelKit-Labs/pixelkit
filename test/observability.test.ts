@@ -164,7 +164,7 @@ describe('the diagnostics a reader actually looks at', () => {
   test('getSlowestTraces sorts by duration and honours the limit', async () => {
     const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
     await traced('a', 'fast', () => wait(1));
-    await traced('b', 'slow', () => wait(30));
+    await traced('b', 'slow', () => wait(80));
     await traced('c', 'middle', () => wait(12));
 
     const slowest = getSlowestTraces(2);
