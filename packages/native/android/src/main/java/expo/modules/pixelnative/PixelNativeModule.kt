@@ -251,6 +251,11 @@ class PixelNativeModule : Module() {
       cameraExtensionsInfo()
     }
 
+    // ───────────────────────── AppFunctions (Android 16/17+) ─────────────────────────
+    Function("getAppFunctionsInfo") {
+      appFunctionsInfo()
+    }
+
     // ───────────────────────── Haptics ─────────────────────────
     Function("getHapticsInfo") {
       val v = vibrator()
@@ -975,6 +980,43 @@ class PixelNativeModule : Module() {
         "hasUltraHdr" to false,
         "hasPortraitBokeh" to false,
         "error" to (e.message ?: "Failed to read camera extension characteristics")
+      )
+    }
+  }
+
+  private fun appFunctionsInfo(): Map<String, Any?> {
+    val isSupported = Build.VERSION.SDK_INT >= 36
+    if (!isSupported) {
+      return mapOf(
+        "isSupported" to false,
+        "serviceFound" to false,
+        "apiLevel" to Build.VERSION.SDK_INT,
+        "serviceName" to null,
+        "interfaceDescriptor" to null,
+        "error" to "AppFunctions requires Android 16+ / Android 17 (API 36+)"
+      )
+    }
+    return try {
+      val serviceManagerClass = Class.forName("android.os.ServiceManager")
+      val getServiceMethod = serviceManagerClass.getMethod("getService", String::class.java)
+      val binder = getServiceMethod.invoke(null, "app_function")
+      val found = binder != null
+      mapOf(
+        "isSupported" to true,
+        "serviceFound" to found,
+        "apiLevel" to Build.VERSION.SDK_INT,
+        "serviceName" to "app_function",
+        "interfaceDescriptor" to "android.app.appfunctions.IAppFunctionManager",
+        "error" to null
+      )
+    } catch (e: Throwable) {
+      mapOf(
+        "isSupported" to true,
+        "serviceFound" to false,
+        "apiLevel" to Build.VERSION.SDK_INT,
+        "serviceName" to "app_function",
+        "interfaceDescriptor" to "android.app.appfunctions.IAppFunctionManager",
+        "error" to (e.message ?: "Failed to query app_function service")
       )
     }
   }

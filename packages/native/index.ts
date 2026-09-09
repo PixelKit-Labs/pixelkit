@@ -70,6 +70,15 @@ export type CameraExtensionsResult = {
   error?: string;
 };
 
+export type AppFunctionsInfo = {
+  isSupported: boolean;
+  serviceFound: boolean;
+  apiLevel: number;
+  serviceName: string | null;
+  interfaceDescriptor: string | null;
+  error?: string | null;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -233,6 +242,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   getTorchInfo(): TorchInfo;
   setTorch(on: boolean, strengthLevel?: number | null): Promise<boolean>;
   getCameraExtensions(): CameraExtensionsResult;
+  getAppFunctionsInfo(): AppFunctionsInfo;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;

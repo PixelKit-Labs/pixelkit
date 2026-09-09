@@ -72,6 +72,13 @@ export { useUWB } from './hardware/useUWB';
 // AI, Voice & Tensor TPU Hooks
 export { useTPU } from './ai/useTPU';
 export { useGemini, type SafetyThreshold, type GroundingSummary } from './ai/useGemini';
+export {
+  useAppFunctions,
+  type AppFunctionParameter,
+  type AppFunctionSchema,
+  type AppFunctionExecutionResult,
+  type AppFunctionsState,
+} from './hardware/useAppFunctions';
 
 // useGeminiNano, useGenAITasks, useVisionAI and useNaturalLanguageAI are exported from
 // '@pixelkit-labs/sdk/mlkit'. They need @pixelkit-labs/mlkit, whose 19 ML Kit artifacts are a build cost that
