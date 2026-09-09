@@ -62,6 +62,7 @@ node scripts/run-artemis-e2e.js full
 | **Sensors & Capture** | [`recipes/03-sensors-and-capture.md`](./recipes/03-sensors-and-capture.md) | Tests accelerometer, barometer, location, and camera preview streams. |
 | **AI & Gemini Nano** | [`recipes/04-ai-gemini-nano.md`](./recipes/04-ai-gemini-nano.md) | Tests `@pixelkit-labs/mlkit`, AICore availability, and on-device summarization. |
 | **Full Sanity Suite** | [`recipes/05-full-sanity-suite.md`](./recipes/05-full-sanity-suite.md) | Traverses all 4 tabs, auditing for zero native Kotlin crashes and complete stability. |
+| **Pixel 11 Pro Extensions** | [`recipes/06-pixel-11-pro-hardware.md`](./recipes/06-pixel-11-pro-hardware.md) | Tests Camera Extensions, Spatial Audio, BLE 6.0 Channel Sounding, Titan M2 Key Attestation, Perfetto, and Health Connect. |
 
 ---
 

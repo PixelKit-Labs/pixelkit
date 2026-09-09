@@ -17,6 +17,8 @@ const RECIPES = {
   sensors: path.join(__dirname, '../test/artemis/recipes/03-sensors-and-capture.md'),
   ai: path.join(__dirname, '../test/artemis/recipes/04-ai-gemini-nano.md'),
   full: path.join(__dirname, '../test/artemis/recipes/05-full-sanity-suite.md'),
+  hardware: path.join(__dirname, '../test/artemis/recipes/06-pixel-11-pro-hardware.md'),
+  pixel11: path.join(__dirname, '../test/artemis/recipes/06-pixel-11-pro-hardware.md'),
 };
 
 function resolveArtemisBinary() {

@@ -1,0 +1,84 @@
+﻿# Recipe 06: Pixel 11 Pro & Android 17 Hardware Extensions
+
+## Objective
+Verify all Pixel 11 Pro (Tensor G6, grizzly) and Android 17 hardware extensions: In-App DevTools HUD, CameraX ISP extensions, Android 17 AppFunctions, Spatial Audio, BLE 6.0 Channel Sounding, Titan M2 Key Attestation, Perfetto Silicon Tracing, and Health Connect.
+
+## Target Application
+- App Name: `PixelKit` or `PixelKit Template`
+- Package: `com.pixelkit.template`
+
+---
+
+## Verification Flow
+
+### 1. In-App Developer HUD (`<PixelKitDevTools />`)
+- Verify floating DevTools HUD badge is visible on the display.
+- Verify live metrics render:
+  - Real-time FPS (e.g. 60 or 120 Hz)
+  - ADPF Thermal headroom status (`Normal`, `Moderate`, or `Severe`)
+  - Tensor G6 CPU cluster loads
+- Tap badge to expand details, drag across screen to confirm PanResponder responsiveness.
+
+### 2. Android Perfetto Silicon Tracing (`usePerfetto`)
+- Navigate to **Silicon** tab -> **Trace** section.
+- Locate the **Silicon Tracing** subsection:
+  - Verify card displays `PERFETTO` badge and Perfetto daemon version (e.g. `v54.0`).
+  - Verify source indicates `hardware`.
+- Tap **Capture 5s silicon trace**:
+  - Verify state transitions to `TRACING`.
+  - After 5 seconds, verify trace file URI is populated.
+
+### 3. Android 17 AppFunctions System Agent Bridge (`useAppFunctions`)
+- Navigate to **AI Lab** tab -> **Agents** section.
+- Verify **Android 17 AppFunctions** header and card:
+  - Status shows `REGISTRY ACTIVE` on Android 16/17 dev builds.
+  - Lists registered agent tools (`check_phone_thermals`, `pulse_hilight`, etc.).
+- Tap **Run it** on any tool card:
+  - Verify feedback banner displays `Executed [tool] ... (X ms)`.
+  - Verify zero native exceptions in Logcat.
+
+### 4. CameraX Computational Photography Extensions (`useCameraExtensions`)
+- Navigate to **Sensors** tab -> **Capture** section.
+- Scroll to **CameraX Extensions**:
+  - Verify badge shows `TENSOR ISP`.
+  - Verify detected camera extension modes (Night Sight, Ultra HDR, Portrait Bokeh).
+  - Confirm `source` is `hardware` on Pixel hardware.
+
+### 5. Spatial Audio & Dynamic Head Tracking (`useSpatialAudio`)
+- Navigate to **Sensors** tab -> **Audio** section.
+- Scroll to **Spatial Audio**:
+  - Verify card displays Android Spatializer status.
+  - If Pixel Buds Pro are paired, verify head tracking mode indicates `relative_world` or `relative_device`.
+  - Confirm `source` is `hardware` or `unavailable` (never synthetic).
+
+### 6. BLE 6.0 Channel Sounding & Ambient Radios (`useChannelSounding`, `useRadios`)
+- Navigate to **Sensors** tab -> **Radios** section.
+- Under **Radio inventory**:
+  - Verify Thread 802.15.4 mesh (`chip0`) and Satellite SOS availability.
+- Under **BLE 6.0 Channel Sounding**:
+  - Verify Phase-Based Ranging (PBR) hardware status.
+  - Verify distance measurement precision indicates `centimeter` on supported silicon.
+
+### 7. Titan M2 Hardware Key Attestation (`usePlayIntegrity`)
+- Navigate to **Sensors** tab -> **Security** section.
+- Locate **Play Integrity & Key Attestation**:
+  - Verify StrongBox Keystore 400 (`TITAN M2`) badge.
+- Tap **Attest Hardware Key**:
+  - Verify button shows `Attesting…`.
+  - Verify attestation succeeds with EC keypair generated inside Titan M2 hardware enclave.
+  - Verify certificate chain length is displayed (e.g. `3 certs`).
+
+### 8. Health Connect & Sensor Vitals (`useHealthConnect`)
+- Navigate to **Sensors** tab -> **Motion** section.
+- Locate **Health Connect & Vitals**:
+  - Verify API 34+ status and hardware step counter detection.
+- Tap **Refresh vitals** and confirm zero native crashes.
+
+---
+
+## Logcat Diagnostics & Pass Criteria
+- Run: `adb logcat -d *:E | grep -iE "pixelkit|pixelnative"`
+- **Pass Criteria**:
+  - Zero fatal unhandled exceptions or crashes.
+  - All hardware features report `source: 'hardware'` or graceful `unavailable` on non-supported configurations.
+  - Nothing simulated.
