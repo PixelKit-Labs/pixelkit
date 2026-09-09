@@ -52,6 +52,7 @@ export { useSecurity } from './hardware/useSecurity';
 export { useSensors } from './hardware/useSensors';
 export { useHaptics, HapticEnvelopes } from './hardware/useHaptics';
 export { useCamera } from './hardware/useCamera';
+export { useCameraExtensions } from './hardware/useCameraExtensions';
 export { useBiometrics } from './hardware/useBiometrics';
 export { useLocation } from './hardware/useLocation';
 export { useNetwork } from './hardware/useNetwork';

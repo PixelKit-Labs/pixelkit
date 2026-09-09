@@ -46,6 +46,30 @@ export type FrameStats = { fps: number; avgFrameMs: number; maxFrameMs: number; 
 export type TorchInfo = { available: boolean; cameraId?: string; maxStrengthLevel?: number | null; defaultStrengthLevel?: number | null; currentStrengthLevel?: number | null };
 export type TorchState = { cameraId: string; enabled: boolean; unavailable?: boolean };
 
+export type CameraExtensionSupport = {
+  night: boolean;
+  hdr: boolean;
+  bokeh: boolean;
+  faceRetouch: boolean;
+  auto: boolean;
+};
+
+export type CameraExtensionInfo = {
+  cameraId: string;
+  facing: 'back' | 'front' | 'external';
+  extensions: CameraExtensionSupport;
+  supportedExtensionIds: number[];
+};
+
+export type CameraExtensionsResult = {
+  available: boolean;
+  cameras: CameraExtensionInfo[];
+  hasNightSight: boolean;
+  hasUltraHdr: boolean;
+  hasPortraitBokeh: boolean;
+  error?: string;
+};
+
 export type HapticsInfo = {
   hasVibrator: boolean; hasAmplitudeControl: boolean; envelopeEffectsSupported: boolean;
   resonantFrequencyHz: number | null; qFactor: number | null; supportedPrimitives: string[];
@@ -208,6 +232,7 @@ declare class PixelNativeModule extends NativeModule<Events> {
   getGpuInfo(): GpuInfo;
   getTorchInfo(): TorchInfo;
   setTorch(on: boolean, strengthLevel?: number | null): Promise<boolean>;
+  getCameraExtensions(): CameraExtensionsResult;
   getHapticsInfo(): HapticsInfo;
   playEnvelope(points: EnvelopePoint[], initialSharpness?: number | null): boolean;
   playPrimitives(steps: PrimitiveStep[]): boolean;

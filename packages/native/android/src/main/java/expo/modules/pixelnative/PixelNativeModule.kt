@@ -13,6 +13,7 @@ import android.content.pm.PackageManager
 import android.os.BatteryManager
 import java.util.Collections
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraExtensionCharacteristics
 import android.hardware.camera2.CameraManager
 import android.net.wifi.rtt.WifiRttManager
 import android.nfc.NfcAdapter
@@ -243,6 +244,11 @@ class PixelNativeModule : Module() {
     OnStopObserving("onTorchState") {
       torchCallback?.let { cameraManager.unregisterTorchCallback(it) }
       torchCallback = null
+    }
+
+    // ───────────────────────── Camera Extensions (Night Sight, Ultra HDR, Bokeh) ─────────────────────────
+    Function("getCameraExtensions") {
+      cameraExtensionsInfo()
     }
 
     // ───────────────────────── Haptics ─────────────────────────
@@ -913,6 +919,65 @@ class PixelNativeModule : Module() {
         c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
     }
   } catch (e: Throwable) { null }
+
+  private fun cameraExtensionsInfo(): Map<String, Any?> {
+    if (Build.VERSION.SDK_INT < 31) {
+      return mapOf(
+        "available" to false,
+        "cameras" to emptyList<Map<String, Any?>>(),
+        "hasNightSight" to false,
+        "hasUltraHdr" to false,
+        "hasPortraitBokeh" to false,
+        "error" to "CameraExtensionCharacteristics requires Android 12+ (API 31)"
+      )
+    }
+    return try {
+      val cameraList = mutableListOf<Map<String, Any?>>()
+      val ids = cameraManager.cameraIdList
+      for (id in ids) {
+        val extensionChars = cameraManager.getCameraExtensionCharacteristics(id)
+        val supported = extensionChars.supportedExtensions
+        val extensionsMap = mapOf(
+          "night" to supported.contains(CameraExtensionCharacteristics.EXTENSION_NIGHT),
+          "hdr" to supported.contains(CameraExtensionCharacteristics.EXTENSION_HDR),
+          "bokeh" to supported.contains(CameraExtensionCharacteristics.EXTENSION_BOKEH),
+          "faceRetouch" to supported.contains(CameraExtensionCharacteristics.EXTENSION_FACE_RETOUCH),
+          "auto" to supported.contains(CameraExtensionCharacteristics.EXTENSION_AUTOMATIC)
+        )
+        val chars = cameraManager.getCameraCharacteristics(id)
+        val facing = when (chars.get(CameraCharacteristics.LENS_FACING)) {
+          CameraCharacteristics.LENS_FACING_BACK -> "back"
+          CameraCharacteristics.LENS_FACING_FRONT -> "front"
+          else -> "external"
+        }
+        cameraList.add(mapOf(
+          "cameraId" to id,
+          "facing" to facing,
+          "extensions" to extensionsMap,
+          "supportedExtensionIds" to supported
+        ))
+      }
+      val hasNight = cameraList.any { ((it["extensions"] as? Map<*, *>)?.get("night") as? Boolean) == true }
+      val hasHdr = cameraList.any { ((it["extensions"] as? Map<*, *>)?.get("hdr") as? Boolean) == true }
+      val hasBokeh = cameraList.any { ((it["extensions"] as? Map<*, *>)?.get("bokeh") as? Boolean) == true }
+      mapOf(
+        "available" to true,
+        "cameras" to cameraList,
+        "hasNightSight" to hasNight,
+        "hasUltraHdr" to hasHdr,
+        "hasPortraitBokeh" to hasBokeh
+      )
+    } catch (e: Throwable) {
+      mapOf(
+        "available" to false,
+        "cameras" to emptyList<Map<String, Any?>>(),
+        "hasNightSight" to false,
+        "hasUltraHdr" to false,
+        "hasPortraitBokeh" to false,
+        "error" to (e.message ?: "Failed to read camera extension characteristics")
+      )
+    }
+  }
 
   private fun vibrator(): Vibrator =
     if (Build.VERSION.SDK_INT >= 31) (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
