@@ -4,6 +4,18 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.6.1] - 2026-09-09
+
+### Added
+- **Web Speech Recognition Support in `useSpeechAI`**:
+  Added native browser Web Speech API support (`webkitSpeechRecognition` / `SpeechRecognition`) to `useSpeechAI`. When running on Web, voice input now streams real-time transcript tokens directly from the browser microphone without requiring cloud API keys or native modules.
+
+### Fixed
+- **Web Bundler White Screen (`useMediaLibrary.web.ts`)**:
+  Added a dedicated web-safe fallback stub for `useMediaLibrary` that reports `available: false` and `source: 'unavailable'` when run in browsers, preventing `expo-media-library`'s native module import from throwing top-level uncaught errors during web bundle execution.
+- **Web Battery Telemetry Listener Warning**:
+  Guarded battery level and state listener attachments in `useDevice.ts` with `Platform.OS !== 'web'` to eliminate console warnings on web platforms lacking native battery listener support.
+
 ## [1.6.0] - 2026-09-09
 
 ### Added
