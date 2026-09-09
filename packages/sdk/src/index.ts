@@ -79,5 +79,8 @@ export { useSpeechAI } from './ai/useSpeechAI';
 export { useSpeech } from './ai/useSpeech';
 export { getStoredApiKey, saveApiKey, createGeminiClient } from './ai/geminiClient';
 
+// In-App Developer HUD & Diagnostics
+export { PixelKitDevTools, type PixelKitDevToolsProps } from './ui/PixelKitDevTools';
 
 export * from './core/observability';
+
