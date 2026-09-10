@@ -2,8 +2,6 @@
   <img src="./PixelKit_readme.jpg" alt="PixelKit" width="300">
 </p>
 
-<h1 align="center">PixelKit</h1>
-
 <p align="center">
   PixelKit is an SDK for building Expo and React Native applications on Google Pixel devices.
   It provides typed React hooks for device sensors, radios, secure hardware, camera and audio,
