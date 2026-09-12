@@ -62,7 +62,7 @@ class NativeUnavailableException(what: String, why: String) :
  * when an API is missing on the device the function reports null or throws.
  */
 class PixelNativeModule : Module() {
-  private val context: Context
+  internal val context: Context
     get() = appContext.reactContext ?: throw NativeUnavailableException("React context", "lost")
 
   private val mainHandler = Handler(Looper.getMainLooper())
@@ -374,6 +374,47 @@ class PixelNativeModule : Module() {
 
     // ───────────────────────── Radios ─────────────────────────
     Function("getRadioInfo") { radioInfo() }
+
+    // ───────────────────────── Phase 1: Sensors & Acoustics ─────────────────────────
+    Function("getMicrophoneArray") { microphoneArrayInfo() }
+    AsyncFunction("setPreferredMicrophoneDirection") { direction: String, zoom: Double ->
+      setPreferredMicrophoneDirectionInternal(direction, zoom)
+    }
+    Function("getThermometerReading") { thermometerReading() }
+
+    // ───────────────────────── Phase 2: Silicon & Battery ─────────────────────────
+    Function("getBatteryShareStatus") { batteryShareStatus() }
+    AsyncFunction("setBatteryShareEnabled") { enabled: Boolean ->
+      setBatteryShareEnabledInternal(enabled)
+    }
+    Function("getChargingIntelligence") { chargingIntelligence() }
+    AsyncFunction("createADPFHintSession") { targetDurationNanos: Long ->
+      createADPFHintSessionInternal(targetDurationNanos)
+    }
+    Function("reportADPFWorkDuration") { actualDurationNanos: Long ->
+      reportADPFWorkDurationInternal(actualDurationNanos)
+    }
+    Function("updateADPFWorkDuration") { targetDurationNanos: Long ->
+      updateADPFWorkDurationInternal(targetDurationNanos)
+    }
+    Function("closeADPFHintSession") { closeADPFHintSessionInternal() }
+
+    // ───────────────────────── Phase 3: Radios & Mesh ─────────────────────────
+    Function("getWifi7MloInfo") { wifi7MloInfo() }
+    Function("getWifiRttStatus") { wifiRttStatus() }
+    AsyncFunction("startWifiRttRanging") { bssids: List<String> ->
+      startWifiRttRangingInternal(bssids)
+    }
+    Function("getSatelliteStatus") { satelliteStatus() }
+
+    // ───────────────────────── Phase 4: Security ─────────────────────────
+    Function("getPrivateSpaceInfo") { privateSpaceInfo() }
+    AsyncFunction("generateKeyAgreementKeyPair") { alias: String, preferStrongBox: Boolean ->
+      generateKeyAgreementKeyPairInternal(alias, preferStrongBox)
+    }
+    AsyncFunction("deriveSharedSecret") { alias: String, peerPublicKeyBase64: String ->
+      deriveSharedSecretInternal(alias, peerPublicKeyBase64)
+    }
 
     // ───────────────────────── Speech Recognition (On-Device / Offline STT) ─────────────────────────
     Function("isOfflineSpeechAvailable") {

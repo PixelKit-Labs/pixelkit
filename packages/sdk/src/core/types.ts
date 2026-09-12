@@ -359,3 +359,60 @@ export interface SpeechTranscriptionResult {
   language: string;
 }
 
+// ───────────────────────── 51-Hook Expansion Telemetry Types ─────────────────────────
+
+export type {
+  AltimeterTelemetry,
+  PressureTrend,
+} from '../hardware/useAltimeter';
+
+export type {
+  MicrophoneArrayTelemetry,
+  MicrophoneBeamDirection,
+} from '../hardware/useMicrophoneArray';
+
+export type {
+  ThermometerTelemetry,
+  ThermometerMode,
+} from '../hardware/useThermometer';
+
+export type {
+  BatteryShareTelemetry,
+} from '../hardware/useBatteryShare';
+
+export type {
+  ChargingIntelligenceTelemetry,
+  ChargingTier,
+} from '../hardware/useChargingIntelligence';
+
+export type {
+  ADPFHintSessionTelemetry,
+} from '../hardware/useADPFHintSession';
+
+export type {
+  Wifi7MloTelemetry,
+} from '../hardware/useWifi7MLO';
+
+export type {
+  WifiRTTTelemetry,
+} from '../hardware/useWifiRTT';
+
+export type {
+  SatelliteNTNTechTelemetry,
+  SatelliteConnectionState,
+} from '../hardware/useSatelliteNTN';
+
+export type {
+  PrivateSpaceTelemetry,
+  PrivateSpaceAutoLockPolicy,
+} from '../hardware/usePrivateSpace';
+
+export type {
+  KeyAgreementTelemetry,
+} from '../hardware/useKeyAgreement';
+
+export type {
+  EmbeddingsTelemetry,
+} from '../ai/useEmbeddings';
+
+

@@ -116,8 +116,17 @@ declare class PixelNanoModule extends NativeModule<Events> {
   translate(text: string, sourceLang: string, targetLang: string): Promise<TranslationResult>;
   suggestReplies(history: Array<{ text: string; timestamp?: number; isLocalUser?: boolean; sender?: string }>): Promise<SmartReplyResult>;
   extractEntities(text: string): Promise<EntityExtractionResult>;
+  isEmbeddingModelAvailable(): boolean;
+  generateEmbedding(text: string): Promise<EmbeddingResult>;
   close(): void;
 }
+
+export type EmbeddingResult = {
+  embedding: number[];
+  dimension: number;
+  latencyMs: number;
+  source: 'hardware';
+};
 
 export type ImageDescriptionResult = {
   description: string;

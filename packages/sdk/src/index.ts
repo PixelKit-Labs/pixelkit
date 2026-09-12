@@ -49,9 +49,17 @@ export { useDevice } from './hardware/useDevice';
 export { useDisplay } from './hardware/useDisplay';
 export { useSecurity } from './hardware/useSecurity';
 export { usePlayIntegrity, type PlayIntegrityInfo, type HardwareAttestationResult, type PlayIntegrityState } from './hardware/usePlayIntegrity';
+export { useBatteryShare, type BatteryShareTelemetry } from './hardware/useBatteryShare';
+export { useChargingIntelligence, type ChargingIntelligenceTelemetry, type ChargingTier } from './hardware/useChargingIntelligence';
+export { useADPFHintSession, type ADPFHintSessionTelemetry, DEFAULT_TARGET_FRAME_DURATION_MS } from './hardware/useADPFHintSession';
+export { usePrivateSpace, type PrivateSpaceTelemetry, type PrivateSpaceAutoLockPolicy } from './hardware/usePrivateSpace';
+export { useKeyAgreement, type KeyAgreementTelemetry, type KeyAgreementKeyPairResult, type SharedSecretResult } from './hardware/useKeyAgreement';
 
 // Sensor & Radio Hardware Hooks
 export { useSensors } from './hardware/useSensors';
+export { useAltimeter, type AltimeterTelemetry, type PressureTrend, STANDARD_SEA_LEVEL_HPA } from './hardware/useAltimeter';
+export { useMicrophoneArray, type MicrophoneArrayTelemetry, type MicrophoneBeamDirection } from './hardware/useMicrophoneArray';
+export { useThermometer, type ThermometerTelemetry, type ThermometerMode, DEFAULT_EMISSIVITY } from './hardware/useThermometer';
 export { useHealthConnect, type HealthConnectInfo, type HealthConnectState } from './hardware/useHealthConnect';
 export { useHaptics, HapticEnvelopes } from './hardware/useHaptics';
 export { useCamera } from './hardware/useCamera';
@@ -69,6 +77,9 @@ export { useBLE } from './hardware/useBLE';
 export { useChannelSounding, type ChannelSoundingInfo, type ChannelSoundingTarget, type ChannelSoundingState } from './hardware/useChannelSounding';
 export { useNFC } from './hardware/useNFC';
 export { useRadios, type RadioTelemetry } from './hardware/useRadios';
+export { useWifi7MLO, type Wifi7MloTelemetry, type MloLinkInfo } from './hardware/useWifi7MLO';
+export { useWifiRTT, type WifiRTTTelemetry, type WifiRttResult } from './hardware/useWifiRTT';
+export { useSatelliteNTN, type SatelliteNTNTechTelemetry, type SatelliteConnectionState, type SatelliteGuidance } from './hardware/useSatelliteNTN';
 
 // Pixel Pro Exclusive Hardware Hooks
 export { useHiLight, type HiLightMode, type HiLightState } from './hardware/useHiLight';

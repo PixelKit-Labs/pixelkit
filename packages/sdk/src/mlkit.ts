@@ -19,3 +19,4 @@ export { useGeminiNano, buildNanoTurn, NANO_SYSTEM_INSTRUCTION } from './ai/useG
 export { useGenAITasks, type TaskTone } from './ai/useGenAITasks';
 export { useNaturalLanguageAI } from './ai/useNaturalLanguageAI';
 export { useVisionAI } from './ai/useVisionAI';
+export { useEmbeddings, type EmbeddingsTelemetry, computeCosineSimilarity } from './ai/useEmbeddings';

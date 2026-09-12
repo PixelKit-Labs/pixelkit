@@ -4,6 +4,35 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.6.2] - 2026-09-12
+
+### Added
+- **12 Next-Generation Hardware and AI Capabilities (39 → 51 Hooks)**:
+  Expanded the PixelKit SDK from 39 to 51 hooks across Silicon, Sensors, Radios, Security, and AI:
+  - **Phase 1 (Sensors & Acoustics)**:
+    - `useAltimeter`: Precision barometric altimetry derived from the ICAO standard atmosphere formula ($h = 44330 \times (1 - (P/P_0)^{0.1903})$), smoothed vertical climb velocity in m/s, storm pressure trend detection, and custom QNH sea-level pressure calibration.
+    - `useMicrophoneArray`: Multi-mic chassis acoustic array topology from `AudioManager.getMicrophones()`, polar directivity patterns (`cardioid`, `hypercardioid`, `omnidirectional`), and hardware beamforming direction steering (`user`, `away`, `external`, `omni`) with acoustic zoom field dimensions.
+    - `useThermometer`: Non-contact infrared temperature measurement interfacing with the Melexis MLX90632 far-infrared (FIR) thermopile sensor on Google Pixel Pro devices (8/9/10/11 Pro), featuring emissivity coefficient tuning and measurement modes (`object`, `body`, `ambient`).
+  - **Phase 2 (Silicon & Battery)**:
+    - `useBatteryShare`: Google Pixel reverse wireless charging (Qi TX coil) control and telemetry querying the kernel `/sys/class/power_supply/wireless/reverse_chg_mode` subsystem, supporting receiver docking detection, power wattage delivery, and safety battery cutoff percentage limits.
+    - `useChargingIntelligence`: In-depth battery health telemetry surfacing lifetime physical charge cycle counts (`BatteryManager.EXTRA_CYCLE_COUNT`), maximum state-of-health percentage ($\text{SoH}$), battery pack manufacture and activation dates, 80% charge protection limit detection, and real-time charging wattage tiering (`slow`, `standard`, `rapid`, `ultra_rapid`).
+    - `useADPFHintSession`: Active frame workload deadline negotiation with `android.os.PerformanceHintManager` (ADPF) and the Tensor Energy-Aware Scheduler (EAS), allowing dynamic render target updates and actual duration reporting in nanoseconds.
+  - **Phase 3 (Advanced Radios & Mesh)**:
+    - `useWifi7MLO`: Wi-Fi 7 (802.11be) Multi-Link Operation telemetry querying affiliated physical links across 2.4 GHz, 5 GHz, and 6 GHz spectrum with 320 MHz channels, calculating combined aggregate PHY throughput.
+    - `useWifiRTT`: Fine Timing Measurement (802.11mc / 802.11az) indoor centimeter-level positioning via `WifiRttManager`, measuring round-trip time distances to access point BSSIDs.
+    - `useSatelliteNTN`: 3GPP Release-17 Non-Terrestrial Network (NTN) satellite link tracking via Android 15 `TelephonyManager.isSatelliteSupported()`, reporting constellation connection states, provider networks, signal bars, and antenna pointing guidance.
+  - **Phase 4 (Security & Edge AI)**:
+    - `usePrivateSpace`: Android 15+ (API 35+) Private Space vault isolation detection via `UserManager.isPrivateProfile()`, detecting whether the running process is within the secure partition and auditing auto-lock timeout policies.
+    - `useKeyAgreement`: Titan M2 StrongBox Elliptic Curve Diffie-Hellman (ECDH) session key agreement on the NIST P-256 curve (`secp256r1`) via `AndroidKeyStore`, deriving symmetrical shared secrets in hardware without exposing private keys.
+    - `useEmbeddings`: On-device 512-dimensional vector embedding generation and cosine similarity scoring on the Google Tensor EdgeTPU via `@pixelkit-labs/mlkit`, enabling offline semantic search and local RAG.
+- **Zero-Simulation Principle & Observability**:
+  - All 12 hooks strictly enforce `source: 'hardware' | 'derived' | 'unavailable'`. Values default to `null` and em dash (`—`) when hardware is unsupported, with zero fabricated data.
+  - All platform invocations wrapped in `traced()`.
+- **Documentation Contract Verification**:
+  - Synchronized all 51 hook documentation contracts in `pixelkit-docs/data/hooks/` with 100% field parity against generated TypeScript declarations.
+- **Test Suite Expansion**:
+  - Added unit test suites for altimetry mathematics, charging tiers, radio link aggregation, and vector embeddings, bringing total coverage to 53 passing tests across 17 suites.
+
 ## [1.6.1] - 2026-09-09
 
 ### Added

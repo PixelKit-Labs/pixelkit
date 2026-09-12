@@ -290,6 +290,132 @@ export type NfcTagEvent = {
   timestamp: number;
 };
 
+// ───────────────────────── 51-Hook Expansion Telemetry Types ─────────────────────────
+
+export type MicrophoneLocation = 'main_body' | 'main_body_movable' | 'peripheral' | 'unknown';
+export type MicrophoneDirectionality = 'omnidirectional' | 'bidirectional' | 'cardioid' | 'hypercardioid' | 'supercardioid' | 'unknown';
+
+export type MicrophoneInfo = {
+  id: number;
+  description: string;
+  type: number;
+  directionality: MicrophoneDirectionality;
+  location: MicrophoneLocation;
+  group: number;
+  indexInTheGroup: number;
+  position: { x: number; y: number; z: number } | null;
+  orientation: { x: number; y: number; z: number } | null;
+};
+
+export type MicrophoneArrayResult = {
+  isSupported: boolean;
+  microphones: MicrophoneInfo[];
+  direction: 'user' | 'away' | 'external' | 'omni';
+  fieldZoom: number;
+  error?: string | null;
+};
+
+export type ThermometerReading = {
+  isSupported: boolean;
+  surfaceTemperatureC: number | null;
+  surfaceTemperatureF: number | null;
+  ambientTemperatureC: number | null;
+  sensorName: string | null;
+  error?: string | null;
+};
+
+export type BatteryShareStatus = {
+  isSupported: boolean;
+  isActive: boolean;
+  isReceiverDetected: boolean;
+  transmittedWatts: number | null;
+  batteryThreshold: number;
+  error?: string | null;
+};
+
+export type ChargingTier = 'slow' | 'standard' | 'rapid' | 'ultra_rapid';
+
+export type ChargingIntelligence = {
+  stateOfHealthPercent: number | null;
+  cycleCount: number | null;
+  manufactureDate: string | null;
+  firstUsageDate: string | null;
+  chargingWattage: number | null;
+  chargingTier: ChargingTier;
+  chargeLimitActive: boolean;
+  error?: string | null;
+};
+
+export type MloLinkInfo = {
+  band: '2.4GHz' | '5GHz' | '6GHz';
+  channelWidthMHz: number;
+  rssi: number;
+  txLinkSpeedMbps: number;
+  rxLinkSpeedMbps: number;
+  state: 'associated' | 'active' | 'idle';
+};
+
+export type Wifi7MloResult = {
+  isSupported: boolean;
+  isMloActive: boolean;
+  links: MloLinkInfo[];
+  aggregateSpeedMbps: number | null;
+  error?: string | null;
+};
+
+export type WifiRttResult = {
+  bssid: string;
+  distanceMm: number;
+  distanceStdDevMm: number;
+  rssi: number;
+  status: number;
+};
+
+export type WifiRttStatusResult = {
+  isSupported: boolean;
+  isAvailable: boolean;
+  isRanging: boolean;
+  rangingResults: WifiRttResult[];
+  error?: string | null;
+};
+
+export type SatelliteGuidance = {
+  azimuthDeg: number;
+  elevationDeg: number;
+  isAligned: boolean;
+};
+
+export type SatelliteStatusResult = {
+  isSupported: boolean;
+  connectionState: 'disconnected' | 'searching' | 'connected' | 'pointing_assist';
+  carrier: string | null;
+  signalQualityBars: number | null;
+  pointingGuidance: SatelliteGuidance | null;
+  emergencyServicesReady: boolean;
+  error?: string | null;
+};
+
+export type PrivateSpaceInfo = {
+  isInsidePrivateSpace: boolean;
+  isPrivateSpaceConfigured: boolean;
+  autoLockPolicy: 'immediate' | 'screen_off' | 'device_reboot' | 'unknown';
+  error?: string | null;
+};
+
+export type KeyAgreementKeyPairResult = {
+  alias: string;
+  publicKeyBase64: string | null;
+  securityLevel: 'STRONGBOX' | 'TRUSTED_ENVIRONMENT';
+  isStrongBoxSupported: boolean;
+  error?: string | null;
+};
+
+export type SharedSecretResult = {
+  sharedSecretBase64: string | null;
+  secretLengthBytes: number;
+  error?: string | null;
+};
+
 type Events = {
   onThermalStatus(e: { status: number }): void;
   onFrameStats(e: FrameStats): void;
@@ -354,6 +480,31 @@ declare class PixelNativeModule extends NativeModule<Events> {
   cancelSpeechRecognition(): boolean;
   getAppFunctions(): AppFunctionInfo[];
   executeAppFunction(functionId: string, params?: Record<string, any>): Promise<any>;
+
+  // Phase 1: Sensors & Acoustics
+  getMicrophoneArray(): MicrophoneArrayResult;
+  setPreferredMicrophoneDirection(direction: string, zoom: number): Promise<boolean>;
+  getThermometerReading(): ThermometerReading;
+
+  // Phase 2: Silicon & Battery
+  getBatteryShareStatus(): BatteryShareStatus;
+  setBatteryShareEnabled(enabled: boolean): Promise<boolean>;
+  getChargingIntelligence(): ChargingIntelligence;
+  createADPFHintSession(targetDurationNanos: number): Promise<boolean>;
+  reportADPFWorkDuration(actualDurationNanos: number): boolean;
+  updateADPFWorkDuration(targetDurationNanos: number): boolean;
+  closeADPFHintSession(): boolean;
+
+  // Phase 3: Radios & Mesh
+  getWifi7MloInfo(): Wifi7MloResult;
+  getWifiRttStatus(): WifiRttStatusResult;
+  startWifiRttRanging(bssids: string[]): Promise<WifiRttStatusResult>;
+  getSatelliteStatus(): SatelliteStatusResult;
+
+  // Phase 4: Security
+  getPrivateSpaceInfo(): PrivateSpaceInfo;
+  generateKeyAgreementKeyPair(alias: string, preferStrongBox?: boolean): Promise<KeyAgreementKeyPairResult>;
+  deriveSharedSecret(alias: string, peerPublicKeyBase64: string): Promise<SharedSecretResult>;
 }
 
 /** `null` when the native module is absent (web, Expo Go, or not yet built). */
