@@ -84,15 +84,14 @@ npx @pixelkit-labs/cli doctor   # tells you which case you are in
 
 **AI** — `useGemini` (multi-turn chat, streaming, safety thresholds, Google Search grounding, token
 counting), `useSpeechAI` (voice capture and transcription, on-device streaming or cloud),
-`useSpeech` (text to speech), `useEmbeddings` (on-device text embeddings), `useAppFunctions`
-(expose your app's capabilities to the system Gemini assistant), `useTPU` (what the AICore stack
-actually exposes)
+`useSpeech` (text to speech), `useAppFunctions` (expose your app's capabilities to the system Gemini
+assistant), `useTPU` (what the AICore stack actually exposes)
 
 **AI, from `@pixelkit-labs/sdk/mlkit`** — `useGeminiNano` (Gemini Nano through AICore),
 `useGenAITasks` (summarize, proofread, rewrite), `useVisionAI` (cloud Gemini multimodal plus
 on-device barcode, face, text, labels, objects, pose, segmentation, document scanning and digital
 ink), `useNaturalLanguageAI` (language ID, offline translation across 58 languages, smart reply,
-entity extraction)
+entity extraction), `useEmbeddings` (on-device text embeddings and cosine similarity)
 
 Inputs, outputs and a contract for every function are in the
 [documentation](https://pixelkit-labs.github.io/pixelkit-docs/).

@@ -33,7 +33,13 @@ function resolveHooksDir() {
   const checkout = path.join(ROOT, '.pixelkit-docs');
   fs.rmSync(checkout, { recursive: true, force: true });
   execFileSync('git', ['clone', '--depth', '1', '--filter=blob:none', '--sparse', DOCS_REPO, checkout], { stdio: 'inherit' });
-  execFileSync('git', ['sparse-checkout', 'set', 'data/hooks'], { cwd: checkout, stdio: 'inherit' });
+  // `docs` comes down too, for the agent-facing pages: they contain import statements naming this
+  // package's exports, and those are checked below. Directories only — sparse-checkout defaults to
+  // cone mode, which rejects a path to a single file such as docs/AI_PRIMER.md.
+  execFileSync('git', ['sparse-checkout', 'set', 'data/hooks', 'docs'], {
+    cwd: checkout,
+    stdio: 'inherit',
+  });
   return path.join(checkout, 'data', 'hooks');
 }
 
@@ -156,6 +162,57 @@ for (const [hook, entry] of documented) {
     if (!/^\w+$/.test(name)) continue; // documented as a group, e.g. "setTopP(n) / setTopK(n)"
     if (!fields.has(name)) {
       failures.push(`${hook} documents a returned field "${name}" that its declared type does not have.`);
+    }
+  }
+}
+
+/**
+ * Every name the agent-facing pages import from this package has to be exported by it.
+ *
+ * Those pages are written to be copied verbatim by an agent, which makes a wrong name worse here
+ * than in ordinary prose: it becomes code that does not compile, in someone else's repository. The
+ * primer and all five recipes imported `HapticButton` and `MetricCard` from `@pixelkit-labs/sdk`
+ * for a long time. Both are real components, but they live in the template, not the SDK — so every
+ * recipe on the page was broken. `useVisionAI` was imported from the main barrel too, when it is
+ * only on the `/mlkit` subpath.
+ */
+const AGENT_PAGES = ['docs/AI_PRIMER.md', 'docs/ai-guidance/recipes.md', 'docs/ai-guidance/README.md'];
+const docsRoot = path.dirname(path.dirname(hooksDir));
+
+const exportsOf = (file) =>
+  new Set(
+    [...fs.readFileSync(file, 'utf8').matchAll(/export\s*\{([^}]*)\}/g)].flatMap((m) =>
+      m[1]
+        .split(',')
+        .map((s) => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/).pop().trim())
+        .filter(Boolean)
+    )
+  );
+
+const mainBarrel = path.join(LIB, 'src', 'index.ts');
+const mlkitBarrel = path.join(LIB, 'src', 'mlkit.ts');
+if (fs.existsSync(mainBarrel) && fs.existsSync(mlkitBarrel)) {
+  const mainExports = exportsOf(mainBarrel);
+  const mlkitExports = exportsOf(mlkitBarrel);
+
+  for (const relative of AGENT_PAGES) {
+    const page = path.join(docsRoot, relative);
+    if (!fs.existsSync(page)) continue;
+    const text = fs.readFileSync(page, 'utf8');
+
+    for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*'@pixelkit-labs\/sdk(\/mlkit)?'/g)) {
+      const isMlkit = Boolean(m[2]);
+      const expected = isMlkit ? mlkitExports : mainExports;
+      const other = isMlkit ? mainExports : mlkitExports;
+      for (const raw of m[1].split(',')) {
+        const name = raw.trim();
+        if (!name || expected.has(name)) continue;
+        failures.push(
+          other.has(name)
+            ? `${relative} imports ${name} from '@pixelkit-labs/sdk${isMlkit ? '/mlkit' : ''}', but it is exported from the ${isMlkit ? 'main barrel' : '/mlkit subpath'}.`
+            : `${relative} imports ${name} from PixelKit, but neither package exports it.`
+        );
+      }
     }
   }
 }
