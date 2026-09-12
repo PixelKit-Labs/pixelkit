@@ -4,6 +4,11 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.6.3] - 2026-09-12
+
+### Documentation
+- **Synchronized Agent Guides**: Updated `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` to reflect the 51-hook expansion architecture across Silicon, Sensors, Radios, Security, and AI. Verified identical SHA-256 hashes across all three files.
+
 ## [1.6.2] - 2026-09-12
 
 ### Added

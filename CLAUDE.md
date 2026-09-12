@@ -4,12 +4,12 @@ This file is the single source of truth for any coding agent (Claude, Gemini, An
 
 ## Project
 
-This repository is the monorepo for the PixelKit SDK: the 39 hardware and AI hooks, the in-app `<PixelKitDevTools />` HUD, and the two Kotlin Expo Modules (`@pixelkit-labs/native` and `@pixelkit-labs/mlkit`) targeting Google Pixel 11 Pro hardware (Tensor G6, Android 17 API 37).
+This repository is the monorepo for the PixelKit SDK: the 51 hardware and AI hooks, the in-app `<PixelKitDevTools />` HUD, and the two Kotlin Expo Modules (`@pixelkit-labs/native` and `@pixelkit-labs/mlkit`) targeting Google Pixel 11 Pro hardware (Tensor G6, Android 17 API 37).
 
 The repository publishes three packages to npm:
 - `@pixelkit-labs/native`: Kotlin Expo Module for low-overhead telemetry and hardware actuators (zero third-party dependencies).
 - `@pixelkit-labs/mlkit`: Kotlin Expo Module for Gemini Nano on-device AI via ML Kit GenAI on AICore.
-- `@pixelkit-labs/sdk`: The developer-facing SDK providing the 39 typed hooks and DevTools HUD.
+- `@pixelkit-labs/sdk`: The developer-facing SDK providing the 51 typed hooks and DevTools HUD.
 
 The consumer template and demo application lives at https://github.com/PixelKit-Labs/pixelkit-template.
 
@@ -36,7 +36,7 @@ The consumer template and demo application lives at https://github.com/PixelKit-
 
 ```
 packages/
-  sdk/                    the 39 hooks, <PixelKitDevTools />, types, index.ts and mlkit.ts
+  sdk/                    the 51 hooks, <PixelKitDevTools />, types, index.ts and mlkit.ts
   native/                 Kotlin Expo Module: telemetry, actuators, battery, display, Perfetto
   mlkit/                  Kotlin Expo Module: Gemini Nano, ML Kit text/image/OCR
 scripts/
