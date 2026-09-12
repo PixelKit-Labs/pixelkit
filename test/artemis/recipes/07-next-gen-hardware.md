@@ -1,0 +1,152 @@
+# Recipe 07: Next-Gen Hardware & AI Capabilities (Phase 1–4 Expansion)
+
+## Objective
+Verify all 12 next-generation PixelKit capabilities across Sensors, Acoustics, Silicon, Battery, Advanced Radios, Security, and Edge AI on connected Google Pixel hardware (or Android emulator):
+1. `useAltimeter` (Sensors & Barometric Altitude)
+2. `useMicrophoneArray` (Audio Beamforming & Microphone Directionality)
+3. `useThermometer` (FIR MLX90632 Temperature Sensor on Pixel 8/9/10/11 Pro)
+4. `useBatteryShare` (Reverse Wireless Charging Qi TX)
+5. `useChargingIntelligence` (Battery Cycle Count & State of Health)
+6. `useADPFHintSession` (PerformanceHintManager Frame Hints & Work Duration)
+7. `useWifi7MLO` (802.11be Multi-Link Operation)
+8. `useWifiRTT` (802.11az / 802.11mc Fine Timing Measurement Ranging)
+9. `useSatelliteNTN` (3GPP Rel-17 NTN Satellite SOS)
+10. `usePrivateSpace` (Android 15+ UserManager Profile Isolation)
+11. `useKeyAgreement` (Titan M2 StrongBox ECDH Key Agreement)
+12. `useEmbeddings` (EdgeTPU Vector Embeddings & Cosine Similarity)
+
+## Target Application
+- App Name: `PixelKit` or `PixelKit Template`
+- Package: `com.pixelkit.sdk` (or `com.pixelkit.template`)
+
+---
+
+## Verification Flow
+
+### 1. High-Precision Barometric Altimeter (`useAltimeter`)
+- Navigate to **Sensors** tab -> **Motion** section.
+- Locate the **Altimeter & Climb Velocity** card:
+  - Verify pressure readings update in real time (hPa).
+  - Verify ICAO altitude (meters) is computed from barometric pressure when available.
+  - Verify climb velocity (m/s) displays rate of vertical motion.
+  - Confirm pressure trend reports `steady`, `rising`, `falling`, or `rapid_fall`.
+  - Tap **Calibrate QNH (1013.25 hPa)** to test sea-level reference adjustment.
+  - Confirm `source` reports `'derived'` when pressure sensor is present, or `'unavailable'` with `null` readings if no barometer exists (Zero-simulation principle).
+
+### 2. Directional Microphone Array & Beamforming (`useMicrophoneArray`)
+- Navigate to **Sensors** tab -> **Audio** section.
+- Locate **Microphone Array & Directivity**:
+  - Verify list of physical microphones detected on device with ID, location (`back`, `bottom`, `main`), and directionality.
+  - Tap beam direction selectors: **User**, **Away**, **Omni**.
+  - Adjust field zoom slider (0.0 to 1.0) to test acoustic focus narrowing.
+  - Verify `source` reports `'hardware'` or `'unavailable'` on devices without multi-mic hardware.
+
+### 3. FIR Infrared Object & Ambient Thermometer (`useThermometer`)
+- Navigate to **Sensors** tab -> **Capture** or **Sensors** section.
+- Locate **Infrared Thermometer**:
+  - On Pixel 8/9/10/11 Pro devices with the MLX90632 FIR sensor:
+    - Verify `isSupported` is `true`.
+    - Verify surface temperature (°C / °F) and ambient sensor temperature update.
+    - Switch measurement modes (`object`, `body`, `ambient`).
+    - Adjust emissivity setting for target surface materials.
+  - On non-Pro Pixel models or emulators lacking the FIR sensor:
+    - Verify `isSupported` is `false`.
+    - Verify all temperature values return `null` and em dash (`—`).
+    - Verify `source` reports `'unavailable'` (no fake temperatures).
+
+### 4. Reverse Wireless Charging Battery Share (`useBatteryShare`)
+- Navigate to **Silicon** tab -> **System** section.
+- Locate **Battery Share (Qi TX)**:
+  - Verify reverse charging capability status (`isSupported`).
+  - Toggle **Enable Battery Share**:
+    - If hardware supports wireless TX: verify state transitions to active and transmitted wattage displays when receiver is placed.
+    - Set battery cutoff threshold (e.g. 20% or 30%) to ensure host protection.
+  - On devices without Qi TX hardware:
+    - Verify `isSupported: false`, `isActive: false`, `transmittedWatts: null`, `source: 'unavailable'`.
+
+### 5. Charging Intelligence & Battery Health (`useChargingIntelligence`)
+- Navigate to **Silicon** tab -> **System** section.
+- Locate **Charging Intelligence & Battery Health**:
+  - Verify battery cycle count (e.g. `142 cycles`).
+  - Verify State of Health percentage (e.g. `98%`).
+  - Verify manufacture date and first usage date when available via HAL.
+  - Verify charging tier classification (`slow`, `standard`, `rapid`, `ultra_rapid`) when plugged into power.
+  - Confirm zero synthetic or estimated health percentages: unreadable values display as `null` / `—` and report `source: 'unavailable'`.
+
+### 6. ADPF Performance Hint Session (`useADPFHintSession`)
+- Navigate to **Silicon** tab -> **Compute** section.
+- Locate **ADPF Work Duration Hint Session**:
+  - Verify `isSupported` status from `PerformanceHintManager`.
+  - Verify target frame duration is set (e.g. `16.6 ms` for 60Hz or `8.3 ms` for 120Hz).
+  - Tap **Report Frame Work**:
+    - Simulates workload reporting via `reportActualWorkDuration()`.
+    - Verify reported duration is logged with zero native JNI crashes.
+    - Verify `source: 'hardware'` when supported.
+
+### 7. Wi-Fi 7 Multi-Link Operation MLO (`useWifi7MLO`)
+- Navigate to **Sensors** tab -> **Radios** section.
+- Locate **Wi-Fi 7 MLO (802.11be)**:
+  - If connected to a Wi-Fi 7 access point with MLO enabled:
+    - Verify affiliated links display separate bands (e.g. 5GHz + 6GHz bonded).
+    - Verify individual link RSSI, TX/RX speeds, and channel widths (e.g. 320 MHz).
+    - Verify aggregate link speed is computed.
+  - If connected to Wi-Fi 6/5 or offline:
+    - Verify `isMloActive: false`, empty links array, `aggregateSpeedMbps: null`, `source: 'unavailable'`.
+
+### 8. Wi-Fi RTT Indoor Positioning (`useWifiRTT`)
+- Navigate to **Sensors** tab -> **Radios** section.
+- Locate **Wi-Fi RTT (802.11az / 802.11mc FTM)**:
+  - Verify `isSupported` reflects hardware FTM ranging support in `WifiRttManager`.
+  - Tap **Scan RTT Responders**:
+    - Verifies ranging query completes without throwing unhandled exceptions.
+    - If FTM-capable access points respond, verify distance in millimeters and standard deviation.
+
+### 9. Rel-17 Satellite Non-Terrestrial Network (`useSatelliteNTN`)
+- Navigate to **Sensors** tab -> **Radios** section.
+- Locate **Satellite NTN (Rel-17 SOS)**:
+  - Verify `isSatelliteSupported` query returns from `TelephonyManager`.
+  - Verify connection state displays (`disconnected`, `searching`, `connected`, `pointing_assist`).
+  - If pointing assist is active, verify azimuth and elevation angles render.
+  - Confirm zero synthetic satellite connections on non-satellite hardware.
+
+### 10. Android 15 Private Space Isolation (`usePrivateSpace`)
+- Navigate to **Sensors** tab -> **Security** section.
+- Locate **Android 15 Private Space**:
+  - Verify `isInsidePrivateSpace` accurately identifies whether app is running in the main user profile or the private isolated profile (`UserManager.isPrivateProfile()`).
+  - Verify `isPrivateSpaceConfigured` checks for existence of private profile on device.
+  - Verify auto-lock policy reporting (`immediate`, `screen_off`, `device_reboot`, `unknown`).
+
+### 11. Titan M2 StrongBox ECDH Key Agreement (`useKeyAgreement`)
+- Navigate to **Sensors** tab -> **Security** section.
+- Locate **Titan M2 Key Agreement (ECDH)**:
+  - Verify `isStrongBoxSupported` reflects Titan M2 hardware security module presence.
+  - Tap **Generate ECDH Keypair**:
+    - Generates P-256 EC keypair inside StrongBox hardware keystore.
+    - Displays public key in base64 format.
+  - Tap **Derive Shared Secret**:
+    - Executes ECDH key agreement via `javax.crypto.KeyAgreement` inside the hardware enclave.
+    - Confirms shared secret is derived with zero keystore corruption.
+
+### 12. On-Device EdgeTPU Vector Embeddings (`useEmbeddings`)
+- Navigate to **AI Lab** tab -> **Tasks** or **Vision** section.
+- Locate **EdgeTPU Vector Embeddings**:
+  - Verify `isAvailable` status for local embedding model.
+  - Enter test prompt: `"PixelKit hardware telemetry on Tensor G6"` and tap **Generate Embedding**:
+    - Generates 512 or 768-dimensional float vector on-device.
+    - Verifies vector normalization and dimension integrity.
+  - Test **Cosine Similarity**:
+    - Compares two test texts and verifies similarity score (0.0 to 1.0).
+
+---
+
+## Logcat Diagnostics & Pass Criteria
+- Run:
+  ```bash
+  adb logcat -d *:E | grep -iE "pixelkit|pixelnative|pixelnano|PerformanceHint|MLX90632|KeyAgreement"
+  ```
+- **Pass Criteria**:
+  - Zero fatal unhandled exceptions or crashes across all 12 modules.
+  - All hooks strictly obey the **Zero-Simulation Principle**:
+    - Values are read from hardware where supported (`source: 'hardware'` or `'derived'`).
+    - Unavailable features report `source: 'unavailable'` and `null` values.
+    - No fabricated readings or mock data.

@@ -19,6 +19,8 @@ const RECIPES = {
   full: path.join(__dirname, '../test/artemis/recipes/05-full-sanity-suite.md'),
   hardware: path.join(__dirname, '../test/artemis/recipes/06-pixel-11-pro-hardware.md'),
   pixel11: path.join(__dirname, '../test/artemis/recipes/06-pixel-11-pro-hardware.md'),
+  nextgen: path.join(__dirname, '../test/artemis/recipes/07-next-gen-hardware.md'),
+  expansion: path.join(__dirname, '../test/artemis/recipes/07-next-gen-hardware.md'),
 };
 
 function resolveArtemisBinary() {

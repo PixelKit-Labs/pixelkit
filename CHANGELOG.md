@@ -4,6 +4,12 @@ All notable changes to PixelKit are recorded here. The format follows [Keep a Ch
 
 **Rule:** every change to the codebase bumps the patch version by 0.0.1 (`1.0.0 → 1.0.1 → 1.0.2 …`) and adds an entry here in the same commit. Bump `version` in `package.json` and `expo.version` in `app.json` together, and increment `expo.android.versionCode` by 1. Minor and major bumps are decided by the maintainer, not by agents.
 
+## [1.6.4] - 2026-09-12
+
+### Added
+- **ARTEMIS Recipe 07 (Next-Gen Hardware & AI Verification)**: Added `test/artemis/recipes/07-next-gen-hardware.md` defining autonomous on-device test flows for all 12 next-gen capabilities: `useAltimeter`, `useMicrophoneArray`, `useThermometer`, `useBatteryShare`, `useChargingIntelligence`, `useADPFHintSession`, `useWifi7MLO`, `useWifiRTT`, `useSatelliteNTN`, `usePrivateSpace`, `useKeyAgreement`, and `useEmbeddings`.
+- **E2E Test Runner Integration**: Added `nextgen` and `expansion` recipe aliases to `scripts/run-artemis-e2e.js` and updated `test/artemis/README.md`.
+
 ## [1.6.3] - 2026-09-12
 
 ### Documentation

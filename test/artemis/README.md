@@ -63,6 +63,7 @@ node scripts/run-artemis-e2e.js full
 | **AI & Gemini Nano** | [`recipes/04-ai-gemini-nano.md`](./recipes/04-ai-gemini-nano.md) | Tests `@pixelkit-labs/mlkit`, AICore availability, and on-device summarization. |
 | **Full Sanity Suite** | [`recipes/05-full-sanity-suite.md`](./recipes/05-full-sanity-suite.md) | Traverses all 4 tabs, auditing for zero native Kotlin crashes and complete stability. |
 | **Pixel 11 Pro Extensions** | [`recipes/06-pixel-11-pro-hardware.md`](./recipes/06-pixel-11-pro-hardware.md) | Tests Camera Extensions, Spatial Audio, BLE 6.0 Channel Sounding, Titan M2 Key Attestation, Perfetto, and Health Connect. |
+| **Next-Gen Hardware & AI** | [`recipes/07-next-gen-hardware.md`](./recipes/07-next-gen-hardware.md) | Tests Altimeter, Mic Array, FIR Thermometer, Battery Share, Charging Intelligence, ADPF Hints, Wi-Fi 7 MLO, Wi-Fi RTT, Satellite NTN, Private Space, Key Agreement, Embeddings. |
 
 ---
 
