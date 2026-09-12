@@ -160,6 +160,25 @@ for (const [hook, entry] of documented) {
   }
 }
 
+/**
+ * The README's Hooks section has to name every exported hook.
+ *
+ * It is the first and often only page anyone reads, on GitHub and on npm, and it is a flat list
+ * with no mechanism behind it. It fell 19 behind without anything noticing: it still described 32
+ * hooks after the count reached 51, so two thirds of a release were invisible to anyone who did not
+ * open the documentation site. Naming them is cheap; leaving it to be remembered was not working.
+ */
+const readmePath = path.join(__dirname, '..', 'README.md');
+if (fs.existsSync(readmePath)) {
+  const readme = fs.readFileSync(readmePath, 'utf8');
+  const unlisted = [...exported].filter((hook) => !new RegExp(`\\b${hook}\\b`).test(readme));
+  if (unlisted.length > 0) {
+    failures.push(
+      `README.md does not name ${unlisted.length} exported hook(s) in its Hooks section: ${unlisted.join(', ')}.`
+    );
+  }
+}
+
 if (failures.length) {
   console.error(`\nDocumentation contract failed with ${failures.length} problem${failures.length > 1 ? 's' : ''}:\n`);
   for (const f of failures) console.error(`  x ${f}`);

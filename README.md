@@ -55,9 +55,10 @@ into the app, and Expo Go contains only the native code Expo shipped.
 ## Supported devices
 
 Built for the Google Pixel 11 Pro, Pro Fold and Pro XL. It degrades rather than fails elsewhere:
-**13 of the 39 hooks are pure Expo and JavaScript** — camera, audio, sensors, location, biometrics,
-the keystore, cloud Gemini — and work on any Android device. The other 26 call the Kotlin modules
-and report `unsupported` where the silicon is not there.
+**13 of the 51 hooks are pure Expo and JavaScript** — camera, audio, sensors, location, biometrics,
+the keystore, cloud Gemini — and work on any Android device. Another 37 call the Kotlin modules and
+report `unsupported` where the silicon is not there. `useHiLight` is the exception to both: Android
+restricts the camera-bar LEDs to privileged apps, so it drives them through a local ADB daemon.
 
 ```bash
 npx @pixelkit-labs/cli doctor   # tells you which case you are in
@@ -65,21 +66,27 @@ npx @pixelkit-labs/cli doctor   # tells you which case you are in
 
 ## Hooks
 
-**Silicon and system** — `useCPU`, `useGPU`, `useMemory`, `useADPF`, `useTPU`, `useDevice`,
-`useDisplay`, `useNetwork`, `useCellular`, `useCapabilities`
+**Silicon and system** — `useCPU`, `useGPU`, `useMemory`, `useADPF`, `useADPFHintSession`, `useTPU`,
+`useBatteryShare`, `useChargingIntelligence`, `usePerfetto`, `useDevice`, `useDisplay`, `useNetwork`,
+`useCellular`, `useCapabilities`
 
-**Sensors and capture** — `useSensors`, `useLocation`, `useCamera`, `useVideo`, `useMediaLibrary`,
-`useAudio`
+**Sensors and capture** — `useSensors`, `useAltimeter`, `useThermometer`, `useLocation`, `useCamera`,
+`useCameraExtensions`, `useVideo`, `useMediaLibrary`, `useAudio`, `useMicrophoneArray`,
+`useSpatialAudio`, `useHealthConnect`
 
 **Actuators** — `useHaptics`, `useTorch`, `useHiLight`
 
-**Radios** — `useBLE`, `useNFC`, `useUWB`, `useRadios`
+**Radios** — `useBLE`, `useChannelSounding`, `useNFC`, `useUWB`, `useRadios`, `useWifi7MLO`,
+`useWifiRTT`, `useSatelliteNTN`
 
-**Security** — `useBiometrics`, `useSecurity`
+**Security** — `useBiometrics`, `useSecurity`, `useKeyAgreement`, `usePrivateSpace`,
+`usePlayIntegrity`
 
 **AI** — `useGemini` (multi-turn chat, streaming, safety thresholds, Google Search grounding, token
 counting), `useSpeechAI` (voice capture and transcription, on-device streaming or cloud),
-`useSpeech` (text to speech), `useTPU` (what the AICore stack actually exposes)
+`useSpeech` (text to speech), `useEmbeddings` (on-device text embeddings), `useAppFunctions`
+(expose your app's capabilities to the system Gemini assistant), `useTPU` (what the AICore stack
+actually exposes)
 
 **AI, from `@pixelkit-labs/sdk/mlkit`** — `useGeminiNano` (Gemini Nano through AICore),
 `useGenAITasks` (summarize, proofread, rewrite), `useVisionAI` (cloud Gemini multimodal plus
@@ -92,13 +99,13 @@ Inputs, outputs and a contract for every function are in the
 
 Every hook also reports where its value came from — `source: 'hardware' | 'derived' | 'unavailable'` —
 and returns `null` rather than a substitute when a reading cannot be taken. The reasoning is in
-[Provenance](https://pixelkit-labs.github.io/pixelkit-docs/api/silicon-compute/#observability--provenance).
+[Provenance](https://pixelkit-labs.github.io/pixelkit-docs/api/silicon-compute/observability-provenance/).
 
 ## Packages
 
 | | |
 | :--- | :--- |
-| `@pixelkit-labs/sdk` | The 39 hooks, the types they return, and the observability layer |
+| `@pixelkit-labs/sdk` | The 51 hooks, the types they return, and the observability layer |
 | `@pixelkit-labs/native` | Kotlin Expo Module for telemetry and actuators. No third-party dependencies. |
 | `@pixelkit-labs/mlkit` | Kotlin Expo Module for on-device ML Kit and Gemini Nano. Opt-in. |
 

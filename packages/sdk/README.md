@@ -44,8 +44,10 @@ the app, and Expo Go contains only the native code Expo shipped.
 ## Supported devices
 
 Built for the Google Pixel 11 Pro, Pro Fold and Pro XL. It degrades rather than fails elsewhere:
-13 of the 39 hooks are pure Expo and JavaScript and work on any Android device; the other 26 call
-the Kotlin modules and report `unsupported` where the silicon is not there.
+13 of the 51 hooks are pure Expo and JavaScript and work on any Android device; another 37 call the
+Kotlin modules and report `unsupported` where the silicon is not there. `useHiLight` is neither: it
+drives the camera-bar LEDs through a local ADB daemon, because Android restricts them to privileged
+apps.
 
 ```bash
 npx @pixelkit-labs/cli doctor   # tells you which case you are in
@@ -79,7 +81,7 @@ counts at runtime.
 
 ## Documentation
 
-Full input and output tables for all 39 hooks, with a contract for every function:
+Full input and output tables for all 51 hooks, with a contract for every function:
 [the documentation](https://pixelkit-labs.github.io/pixelkit-docs/).
 
 ## Licence
